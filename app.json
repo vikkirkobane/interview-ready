@@ -12,7 +12,7 @@
     },
     "scheme": "interviewready",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.interviewready.app",
