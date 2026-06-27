@@ -35,10 +35,7 @@ dist/
 web-build/
 
 # Android build artifacts (large, regenerated on EAS)
-android/app/build/
-android/app/.cxx/
-android/build/
-android/.gradle/
+android/
 
 # Git
 .git/
