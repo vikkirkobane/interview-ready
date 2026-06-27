@@ -10,7 +10,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
-import { CoverLetter } from '../../supabase/functions/_shared/zod-schemas';
+import { CoverLetter } from '../../src/types/schemas';
 import { Ionicons } from '@expo/vector-icons';
 
 const TONES = ['Professional', 'Enthusiastic', 'Concise', 'Storytelling', 'Formal'];

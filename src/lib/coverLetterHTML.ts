@@ -1,4 +1,4 @@
-import { CoverLetter } from '../../supabase/functions/_shared/zod-schemas';
+import { CoverLetter } from '../types/schemas';
 
 export function buildCoverLetterHTML(cl: CoverLetter): string {
   const h = cl.header;

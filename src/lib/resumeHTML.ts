@@ -1,4 +1,4 @@
-import { ResumeContent } from '../../supabase/functions/_shared/zod-schemas';
+import { ResumeContent } from '../types/schemas';
 
 function getTemplateCSS(template: string): string {
   const templates: Record<string, string> = {

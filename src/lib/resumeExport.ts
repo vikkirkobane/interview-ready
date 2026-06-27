@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { ResumeContent } from '../../supabase/functions/_shared/zod-schemas';
+import { ResumeContent } from '../types/schemas';
 import { buildResumeHTML } from './resumeHTML';
 
 declare var window: any;

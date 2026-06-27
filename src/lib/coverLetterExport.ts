@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { CoverLetter } from '../../supabase/functions/_shared/zod-schemas';
+import { CoverLetter } from '../types/schemas';
 import { buildCoverLetterHTML } from './coverLetterHTML';
 
 declare var window: any;
