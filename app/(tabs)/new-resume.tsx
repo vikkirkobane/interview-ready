@@ -68,7 +68,7 @@ const TEMPLATES = [
     description: 'Clean single-column, leadership-focused',
     atsScore: 95,
     isPremium: false,
-    image: require('../../assets/templates/modern.png') // TODO: Replace with executive.png
+    image: require('../../assets/logo.png')
   },
   { 
     id: 'minimal', 
@@ -76,7 +76,7 @@ const TEMPLATES = [
     description: 'Whitespace-heavy, typography-driven',
     atsScore: 94,
     isPremium: false,
-    image: require('../../assets/templates/classic.png') // TODO: Replace with minimal.png
+    image: require('../../assets/logo.png')
   },
   { 
     id: 'tech-stack', 
@@ -84,7 +84,7 @@ const TEMPLATES = [
     description: 'Projects-first, GitHub-linked',
     atsScore: 90,
     isPremium: false,
-    image: require('../../assets/templates/classic.png') // TODO: Replace with tech-stack.png
+    image: require('../../assets/logo.png')
   },
   { 
     id: 'academic', 
@@ -92,7 +92,7 @@ const TEMPLATES = [
     description: 'Publications and research focus',
     atsScore: 93,
     isPremium: true,
-    image: require('../../assets/templates/classic.png') // TODO: Replace with academic.png
+    image: require('../../assets/logo.png')
   },
 ];
 
