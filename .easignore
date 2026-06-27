@@ -1,0 +1,48 @@
+# Environment & secrets (NEVER upload)
+.env
+.env.*
+!.env.example
+
+# Documentation (not needed for mobile build)
+docs/
+*.md
+!README.md
+
+# Backend (separate from mobile app)
+supabase/
+
+# Dev / AI tooling
+.agents/
+_dev/
+.bob/
+.vscode/
+eslint.config.js
+skills-lock.json
+test-connection.*
+test_openrouter.js
+fix_*.js
+refactor.js
+refactor_new_resume.py
+APPLY_FIX.sql
+mappings.json
+npx_out.txt
+
+# Local Expo cache
+.expo/
+
+# Web build output
+dist/
+web-build/
+
+# Android build artifacts (large, regenerated on EAS)
+android/app/build/
+android/app/.cxx/
+android/build/
+android/.gradle/
+
+# Git
+.git/
+
+# OS junk
+.DS_Store
+Thumbs.db

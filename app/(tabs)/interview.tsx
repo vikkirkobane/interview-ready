@@ -1,0 +1,468 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Animated, Easing } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+import { useStartInterviewMutation, useInterviewMessageMutation } from '../../src/hooks/useApi';
+import Toast from 'react-native-toast-message';
+import { Ionicons } from '@expo/vector-icons';
+
+// Mock Message Data
+type Message = {
+  id: string;
+  role: 'ai' | 'user';
+  text: string;
+};
+
+export default function InterviewScreen() {
+  const router = useRouter();
+  const { colors } = useTheme();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+  const [seconds, setSeconds] = useState(0); 
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const startMutation = useStartInterviewMutation();
+  const messageMutation = useInterviewMessageMutation();
+
+  useEffect(() => {
+    // Start interview on mount
+    const initSession = async () => {
+      try {
+        const res = await startMutation.mutateAsync({
+          role: 'Product Manager',
+          type: 'BEHAVIORAL',
+          difficulty: 'INTERMEDIATE'
+        });
+        setSessionId(res.interview?.id || res.id);
+        const initialMsg = res.interview?.messages?.[0]?.content || res.message || "Hello! I am your AI interviewer. Shall we begin?";
+        setMessages([{
+          id: Date.now().toString(),
+          role: 'ai',
+          text: initialMsg
+        }]);
+      } catch (e: any) {
+        Toast.show({ type: 'error', text1: 'Failed to start', text2: e.message });
+      } finally {
+        setIsTyping(false);
+      }
+    };
+    initSession();
+  }, []);
+
+  // Timer Effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds(s => s + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (totalSeconds: number) => {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleSend = async () => {
+    if (!inputText.trim() || !sessionId) return;
+    
+    const newMsg: Message = { id: Date.now().toString(), role: 'user', text: inputText };
+    setMessages(prev => [...prev, newMsg]);
+    setInputText('');
+    setIsTyping(true);
+
+    try {
+      const res = await messageMutation.mutateAsync({
+        session_id: sessionId,
+        content: newMsg.text
+      });
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        text: res.message?.content || res.content || "Thank you for your response."
+      }]);
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Message Failed', text2: e.message });
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleEndSession = () => {
+    if (sessionId) {
+      router.push({ pathname: '/feedback', params: { sessionId } });
+    } else {
+      router.back();
+    }
+  };
+
+  const TypingIndicator = () => {
+    const dot1 = useRef(new Animated.Value(0)).current;
+    const dot2 = useRef(new Animated.Value(0)).current;
+    const dot3 = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+      const animateDot = (anim: Animated.Value, delay: number) => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 400,
+              delay: delay,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0,
+              duration: 400,
+              easing: Easing.inOut(Easing.ease),
+              useNativeDriver: true,
+            }),
+            Animated.delay(400) // pause between loops
+          ])
+        ).start();
+      };
+
+      animateDot(dot1, 0);
+      animateDot(dot2, 200);
+      animateDot(dot3, 400);
+    }, []);
+
+    return (
+      <View style={styles.messageRowLeft}>
+        <View style={styles.messageMetaLeft}>
+          <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
+            <Ionicons name="sparkles" size={12} color={colors.primary} />
+          </View>
+          <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Analyzing Response...</Text>
+        </View>
+        <View style={[styles.typingBubble, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+          <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot1 }] }]} />
+          <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot2 }] }]} />
+          <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot3 }] }]} />
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={[styles.flex, { backgroundColor: colors.bgPrimary }]}>
+      {/* Background Auras */}
+      <View style={[styles.auraTopLeft, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
+      <View style={[styles.auraBottomRight, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
+
+      {/* Chat Canvas */}
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.chatScroller}
+        contentContainerStyle={styles.chatContent}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Page Header */}
+        <View style={styles.pageHeader}>
+          <View style={styles.pageHeaderTitleArea}>
+            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Product Manager Role</Text>
+            <View style={styles.headerBadge}>
+              <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+              <Text style={[styles.liveText, { color: colors.textMuted }]}>LIVE INTERVIEW SESSION</Text>
+            </View>
+          </View>
+          
+          <View style={styles.headerActions}>
+            <View style={styles.timerContainer}>
+              <Text style={[styles.timerText, { color: colors.primary }]}>{formatTime(seconds)}</Text>
+              <Text style={[styles.timerLabel, { color: colors.textMuted }]}>DURATION</Text>
+            </View>
+            <TouchableOpacity style={[styles.endSessionBtn, { backgroundColor: colors.errorLight }]} onPress={handleEndSession}>
+              <Text style={[styles.endSessionText, { color: colors.error }]}>END SESSION</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {messages.map((msg) => {
+          const isAi = msg.role === 'ai';
+          return (
+            <View key={msg.id} style={isAi ? styles.messageRowLeft : styles.messageRowRight}>
+              
+              {/* Meta Row */}
+              <View style={isAi ? styles.messageMetaLeft : styles.messageMetaRight}>
+                {isAi ? (
+                  <>
+                    <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
+                      <Ionicons name="sparkles" size={12} color={colors.primary} />
+                    </View>
+                    <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Interview AI</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.metaLabel, { color: colors.textMuted }]}>You</Text>
+                    <View style={[styles.userIconWrapper, { backgroundColor: colors.primary }]}>
+                      <Ionicons name="person" size={12} color="#fff" />
+                    </View>
+                  </>
+                )}
+              </View>
+
+              {/* Bubble */}
+              <View style={[styles.bubble, isAi ? [styles.bubbleLeft, { backgroundColor: colors.bgCard, borderColor: colors.border }] : [styles.bubbleRight, { backgroundColor: colors.primary }]]}>
+                <Text style={[styles.bubbleText, isAi ? [styles.bubbleTextLeft, { color: colors.textPrimary }] : [styles.bubbleTextRight, { color: '#fff' }]]}>
+                  {msg.text}
+                </Text>
+              </View>
+
+            </View>
+          );
+        })}
+
+        {isTyping && <TypingIndicator />}
+      </ScrollView>
+
+      {/* Bottom Input Area */}
+      <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
+        <View style={styles.inputContainer}>
+          <TouchableOpacity style={[styles.micBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border, borderWidth: 1 }]}>
+            <Ionicons name="mic-outline" size={20} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
+              placeholder="Type your response..."
+              placeholderTextColor={colors.textMuted}
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+            />
+            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
+              <Ionicons name="send" size={14} color="#fff" style={{ transform: [{ translateX: 1 }] }} />
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>
+      </View>
+
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
+  auraTopLeft: {
+    position: 'absolute',
+    top: '-10%',
+    left: '-10%',
+    width: '60%',
+    height: '40%',
+    borderRadius: 9999,
+  },
+  auraBottomRight: {
+    position: 'absolute',
+    bottom: '-10%',
+    right: '-10%',
+    width: '60%',
+    height: '40%',
+    borderRadius: 9999,
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.xl,
+    gap: Spacing.md,
+  },
+  pageHeaderTitleArea: {
+    flex: 1,
+  },
+  headerActions: {
+    alignItems: 'flex-end',
+    gap: Spacing.xs,
+  },
+  pageTitle: {
+    ...Typography.displayMd,
+    marginBottom: 4,
+  },
+  headerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  liveText: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+
+  timerContainer: {
+    alignItems: 'flex-end',
+  },
+  timerText: {
+    ...Typography.mono,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  timerLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  endSessionBtn: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: Radius.md,
+  },
+  endSessionText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  chatScroller: {
+    flex: 1,
+  },
+  chatContent: {
+    padding: Spacing.lg,
+    paddingBottom: 40,
+    gap: Spacing.xl,
+    maxWidth: 768,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  messageRowLeft: {
+    alignSelf: 'flex-start',
+    maxWidth: '85%',
+  },
+  messageRowRight: {
+    alignSelf: 'flex-end',
+    maxWidth: '85%',
+  },
+  messageMetaLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  messageMetaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginBottom: 6,
+  },
+  metaLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  botIconWrapper: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userIconWrapper: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bubble: {
+    padding: Spacing.md,
+    borderRadius: 16,
+    ...Shadow.sm,
+  },
+  bubbleLeft: {
+    borderWidth: 1,
+    borderBottomLeftRadius: 4,
+  },
+  bubbleRight: {
+    borderBottomRightRadius: 4,
+    ...Shadow.card,
+  },
+  bubbleText: {
+    ...Typography.bodyLg,
+    lineHeight: 28,
+  },
+  bubbleTextLeft: {
+  },
+  bubbleTextRight: {
+  },
+  typingBubble: {
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+  },
+  typingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  inputArea: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
+    borderTopWidth: 1,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    maxWidth: 768,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  micBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    paddingRight: 56,
+    ...Typography.bodyLg,
+  },
+  sendBtn: {
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadow.sm,
+  },
+  poweredByText: {
+    fontSize: 9,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: Spacing.sm,
+    letterSpacing: 1,
+  },
+});

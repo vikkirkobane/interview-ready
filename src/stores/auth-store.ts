@@ -1,0 +1,121 @@
+import { create } from 'zustand';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase';
+import { queryClient } from '../lib/query-client';
+import { useProfileStore } from './profile-store';
+import { useOnboardingStore } from './onboarding-store';
+
+// Holds the auth listener subscription so it can be cleaned up on re-initialization
+let authSubscription: (() => void) | null = null;
+
+interface AuthState {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  initialized: boolean;
+
+  // Actions
+  initialize: () => Promise<void>;
+  signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInWithOAuth: (provider: 'google' | 'linkedin_oidc') => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
+  setSession: (session: Session | null) => void;
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  session: null,
+  user: null,
+  loading: true,
+  initialized: false,
+
+  initialize: async () => {
+    // Tear down any previous listener (guards against hot-reload double-subscription)
+    if (authSubscription) {
+      authSubscription();
+      authSubscription = null;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      set({
+        session,
+        user: session?.user ?? null,
+        loading: false,
+        initialized: true,
+      });
+
+      // Listen for auth state changes (sign in, sign out, token refresh)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        set({
+          session,
+          user: session?.user ?? null,
+        });
+        
+        if (_event === 'SIGNED_OUT') {
+          useProfileStore.getState().clearProfile();
+          useOnboardingStore.getState().resetOnboarding();
+        }
+      });
+
+      authSubscription = () => subscription.unsubscribe();
+    } catch (error) {
+      console.error('[Auth] Failed to initialize:', error);
+      set({ loading: false, initialized: true });
+    }
+  },
+
+  signUp: async (email, password, firstName = '', lastName = '') => {
+    set({ loading: true });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+        },
+      },
+    });
+    set({ loading: false });
+    return { error: error?.message ?? null };
+  },
+
+  signIn: async (email, password) => {
+    set({ loading: true });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    set({ loading: false });
+    return { error: error?.message ?? null };
+  },
+
+  signInWithOAuth: async (provider) => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: 'interviewready://auth/callback',
+        },
+      });
+      return { error: error?.message ?? null };
+    } catch (err: any) {
+      return { error: err.message };
+    }
+  },
+
+  signOut: async () => {
+    set({ loading: true });
+    
+    useProfileStore.getState().clearProfile();
+    useOnboardingStore.getState().resetOnboarding();
+    
+    await supabase.auth.signOut();
+    set({ session: null, user: null, loading: false });
+  },
+
+  setSession: (session) => {
+    set({ session, user: session?.user ?? null });
+  },
+}));

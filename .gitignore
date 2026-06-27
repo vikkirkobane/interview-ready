@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native build artifacts
+android/app/build/
+android/app/.cxx/
+android/build/
+android/.gradle/
+*.apk
+*.aab
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Dev tooling cache
+.bob/
+
+# Logs
+npx_out.txt

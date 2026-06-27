@@ -1,0 +1,94 @@
+[
+  {
+    "old": "applications/crud",
+    "new": "applications-crud"
+  },
+  {
+    "old": "applications/list",
+    "new": "applications-list"
+  },
+  {
+    "old": "auth/delete-account",
+    "new": "auth-delete-account"
+  },
+  {
+    "old": "auth/me",
+    "new": "auth-me"
+  },
+  {
+    "old": "auth/sync",
+    "new": "auth-sync"
+  },
+  {
+    "old": "cover-letters/create",
+    "new": "cover-letters-create"
+  },
+  {
+    "old": "interviews/feedback",
+    "new": "interviews-feedback"
+  },
+  {
+    "old": "interviews/message",
+    "new": "interviews-message"
+  },
+  {
+    "old": "interviews/start",
+    "new": "interviews-start"
+  },
+  {
+    "old": "jobs/analyze",
+    "new": "jobs-analyze"
+  },
+  {
+    "old": "linkedin/analyze",
+    "new": "linkedin-analyze"
+  },
+  {
+    "old": "linkedin/optimize",
+    "new": "linkedin-optimize"
+  },
+  {
+    "old": "networking/contacts",
+    "new": "networking-contacts"
+  },
+  {
+    "old": "networking/followup",
+    "new": "networking-followup"
+  },
+  {
+    "old": "profile/get",
+    "new": "profile-get"
+  },
+  {
+    "old": "profile/update",
+    "new": "profile-update"
+  },
+  {
+    "old": "resumes/create",
+    "new": "resumes-create"
+  },
+  {
+    "old": "resumes/score",
+    "new": "resumes-score"
+  },
+  {
+    "old": "resumes/section-rewrite",
+    "new": "resumes-section-rewrite"
+  },
+  {
+    "old": "resumes/update",
+    "new": "resumes-update"
+  },
+  {
+    "old": "utilities/autofill",
+    "new": "utilities-autofill"
+  },
+  {
+    "old": "utilities/elevator-pitch",
+    "new": "utilities-elevator-pitch"
+  },
+  {
+    "old": "utilities/jd-summary",
+    "new": "utilities-jd-summary"
+  }
+]
