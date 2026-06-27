@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Image, ColorValue } from 'react-native';
 import { Typography, Spacing, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNavigationStore } from '../../src/stores/navigation-store';
@@ -10,7 +10,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 
 // Custom Animated Icon Component for Bottom Tabs
-const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: boolean, color: string, size: number, name: any, isMaterial?: boolean }) => {
+const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: boolean, color: ColorValue, size: number, name: any, isMaterial?: boolean }) => {
+  const colorString = typeof color === 'string' ? color : '#000';
   return (
     <MotiView
       from={{ translateY: 0, scale: 1 }}
@@ -33,9 +34,9 @@ const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: 
       }}
     >
       {isMaterial ? (
-        <MaterialCommunityIcons name={name} size={size + 4} color={color} />
+        <MaterialCommunityIcons name={name} size={size + 4} color={colorString} />
       ) : (
-        <Ionicons name={name} size={size + 4} color={color} />
+        <Ionicons name={name} size={size + 4} color={colorString} />
       )}
       {focused && (
         <MotiView
@@ -48,7 +49,7 @@ const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: 
             width: 4,
             height: 4,
             borderRadius: 2,
-            backgroundColor: color,
+            backgroundColor: colorString,
           }}
         />
       )}
@@ -80,11 +81,7 @@ export default function TabLayout() {
     const hasCurrentRole = !!(profile as any)?.current_role;
 
     if (!profileLoading && (!profile || !hasFirstName || !hasLastName || !hasCurrentRole) && !isCompleted) {
-      if (Platform.OS === 'web') {
-        (window as any).location.href = '/role';
-      } else {
-        router.replace('/(onboarding)/role');
-      }
+      router.replace('/(onboarding)/role');
     }
   }, [profile, profileLoading, user]);
 
