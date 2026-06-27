@@ -7,7 +7,8 @@ import { StyleSheet, ActivityIndicator, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '../src/components/ui';
 import { useAuthStore } from '../src/stores/auth-store';
-import { useTheme } from '../src/theme';import * as Font from 'expo-font';
+import { useTheme } from '../src/theme';
+import * as Font from 'expo-font';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 const queryClient = new QueryClient({
