@@ -230,7 +230,7 @@ export const useDeleteAccountMutation = () => {
 
 export const useStartInterviewMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { role: string; type: string; difficulty: string; resume_id?: string }) => {
+    mutationFn: async (payload: { role: string; interview_type: string; difficulty?: string; company?: string; job_description?: string; job_application_id?: string }) => {
       const response = await apiCall('interviews-start', 'POST', payload);
       if (response.error) throw new Error(response.error);
       return response.data; // { session_id, initial_message }
@@ -460,6 +460,23 @@ export const useInterviewQuery = (id: string | null) => {
       return data;
     },
     enabled: !!id,
+  });
+};
+
+/**
+ * Fetch Past Interviews
+ */
+export const usePastInterviewsQuery = () => {
+  return useQuery({
+    queryKey: ['mock_interviews', 'list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mock_interviews')
+        .select('*')
+        .order('updated_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
   });
 };
 

@@ -51,13 +51,33 @@ app.post('/*', async (c: any) => {
 
     const systemPrompt = `You are an expert technical recruiter and interviewer evaluator.
 Review the provided mock interview transcript. Provide comprehensive, structured feedback using the provided JSON schema.
-Evaluate the candidate across communication, technical knowledge, problem solving, confidence, and cultural fit.
-Provide specific feedback for their answers and a final hiring recommendation.`;
+Evaluate the candidate strictly against the provided Role, Interview Type, and Job Description.
+Be highly objective, critical, and specific. Do not flatter the candidate. Point out exactly where they lacked depth, clarity, or technical accuracy.
+
+Respond ONLY with a raw, valid JSON object matching this schema exactly (no markdown formatting, no comments, just the JSON):
+{
+  "overall_score": <number 0-100>,
+  "dimension_scores": {
+    "communication": <number 0-100>,
+    "technical_knowledge": <number 0-100>,
+    "problem_solving": <number 0-100>,
+    "confidence": <number 0-100>,
+    "cultural_fit": <number 0-100>
+  },
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "areas_for_improvement": ["<area 1>", "<area 2>", "<area 3>"],
+  "hiring_recommendation": "<Clear hire/no-hire/leaning recommendation with 1-2 sentence justification>",
+  "feedback": "<Overall constructive summary of the performance>"
+}`;
 
     const conversationHistory = messages.map(m => `${m.role === 'user' ? 'Candidate' : 'Interviewer'}: ${m.content}`).join('\n\n');
     
+    const jdContext = interview.job_description 
+      ? `\nJob Description:\n${interview.job_description}` 
+      : '';
+
     const userPrompt = `Role: ${interview.role}${interview.company ? ` at ${interview.company}` : ''}
-Interview Type: ${interview.interview_type}
+Interview Type: ${interview.interview_type}${jdContext}
     
 Interview Transcript:
 ${conversationHistory}
@@ -77,11 +97,11 @@ Generate structured feedback.`;
       .update({
         status: 'COMPLETED',
         overall_score: feedbackData.overall_score,
-        communication_score: feedbackData.dimension_scores.communication,
-        technical_score: feedbackData.dimension_scores.technical_knowledge,
-        confidence_score: feedbackData.dimension_scores.confidence,
-        strengths: feedbackData.strengths,
-        improvements: feedbackData.areas_for_improvement,
+        communication_score: feedbackData.dimension_scores?.communication || 0,
+        technical_score: feedbackData.dimension_scores?.technical_knowledge || 0,
+        confidence_score: feedbackData.dimension_scores?.confidence || 0,
+        strengths: feedbackData.strengths || [],
+        improvements: feedbackData.areas_for_improvement || [],
         detailed_feedback: feedbackData,
         completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

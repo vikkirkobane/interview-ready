@@ -13,6 +13,7 @@ const StartInterviewInput = z.object({
   job_application_id: z.string().uuid().optional(),
   role: z.string().min(1),
   company: z.string().optional(),
+  job_description: z.string().optional(),
   interview_type: z.enum(['TECHNICAL', 'BEHAVIORAL', 'SYSTEM_DESIGN', 'MIXED', 'CASE_STUDY']),
   difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'SENIOR']).optional().default('INTERMEDIATE'),
 });
@@ -74,6 +75,7 @@ app.post('/*', async (c: any) => {
         job_application_id: input.job_application_id || null,
         role: input.role,
         company: input.company || null,
+        job_description: input.job_description || null,
         interview_type: input.interview_type,
         status: 'IN_PROGRESS',
         messages: [initialMessage],
@@ -107,7 +109,7 @@ app.post('/*', async (c: any) => {
     console.error('Error in /interviews/start:', error);
     return c.json(
       { 
-        error: 'Failed to start mock interview', 
+        error: 'Failed to start interview', 
         code: 'INTERNAL_ERROR',
         details: error instanceof Error ? { message: error.message } : undefined
       },

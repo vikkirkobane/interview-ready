@@ -72,7 +72,7 @@ export default function TrackerScreen() {
             <Text style={[styles.cardRole, { color: isOffer ? colors.success : colors.textPrimary }]}>{app.job_title}</Text>
             <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
               <View style={[styles.statusDot, { backgroundColor: color, marginRight: 6 }]} />
-              <Text style={[styles.cardCompany, { color: colors.textMuted, marginTop: 0 }]}>{app.company} {app.location ? `• ${app.location}` : ""}</Text>
+              <Text style={[styles.cardCompany, { color: colors.textMuted, marginTop: 0 }]}>{app.company} {app.location ? ` ${app.location}` : ""}</Text>
             </View>
           </View>
           
@@ -113,7 +113,7 @@ export default function TrackerScreen() {
             {selectedApp && (
               <ScrollView style={{ marginTop: Spacing.md }}>
                 <Text style={[Typography.displaySm, { color: colors.textPrimary }]}>{selectedApp.job_title}</Text>
-                <Text style={[Typography.bodyLg, { color: colors.textMuted, marginBottom: Spacing.xl }]}>{selectedApp.company} {selectedApp.location ? `• ${selectedApp.location}` : ""}</Text>
+                <Text style={[Typography.bodyLg, { color: colors.textMuted, marginBottom: Spacing.xl }]}>{selectedApp.company} {selectedApp.location ? ` ${selectedApp.location}` : ""}</Text>
 
                 <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Status</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.xl }}>
@@ -156,10 +156,30 @@ export default function TrackerScreen() {
                 )}
 
                 <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Job Description</Text>
-                <View style={[styles.jdBox, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                <View style={[styles.jdBox, { backgroundColor: colors.bgSecondary, borderColor: colors.border, marginBottom: Spacing.xl }]}>
                   <Text style={[Typography.bodyMd, { color: colors.textBody }]} numberOfLines={10}>
                     {selectedApp.raw_jd || "No job description provided."}
                   </Text>
+                </View>
+
+                <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Quick Actions</Text>
+                <View style={{ flexDirection: 'column', gap: Spacing.md, paddingBottom: Spacing.xxl }}>
+                  <TouchableOpacity 
+                    style={[styles.secondaryBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                    onPress={() => {
+                      setSelectedApp(null);
+                      router.push({
+                        pathname: '/interviews',
+                        params: { 
+                          role: selectedApp.job_title, 
+                          jobDescription: selectedApp.raw_jd || '' 
+                        }
+                      });
+                    }}
+                  >
+                    <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} style={{ marginRight: 8 }} />
+                    <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Practice Mock Interview</Text>
+                  </TouchableOpacity>
                 </View>
 
               </ScrollView>

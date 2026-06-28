@@ -71,7 +71,11 @@ app.post('/*', async (c: any) => {
     });
 
     // Prepare context for AI
-    const systemPrompt = `You are an expert interviewer conducting a ${interview.interview_type} interview for the role of ${interview.role}${interview.company ? ` at ${interview.company}` : ''}.
+    const jdContext = interview.job_description 
+      ? `\n\nJOB DESCRIPTION:\n${interview.job_description}\n\nCRITICAL INSTRUCTION: You must heavily base your questions and evaluation on the specific responsibilities, skills, and requirements mentioned in the job description above. Tailor the mock interview to feel exactly like a real-life interview for this specific role.` 
+      : '';
+
+    const systemPrompt = `You are an expert interviewer conducting a ${interview.interview_type} interview for the role of ${interview.role}${interview.company ? ` at ${interview.company}` : ''}.${jdContext}
 Maintain a professional, encouraging, yet critical tone. Ask clear, targeted follow-up questions or proceed to the next topic. Do not break character. Do not provide the score yet, just continue the conversation naturally. Keep your responses concise (1-2 paragraphs max).`;
 
     // Map message history to format expected by Groq/LLM
@@ -108,20 +112,15 @@ Maintain a professional, encouraging, yet critical tone. Ask clear, targeted fol
       .eq('id', interviewId);
 
     if (updateError) {
-      console.error('Failed to update interview messages:', updateError);
+      console.error('Failed to update messages:', updateError);
       throw new Error('Database update failed');
     }
 
-    // Ideally, we could broadcast via Realtime, but returning the response here is simpler for MVP
-    // The client can await the POST response
-    return c.json(
-      {
-        message: aiMessage,
-        question_count: questionCount,
-        status: 'Success'
-      },
-      200
-    );
+    return c.json({
+      message: aiMessage,
+      question_count: questionCount
+    }, 200);
+
   } catch (error: any) {
     if (
       error instanceof UnauthorizedError ||
@@ -131,7 +130,7 @@ Maintain a professional, encouraging, yet critical tone. Ask clear, targeted fol
       return c.json({ error: error.message, code: error.code }, error.status);
     }
 
-    console.error('Error in /interviews/:id/message:', error);
+    console.error('Error in /interviews/message:', error);
     return c.json(
       { 
         error: 'Failed to process message', 

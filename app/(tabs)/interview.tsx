@@ -16,7 +16,8 @@ type Message = {
 
 export default function InterviewScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '' } = useLocalSearchParams();
+  const { colors, isDark } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -28,14 +29,20 @@ export default function InterviewScreen() {
   const messageMutation = useInterviewMessageMutation();
 
   useEffect(() => {
-    // Start interview on mount
-    const initSession = async () => {
+    // Start interview session when screen mounts
+    const startInterview = async () => {
       try {
-        const res = await startMutation.mutateAsync({
-          role: 'Product Manager',
-          type: 'BEHAVIORAL',
-          difficulty: 'INTERMEDIATE'
-        });
+        const payload: any = {
+          role: role as string,
+          interview_type: (type as string).toUpperCase().replace(' ', '_'),
+          difficulty: (difficulty as string).toUpperCase()
+        };
+        
+        if (jobDescription) {
+          payload.job_description = jobDescription;
+        }
+
+        const res = await startMutation.mutateAsync(payload);
         setSessionId(res.interview?.id || res.id);
         const initialMsg = res.interview?.messages?.[0]?.content || res.message || "Hello! I am your AI interviewer. Shall we begin?";
         setMessages([{
@@ -49,7 +56,7 @@ export default function InterviewScreen() {
         setIsTyping(false);
       }
     };
-    initSession();
+    startInterview();
   }, []);
 
   // Timer Effect

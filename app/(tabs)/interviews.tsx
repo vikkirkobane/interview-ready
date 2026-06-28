@@ -1,23 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, ScoreRing } from '../../src/components/ui';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { usePastInterviewsQuery } from '../../src/hooks/useApi';
 
 export default function InterviewsLobbyScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { colors } = useTheme();
-  const [role, setRole] = useState('Product Manager');
+  
+  const [role, setRole] = useState((params.role as string) || 'Product Manager');
+  const [jobDescription, setJobDescription] = useState((params.jobDescription as string) || '');
   const [type, setType] = useState('Behavioral');
   const [difficulty, setDifficulty] = useState('Intermediate');
+  
+  const { data: pastInterviews, isLoading } = usePastInterviewsQuery();
 
   const handleStart = () => {
-    // In a real integration, we'd call /interviews/start to create a session
-    // For now, just navigate to the chat screen
+    // Navigate to the chat screen
     router.push({
       pathname: '/interview',
-      params: { role, type, difficulty }
+      params: { role, type, difficulty, jobDescription }
     });
   };
 
@@ -46,6 +51,19 @@ export default function InterviewsLobbyScreen() {
               onChangeText={setRole}
               placeholder="e.g. Senior Frontend Engineer"
               placeholderTextColor={colors.textMuted}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional)</Text>
+            <TextInput 
+              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, minHeight: 80 }]}
+              value={jobDescription}
+              onChangeText={setJobDescription}
+              placeholder="Paste the target job description here to guide the interview..."
+              placeholderTextColor={colors.textMuted}
+              multiline={true}
+              textAlignVertical="top"
             />
           </View>
 
@@ -88,39 +106,30 @@ export default function InterviewsLobbyScreen() {
 
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Past Interviews</Text>
         
-        <Card style={[styles.historyCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-          <View style={styles.historyHeader}>
-            <ScoreRing score={82} size={48} hideText={true} />
-            <View style={styles.historyInfo}>
-              <Text style={[styles.historyRole, { color: colors.textPrimary }]}>Product Manager</Text>
-              <Text style={[styles.historyMeta, { color: colors.textSecondary }]}>Behavioral • 2 days ago</Text>
-            </View>
-            <Text style={[styles.historyScore, { color: colors.textPrimary }]}>82%</Text>
-          </View>
-          <TouchableOpacity 
-            style={[styles.viewFeedbackBtn, { borderTopColor: colors.border }]}
-            onPress={() => router.push('/feedback')}
-          >
-            <Text style={[styles.viewFeedbackText, { color: colors.primary }]}>View Feedback →</Text>
-          </TouchableOpacity>
-        </Card>
-
-        <Card style={[styles.historyCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-          <View style={styles.historyHeader}>
-            <ScoreRing score={65} size={48} hideText={true} color={colors.warning} />
-            <View style={styles.historyInfo}>
-              <Text style={[styles.historyRole, { color: colors.textPrimary }]}>Product Manager</Text>
-              <Text style={[styles.historyMeta, { color: colors.textSecondary }]}>Technical • 1 week ago</Text>
-            </View>
-            <Text style={[styles.historyScore, { color: colors.textPrimary }]}>65%</Text>
-          </View>
-          <TouchableOpacity 
-            style={[styles.viewFeedbackBtn, { borderTopColor: colors.border }]}
-            onPress={() => router.push('/feedback')}
-          >
-            <Text style={[styles.viewFeedbackText, { color: colors.primary }]}>View Feedback →</Text>
-          </TouchableOpacity>
-        </Card>
+        {isLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 20 }} />
+        ) : pastInterviews && pastInterviews.length > 0 ? (
+          pastInterviews.map((interview: any) => (
+            <Card key={interview.id} style={[styles.historyCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
+              <View style={styles.historyHeader}>
+                <ScoreRing score={interview.feedback?.overall_score || 0} size={48} hideText={true} color={colors.primary} />
+                <View style={styles.historyInfo}>
+                  <Text style={[styles.historyRole, { color: colors.textPrimary }]}>{interview.role || 'General Interview'}</Text>
+                  <Text style={[styles.historyMeta, { color: colors.textSecondary }]}>{interview.type || 'Behavioral'} • {new Date(interview.updated_at).toLocaleDateString()}</Text>
+                </View>
+                <Text style={[styles.historyScore, { color: colors.textPrimary }]}>{interview.feedback?.overall_score || '--'}%</Text>
+              </View>
+              <TouchableOpacity 
+                style={[styles.viewFeedbackBtn, { borderTopColor: colors.border }]}
+                onPress={() => router.push({ pathname: '/feedback', params: { sessionId: interview.id } })}
+              >
+                <Text style={[styles.viewFeedbackText, { color: colors.primary }]}>View Feedback →</Text>
+              </TouchableOpacity>
+            </Card>
+          ))
+        ) : (
+          <Text style={[styles.historyMeta, { color: colors.textMuted, textAlign: 'center', marginTop: 20 }]}>No past interviews yet.</Text>
+        )}
 
       </ScrollView>
     </View>

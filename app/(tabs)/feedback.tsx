@@ -79,58 +79,52 @@ export default function FeedbackScreen() {
     );
   }
 
-  const overallScore = feedbackData?.overall_score || 75;
+  if (!feedbackData) {
+    return (
+      <View style={[styles.flex, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgSecondary }]}>
+        <Ionicons name="alert-circle-outline" size={48} color={colors.warning} />
+        <Text style={{ marginTop: 16, color: colors.textPrimary, ...Typography.titleLg }}>No Feedback Available</Text>
+        <Text style={{ marginTop: 8, color: colors.textMuted, textAlign: 'center', marginHorizontal: Spacing.xl }}>
+          We couldn't generate feedback for this interview. It might have been too short or encountered an error.
+        </Text>
+        <TouchableOpacity 
+          style={[styles.primaryBtn, { backgroundColor: colors.primary, marginTop: Spacing.xl }]} 
+          onPress={() => router.push('/interviews')}
+        >
+          <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Return to Interviews</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const overallScore = feedbackData?.overall_score || 0;
   const dimensionScores = feedbackData?.dimension_scores || {
-    communication: 82,
-    technical_knowledge: 90,
-    problem_solving: 75,
-    confidence: 70,
-    cultural_fit: 80
+    communication: 0,
+    technical_knowledge: 0,
+    problem_solving: 0,
+    confidence: 0,
+    cultural_fit: 0
   };
-  const strengths = feedbackData?.strengths || ['Concise Articulation'];
-  const improvements = feedbackData?.areas_for_improvement || ['Action Quantification'];
+  const strengths = feedbackData?.strengths || [];
+  const improvements = feedbackData?.areas_for_improvement || [];
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
-      {/* Top Navigation */}
-      <View style={[styles.header, { paddingTop: Platform.OS === 'ios' ? 50 : Spacing.xl, backgroundColor: colors.bgSecondary, borderBottomColor: colors.border }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity style={styles.menuBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.primary }]}>Interview Ready</Text>
-        </View>
-        <View style={[styles.avatarWrapper, { backgroundColor: colors.bgMuted, borderColor: colors.border }]}>
-          <Image 
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAIPQAwi5hse1-II3vUbcAau_oPk1LQuf2L2ISfgsRG_3Icyt2l8A3W-mJWKWWOCoejqbakWwb0OuqEg9Q02ditAr8COW7__HXcOENbgZqyywKaDI-Sc3TAy2HlfO29dKOhz4vQVQB7G-vXBDz9QMVzaRy_J827CM8ELUTF66kF2_YPGEzTl3sRwL4VM3Z3GtvwnycNzKmw6jKSIegd8sBuhiil7fFB7LAPm9CXVrhXYvkcDNHqUhWUWLqwqiTvnIfUOq7ZAFk3DgM' }}
-            style={styles.avatarImage}
-          />
-        </View>
-      </View>
-
       <ScrollView 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxl }]} 
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]} 
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Section: Overall Score */}
         <Animated.View style={[styles.heroCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border, opacity: fadeAnim, transform: [{ translateY: slideAnim1 }] }]}>
           <View style={styles.heroScoreWrapper}>
             <ScoreRing score={overallScore} size="xl" color={colors.primary} animate={true} />
-            <Text style={[styles.heroScoreLabel, { color: colors.textMuted }]}>OVERALL SCORE</Text>
+            <Text style={[styles.heroScoreLabel, { color: colors.textMuted }]}>SCORE</Text>
           </View>
           <View style={styles.heroTextContent}>
-            <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>Great Progress, Alex!</Text>
+            <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>Interview Complete!</Text>
             <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
-              {feedbackData?.feedback || "You've demonstrated a strong grasp of technical concepts. Refining your STAR delivery will bridge the gap to a Senior level performance."}
+              {feedbackData?.hiring_recommendation || "Here is your detailed feedback."}
             </Text>
-            <View style={styles.pillContainer}>
-              <View style={[styles.pill, { backgroundColor: `${colors.success}33` }]}>
-                <Text style={[styles.pillTextSuccess, { color: colors.success }]}>READY FOR JUNIOR+</Text>
-              </View>
-              <View style={[styles.pill, { backgroundColor: `${colors.primary}33` }]}>
-                <Text style={[styles.pillTextPrimary, { color: colors.primary }]}>TOP 15% OF CANDIDATES</Text>
-              </View>
-            </View>
           </View>
         </Animated.View>
 
@@ -145,7 +139,7 @@ export default function FeedbackScreen() {
             <View style={[styles.bentoProgressBar, { backgroundColor: colors.border }]}>
               <View style={[styles.bentoProgressFill, { width: `${dimensionScores.communication}%`, backgroundColor: colors.primary }]} />
             </View>
-            <Text style={[styles.bentoScoreText, { color: colors.primary }]}>{dimensionScores.communication}% {dimensionScores.communication >= 80 ? 'Excellent' : dimensionScores.communication >= 60 ? 'Good' : 'Developing'}</Text>
+            <Text style={[styles.bentoScoreText, { color: colors.primary }]}>{dimensionScores.communication}%</Text>
           </View>
 
           <View style={[styles.bentoCard, { backgroundColor: colors.bgMuted, borderColor: colors.border }]}>
@@ -156,18 +150,18 @@ export default function FeedbackScreen() {
             <View style={[styles.bentoProgressBar, { backgroundColor: colors.border }]}>
               <View style={[styles.bentoProgressFill, { width: `${dimensionScores.technical_knowledge}%`, backgroundColor: colors.primary }]} />
             </View>
-            <Text style={[styles.bentoScoreText, { color: colors.primary }]}>{dimensionScores.technical_knowledge}% {dimensionScores.technical_knowledge >= 80 ? 'Expert' : dimensionScores.technical_knowledge >= 60 ? 'Good' : 'Developing'}</Text>
+            <Text style={[styles.bentoScoreText, { color: colors.primary }]}>{dimensionScores.technical_knowledge}%</Text>
           </View>
 
           <View style={[styles.bentoCard, { backgroundColor: colors.bgMuted, borderColor: colors.border }]}>
             <View style={[styles.bentoIconWrapper, { backgroundColor: colors.bgPrimary }]}>
-               <MaterialCommunityIcons name="puzzle-outline" size={24} color={dimensionScores.problem_solving >= 60 ? colors.primary : colors.warning} />
+               <MaterialCommunityIcons name="puzzle-outline" size={24} color={colors.primary} />
             </View>
             <Text style={[styles.bentoTitle, { color: colors.textPrimary }]}>Problem Solving</Text>
             <View style={[styles.bentoProgressBar, { backgroundColor: colors.border }]}>
-              <View style={[styles.bentoProgressFill, { width: `${dimensionScores.problem_solving}%`, backgroundColor: dimensionScores.problem_solving >= 60 ? colors.primary : colors.warning }]} />
+              <View style={[styles.bentoProgressFill, { width: `${dimensionScores.problem_solving}%`, backgroundColor: colors.primary }]} />
             </View>
-            <Text style={[styles.bentoScoreText, { color: dimensionScores.problem_solving >= 60 ? colors.primary : colors.warning }]}>{dimensionScores.problem_solving}% {dimensionScores.problem_solving >= 80 ? 'Excellent' : dimensionScores.problem_solving >= 60 ? 'Good' : 'Developing'}</Text>
+            <Text style={[styles.bentoScoreText, { color: colors.primary }]}>{dimensionScores.problem_solving}%</Text>
           </View>
 
         </Animated.View>
@@ -220,13 +214,17 @@ export default function FeedbackScreen() {
           <TouchableOpacity 
             style={[styles.primaryBtn, { backgroundColor: colors.primary }]} 
             activeOpacity={0.8}
-            onPress={() => router.push('/interview')}
+            onPress={() => router.push('/interviews')}
           >
             <Ionicons name="refresh" size={20} color={colors.textInverse} />
             <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Practice Again</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} activeOpacity={0.6}>
+          <TouchableOpacity 
+            style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+            activeOpacity={0.6}
+            onPress={() => Toast.show({ type: 'info', text1: 'Downloading Report', text2: 'Your PDF report is being generated.' })}
+          >
             <Ionicons name="download-outline" size={20} color={colors.textPrimary} />
             <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>Download Report</Text>
           </TouchableOpacity>
