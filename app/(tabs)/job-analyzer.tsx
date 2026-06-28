@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery } from '../../src/hooks/useApi';
+import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function JobFitScreen() {
   const { job_id } = useLocalSearchParams();
@@ -26,11 +27,76 @@ export default function JobFitScreen() {
   }, [jobApplication]);
 
   const { user } = useAuthStore();
-  const { profile } = useProfileStore();
+  const { profile, updateProfile } = useProfileStore();
   const { colors, isDark } = useTheme();
   
   const analyzeJob = useAnalyzeJobMutation();
+  const parseResume = useParseResumeMutation();
   const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery(5);
+
+  const handleUploadResume = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 5 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 5MB.' });
+        return;
+      }
+
+      const isPdf = fileAsset.mimeType === 'application/pdf' || fileAsset.name.toLowerCase().endsWith('.pdf');
+      const isDocx = fileAsset.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileAsset.name.toLowerCase().endsWith('.docx');
+
+      if (!isPdf && !isDocx) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PDF and DOCX files are supported.' });
+        return;
+      }
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        } as any);
+      }
+
+      Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+      
+      const extractedData = await parseResume.mutateAsync(formData);
+      
+      // Update the user profile with the newly parsed data
+      await updateProfile({
+        current_role: extractedData.current_role,
+        company: extractedData.company,
+        technical_skills: extractedData.technical_skills,
+      } as any);
+
+      Toast.show({ type: 'success', text1: 'Resume Uploaded', text2: 'Your main resume has been replaced successfully.' });
+    } catch (error: any) {
+      if (error.message?.includes('PROMPT_INJECTION')) {
+        Toast.show({
+          type: 'error',
+          text1: 'Security Violation',
+          text2: 'Injection attempt detected. You have been logged out.',
+        });
+        useAuthStore.getState().signOut();
+        router.replace('/(auth)/login');
+      } else {
+        Toast.show({ type: 'error', text1: 'Upload Failed', text2: error.message || 'Please check your file and try again.' });
+      }
+    }
+  };
 
   const handleAnalyze = async () => {
     setUrlError('');
@@ -115,8 +181,15 @@ export default function JobFitScreen() {
                   textAlignVertical="top"
                 />
                 <View style={styles.inputActions}>
-                  <TouchableOpacity style={styles.attachBtn}>
-                     <Ionicons name="document-attach" size={18} color={colors.textMuted} />
+                  <TouchableOpacity style={styles.attachBtn} onPress={handleUploadResume} disabled={parseResume.isPending}>
+                     {parseResume.isPending ? (
+                       <ActivityIndicator size="small" color={colors.primary} />
+                     ) : (
+                       <>
+                         <Ionicons name="document-attach" size={18} color={colors.textMuted} style={{ marginRight: 6 }} />
+                         <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>Replace Resume (Optional)</Text>
+                       </>
+                     )}
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.analyzeBtn, { backgroundColor: colors.primary }, analyzeJob.isPending && { opacity: 0.7 }]}
@@ -281,6 +354,12 @@ const styles = StyleSheet.create({
   },
   attachBtn: {
     padding: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   analyzeBtn: {
     flexDirection: 'row',

@@ -62,7 +62,7 @@ export default function ProfileScreen() {
   const handleUploadResume = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/pdf',
+        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
         copyToCacheDirectory: true,
       });
 
@@ -76,16 +76,19 @@ export default function ProfileScreen() {
         Toast.show({
           type: 'error',
           text1: 'File too large',
-          text2: 'Please upload a PDF smaller than 5MB.',
+          text2: 'Please upload a file smaller than 5MB.',
         });
         return;
       }
 
-      if (fileAsset.mimeType !== 'application/pdf' && !fileAsset.name.toLowerCase().endsWith('.pdf')) {
+      const isPdf = fileAsset.mimeType === 'application/pdf' || fileAsset.name.toLowerCase().endsWith('.pdf');
+      const isDocx = fileAsset.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileAsset.name.toLowerCase().endsWith('.docx');
+
+      if (!isPdf && !isDocx) {
         Toast.show({
           type: 'error',
           text1: 'Invalid file type',
-          text2: 'Only PDF files are supported.',
+          text2: 'Only PDF and DOCX files are supported.',
         });
         return;
       }
@@ -98,7 +101,7 @@ export default function ProfileScreen() {
         formData.append('file', {
           uri: fileAsset.uri,
           name: fileAsset.name,
-          type: fileAsset.mimeType || 'application/pdf',
+          type: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
         } as any);
       }
 
