@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 120,
+    maxHeight: 200,
   },
   labelRow: {
     flexDirection: 'row',

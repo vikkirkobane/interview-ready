@@ -14,7 +14,7 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     @page { size: A4; margin: 48pt 56pt; }
-    @media screen { body { padding: 32px 24px; } }
+    @media screen { body { padding: 48px 40px; max-width: 750px; margin: 0 auto; } }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
            font-size: 12.7px; color: #1A1A1A; line-height: 1.55;
@@ -28,7 +28,7 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
     .recip-name    { font-weight: 700; }
     .salutation    { font-size: 12px; font-weight: 700;
                      margin-top: 16pt; margin-bottom: 14pt; }
-    .para    { font-size: 12.7px; margin-bottom: 14pt; }
+    .para    { font-size: 12.7px; margin-bottom: 14pt; white-space: pre-wrap; }
     .signoff { font-size: 12.7px; margin-top: 20pt; }
     .signname{ font-size: 13.3px; font-weight: 700; color: #1A3A5C; margin-top: 4pt; }
     .footer  { font-size: 10.7px; color: #555555; margin-top: 24pt;

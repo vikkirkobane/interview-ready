@@ -160,21 +160,24 @@ You MUST output exactly this JSON structure and nothing else:
   }
 }`;
 
+    const fullName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || 'Candidate';
+    const email = user.email || '';
+
     const userPrompt = `CANDIDATE INFORMATION:
 
-Full Name: ${profile?.full_name || 'Candidate'}
+Full Name: ${fullName}
 Phone: ${profile?.phone || ''}
-Email: ${profile?.email || ''}
+Email: ${email}
 LinkedIn: ${profile?.linkedin_url || ''}
 Portfolio / Website: ${profile?.portfolio_url || ''}
 Location: ${profile?.location || ''}
 Current Title: ${profile?.current_role || ''}
 
 RESUME SUMMARY OR KEY EXPERIENCE:
-${resumeText || profile?.summary || ''}
+${resumeText || profile?.resume_raw_text || profile?.summary || ''}
 
 CANDIDATE'S TOP ACHIEVEMENTS (optional but highly recommended):
-- ${topAchievements || profile?.achievements || ''}
+- ${topAchievements || ''}
 
 TARGET JOB DETAILS:
 

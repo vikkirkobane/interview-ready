@@ -18,7 +18,6 @@ export default function AskAIScreen() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [contextSource, setContextSource] = useState<'profile' | 'resume'>('profile');
 
   const answerQuestionMutation = useAnswerQuestionMutation();
 
@@ -33,7 +32,7 @@ export default function AskAIScreen() {
     try {
       const response = await answerQuestionMutation.mutateAsync({
         question: userMsg.text,
-        context_source: contextSource,
+        context_source: 'profile',
       });
 
       const aiMsg: Message = { 
@@ -119,23 +118,6 @@ export default function AskAIScreen() {
       </ScrollView>
       
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
-        <View style={styles.contextToggleRow}>
-          <Text style={[styles.contextLabel, { color: colors.textMuted }]}>Using Context:</Text>
-          <TouchableOpacity 
-             style={[styles.contextChip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }, contextSource === 'profile' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
-             onPress={() => setContextSource('profile')}
-          >
-             <Ionicons name="person-circle" size={16} color={contextSource === 'profile' ? '#fff' : colors.textMuted} />
-             <Text style={[styles.contextChipText, { color: colors.textMuted }, contextSource === 'profile' && styles.contextChipTextActive]}>Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-             style={[styles.contextChip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }, contextSource === 'resume' && { backgroundColor: colors.primary, borderColor: colors.primary }]}
-             onPress={() => setContextSource('resume')}
-          >
-             <Ionicons name="document-text" size={16} color={contextSource === 'resume' ? '#fff' : colors.textMuted} />
-             <Text style={[styles.contextChipText, { color: colors.textMuted }, contextSource === 'resume' && styles.contextChipTextActive]}>Resume</Text>
-          </TouchableOpacity>
-        </View>
         <View style={styles.inputRow}>
           <TextInput 
              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
@@ -227,34 +209,9 @@ const styles = StyleSheet.create({
     lineHeight: 24 
   },
   inputArea: { 
-    padding: Spacing.md, 
-    paddingTop: Spacing.sm, 
+    padding: Spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? Spacing.xl : Spacing.md,
     borderTopWidth: 1, 
-    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
-  },
-  contextToggleRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: Spacing.sm, 
-    gap: 8 
-  },
-  contextLabel: { 
-    ...Typography.label, 
-  },
-  contextChip: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 4, 
-    paddingHorizontal: 10, 
-    paddingVertical: 4, 
-    borderRadius: 12, 
-    borderWidth: 1, 
-  },
-  contextChipText: { 
-    ...Typography.label, 
-  },
-  contextChipTextActive: { 
-    color: '#fff' 
   },
   inputRow: { 
     flexDirection: 'row', 

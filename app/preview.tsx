@@ -58,7 +58,7 @@ export default function PreviewScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       <View style={[styles.header, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
            <Text style={{ ...Typography.headingLg, color: colors.textBody }}>←</Text>
@@ -87,7 +87,6 @@ export default function PreviewScreen() {
         { 
           backgroundColor: colors.bgPrimary, 
           borderTopColor: colors.border,
-          paddingBottom: Math.max(insets.bottom, Spacing.lg)
         }
       ]}>
         <Button 
