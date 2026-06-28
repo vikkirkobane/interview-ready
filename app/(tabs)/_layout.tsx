@@ -8,6 +8,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { SideMenu } from '../../src/components/ui/SideMenu';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Custom Animated Icon Component for Bottom Tabs
 const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: boolean, color: ColorValue, size: number, name: any, isMaterial?: boolean }) => {
@@ -69,6 +70,7 @@ export default function TabLayout() {
 
   const { openMenu } = useNavigationStore();
   const { profile, loading: profileLoading, fetchProfile } = useProfileStore();
+  const insets = useSafeAreaInsets();
 
   React.useEffect(() => {
     fetchProfile();
@@ -126,7 +128,7 @@ export default function TabLayout() {
           tabBarShowLabel: false,
           tabBarStyle: {
             position: 'absolute',
-            bottom: Spacing.md,
+            bottom: insets.bottom > 0 ? insets.bottom + 8 : Spacing.md,
             left: Spacing.lg,
             right: Spacing.lg,
             backgroundColor: colors.bgCard,

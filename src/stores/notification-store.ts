@@ -15,6 +15,7 @@ interface NotificationState {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
+  reset: () => void;
   unreadCount: () => number;
 }
 
@@ -59,6 +60,21 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   
   clearAll: () => {
     set({ notifications: [] });
+  },
+
+  reset: () => {
+    set({
+      notifications: [
+        {
+          id: 'welcome-notification',
+          title: 'Welcome to Interview Ready!',
+          description: 'Start by updating your profile to get tailored job matches.',
+          timestamp: new Date().toISOString(),
+          read: false,
+          type: 'info',
+        }
+      ]
+    });
   },
   
   unreadCount: () => {

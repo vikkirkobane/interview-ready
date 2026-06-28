@@ -4,9 +4,43 @@ import { supabase } from '../lib/supabase';
 import { queryClient } from '../lib/query-client';
 import { useProfileStore } from './profile-store';
 import { useOnboardingStore } from './onboarding-store';
+import { useResumeStore } from './resume-store';
+import { useDashboardStore } from './dashboard-store';
+import { useNotificationStore } from './notification-store';
+import { usePreviewStore } from '../store/previewStore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Holds the auth listener subscription so it can be cleaned up on re-initialization
 let authSubscription: (() => void) | null = null;
+
+// AsyncStorage keys used by persisted Zustand stores
+const PERSISTED_STORE_KEYS = [
+  'resume-store',
+  'dashboard-store',
+  'onboarding-storage',
+];
+
+/**
+ * Wipes ALL client-side user data to prevent data leakage
+ * when a different user signs in on the same device.
+ * This covers: in-memory Zustand state, TanStack Query cache,
+ * and any data persisted to AsyncStorage.
+ */
+async function clearAllUserState() {
+  // 1. Reset all in-memory Zustand stores
+  useProfileStore.getState().clearProfile();
+  useOnboardingStore.getState().resetOnboarding();
+  useResumeStore.getState().reset();
+  useDashboardStore.getState().reset();
+  useNotificationStore.getState().reset();
+  usePreviewStore.getState().clearPreview();
+
+  // 2. Clear all server-fetched data from the TanStack Query cache
+  queryClient.clear();
+
+  // 3. Remove all persisted store data from on-device storage
+  await AsyncStorage.multiRemove(PERSISTED_STORE_KEYS);
+}
 
 interface AuthState {
   session: Session | null;
@@ -53,8 +87,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
         
         if (_event === 'SIGNED_OUT') {
-          useProfileStore.getState().clearProfile();
-          useOnboardingStore.getState().resetOnboarding();
+          // Comprehensive cleanup fires on every sign-out event (manual or session expiry)
+          clearAllUserState();
         }
       });
 
@@ -108,8 +142,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ loading: true });
     
-    useProfileStore.getState().clearProfile();
-    useOnboardingStore.getState().resetOnboarding();
+    // Eagerly clear all user state before the Supabase network call
+    // so the UI transitions immediately and data is never visible again
+    await clearAllUserState();
     
     await supabase.auth.signOut();
     set({ session: null, user: null, loading: false });
