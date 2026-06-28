@@ -12,6 +12,7 @@ const app = new Hono();
 app.use('/*', cors());
 
 const AnalyzeJobInput = z.object({
+  job_id: z.string().uuid().optional(),
   job_description: z.string().max(50000).optional(),
   job_url: z.string().url().optional(),
   user_role: z.string().optional(), // For context/personalization
@@ -153,25 +154,46 @@ Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skill
     });
 
     // Save analysis to database
-    const { data: saved, error: saveError } = await client
-      .from('job_applications')
-      .insert({
-        user_id: user.id,
-        title: analysis.title,
-        company: analysis.company,
-        job_description: actualJobDescription,
-        job_url: input.job_url || null,
-        location: analysis.location,
-        salary_min: analysis.salary_min,
-        salary_max: analysis.salary_max,
-        salary_currency: analysis.salary_currency,
-        remote_option: analysis.remote_option,
-        analysis_data: analysis, // Store full analysis
-        ai_recommendation: analysis.recommendation_level,
-        status: 'SAVED',
-      })
-      .select('id')
-      .single();
+    const jobData = {
+      user_id: user.id,
+      job_title: analysis.title,
+      company: analysis.company,
+      raw_jd: actualJobDescription,
+      job_url: input.job_url || null,
+      location: analysis.location,
+      salary_min: analysis.salary_min,
+      salary_max: analysis.salary_max,
+      salary_currency: analysis.salary_currency,
+      is_remote: analysis.remote_option === "FULLY_REMOTE",
+      match_score: analysis.fit_score || null,
+      missing_skills: analysis.missing_bonus_skills ? analysis.missing_bonus_skills.map((s: any) => typeof s === 'string' ? s : s.skill) : [],
+      required_skills: analysis.required_skills ? analysis.required_skills.map((s: any) => typeof s === 'string' ? s : s.skill) : [],
+      recommendation: analysis.recommendation_level,
+      jd_summary: JSON.stringify(analysis)
+    };
+
+    let saved = null;
+    let saveError = null;
+
+    if (input.job_id) {
+      const { data, error } = await client
+        .from('job_applications')
+        .update(jobData)
+        .eq('id', input.job_id)
+        .eq('user_id', user.id)
+        .select('id')
+        .single();
+      saved = data;
+      saveError = error;
+    } else {
+      const { data, error } = await client
+        .from('job_applications')
+        .insert({ ...jobData, status: 'SAVED' })
+        .select('id')
+        .single();
+      saved = data;
+      saveError = error;
+    }
 
     if (saveError) {
       console.error('Failed to save job analysis:', saveError);

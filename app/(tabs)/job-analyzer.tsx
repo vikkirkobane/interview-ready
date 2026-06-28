@@ -3,16 +3,27 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Activi
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { useAnalyzeJobMutation, useJobApplicationsListQuery } from '../../src/hooks/useApi';
+import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function JobFitScreen() {
+  const { job_id } = useLocalSearchParams();
   const [jdText, setJdText] = useState('');
   const [jdUrl, setJdUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const router = useRouter();
+
+  // Load existing job application if job_id is provided
+  const { data: jobApplication } = useJobApplicationQuery(job_id as string || null);
+  
+  React.useEffect(() => {
+    if (jobApplication) {
+      if (jobApplication.raw_jd) setJdText(jobApplication.raw_jd);
+      if (jobApplication.job_url) setJdUrl(jobApplication.job_url);
+    }
+  }, [jobApplication]);
 
   const { user } = useAuthStore();
   const { profile } = useProfileStore();
@@ -30,7 +41,12 @@ export default function JobFitScreen() {
 
     try {
       const finalJdUrl = jdText.trim().length >= 20 ? '' : jdUrl;
-      const result = await analyzeJob.mutateAsync({ jdText, jdUrl: finalJdUrl, profileData: profile });
+      const result = await analyzeJob.mutateAsync({ 
+        job_id: job_id as string, 
+        jdText, 
+        jdUrl: finalJdUrl, 
+        profileData: profile 
+      });
       
       // Navigate to standalone results screen
       router.push(`/job-match-results?id=${result.id}`);

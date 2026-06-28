@@ -43,8 +43,11 @@ export const useParseResumeMutation = () => {
  */
 export const useAnalyzeJobMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { jdText?: string; jdUrl?: string; profileData?: any }) => {
+    mutationFn: async (payload: { job_id?: string; jdText?: string; jdUrl?: string; profileData?: any }) => {
       const finalPayload: any = {};
+      if (payload.job_id) {
+        finalPayload.job_id = payload.job_id;
+      }
       if (payload.jdText && payload.jdText.length > 0) {
         finalPayload.job_description = payload.jdText;
       }
@@ -73,15 +76,7 @@ export const useCreateResumeMutation = () => {
   });
 };
 
-export const useAnalyzeJobMutation = () => {
-  return useMutation({
-    mutationFn: async (payload: { title?: string; jdText: string }) => {
-      const response = await apiCall('jobs-analyze', 'POST', payload);
-      if (response.error) throw new Error(response.error);
-      return response.data; // { id: string }
-    },
-  });
-};
+
 
 /**
  * Complete Onboarding Mutation
@@ -382,17 +377,68 @@ export const useJobApplicationQuery = (id: string | null) => {
 /**
  * Fetch List of Job Applications for Past Matches section
  */
-export const useJobApplicationsListQuery = (limit: number = 10) => {
+export const useJobApplicationsListQuery = () => {
   return useQuery({
     queryKey: ['job_applications', 'list'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('job_applications')
-        .select('id, job_title, company, match_score, updated_at')
-        .order('updated_at', { ascending: false })
-        .limit(limit);
+        .select('id, job_title, company, location, is_remote, ats_score, match_score, status, raw_jd, jd_summary, updated_at, created_at')
+        .order('updated_at', { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+};
+
+/**
+ * Manually create a Job Application (no AI analysis)
+ */
+export const useCreateJobApplicationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { job_title: string; company: string; raw_jd: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase
+        .from('job_applications')
+        .insert({
+          user_id: user.id,
+          job_title: payload.job_title,
+          company: payload.company,
+          raw_jd: payload.raw_jd,
+          status: 'SAVED',
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job_applications', 'list'] });
+    },
+  });
+};
+
+/**
+ * Update Job Application Status
+ */
+export const useUpdateJobApplicationStatusMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { id: string; status: string }) => {
+      const { data, error } = await supabase
+        .from('job_applications')
+        .update({ status: payload.status, updated_at: new Date().toISOString() })
+        .eq('id', payload.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job_applications', 'list'] });
     },
   });
 };
