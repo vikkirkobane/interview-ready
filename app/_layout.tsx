@@ -10,6 +10,26 @@ import { useAuthStore } from '../src/stores/auth-store';
 import { useTheme } from '../src/theme';
 import * as Font from 'expo-font';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNotificationStore } from '../src/stores/notification-store';
+
+if (!(Toast as any)._isPatched) {
+  const originalToastShow = Toast.show;
+  Toast.show = (params) => {
+    // Show the actual UI toast
+    originalToastShow(params);
+
+    // Filter and add to notification store
+    const type = params.type || 'info';
+    if (type === 'success' || type === 'info') {
+      useNotificationStore.getState().addNotification({
+        title: params.text1 || 'Notification',
+        description: params.text2 || '',
+        type: type as 'success' | 'info',
+      });
+    }
+  };
+  (Toast as any)._isPatched = true;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {

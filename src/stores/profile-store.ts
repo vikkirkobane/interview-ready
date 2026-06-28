@@ -78,7 +78,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
     if (error) return { error: error.message };
 
-    set({ profile: { ...profile, ...updates } as any });
+    await get().fetchProfile();
     return { error: null };
   },
 

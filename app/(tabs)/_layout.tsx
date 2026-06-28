@@ -227,6 +227,7 @@ export default function TabLayout() {
         <Tabs.Screen name="interview" options={{ href: null }} />
         <Tabs.Screen name="interviews" options={{ href: null }} />
         <Tabs.Screen name="referral" options={{ href: null }} />
+        <Tabs.Screen name="notifications" options={{ href: null }} />
       </Tabs>
       <SideMenu />
     </>

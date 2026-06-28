@@ -83,11 +83,10 @@ export function SideMenu() {
     { name: 'Cover Letters',   path: '/(tabs)/cover-letter',icon: 'mail-outline',           iconActive: 'mail',            lib: 'ion' },
     { name: 'Mock Interview',  path: '/interviews',          icon: 'mic-outline',            iconActive: 'mic',             lib: 'ion' },
     { name: 'Ask AI',          path: '/(tabs)/ask-ai',      icon: 'robot-outline',          iconActive: 'robot',           lib: 'mci' },
-    { name: 'Referral',        path: '/(tabs)/referral',    icon: 'gift-outline',           iconActive: 'gift',            lib: 'ion' },
     { name: 'Tracker',         path: '/(tabs)/tracker',     icon: 'briefcase-outline',      iconActive: 'briefcase',       lib: 'ion' },
-    { name: 'Profile',         path: '/(tabs)/profile',     icon: 'person-outline',         iconActive: 'person',          lib: 'ion' },
     { name: 'LinkedIn',        path: '/(tabs)/linkedin',    icon: 'logo-linkedin',          iconActive: 'logo-linkedin',   lib: 'ion' },
-    { name: 'Settings',        path: '/(tabs)/settings',    icon: 'settings-outline',       iconActive: 'settings',        lib: 'ion' },
+    { name: 'Onboarding',      path: '/(onboarding)/role',  icon: 'compass-outline',        iconActive: 'compass',         lib: 'ion' },
+    { name: 'Referral',        path: '/(tabs)/referral',    icon: 'gift-outline',           iconActive: 'gift',            lib: 'ion' },
   ];
 
   const renderIcon = (item: typeof menuItems[0], isActive: boolean) => {

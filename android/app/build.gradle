@@ -130,6 +130,16 @@ android {
     androidResources {
         ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            def name = "interview-ready"
+            if (variant.buildType.name == "debug") {
+                name += "-debug"
+            }
+            outputFileName = "${name}.apk"
+        }
+    }
 }
 
 // Apply static values from `gradle.properties` to the `android.packagingOptions`

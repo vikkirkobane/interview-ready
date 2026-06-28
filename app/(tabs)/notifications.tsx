@@ -2,7 +2,9 @@ import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../src/theme';
 import { useRouter } from 'expo-router';
-import { useNotificationStore } from '../src/stores/notification-store';
+import { useNotificationStore, AppNotification } from '../src/stores/notification-store';
+import { useAuthStore } from '../src/stores/auth-store';
+import { useProfileStore } from '../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
 
 const timeAgo = (dateStr: string) => {
@@ -20,12 +22,41 @@ const timeAgo = (dateStr: string) => {
 export default function NotificationsScreen() {
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { user } = useAuthStore();
+  const { profile } = useProfileStore();
   const { colors, isDark } = useTheme();
 
-  useEffect(() => {
-    // Optionally mark all as read when opening the screen
-    // markAllAsRead();
-  }, []);
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const completeness = profile?.profileCompleteness || 0;
+  const isProfileIncomplete = completeness < 100 && !user?.user_metadata?.onboarding_completed;
+
+  const displayNotifications = useMemo(() => {
+    const systemAlerts: AppNotification[] = [];
+    
+    if (!isPro) {
+      systemAlerts.push({
+        id: 'system-upgrade-pro',
+        title: 'Upgrade to Pro 🚀',
+        description: 'Unlock advanced AI features and unlimited credits.',
+        timestamp: new Date().toISOString(),
+        read: false,
+        type: 'warning',
+      });
+    }
+
+    if (isProfileIncomplete) {
+      systemAlerts.push({
+        id: 'system-complete-profile',
+        title: 'Complete your profile',
+        description: 'Finish setting up your profile to get tailored job matches.',
+        timestamp: new Date().toISOString(),
+        read: false,
+        type: 'info',
+      });
+    }
+
+    return [...systemAlerts, ...notifications];
+  }, [notifications, isPro, isProfileIncomplete]);
 
   const getGeometryColor = (type: string) => {
     switch (type) {
@@ -63,8 +94,20 @@ export default function NotificationsScreen() {
     emptyDesc: { color: colors.textMuted },
   }), [colors, isDark]);
 
+  const handleNotificationPress = (notification: AppNotification) => {
+    if (notification.id === 'system-upgrade-pro') {
+      router.push('/(tabs)/settings');
+      return;
+    }
+    if (notification.id === 'system-complete-profile') {
+      router.push('/(tabs)/profile');
+      return;
+    }
+    markAsRead(notification.id);
+  };
+
   return (
-    <View style={dynamicStyles.container}>
+    <View style={[styles.flex, dynamicStyles.container]}>
       <View style={[styles.header, dynamicStyles.header]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityRole="button">
           <Text style={[styles.navText, { color: colors.textSecondary }]}>← BACK</Text>
@@ -75,7 +118,7 @@ export default function NotificationsScreen() {
 
       <View style={styles.actionHeader}>
         <Text style={[styles.countText, dynamicStyles.countText]}>
-          {notifications.length} {notifications.length === 1 ? 'Notification' : 'Notifications'}
+          {displayNotifications.length} {displayNotifications.length === 1 ? 'Notification' : 'Notifications'}
         </Text>
         <View style={styles.actionButtons}>
           <TouchableOpacity style={styles.actionBtn} onPress={markAllAsRead}>
@@ -88,15 +131,16 @@ export default function NotificationsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {notifications.length === 0 ? (
+        {displayNotifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="checkmark-done" size={48} color={colors.textMuted} style={{ marginBottom: Spacing.lg }} />
             <Text style={[styles.emptyTitle, dynamicStyles.emptyTitle]}>All caught up!</Text>
             <Text style={[styles.emptyDesc, dynamicStyles.emptyDesc]}>You have no new notifications.</Text>
           </View>
         ) : (
-          notifications.map((notification, index) => {
+          displayNotifications.map((notification) => {
             const geomColor = getGeometryColor(notification.type);
+            const isSystem = notification.id.startsWith('system-');
             return (
               <TouchableOpacity 
                 key={notification.id} 
@@ -105,10 +149,10 @@ export default function NotificationsScreen() {
                   dynamicStyles.card,
                   !notification.read && dynamicStyles.cardUnread
                 ]}
-                onPress={() => markAsRead(notification.id)}
+                onPress={() => handleNotificationPress(notification)}
               >
                 <View style={[styles.geometryContainer, { backgroundColor: `${geomColor}${isDark ? '25' : '15'}` }]}>
-                  <Ionicons name="notifications" size={20} color={geomColor} />
+                  <Ionicons name={isSystem ? "star" : "notifications"} size={20} color={geomColor} />
                 </View>
                 <View style={styles.contentContainer}>
                   <View style={styles.titleRow}>
@@ -117,7 +161,7 @@ export default function NotificationsScreen() {
                   </View>
                   <Text style={[styles.description, dynamicStyles.description]}>{notification.description}</Text>
                   <Text style={[styles.timestamp, dynamicStyles.timestamp]}>
-                    {timeAgo(notification.timestamp)}
+                    {isSystem ? 'System Action Required' : timeAgo(notification.timestamp)}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -130,6 +174,7 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

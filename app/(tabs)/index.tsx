@@ -7,12 +7,15 @@ import {
   Platform,
   TouchableOpacity,
   RefreshControl,
+  Image,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
+import { useProfileStore } from '../../src/stores/profile-store';
 import { ScoreRing, GoldenBox, ShimmerEffect } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -20,13 +23,50 @@ export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
+  const { profile } = useProfileStore();
   const { unreadCount } = useNotificationStore();
   const [refreshing, setRefreshing] = useState(false);
   const { colors, isDark } = useTheme();
 
   const userName = user?.user_metadata?.first_name || 'Alex';
   const credits = 24; // Mock
-  const completeness = 85;
+  const completeness = profile?.profile_completeness ?? profile?.profileCompleteness ?? 0;
+
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
+
+  const getCompletenessMessage = (score: number) => {
+    if (score === 0) return 'Start your profile';
+    if (score < 40) return 'Basic info added';
+    if (score < 70) return 'Profile is half-way';
+    if (score < 100) return 'Almost ready!';
+    return 'Ready for jobs!';
+  };
+
+  const shakeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    const startShaking = () => {
+      Animated.sequence([
+        Animated.timing(shakeAnim, { toValue: 6, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -6, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 6, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -6, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 4, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: -4, duration: 70, useNativeDriver: true }),
+        Animated.timing(shakeAnim, { toValue: 0, duration: 70, useNativeDriver: true }),
+      ]).start();
+    };
+
+    const interval = setInterval(startShaking, 4000);
+    // Initial delay so it doesn't shake immediately on mount before loading
+    const timeout = setTimeout(startShaking, 1500);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [shakeAnim]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -45,12 +85,14 @@ export default function DashboardScreen() {
       }]}>
         <View style={styles.headerLeft}>
           <View style={styles.avatarContainer}>
-            <View style={[styles.avatar, { backgroundColor: colors.bgMuted }]} />
-            <View style={[styles.proBadge, { backgroundColor: colors.primary, borderColor: colors.bgPrimary }]}>
-              <Text style={[styles.proBadgeText, { color: colors.textInverse }]}>PRO</Text>
-            </View>
+            <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            {isPro && (
+              <View style={[styles.proBadge, { backgroundColor: colors.primary, borderColor: colors.bgPrimary }]}>
+                <Text style={[styles.proBadgeText, { color: colors.textInverse }]}>PRO</Text>
+              </View>
+            )}
           </View>
-          <View>
+          <View style={{ justifyContent: 'center' }}>
             <Text style={[styles.greeting, { color: colors.textMuted }]}>Welcome back,</Text>
             <Text style={[styles.name, { color: colors.textPrimary }]}>{userName}</Text>
           </View>
@@ -99,22 +141,31 @@ export default function DashboardScreen() {
             </View>
             <View style={styles.completenessContent}>
               <ScoreRing score={completeness} size="sm" color={colors.success} animate />
-              <Text style={[styles.completenessText, { color: colors.textMuted }]}>Profile is ready for applications</Text>
+              <Text 
+                style={[styles.completenessText, { color: colors.textMuted, fontSize: 12 }]} 
+                numberOfLines={2}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                {getCompletenessMessage(completeness)}
+              </Text>
             </View>
           </View>
         </View>
 
-        <GoldenBox onPress={() => router.push('/referral')}>
-          <View style={styles.promoContent}>
-            <View style={styles.promoIconBg}>
-              <Ionicons name="gift" size={24} color="#FFFFFF" />
+        <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+          <GoldenBox onPress={() => router.push('/referral')}>
+            <View style={styles.promoContent}>
+              <View style={styles.promoIconBg}>
+                <Ionicons name="gift" size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.promoTextContainer}>
+                <Text style={styles.promoTitle}>Get Free Credits</Text>
+                <Text style={styles.promoDesc}>Invite friends and earn 10 credits</Text>
+              </View>
             </View>
-            <View style={styles.promoTextContainer}>
-              <Text style={styles.promoTitle}>Get Free Credits</Text>
-              <Text style={styles.promoDesc}>Invite friends and earn 10 credits</Text>
-            </View>
-          </View>
-        </GoldenBox>
+          </GoldenBox>
+        </Animated.View>
 
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Quick Actions</Text>
         <View style={styles.quickGrid}>

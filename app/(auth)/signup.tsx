@@ -30,8 +30,15 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     setError('');
-    if (!email || !password || !confirmPassword) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password || !confirmPassword) {
       setError('Please fill in all required fields.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
     if (password.length < 8) {
@@ -46,7 +53,7 @@ export default function SignupScreen() {
       setError('Passwords do not match.');
       return;
     }
-    const { error: authError } = await signUp(email, password);
+    const { error: authError } = await signUp(trimmedEmail, password);
     if (authError) {
       setError(authError);
     } else {
@@ -57,7 +64,7 @@ export default function SignupScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.flex, { backgroundColor: colors.bgPrimary }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
@@ -83,6 +90,7 @@ export default function SignupScreen() {
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="email-address"
             autoComplete="email"
           />
@@ -93,6 +101,8 @@ export default function SignupScreen() {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             autoComplete="new-password"
+            autoCapitalize="none"
+            autoCorrect={false}
             hint="Must be at least 8 characters, with letters and numbers"
             rightIcon={
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
@@ -107,6 +117,8 @@ export default function SignupScreen() {
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
             autoComplete="new-password"
+            autoCapitalize="none"
+            autoCorrect={false}
             rightIcon={
               <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ padding: 4 }}>
                 <Text style={{ color: colors.textMuted, ...Typography.label }}>{showConfirmPassword ? 'Hide' : 'Show'}</Text>
