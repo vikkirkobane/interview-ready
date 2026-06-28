@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button } from '../../src/components/ui';
-import { useRouter } from 'expo-router';
-import { useCreateCoverLetterMutation } from '../../src/hooks/useApi';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useCreateCoverLetterMutation, useCoverLetterQuery } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import * as Clipboard from 'expo-clipboard';
@@ -27,7 +27,24 @@ export default function CoverLetterGeneratorScreen() {
   const [targetCompany, setTargetCompany] = useState('');
   const [targetRole, setTargetRole] = useState('');
 
+  const { id } = useLocalSearchParams();
+
   const coverLetterMutation = useCreateCoverLetterMutation();
+  const { data: pastCoverLetter } = useCoverLetterQuery(id as string);
+
+  React.useEffect(() => {
+    if (pastCoverLetter) {
+      if (pastCoverLetter.title) setTargetRole(pastCoverLetter.title.split(' - ')[0] || ''); // Attempt to parse title
+      if (pastCoverLetter.tone) {
+        const toneStr = pastCoverLetter.tone.charAt(0) + pastCoverLetter.tone.slice(1).toLowerCase();
+        setSelectedTone(toneStr);
+      }
+      if (pastCoverLetter.body) {
+        setGeneratedLetter(pastCoverLetter.body);
+        setCoverLetterObj(pastCoverLetter as CoverLetter);
+      }
+    }
+  }, [pastCoverLetter]);
 
   const handleGenerate = async () => {
     setGenerating(true);

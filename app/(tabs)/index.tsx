@@ -16,6 +16,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
+import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { ScoreRing, GoldenBox, ShimmerEffect } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -42,6 +43,8 @@ export default function DashboardScreen() {
     if (score < 100) return 'Almost ready!';
     return 'Ready for jobs!';
   };
+
+  const { data: recentActivities, isLoading: isActivitiesLoading } = useRecentActivitiesQuery();
 
   const shakeAnim = React.useRef(new Animated.Value(0)).current;
 
@@ -217,25 +220,47 @@ export default function DashboardScreen() {
         <View style={styles.feedSection}>
           <View style={styles.feedHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/activities')}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>SEE ALL</Text>
             </TouchableOpacity>
           </View>
 
-          {[1, 2, 3].map((_, i) => (
-            <View key={i} style={[styles.feedItem, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-              <View style={[styles.feedIcon, { backgroundColor: `${colors.primary}15` }]}>
-                <Ionicons name="document-text-outline" size={18} color={colors.primary} />
-              </View>
-              <View style={styles.feedContent}>
-                <Text style={[styles.feedTitle, { color: colors.textPrimary }]}>Generated Resume: PM</Text>
-                <Text style={[styles.feedTime, { color: colors.textMuted }]}>2 hours ago • ATS Score: 89</Text>
-              </View>
-              <View style={styles.feedArrow}>
-                <Ionicons name="chevron-forward" size={18} color={colors.primary} />
-              </View>
-            </View>
-          ))}
+          {isActivitiesLoading ? (
+            <Text style={{ color: colors.textMuted, padding: Spacing.md }}>Loading...</Text>
+          ) : recentActivities && recentActivities.length > 0 ? (
+            recentActivities.map((activity, i) => {
+              const handlePress = () => {
+                if (activity.type === 'resume') router.push(`/(tabs)/new-resume?id=${activity.id}`);
+                else if (activity.type === 'cover_letter') router.push(`/(tabs)/cover-letter?id=${activity.id}`);
+                else if (activity.type === 'job_match') router.push(`/job-match-results?id=${activity.id}`);
+                else if (activity.type === 'interview') router.push(`/feedback?id=${activity.id}`);
+              };
+
+              return (
+                <TouchableOpacity 
+                  key={i} 
+                  style={[styles.feedItem, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+                  onPress={handlePress}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.feedIcon, { backgroundColor: `${activity.color}15` }]}>
+                    <Ionicons name={activity.icon as any} size={18} color={activity.color} />
+                  </View>
+                  <View style={styles.feedContent}>
+                    <Text style={[styles.feedTitle, { color: colors.textPrimary }]} numberOfLines={1}>{activity.title}</Text>
+                    <Text style={[styles.feedTime, { color: colors.textMuted }]}>
+                      {new Date(activity.date).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <View style={styles.feedArrow}>
+                    <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <Text style={{ color: colors.textMuted, padding: Spacing.md }}>No recent activities found.</Text>
+          )}
         </View>
 
       </ScrollView>

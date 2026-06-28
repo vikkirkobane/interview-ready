@@ -197,6 +197,9 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen name="job-analyzer" options={{ href: null }} />
+        <Tabs.Screen name="activities" options={{ href: null }} />
+        <Tabs.Screen name="job-match-results" options={{ href: null }} />
+        <Tabs.Screen name="feedback" options={{ href: null }} />
         <Tabs.Screen
           name="profile"
           options={{

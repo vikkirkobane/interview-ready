@@ -20,7 +20,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function FeedbackScreen() {
   const router = useRouter();
-  const { sessionId } = useLocalSearchParams();
+  const { sessionId, id } = useLocalSearchParams();
+  const actualSessionId = (sessionId || id) as string;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   
@@ -37,13 +38,13 @@ export default function FeedbackScreen() {
 
   useEffect(() => {
     const fetchFeedback = async () => {
-      if (!sessionId) {
+      if (!actualSessionId) {
         setLoading(false);
         return;
       }
       try {
         const res = await feedbackMutation.mutateAsync({
-          session_id: sessionId as string
+          session_id: actualSessionId
         });
         setFeedbackData(res.feedback);
       } catch (e: any) {
@@ -53,7 +54,7 @@ export default function FeedbackScreen() {
       }
     };
     fetchFeedback();
-  }, [sessionId]);
+  }, [actualSessionId]);
 
   useEffect(() => {
     if (!loading) {

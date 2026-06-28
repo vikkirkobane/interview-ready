@@ -330,3 +330,122 @@ export const useAnswerQuestionMutation = () => {
     },
   });
 };
+
+/**
+ * Fetch Cover Letter by ID
+ */
+export const useCoverLetterQuery = (id: string | null) => {
+  return useQuery({
+    queryKey: ['cover_letters', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('cover_letters')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
+/**
+ * Fetch Job Application (Match Analysis) by ID
+ */
+export const useJobApplicationQuery = (id: string | null) => {
+  return useQuery({
+    queryKey: ['job_applications', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
+/**
+ * Fetch List of Job Applications for Past Matches section
+ */
+export const useJobApplicationsListQuery = (limit: number = 10) => {
+  return useQuery({
+    queryKey: ['job_applications', 'list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('job_applications')
+        .select('id, job_title, company, match_score, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+/**
+ * Fetch Interview by ID
+ */
+export const useInterviewQuery = (id: string | null) => {
+  return useQuery({
+    queryKey: ['mock_interviews', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('mock_interviews')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+};
+
+/**
+ * Fetch Unified Recent Activities
+ */
+export const useRecentActivitiesQuery = () => {
+  return useQuery({
+    queryKey: ['recentActivities'],
+    queryFn: async () => {
+      const [
+        { data: resumes },
+        { data: covers },
+        { data: jobs },
+        { data: interviews }
+      ] = await Promise.all([
+        supabase.from('resumes').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
+        supabase.from('cover_letters').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
+        supabase.from('job_applications').select('id, job_title, company, updated_at').order('updated_at', { ascending: false }).limit(5),
+        supabase.from('mock_interviews').select('id, role, updated_at').order('updated_at', { ascending: false }).limit(5)
+      ]);
+
+      const activities: Array<{ id: string; type: string; title: string; date: string; icon: string; color: string }> = [];
+      
+      if (resumes) {
+        resumes.forEach(r => activities.push({ id: r.id, type: 'resume', title: r.title || 'Untitled Resume', date: r.updated_at, icon: 'document-text-outline', color: '#10b981' }));
+      }
+      if (covers) {
+        covers.forEach(c => activities.push({ id: c.id, type: 'cover_letter', title: c.title || 'Untitled Cover Letter', date: c.updated_at, icon: 'mail-outline', color: '#6366f1' }));
+      }
+      if (jobs) {
+        jobs.forEach(j => activities.push({ id: j.id, type: 'job_match', title: `${j.job_title || 'Unknown Role'} at ${j.company || 'Unknown Company'}`, date: j.updated_at, icon: 'search-outline', color: '#f59e0b' }));
+      }
+      if (interviews) {
+        interviews.forEach(i => activities.push({ id: i.id, type: 'interview', title: `Mock Interview: ${i.role || 'General'}`, date: i.updated_at, icon: 'chatbubbles-outline', color: '#ec4899' }));
+      }
+
+      // Sort combined array by date descending
+      return activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+    },
+  });
+};
+
