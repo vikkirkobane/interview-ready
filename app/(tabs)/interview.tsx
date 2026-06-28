@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Animated, Easing, KeyboardAvoidingView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Markdown from 'react-native-markdown-display';
 
 // Mock Message Data
 type Message = {
@@ -134,7 +135,7 @@ export default function InterviewScreen() {
       <View style={styles.messageRowLeft}>
         <View style={styles.messageMetaLeft}>
           <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
-            <Ionicons name="sparkles" size={12} color={colors.primary} />
+            <MaterialCommunityIcons name="robot" size={12} color={colors.primary} />
           </View>
           <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Analyzing Response...</Text>
         </View>
@@ -148,7 +149,7 @@ export default function InterviewScreen() {
   };
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.bgPrimary }]}>
+    <KeyboardAvoidingView style={[styles.flex, { backgroundColor: colors.bgPrimary }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
       {/* Background Auras */}
       <View style={[styles.auraTopLeft, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
       <View style={[styles.auraBottomRight, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
@@ -193,7 +194,7 @@ export default function InterviewScreen() {
                 {isAi ? (
                   <>
                     <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
-                      <Ionicons name="sparkles" size={12} color={colors.primary} />
+                      <MaterialCommunityIcons name="robot" size={12} color={colors.primary} />
                     </View>
                     <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Interview AI</Text>
                   </>
@@ -209,9 +210,26 @@ export default function InterviewScreen() {
 
               {/* Bubble */}
               <View style={[styles.bubble, isAi ? [styles.bubbleLeft, { backgroundColor: colors.bgCard, borderColor: colors.border }] : [styles.bubbleRight, { backgroundColor: colors.primary }]]}>
-                <Text style={[styles.bubbleText, isAi ? [styles.bubbleTextLeft, { color: colors.textPrimary }] : [styles.bubbleTextRight, { color: '#fff' }]]}>
-                  {msg.text}
-                </Text>
+                {isAi ? (
+                  <Markdown style={{
+                    body: { ...Typography.bodyMd, color: colors.textPrimary },
+                    code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
+                    code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
+                    heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
+                    heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
+                    heading3: { ...Typography.headingSm, color: colors.textPrimary, marginVertical: Spacing.xs },
+                    paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
+                    list_item: { ...Typography.bodyMd, color: colors.textPrimary },
+                    link: { color: colors.primary, textDecorationLine: 'underline' },
+                    strong: { fontWeight: '700' },
+                  }}>
+                    {msg.text}
+                  </Markdown>
+                ) : (
+                  <Text style={[styles.bubbleText, styles.bubbleTextRight, { color: '#fff' }]}>
+                    {msg.text}
+                  </Text>
+                )}
               </View>
 
             </View>
@@ -245,7 +263,7 @@ export default function InterviewScreen() {
         <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>
       </View>
 
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

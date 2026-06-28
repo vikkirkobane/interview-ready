@@ -141,7 +141,7 @@ export default function JobFitScreen() {
               <Text style={styles.heroDesc}>Benchmark your profile against specific roles to identify high-impact gaps.</Text>
               
               <View style={styles.profileBadge}>
-                <Ionicons name="person" size={14} color={colors.primary} style={{ marginRight: 8 }} />
+                <Ionicons name="person" size={14} color={colors.textInverse} style={{ marginRight: 8 }} />
                 <View>
                   <Text style={styles.profileBadgeLabel}>CURRENT PROFILE</Text>
                   <Text style={[styles.profileBadgeRole, { color: colors.textInverse }]}>{(profile as any)?.current_role || 'Candidate'}</Text>

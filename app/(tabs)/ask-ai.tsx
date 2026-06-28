@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useAnswerQuestionMutation } from '../../src/hooks/useApi';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Markdown from 'react-native-markdown-display';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -57,11 +58,28 @@ export default function AskAIScreen() {
       <View key={msg.id} style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAi]}>
         {!isUser && (
           <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
-             <Ionicons name="sparkles" size={14} color="#fff" />
+             <MaterialCommunityIcons name="robot" size={16} color="#fff" />
           </View>
         )}
         <View style={[styles.messageBubble, isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]]}>
-          <Text style={[styles.messageText, isUser ? { color: '#fff' } : { color: colors.textPrimary }]}>{msg.text}</Text>
+          {isUser ? (
+            <Text style={[styles.messageText, { color: '#fff' }]}>{msg.text}</Text>
+          ) : (
+            <Markdown style={{
+              body: { ...Typography.bodyMd, color: colors.textPrimary },
+              code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
+              code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
+              heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
+              heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
+              heading3: { ...Typography.headingSm, color: colors.textPrimary, marginVertical: Spacing.xs },
+              paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
+              list_item: { ...Typography.bodyMd, color: colors.textPrimary },
+              link: { color: colors.primary, textDecorationLine: 'underline' },
+              strong: { fontWeight: '700' },
+            }}>
+              {msg.text}
+            </Markdown>
+          )}
         </View>
         {isUser && (
           <View style={[styles.avatarUser, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -75,8 +93,8 @@ export default function AskAIScreen() {
   return (
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: colors.bgSecondary }]} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={90}
     >
       <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
         
@@ -91,7 +109,7 @@ export default function AskAIScreen() {
         {isTyping && (
           <View style={[styles.messageWrapper, styles.messageWrapperAi]}>
             <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
-              <Ionicons name="sparkles" size={14} color="#fff" />
+              <MaterialCommunityIcons name="robot" size={16} color="#fff" />
             </View>
             <View style={[styles.messageBubble, styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <ActivityIndicator size="small" color={colors.primary} />
