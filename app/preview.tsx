@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { Colors, Typography, Spacing, Shadow, Radius, useTheme } from '../src/theme';
@@ -13,11 +14,12 @@ import { Ionicons } from '@expo/vector-icons';
 export default function PreviewScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { documentType, documentData, htmlPreview, templateId, clearPreview } = usePreviewStore();
 
   if (!documentType || !documentData || !htmlPreview) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: colors.textMuted }]}>No document available to preview.</Text>
           <Button title="Go Back" onPress={() => router.back()} />
@@ -56,7 +58,7 @@ export default function PreviewScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
            <Text style={{ ...Typography.headingLg, color: colors.textBody }}>←</Text>
@@ -80,7 +82,14 @@ export default function PreviewScreen() {
         )}
       </View>
 
-      <View style={[styles.footer, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
+      <View style={[
+        styles.footer, 
+        { 
+          backgroundColor: colors.bgPrimary, 
+          borderTopColor: colors.border,
+          paddingBottom: Math.max(insets.bottom, Spacing.lg)
+        }
+      ]}>
         <Button 
           title="Download PDF" 
           onPress={handleDownloadPDF} 

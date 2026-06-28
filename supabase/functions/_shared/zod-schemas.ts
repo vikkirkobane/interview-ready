@@ -112,14 +112,22 @@ export const RESUME_CONTENT_SCHEMA = z.object({
     note: z.string().optional(),
   })),
   
-  certifications: z.array(z.string()),
+  certifications: z.array(z.object({
+    name: z.string(),
+    issuer: z.string().optional(),
+    year: z.string().optional()
+  })).optional(),
   
   languages: z.array(z.object({
     language: z.string(),
     proficiency: z.string(),
   })).optional(),
   
-  recognition: z.array(z.string()).optional(),
+  recognition: z.array(z.object({
+    name: z.string(),
+    issuer: z.string().optional(),
+    year: z.string().optional()
+  })).optional(),
   
   sections_to_include: z.object({
     summary: z.boolean().default(true),

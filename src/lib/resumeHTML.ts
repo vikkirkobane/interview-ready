@@ -55,6 +55,7 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   const css = `
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     @page { size: A4; margin: 36pt 40pt; }
+    @media screen { body { padding: 32px 24px; } }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
            font-size: 11.3px; color: #1A1A1A; background: #fff;
@@ -178,6 +179,7 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   ` : '';
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>${r.header.name} Resume</title>
     <style>${css}</style></head><body>
     ${header}${summary}${skills}${experience}${project}${education}${languages}${recognition}
   </body></html>`;

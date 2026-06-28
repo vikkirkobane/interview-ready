@@ -10,9 +10,11 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
 <html>
 <head>
   <meta charset="UTF-8">
+  <title>${h.candidate_name} Cover Letter</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     @page { size: A4; margin: 48pt 56pt; }
+    @media screen { body { padding: 32px 24px; } }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
            font-size: 12.7px; color: #1A1A1A; line-height: 1.55;

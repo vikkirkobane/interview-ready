@@ -8,7 +8,7 @@ import { Button } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useResumeQuery, useUpdateResumeMutation,
-  useRewriteSectionMutation, useCreateResumeMutation
+  useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
@@ -57,6 +57,15 @@ interface DraftResume {
   certifications: CertificationEntry[];
   awards: AwardEntry[];
   featuredProject?: FeaturedProject;
+  sections_to_include?: {
+    summary: boolean;
+    skills: boolean;
+    experience: boolean;
+    featured_project: boolean;
+    education: boolean;
+    certifications: boolean;
+    recognition: boolean;
+  };
 }
 
 // ─── Templates ────────────────────────────────────────────────────────────────
@@ -108,6 +117,15 @@ const blankResume = (templateId: string | null): DraftResume => ({
   certifications: [],
   awards: [],
   featuredProject: { include: false, name: '', tech_stack: '', bullet: '' },
+  sections_to_include: {
+    summary: true,
+    skills: true,
+    experience: true,
+    featured_project: false,
+    education: true,
+    certifications: false,
+    recognition: false,
+  }
 });
 
 const aiResume = (templateId: string | null): DraftResume => ({
@@ -158,6 +176,15 @@ const aiResume = (templateId: string | null): DraftResume => ({
   certifications: [],
   awards: [],
   featuredProject: { include: false, name: '', tech_stack: '', bullet: '' },
+  sections_to_include: {
+    summary: true,
+    skills: true,
+    experience: true,
+    featured_project: false,
+    education: true,
+    certifications: false,
+    recognition: false,
+  }
 });
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
@@ -174,7 +201,8 @@ export default function ResumeBuilderScreen() {
   const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>('executive');
+  const [jobDescription, setJobDescription] = useState('');
   const [aiGeneratedContent, setAiGeneratedContent] = useState<any>(null);
   const [expandedExp, setExpandedExp] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
@@ -190,6 +218,34 @@ export default function ResumeBuilderScreen() {
   const updateMutation = useUpdateResumeMutation();
   const rewriteMutation = useRewriteSectionMutation();
   const createResumeMutation = useCreateResumeMutation();
+  const analyzeJobMutation = useAnalyzeJobMutation();
+
+  const handleGenerate = async () => {
+    if (!selectedTemplateId) {
+      Toast.show({ type: 'error', text1: 'Please select a template.' });
+      return;
+    }
+    try {
+      Toast.show({ type: 'info', text1: 'Generating tailored resume...', text2: 'This may take a moment' });
+      let job_analysis_id = undefined;
+      if (jobDescription.trim().length > 10) {
+        const analyzeRes = await analyzeJobMutation.mutateAsync({ jdText: jobDescription });
+        job_analysis_id = analyzeRes.id;
+      }
+      
+      const res = await createResumeMutation.mutateAsync({
+        title: jobDescription ? 'Tailored Resume' : 'Base Resume',
+        template_id: selectedTemplateId,
+        job_analysis_id,
+        is_base: !jobDescription
+      });
+      
+      router.setParams({ id: res.resume_id });
+      Toast.show({ type: 'success', text1: 'Resume generated!' });
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Generation failed', text2: e.message });
+    }
+  };
 
   // Sync from remote when loaded
   React.useEffect(() => {
@@ -211,6 +267,15 @@ export default function ResumeBuilderScreen() {
         featuredProject: (remoteResume.projects && remoteResume.projects.length > 0) 
           ? remoteResume.projects[0] 
           : { include: false, name: '', tech_stack: '', bullet: '' },
+        sections_to_include: remoteResume.sections_to_include || {
+          summary: true,
+          skills: true,
+          experience: true,
+          featured_project: false,
+          education: true,
+          certifications: remoteResume.certifications?.length > 0,
+          recognition: remoteResume.awards?.length > 0,
+        }
       });
     }
   }, [remoteResume]);
@@ -242,6 +307,21 @@ export default function ResumeBuilderScreen() {
     }
   };
 
+  const handleRewriteItem = async (sectionType: string, text: string, onUpdate: (rewritten: string) => void) => {
+    if (!text || text.trim() === '') {
+       Toast.show({ type: 'error', text1: 'Nothing to rewrite.' });
+       return;
+    }
+    try {
+      Toast.show({ type: 'info', text1: 'AI is polishing...' });
+      const res = await rewriteMutation.mutateAsync({ text, section_type: sectionType });
+      onUpdate(res.rewritten);
+      Toast.show({ type: 'success', text1: 'Polished!' });
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'AI rewrite failed', text2: e.message });
+    }
+  };
+
   // ── Preview ────────────────────────────────────────────────────────────────
   const handlePreview = () => {
     if (!draft) return;
@@ -253,17 +333,17 @@ export default function ResumeBuilderScreen() {
         skills: draft.skills,
         education: draft.education,
         featured_project: draft.featuredProject,
-        certifications: draft.certifications,
-        recognition: draft.awards,
+        certifications: draft.certifications.map(c => [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
+        recognition: draft.awards.map(a => [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
         sections_to_include: {
-          summary: !!draft.summary,
-          skills: draft.skills.length > 0,
-          experience: draft.experience.length > 0,
-          featured_project: !!draft.featuredProject?.include,
-          education: draft.education.length > 0,
-          certifications: draft.certifications.length > 0,
+          summary: draft.sections_to_include?.summary !== false && !!draft.summary,
+          skills: draft.sections_to_include?.skills !== false && draft.skills.length > 0,
+          experience: draft.sections_to_include?.experience !== false && draft.experience.length > 0,
+          featured_project: draft.sections_to_include?.featured_project !== false && !!draft.featuredProject?.include,
+          education: draft.sections_to_include?.education !== false && draft.education.length > 0,
+          certifications: draft.sections_to_include?.certifications !== false && draft.certifications.length > 0,
           languages: false,
-          recognition: draft.awards.length > 0,
+          recognition: draft.sections_to_include?.recognition !== false && draft.awards.length > 0,
         }
       };
       
@@ -295,17 +375,17 @@ export default function ResumeBuilderScreen() {
         skills: draft.skills,
         education: draft.education,
         featured_project: draft.featuredProject,
-        certifications: draft.certifications,
-        recognition: draft.awards,
+        certifications: draft.certifications.map(c => [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
+        recognition: draft.awards.map(a => [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
         sections_to_include: {
-          summary: !!draft.summary,
-          skills: draft.skills.length > 0,
-          experience: draft.experience.length > 0,
-          featured_project: !!draft.featuredProject?.include,
-          education: draft.education.length > 0,
-          certifications: draft.certifications.length > 0,
+          summary: draft.sections_to_include?.summary !== false && !!draft.summary,
+          skills: draft.sections_to_include?.skills !== false && draft.skills.length > 0,
+          experience: draft.sections_to_include?.experience !== false && draft.experience.length > 0,
+          featured_project: draft.sections_to_include?.featured_project !== false && !!draft.featuredProject?.include,
+          education: draft.sections_to_include?.education !== false && draft.education.length > 0,
+          certifications: draft.sections_to_include?.certifications !== false && draft.certifications.length > 0,
           languages: false,
-          recognition: draft.awards.length > 0,
+          recognition: draft.sections_to_include?.recognition !== false && draft.awards.length > 0,
         }
       };
 
@@ -471,25 +551,71 @@ export default function ResumeBuilderScreen() {
     });
   };
 
-  // ── Render: No draft yet → Empty state ───────────────────────────────────
+  // ── Render: No draft yet → Form State ───────────────────────────────────
   if (!id && !draft) {
     return (
       <View style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {renderPageHeader()}
-          <View style={styles.emptyStateContainer}>
-            <View style={styles.emptyStateIconBg}>
-              <Image source={require('../../assets/logo.png')} style={{ width: 48, height: 48 }} resizeMode="contain" />
-            </View>
-            <Text style={styles.emptyStateTitle}>Start a New Resume</Text>
-            <Text style={styles.emptyStateDesc}>Pick a template and generate with AI or start fresh.</Text>
-            <TouchableOpacity style={styles.primaryBtn} onPress={() => setIsTemplateModalVisible(true)}>
-              <Ionicons name="document-text-outline" size={18} color={colors.primary} />
-              <Text style={styles.primaryBtnText}>Choose a Template</Text>
-            </TouchableOpacity>
+          
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>1. Target Job Description (Optional)</Text>
+            <Text style={{ color: colors.textMuted, marginBottom: Spacing.md, fontSize: 14 }}>
+              Paste the job description you're targeting. Our AI will analyze the requirements and automatically tailor your resume.
+            </Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              value={jobDescription}
+              onChangeText={setJobDescription}
+              placeholder="Paste Job Description here..."
+              placeholderTextColor={colors.textMuted}
+              multiline
+              numberOfLines={6}
+            />
           </View>
+
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>2. Choose a Template</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, marginTop: Spacing.md }}>
+              {TEMPLATES.map(t => (
+                <TouchableOpacity
+                  key={t.id}
+                  style={[
+                    { width: '47%', padding: Spacing.md, borderRadius: Radius.md, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.surface },
+                    selectedTemplateId === t.id && { borderColor: colors.primary, backgroundColor: colors.primary + '10' }
+                  ]}
+                  onPress={() => setSelectedTemplateId(t.id)}
+                >
+                  <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>{t.name}</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>{t.description}</Text>
+                  {t.isPremium && (
+                    <View style={{ backgroundColor: '#FFD70030', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: 'flex-start', marginTop: 8 }}>
+                      <Text style={{ color: '#B8860B', fontSize: 10, fontWeight: 'bold' }}>PRO</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.primaryBtn, { marginVertical: Spacing.xl, height: 54 }]} 
+            onPress={handleGenerate}
+            disabled={createResumeMutation.isPending || analyzeJobMutation.isPending}
+          >
+            {createResumeMutation.isPending || analyzeJobMutation.isPending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
+                <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
+                  {jobDescription.trim().length > 10 ? 'Generate Tailored Resume (3 Credits)' : 'Generate Base Resume (3 Credits)'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+
         </ScrollView>
-        {renderTemplateModal()}
       </View>
     );
   }
@@ -554,20 +680,28 @@ export default function ResumeBuilderScreen() {
         </View>
 
         {/* Summary */}
+        {draft?.sections_to_include?.summary !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <Ionicons name="document-text-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Summary</Text>
             </View>
-            {isEditMode && (
-              <TouchableOpacity style={styles.aiBtn} onPress={handleAIRewrite} disabled={rewriteMutation.isPending}>
-                {rewriteMutation.isPending
-                  ? <ActivityIndicator size="small" color={colors.primary} />
-                  : <><MaterialCommunityIcons name="star-four-points-outline" size={18} color={colors.primary} /><Text style={styles.aiBtnText}>AI Rewrite</Text></>
-                }
-              </TouchableOpacity>
-            )}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {isEditMode && (
+                <TouchableOpacity style={styles.aiBtn} onPress={handleAIRewrite} disabled={rewriteMutation.isPending}>
+                  {rewriteMutation.isPending
+                    ? <ActivityIndicator size="small" color={colors.primary} />
+                    : <><MaterialCommunityIcons name="star-four-points-outline" size={18} color={colors.primary} /><Text style={styles.aiBtnText}>AI Rewrite</Text></>
+                  }
+                </TouchableOpacity>
+              )}
+              {isEditMode && (
+                <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, summary: false } } as any : p)}>
+                  <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
           <TextInput
             style={[styles.textArea, !isEditMode && styles.textAreaReadonly]}
@@ -581,19 +715,28 @@ export default function ResumeBuilderScreen() {
           />
         </View>
 
+        )}
         {/* Experience */}
+        {draft?.sections_to_include?.experience !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <Ionicons name="document-text-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Experience</Text>
             </View>
-            {isEditMode && (
-              <TouchableOpacity style={styles.addBtn} onPress={addExperience}>
-                <Ionicons name="add" size={16} color={colors.primary} />
-                <Text style={styles.addBtnText}>Add</Text>
-              </TouchableOpacity>
-            )}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {isEditMode && (
+                <TouchableOpacity style={styles.addBtn} onPress={addExperience}>
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={styles.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              )}
+              {isEditMode && (
+                <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, experience: false } } as any : p)}>
+                  <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {(draft?.experience || []).length === 0 && (
@@ -638,7 +781,22 @@ export default function ResumeBuilderScreen() {
                     </View>
                   </View>
 
-                  <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Bullet Points</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.md, marginBottom: 8 }}>
+                    <Text style={[styles.fieldLabel, { marginTop: 0 }]}>Bullet Points</Text>
+                    {isEditMode && (
+                      <TouchableOpacity 
+                        style={styles.inlineAddBtn} 
+                        onPress={() => handleRewriteItem('experience', exp.bullets.join('\n'), (rewritten) => {
+                          const newBullets = rewritten.split('\n').map(s => s.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean);
+                          setDraft(p => p ? { ...p, experience: p.experience.map(e => e.id === exp.id ? { ...e, bullets: newBullets } : e) } : p);
+                        })}
+                        disabled={rewriteMutation.isPending}
+                      >
+                        <MaterialCommunityIcons name="star-four-points-outline" size={14} color={colors.primary} />
+                        <Text style={[styles.inlineAddBtnText, { marginLeft: 4 }]}>AI Rewrite Role</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                   {exp.bullets.map((bullet, bi) => (
                     <View key={bi} style={styles.bulletRow}>
                       <Text style={styles.bulletDot}>•</Text>
@@ -670,19 +828,28 @@ export default function ResumeBuilderScreen() {
           ))}
         </View>
 
+        )}
         {/* Skills */}
+        {draft?.sections_to_include?.skills !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <MaterialCommunityIcons name="star-four-points-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Skills</Text>
             </View>
-            {isEditMode && (
-              <TouchableOpacity style={styles.addBtn} onPress={addSkill}>
-                <Ionicons name="add" size={16} color={colors.primary} />
-                <Text style={styles.addBtnText}>Add</Text>
-              </TouchableOpacity>
-            )}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {isEditMode && (
+                <TouchableOpacity style={styles.addBtn} onPress={addSkill}>
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={styles.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              )}
+              {isEditMode && (
+                <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, skills: false } } as any : p)}>
+                  <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {(draft?.skills || []).length === 0 && (
@@ -736,7 +903,22 @@ export default function ResumeBuilderScreen() {
                       </View>
                     </View>
 
-                    <Text style={[styles.fieldLabel, { marginTop: Spacing.md }]}>Skills</Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.md, marginBottom: 8 }}>
+                      <Text style={[styles.fieldLabel, { marginTop: 0 }]}>Skills</Text>
+                      {isEditMode && (
+                        <TouchableOpacity 
+                          style={styles.inlineAddBtn} 
+                          onPress={() => handleRewriteItem('skills', skill.items.join(', '), (rewritten) => {
+                            const newItems = rewritten.split(',').map(s => s.trim()).filter(Boolean);
+                            setDraft(p => p ? { ...p, skills: p.skills.map(s => s.id === skill.id ? { ...s, items: newItems } : s) } : p);
+                          })}
+                          disabled={rewriteMutation.isPending}
+                        >
+                          <MaterialCommunityIcons name="star-four-points-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.inlineAddBtnText, { marginLeft: 4 }]}>AI Optimize List</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                     <View style={styles.skillChipsContainer}>
                       {skill.items.map((item, itemIndex) => (
                         <View key={itemIndex} style={styles.skillChip}>
@@ -776,19 +958,28 @@ export default function ResumeBuilderScreen() {
           })}
         </View>
 
+        )}
         {/* Education */}
+        {draft?.sections_to_include?.education !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <MaterialCommunityIcons name="star-four-points-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Education</Text>
             </View>
-            {isEditMode && (
-              <TouchableOpacity style={styles.addBtn} onPress={addEducation}>
-                <Ionicons name="add" size={16} color={colors.primary} />
-                <Text style={styles.addBtnText}>Add</Text>
-              </TouchableOpacity>
-            )}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {isEditMode && (
+                <TouchableOpacity style={styles.addBtn} onPress={addEducation}>
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={styles.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              )}
+              {isEditMode && (
+                <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, education: false } } as any : p)}>
+                  <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {(draft?.education || []).length === 0 && (
@@ -828,7 +1019,19 @@ export default function ResumeBuilderScreen() {
                       <TextInput style={styles.input} value={edu.year} onChangeText={v => updateEdu(edu.id, 'year', v)} placeholder="2018 – 2022" placeholderTextColor={colors.textMuted} editable={isEditMode} />
                     </View>
                     <View style={styles.fieldHalf}>
-                      <Text style={styles.fieldLabel}>Note (optional)</Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={styles.fieldLabel}>Note (optional)</Text>
+                        {isEditMode && edu.note && (
+                          <TouchableOpacity 
+                            style={{ flexDirection: 'row', alignItems: 'center' }} 
+                            onPress={() => handleRewriteItem('education', edu.note || '', (rewritten) => updateEdu(edu.id, 'note', rewritten))}
+                            disabled={rewriteMutation.isPending}
+                          >
+                            <MaterialCommunityIcons name="star-four-points-outline" size={12} color={colors.primary} />
+                            <Text style={[styles.inlineAddBtnText, { fontSize: 12, marginLeft: 2 }]}>Rewrite</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
                       <TextInput style={styles.input} value={edu.note} onChangeText={v => updateEdu(edu.id, 'note', v)} placeholder="Summa Cum Laude" placeholderTextColor={colors.textMuted} editable={isEditMode} />
                     </View>
                   </View>
@@ -838,13 +1041,20 @@ export default function ResumeBuilderScreen() {
           ))}
         </View>
 
+        )}
         {/* Featured Project */}
+        {draft?.sections_to_include?.featured_project !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <Ionicons name="document-text-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Featured Project</Text>
             </View>
+            {isEditMode && (
+              <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, featured_project: false } } as any : p)}>
+                <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
           <View style={styles.fieldGrid}>
             <View style={styles.fieldFull}>
@@ -869,7 +1079,19 @@ export default function ResumeBuilderScreen() {
                   <TextInput style={styles.input} value={draft?.featuredProject?.tech_stack} onChangeText={v => setDraft(p => p && p.featuredProject ? { ...p, featuredProject: { ...p.featuredProject, tech_stack: v } } : p)} placeholder="React Native, Node.js" placeholderTextColor={colors.textMuted} editable={isEditMode} />
                 </View>
                 <View style={styles.fieldFull}>
-                  <Text style={styles.fieldLabel}>Description (Bullets)</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={[styles.fieldLabel, { marginBottom: 0 }]}>Description (Bullets)</Text>
+                    {isEditMode && draft?.featuredProject?.bullet && (
+                      <TouchableOpacity 
+                        style={styles.inlineAddBtn} 
+                        onPress={() => handleRewriteItem('projects', draft.featuredProject?.bullet || '', (rewritten) => setDraft(p => p && p.featuredProject ? { ...p, featuredProject: { ...p.featuredProject, bullet: rewritten } } : p))}
+                        disabled={rewriteMutation.isPending}
+                      >
+                        <MaterialCommunityIcons name="star-four-points-outline" size={14} color={colors.primary} />
+                        <Text style={[styles.inlineAddBtnText, { marginLeft: 4 }]}>AI Rewrite</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                   <TextInput style={[styles.input, styles.textArea]} value={draft?.featuredProject?.bullet} onChangeText={v => setDraft(p => p && p.featuredProject ? { ...p, featuredProject: { ...p.featuredProject, bullet: v } } : p)} placeholder="• Built a full-stack AI app..." placeholderTextColor={colors.textMuted} editable={isEditMode} multiline />
                 </View>
               </>
@@ -877,19 +1099,28 @@ export default function ResumeBuilderScreen() {
           </View>
         </View>
 
+        )}
         {/* Certifications */}
+        {draft?.sections_to_include?.certifications !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <Ionicons name="person-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Certifications</Text>
             </View>
-            {isEditMode && (
-              <TouchableOpacity style={styles.addBtn} onPress={addCertification}>
-                <Ionicons name="add" size={16} color={colors.primary} />
-                <Text style={styles.addBtnText}>Add</Text>
-              </TouchableOpacity>
-            )}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {isEditMode && (
+                <TouchableOpacity style={styles.addBtn} onPress={addCertification}>
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={styles.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              )}
+              {isEditMode && (
+                <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, certifications: false } } as any : p)}>
+                  <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {(draft?.certifications || []).length === 0 && (
@@ -952,18 +1183,26 @@ export default function ResumeBuilderScreen() {
         </View>
 
         {/* Awards */}
+        {draft?.sections_to_include?.recognition !== false && (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionHeaderLeft}>
               <MaterialCommunityIcons name="star-four-points-outline" size={18} color={colors.primary} />
               <Text style={styles.sectionTitle}>Awards & Recognition</Text>
             </View>
-            {isEditMode && (
-              <TouchableOpacity style={styles.addBtn} onPress={addAward}>
-                <Ionicons name="add" size={16} color={colors.primary} />
-                <Text style={styles.addBtnText}>Add</Text>
-              </TouchableOpacity>
-            )}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {isEditMode && (
+                <TouchableOpacity style={styles.addBtn} onPress={addAward}>
+                  <Ionicons name="add" size={16} color={colors.primary} />
+                  <Text style={styles.addBtnText}>Add</Text>
+                </TouchableOpacity>
+              )}
+              {isEditMode && (
+                <TouchableOpacity style={{ marginLeft: 12, padding: 4 }} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, recognition: false } } as any : p)}>
+                  <Ionicons name="eye-off-outline" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {(draft?.awards || []).length === 0 && (
@@ -973,7 +1212,7 @@ export default function ResumeBuilderScreen() {
           {(draft?.awards || []).filter(award => 
             award.id === expandedAward || award.name?.trim() || award.issuer?.trim() || award.year?.trim()
           ).map((award, index) => {
-            const displayName = award.name?.trim() || 'New Certificate';
+            const displayName = award.name?.trim() || 'New Award';
             const displaySub = [award.issuer || '', award.year || ''].filter(Boolean).join(' · ') || 'Tap to add details';
             return (
               <View key={award.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
@@ -1006,11 +1245,11 @@ export default function ResumeBuilderScreen() {
                 <View style={styles.entryForm}>
                   <View style={styles.fieldGrid}>
                     <View style={styles.fieldFull}>
-                      <Text style={styles.fieldLabel}>Certificate Name</Text>
+                      <Text style={styles.fieldLabel}>Award Name</Text>
                       <TextInput style={styles.input} value={award.name} onChangeText={v => updateAward(award.id, 'name', v)} placeholder="Employee of the Year" placeholderTextColor={colors.textMuted} editable={isEditMode} />
                     </View>
                     <View style={styles.fieldHalf}>
-                      <Text style={styles.fieldLabel}>Issuer</Text>
+                      <Text style={styles.fieldLabel}>Organization</Text>
                       <TextInput style={styles.input} value={award.issuer} onChangeText={v => updateAward(award.id, 'issuer', v)} placeholder="Acme Corp" placeholderTextColor={colors.textMuted} editable={isEditMode} />
                     </View>
                     <View style={styles.fieldHalf}>
@@ -1024,28 +1263,75 @@ export default function ResumeBuilderScreen() {
             );
           })}
         </View>
+        )}
+
+        {/* Add Sections Area */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 20 }}>
+          {draft?.sections_to_include?.summary === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, summary: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Summary</Text>
+            </TouchableOpacity>
+          )}
+          {draft?.sections_to_include?.experience === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, experience: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Experience</Text>
+            </TouchableOpacity>
+          )}
+          {draft?.sections_to_include?.skills === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, skills: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Skills</Text>
+            </TouchableOpacity>
+          )}
+          {draft?.sections_to_include?.education === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, education: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Education</Text>
+            </TouchableOpacity>
+          )}
+          {draft?.sections_to_include?.featured_project === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, featured_project: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Project</Text>
+            </TouchableOpacity>
+          )}
+          {draft?.sections_to_include?.certifications === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, certifications: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Certifications</Text>
+            </TouchableOpacity>
+          )}
+          {draft?.sections_to_include?.recognition === false && (
+            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, recognition: true } } as any : p)}>
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Awards</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* Action Buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.outlineBtn} onPress={() => { if (!id) setDraft(null); else router.back(); }}>
+          <TouchableOpacity style={[styles.outlineBtn, { flex: 1, minWidth: '45%' }]} onPress={() => { if (!id) setDraft(null); else router.back(); }}>
             <Text style={styles.outlineBtnText}>Cancel</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.primaryBtn, { flex: 1 }]} onPress={handleSave} disabled={updateMutation.isPending}>
+          <TouchableOpacity style={[styles.primaryBtn, { flex: 1, minWidth: '45%' }]} onPress={handleSave} disabled={updateMutation.isPending}>
             {updateMutation.isPending
               ? <ActivityIndicator size="small" color="#fff" />
               : <Text style={styles.primaryBtnText}>Save</Text>
             }
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.exportBtn]} onPress={handlePreview}>
+          <TouchableOpacity style={[styles.exportBtn, { flex: 1, minWidth: '45%' }]} onPress={handlePreview}>
             <Ionicons name="person-outline" size={18} color={colors.primary} />
             <Text style={styles.exportBtnText}>Preview</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.exportBtn]} 
+            style={[styles.exportBtn, { flex: 1, minWidth: '45%' }]} 
             onPress={() => setIsExportModalVisible(true)}
             disabled={!draft || updateMutation.isPending}
           >
-            
+            <Ionicons name="download-outline" size={18} color={colors.primary} />
             <Text style={styles.exportBtnText}>Download</Text>
           </TouchableOpacity>
         </View>

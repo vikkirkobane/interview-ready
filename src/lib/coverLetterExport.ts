@@ -5,8 +5,10 @@ import { buildCoverLetterHTML } from './coverLetterHTML';
 declare var window: any;
 declare var document: any;
 
+// Helper for dynamic imports on native vs web
 let printToFileAsync: any;
 let shareAsync: any;
+let FileSystem: any;
 
 try {
   const Print = require('expo-print');
@@ -18,6 +20,12 @@ try {
 try {
   const Sharing = require('expo-sharing');
   shareAsync = Sharing.shareAsync;
+} catch (e) {
+  // Ignore
+}
+
+try {
+  FileSystem = require('expo-file-system');
 } catch (e) {
   // Ignore
 }
@@ -34,19 +42,19 @@ export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
       setTimeout(() => win.print(), 500);
     }
   } else {
-    if (!printToFileAsync || !shareAsync) {
-      throw new Error('PDF export requires expo-print and expo-sharing.');
+    if (!printToFileAsync || !shareAsync || !FileSystem) {
+      throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    const filename = `${cl.header.candidate_name.replace(/\\s+/g, '_')}_Cover_Letter.pdf`;
+    const newUri = `${FileSystem.documentDirectory}${filename}`;
+    await FileSystem.moveAsync({ from: uri, to: newUri });
+    
+    await shareAsync(newUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Cover Letter PDF' });
   }
 }
 
 export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
-  if (Platform.OS !== 'web') {
-    throw new Error('DOCX export is available on web only.');
-  }
-
   try {
     const { Document, Paragraph, TextRun, AlignmentType, Packer } = await import('docx');
     const h = cl.header;
@@ -105,15 +113,33 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
     children.push(new Paragraph({ children: [new TextRun({ text: cl.sign_off.name, bold: true, size: 22 })] }));
 
     const doc = new Document({ sections: [{ properties: {}, children }] });
-    const blob = await Packer.toBlob(doc);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${h.candidate_name.replace(/\s+/g, '_')}_Cover_Letter.docx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const filename = `${h.candidate_name.replace(/\s+/g, '_')}_Cover_Letter.docx`;
+
+    if (Platform.OS === 'web') {
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      if (!FileSystem || !shareAsync) {
+        throw new Error('DOCX export requires expo-file-system and expo-sharing.');
+      }
+      const base64Data = await Packer.toBase64String(doc);
+      const fileUri = `${FileSystem.documentDirectory}${filename}`;
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      await shareAsync(fileUri, {
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        dialogTitle: 'Download Cover Letter DOCX',
+        UTI: 'org.openxmlformats.wordprocessingml.document',
+      });
+    }
   } catch (e: any) {
     throw new Error('DOCX export failed: ' + e.message);
   }

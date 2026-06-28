@@ -99,8 +99,8 @@ export default function SettingsScreen() {
         />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <SettingRow 
-          iconName="moon-outline"
-          title="Dark Mode"
+          iconName={isDark ? "sunny" : "moon-outline"}
+          title={isDark ? "Light Mode" : "Dark Mode"}
           rightElement={
             <Switch 
               value={isDark} 

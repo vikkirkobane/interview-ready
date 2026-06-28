@@ -167,20 +167,49 @@ async function generateResumeContentAsync(
   const serviceClient = createServiceClient();
 
   try {
-    const systemPrompt = `You are an expert resume strategist and professional writer with deep knowledge across
-all industries and career levels. You craft resumes that are simultaneously:
-- Optimised for Applicant Tracking Systems (ATS)
-- Compelling to human recruiters and hiring managers
-- Authentic to the candidate's voice and actual experience
-- Precisely formatted for single-page professional output
+    const systemPrompt = `You are an elite, ATS-first resume engineer. Your sole mission is to produce a resume that:
+1. Passes every ATS filter with a score of 90%+
+2. Reads compellingly to a human recruiter who opens it after the ATS
+3. Is laser-aligned to the TARGET JOB DESCRIPTION provided
 
-You receive a candidate's raw professional information and a target job description.
-You output ONLY a single, valid JSON object — no markdown, no explanation, no preamble,
-no trailing text. The JSON is consumed directly by a mobile application to generate
-DOCX and PDF resume files.
+════════════════════════════════════════════
+STRATEGY — READ THIS CAREFULLY
+════════════════════════════════════════════
 
-Your JSON must be complete, accurate, and production-ready. Every field matters.
-If a field has no data, use an empty string "" — never omit a key.
+PROFESSIONAL TITLE
+- Set header.title to the EXACT job title from the job description (e.g. "Product Manager", "Senior Data Engineer")
+- Never use weak qualifiers: no "Aspiring", "Seeking", "Junior", "Entry-Level" unless those words appear in the JD itself
+- The title must match what an ATS keyword scanner looks for first
+
+SKILLS SECTION
+- List ALL skills, tools, and technologies that appear in the job description
+- Group them into logical categories (e.g. "Core Skills", "Tools & Platforms", "Soft Skills")
+- Do NOT limit yourself to skills the candidate explicitly listed — infer from their background and add every relevant JD keyword
+- This section is the primary ATS keyword injection zone
+
+EXPERIENCE SECTION — STRICT RULES
+- KEEP all real employer names and date ranges exactly as provided (do not invent employers or fabricate dates)
+- FREELY rewrite every bullet point to be impactful, quantified, and aligned to the JD
+- INVENT specific, plausible quantified achievements that a person in that role at that company could realistically claim (e.g. "Reduced onboarding time by 35%", "Managed a portfolio of 50+ client accounts", "Led cross-functional team of 8 engineers")
+- Reframe the experience titles at each employer if a sharper title better serves the JD (e.g. "Sales Executive" → "Business Development & Revenue Growth Specialist")
+- Every bullet must start with a strong action verb (Led, Spearheaded, Engineered, Drove, Optimised, Delivered, etc.)
+- Minimum 4 bullets per role, each packed with keywords from the JD
+- If the candidate's background is in a different industry, bridge it — reframe transferable skills to match the JD language precisely
+
+PROFESSIONAL SUMMARY
+- Write a punchy 3-sentence summary that:
+  a) Opens with the exact target job title
+  b) Highlights the most relevant skills/achievements for the JD
+  c) Ends with a confident value proposition (never "looking for" or "hoping to")
+
+EDUCATION
+- Keep exactly as provided. Do not fabricate degrees or institutions.
+
+CERTIFICATIONS & RECOGNITION
+- Only include if the candidate has real ones from their profile. Do not fabricate.
+
+OUTPUT FORMAT
+You output ONLY a single, valid JSON object — no markdown, no explanation, no preamble, no trailing text.
 
 You MUST output exactly this JSON structure and nothing else:
 {
@@ -229,11 +258,15 @@ You MUST output exactly this JSON structure and nothing else:
       "note": "string"
     }
   ],
-  "certifications": ["string"],
+  "certifications": [
+    { "name": "string", "issuer": "string", "year": "string" }
+  ],
   "languages": [
     { "language": "string", "proficiency": "string" }
   ],
-  "recognition": ["string"],
+  "recognition": [
+    { "name": "string", "issuer": "string", "year": "string" }
+  ],
   "sections_to_include": {
     "summary": true,
     "skills": true,
@@ -271,8 +304,18 @@ You MUST output exactly this JSON structure and nothing else:
       education: resumeContent.education,
       skills: resumeContent.skills,
       projects: (resumeContent.featured_project && resumeContent.featured_project.include) ? [resumeContent.featured_project] : [],
-      certifications: resumeContent.certifications || [],
-      awards: resumeContent.recognition || [],
+      certifications: (resumeContent.certifications || []).map((c: any) => ({
+        id: crypto.randomUUID(),
+        name: c.name || '',
+        issuer: c.issuer || '',
+        year: c.year || ''
+      })),
+      awards: (resumeContent.recognition || []).map((a: any) => ({
+        id: crypto.randomUUID(),
+        name: a.name || '',
+        issuer: a.issuer || '',
+        year: a.year || ''
+      })),
     });
 
     // Update resume status to READY

@@ -8,6 +8,7 @@ declare var document: any;
 // Helper for dynamic imports on native vs web
 let printToFileAsync: any;
 let shareAsync: any;
+let FileSystem: any;
 
 try {
   const Print = require('expo-print');
@@ -19,6 +20,12 @@ try {
 try {
   const Sharing = require('expo-sharing');
   shareAsync = Sharing.shareAsync;
+} catch (e) {
+  // Ignore
+}
+
+try {
+  FileSystem = require('expo-file-system');
 } catch (e) {
   // Ignore
 }
@@ -84,19 +91,19 @@ export async function exportResumePDF(resume: ResumeContent, templateId?: string
     }
   } else {
     // Native PDF generation
-    if (!printToFileAsync || !shareAsync) {
-      throw new Error('PDF export requires expo-print and expo-sharing.');
+    if (!printToFileAsync || !shareAsync || !FileSystem) {
+      throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    const filename = `${resume.header.name.replace(/\\s+/g, '_')}_Resume.pdf`;
+    const newUri = `${FileSystem.documentDirectory}${filename}`;
+    await FileSystem.moveAsync({ from: uri, to: newUri });
+    
+    await shareAsync(newUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Resume PDF' });
   }
 }
 
 export async function exportResumeDOCX(resume: ResumeContent, templateId?: string): Promise<void> {
-  if (Platform.OS !== 'web') {
-    throw new Error('DOCX export is available on web only.');
-  }
-
   try {
     const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } = await import('docx');
 
@@ -227,15 +234,33 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
     }
 
     const doc = new Document({ sections: [{ properties: {}, children }] });
-    const blob = await Packer.toBlob(doc);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${h.name.replace(/\s+/g, '_')}_Resume.docx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const filename = `${h.name.replace(/\s+/g, '_')}_Resume.docx`;
+
+    if (Platform.OS === 'web') {
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      if (!FileSystem || !shareAsync) {
+        throw new Error('DOCX export requires expo-file-system and expo-sharing.');
+      }
+      const base64Data = await Packer.toBase64String(doc);
+      const fileUri = `${FileSystem.documentDirectory}${filename}`;
+      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      await shareAsync(fileUri, {
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        dialogTitle: 'Download Resume DOCX',
+        UTI: 'org.openxmlformats.wordprocessingml.document',
+      });
+    }
   } catch (e: any) {
     throw new Error('DOCX export failed: ' + e.message);
   }

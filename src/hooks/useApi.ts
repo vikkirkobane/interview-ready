@@ -61,16 +61,24 @@ export const useAnalyzeJobMutation = () => {
     },
   });
 };
-
-/**
  * Create Resume Mutation
  */
 export const useCreateResumeMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { title: string; job_analysis_id?: string }) => {
+    mutationFn: async (payload: { title: string; template_id?: string; job_analysis_id?: string; is_base?: boolean }) => {
       const response = await apiCall('resumes-create', 'POST', payload);
       if (response.error) throw new Error(response.error);
       return response.data; // { resume_id: string, message: string, stream_channel: string }
+    },
+  });
+};
+
+export const useAnalyzeJobMutation = () => {
+  return useMutation({
+    mutationFn: async (payload: { title?: string; jdText: string }) => {
+      const response = await apiCall('jobs-analyze', 'POST', payload);
+      if (response.error) throw new Error(response.error);
+      return response.data; // { id: string }
     },
   });
 };
