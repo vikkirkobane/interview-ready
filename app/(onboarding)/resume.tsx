@@ -196,17 +196,31 @@ export default function ResumeGenScreen() {
               <View style={[styles.thumbnailCard, { borderColor: colors.border, backgroundColor: colors.bgCard, padding: 0, overflow: 'hidden' }]}>
                 {previewHtml ? (
                   Platform.OS === 'web' ? (
-                    <iframe 
-                      srcDoc={previewHtml} 
-                      style={{ border: 'none', backgroundColor: colors.bgCard, transform: 'scale(0.35)', transformOrigin: 'top left', width: 732, height: 915, pointerEvents: 'none', userSelect: 'none' } as any}
-                    />
+                    // Web: scale down the full A4 width (794px) to fit our card width (320px) → scale ≈ 0.40
+                    // Use 'top center' origin so content is centered and fully visible
+                    <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+                      <iframe
+                        srcDoc={previewHtml}
+                        style={{
+                          border: 'none',
+                          width: 794,
+                          height: 1123,
+                          transform: 'scale(0.40)',
+                          transformOrigin: 'top left',
+                          pointerEvents: 'none',
+                          userSelect: 'none',
+                        } as any}
+                      />
+                    </div>
                   ) : (
+                    // Native: WebView fills the card, scalesPageToFit shrinks the full document to fit
                     <WebView
                       source={{ html: previewHtml }}
-                      style={{ flex: 1, backgroundColor: colors.bgCard }}
+                      style={{ width: '100%', height: '100%', backgroundColor: colors.bgCard }}
                       scalesPageToFit={true}
                       scrollEnabled={false}
                       pointerEvents="none"
+                      originWhitelist={['*']}
                     />
                   )
                 ) : (
@@ -385,6 +399,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: Spacing.xl,
     marginTop: Spacing.md,
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
   },
   thumbnailGlow: {
     position: 'absolute',
@@ -396,11 +413,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
   },
   thumbnailCard: {
-    width: 256,
-    height: 320,
+    width: '100%',
+    // A4 aspect ratio ≈ 1:1.414 — use 320px wide → ~452px tall to show roughly the top half
+    aspectRatio: 0.707,
     borderWidth: 1,
     borderRadius: Radius.lg,
-    padding: 16,
     ...Shadow.lg,
   },
   actionBlock: {

@@ -78,13 +78,69 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteAccount = async () => {
-    try {
-      await deleteAccountMutation.mutateAsync();
-      await signOut();
-      router.replace('/(auth)/welcome');
-      Toast.show({ type: 'success', text1: 'Account deleted successfully.' });
-    } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Delete failed', text2: e.message });
+    const runDeletion = async () => {
+      try {
+        await deleteAccountMutation.mutateAsync();
+        Toast.show({ type: 'success', text1: 'Account deleted successfully' });
+        await signOut();
+        router.replace('/(auth)/welcome');
+      } catch (error: any) {
+        Toast.show({ type: 'error', text1: 'Failed to delete account', text2: error.message });
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if ((window as any).confirm("Delete Account? This action cannot be undone. All your data will be permanently deleted.")) {
+        runDeletion();
+      }
+    } else {
+      import('react-native').then(({ Alert }) => {
+        Alert.alert(
+          "Delete Account",
+          "This action cannot be undone. All your data will be permanently deleted.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { 
+              text: "Delete", 
+              style: "destructive",
+              onPress: runDeletion
+            }
+          ]
+        );
+      });
+    }
+  };
+
+  const handleAccountSettingsPress = () => {
+    if (Platform.OS === 'web') {
+      const choice = (window as any).confirm(
+        "Account Settings\n\nClick OK to go to Settings, or Cancel. To delete your account, you must do so from the mobile app or contact support."
+      );
+      if (choice) {
+        router.push('/(tabs)/settings');
+      }
+    } else {
+      import('react-native').then(({ Alert }) => {
+        Alert.alert(
+          "Account Settings",
+          "Manage your account options.",
+          [
+            {
+              text: "Cancel",
+              style: "cancel"
+            },
+            {
+              text: "Delete Account",
+              style: "destructive",
+              onPress: handleDeleteAccount
+            },
+            {
+              text: "View Settings",
+              onPress: () => router.push('/(tabs)/settings')
+            }
+          ]
+        );
+      });
     }
   };
 
@@ -260,6 +316,10 @@ export default function ProfileScreen() {
   const softSkills = (profile?.softSkills || (profile as any)?.soft_skills || []) as string[];
   const education = (profile?.education || (profile as any)?.education || []) as EducationItem[];
   
+  const { stats } = useDashboardStore();
+  const { setUpgradeModal } = useUIStore();
+  const credits = stats?.creditsAvailable ?? 0;
+  
   const renderSkillPill = (skill: string, variant: 'primary' | 'secondary' | 'neutral') => {
     let bg: string = colors.bgMuted;
     let color: string = colors.textBody;
@@ -328,26 +388,35 @@ export default function ProfileScreen() {
                 <View style={[styles.planBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
                   <Text style={styles.planBadgeText}>ACTIVE PLAN</Text>
                 </View>
-                <Text style={styles.planTitle}>Pro Plan</Text>
+                <Text style={styles.planTitle}>Free Plan</Text>
               </View>
               <View style={styles.creditsContainer}>
-                <Text style={styles.creditsValue}>1,240</Text>
-                <Text style={styles.creditsLabel}>Interview Credits</Text>
+                <Text style={styles.creditsValue}>{credits}</Text>
+                <Text style={styles.creditsLabel}>Available Credits</Text>
               </View>
             </View>
 
             <View style={styles.premiumActions}>
-              <TouchableOpacity style={[styles.upgradeBtn, { backgroundColor: colors.textInverse }]}>
+              <TouchableOpacity 
+                style={[styles.upgradeBtn, { backgroundColor: colors.textInverse }]}
+                onPress={() => setUpgradeModal(true)}
+              >
                 <Text style={[styles.upgradeBtnText, { color: colors.primary }]}>Upgrade Plan</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.addCreditsBtn}>
+              <TouchableOpacity 
+                style={styles.addCreditsBtn}
+                onPress={() => setUpgradeModal(true)}
+              >
                 <Text style={styles.addCreditsBtnText}>Add Credits</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        <TouchableOpacity style={[styles.importBtn, { borderColor: colors.primary, backgroundColor: `${colors.primary}${isDark ? '1A' : '05'}` }]}>
+        <TouchableOpacity 
+          style={[styles.importBtn, { borderColor: colors.primary, backgroundColor: `${colors.primary}${isDark ? '1A' : '05'}` }]}
+          onPress={() => router.push('/(tabs)/linkedin')}
+        >
           <Ionicons name="logo-linkedin" size={18} color={colors.primary} style={{ marginRight: 8 }} />
           <Text style={[styles.importBtnText, { color: colors.primary }]}>Import Profile from LinkedIn</Text>
         </TouchableOpacity>
@@ -398,7 +467,7 @@ export default function ProfileScreen() {
           <View style={styles.skillsCloud}>
             {techSkills.length === 0 && softSkills.length === 0 && (
               <Text style={[styles.roleDesc, { color: colors.textBody }]}>No skills added yet.</Text>
-            )}
+            ) }
             {techSkills.map((skill, i) => renderSkillPill(skill, 'primary'))}
             {softSkills.map((skill, i) => renderSkillPill(skill, 'secondary'))}
           </View>
@@ -440,14 +509,20 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.settingsGrid}>
-          <TouchableOpacity style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}>
+          <TouchableOpacity 
+            style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
+            onPress={handleAccountSettingsPress}
+          >
             <View style={[styles.settingsIconBox, { backgroundColor: colors.bgPrimary }]}>
                <Ionicons name="settings-outline" size={20} color={colors.textMuted} />
             </View>
             <Text style={[styles.settingsText, { color: colors.textPrimary }]}>Account Settings</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}>
+          <TouchableOpacity 
+            style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
+            onPress={() => Linking.openURL('mailto:support@interviewready.app')}
+          >
             <View style={[styles.settingsIconBox, { backgroundColor: colors.bgPrimary }]}>
                <Ionicons name="help-circle-outline" size={20} color={colors.textMuted} />
             </View>
@@ -455,19 +530,12 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={{ marginTop: Spacing.xl, gap: Spacing.md }}>
+        <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.xl }}>
           <Button 
             title="Sign Out" 
             variant="outline" 
             onPress={handleSignOut} 
             fullWidth
-          />
-          <Button 
-            title={deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
-            variant="danger" 
-            onPress={handleDeleteAccount} 
-            fullWidth
-            disabled={deleteAccountMutation.isPending}
           />
         </View>
 

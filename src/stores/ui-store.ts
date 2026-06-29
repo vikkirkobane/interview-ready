@@ -6,6 +6,10 @@ interface UIState {
   // Theme — default is dark
   isDark: boolean;
   setIsDark: (v: boolean) => void;
+  
+  // Notifications
+  notificationsEnabled: boolean;
+  setNotificationsEnabled: (v: boolean) => void;
 
   // Loading states for AI operations
   isAnalyzing: boolean;
@@ -31,6 +35,10 @@ export const useUIStore = create<UIState>()(
       isDark: true,
       setIsDark: (v) => set({ isDark: v }),
 
+      // Notifications default to true
+      notificationsEnabled: true,
+      setNotificationsEnabled: (v) => set({ notificationsEnabled: v }),
+
       isAnalyzing: false,
       isGeneratingResume: false,
       isGeneratingCoverLetter: false,
@@ -46,8 +54,11 @@ export const useUIStore = create<UIState>()(
     {
       name: 'ui-preferences',
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist the theme preference
-      partialize: (state) => ({ isDark: state.isDark }),
+      // Only persist the theme and notification preferences
+      partialize: (state) => ({ 
+        isDark: state.isDark,
+        notificationsEnabled: state.notificationsEnabled 
+      }),
     }
   )
 );

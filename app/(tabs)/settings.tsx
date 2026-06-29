@@ -6,16 +6,34 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useUIStore } from '../../src/stores/ui-store';
+import { useProfileStore } from '../../src/stores/profile-store';
+import { useDashboardStore } from '../../src/stores/dashboard-store';
+import * as Linking from 'expo-linking';
+import Toast from 'react-native-toast-message';
 
 declare var window: any;
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const { setIsDark } = useUIStore();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const { setIsDark, notificationsEnabled, setNotificationsEnabled, setUpgradeModal } = useUIStore();
+  const { user } = useAuthStore();
+  const { profile } = useProfileStore();
+  const { stats } = useDashboardStore();
 
   const signOut = () => useAuthStore.getState().signOut();
+
+  // Dynamic user data
+  const email = user?.email || 'user@example.com';
+  const name = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Your Account';
+  const initials = name
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'IR';
+
+  const credits = stats?.creditsAvailable ?? 0;
 
   const handleLogout = async () => {
     if (Platform.OS === 'web') {
@@ -32,7 +50,7 @@ export default function SettingsScreen() {
             text: "Log Out", 
             style: "destructive",
             onPress: async () => {
-              await useAuthStore.getState().signOut();
+              await signOut();
             }
           }
         ]
@@ -46,10 +64,10 @@ export default function SettingsScreen() {
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.avatarText, { color: colors.textInverse }]}>JD</Text>
+          <Text style={[styles.avatarText, { color: colors.textInverse }]}>{initials}</Text>
         </View>
-        <Text style={[styles.nameText, { color: colors.textPrimary }]}>John Doe</Text>
-        <Text style={[styles.emailText, { color: colors.textSecondary }]}>john.doe@example.com</Text>
+        <Text style={[styles.nameText, { color: colors.textPrimary }]}>{name}</Text>
+        <Text style={[styles.emailText, { color: colors.textSecondary }]}>{email}</Text>
         <Button 
           title="Edit Profile" 
           variant="outline" 
@@ -72,14 +90,14 @@ export default function SettingsScreen() {
         
         <View style={styles.creditsRow}>
           <Text style={[styles.creditsLabel, { color: colors.textPrimary }]}>Available Credits</Text>
-          <Text style={[styles.creditsValue, { color: colors.primary }]}>14</Text>
+          <Text style={[styles.creditsValue, { color: colors.primary }]}>{credits}</Text>
         </View>
         
         <Button 
           title="Upgrade to Pro" 
           variant="primary" 
           style={{ marginTop: Spacing.md }}
-          onPress={() => {}}
+          onPress={() => setUpgradeModal(true)}
         />
       </Card>
 
@@ -120,20 +138,20 @@ export default function SettingsScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </View>
           }
-          onPress={() => {}}
+          onPress={() => Toast.show({ type: 'info', text1: 'Language selector coming soon!' })}
         />
       </Card>
 
       {/* Support & Legal */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support & Legal</Text>
       <Card style={[styles.settingsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-        <SettingRow title="Help Center & FAQ" onPress={() => {}} />
+        <SettingRow title="Help Center & FAQ" onPress={() => Linking.openURL('https://interviewready.app/faq')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Contact Support" onPress={() => {}} />
+        <SettingRow title="Contact Support" onPress={() => Linking.openURL('mailto:support@interviewready.app')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Privacy Policy" onPress={() => {}} />
+        <SettingRow title="Privacy Policy" onPress={() => Linking.openURL('https://interviewready.app/privacy')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Terms of Service" onPress={() => {}} />
+        <SettingRow title="Terms of Service" onPress={() => Linking.openURL('https://interviewready.app/terms')} />
       </Card>
 
       {/* Danger Zone */}
@@ -144,16 +162,6 @@ export default function SettingsScreen() {
           title="Log Out"
           titleStyle={{ color: colors.error }}
           onPress={handleLogout}
-          hideChevron
-        />
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow 
-          iconName="trash-outline"
-          title="Delete Account"
-          titleStyle={{ color: colors.error }}
-          onPress={() => {
-            Alert.alert("Delete Account", "This action cannot be undone. All your data will be permanently deleted.")
-          }}
           hideChevron
         />
       </Card>
