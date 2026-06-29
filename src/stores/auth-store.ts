@@ -9,6 +9,10 @@ import { useDashboardStore } from './dashboard-store';
 import { useNotificationStore } from './notification-store';
 import { usePreviewStore } from '../store/previewStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
+
+WebBrowser.maybeCompleteAuthSession();
 
 // Holds the auth listener subscription so it can be cleaned up on re-initialization
 let authSubscription: (() => void) | null = null;
@@ -127,13 +131,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithOAuth: async (provider) => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectTo = makeRedirectUri({
+        scheme: 'interviewready',
+        path: 'auth/callback',
+      });
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: 'interviewready://auth/callback',
+          redirectTo,
+          skipBrowserRedirect: true, // Let WebBrowser handle it
         },
       });
-      return { error: error?.message ?? null };
+      
+      if (error) return { error: error.message };
+      
+      if (data?.url) {
+        const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        
+        if (res.type === 'success') {
+          const { url } = res;
+          // Capture the session directly from the returned URL
+          const { error: sessionError } = await supabase.auth.getSessionFromUrl(url);
+          if (sessionError) return { error: sessionError.message };
+          return { error: null };
+        } else {
+          return { error: 'Authentication canceled.' };
+        }
+      }
+      return { error: 'No URL returned from Supabase.' };
     } catch (err: any) {
       return { error: err.message };
     }

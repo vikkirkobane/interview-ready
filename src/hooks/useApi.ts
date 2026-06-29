@@ -274,22 +274,89 @@ export const useCreateCoverLetterMutation = () => {
   });
 };
 
+// ── LinkedIn Types ────────────────────────────────────────────────────────────
+
+export type LinkedInSpikeInput = {
+  differentiator: string;
+  praised_for: string;
+  problems_solved: string;
+};
+
+export type LinkedInTone = 'PROFESSIONAL' | 'APPROACHABLE' | 'DATA_DRIVEN' | 'NARRATIVE' | 'INSPIRATIONAL';
+
+export type LinkedInSection =
+  | 'HEADLINE'
+  | 'ABOUT'
+  | 'EXPERIENCE_BULLETS'
+  | 'SKILLS'
+  | 'FEATURED'
+  | 'OUTREACH_KIT';
+
+/**
+ * Analyse the user's LinkedIn profile sections.
+ * Implements Master Prompt Steps 2A (keyword intel) + 1C (SPIKE) + 3 (scoring).
+ */
 export const useLinkedinAnalyzeMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { profile_url: string; target_role?: string }) => {
+    mutationFn: async (payload: {
+      // Profile content (manually pasted by user)
+      headline?: string;
+      about?: string;
+      experience?: { title: string; company: string; description: string }[];
+      skills?: string[];
+      // Strategic context (from intake wizard)
+      target_roles: string[];
+      target_companies?: string[];
+      years_experience?: number;
+      spike?: LinkedInSpikeInput;
+      tone?: LinkedInTone;
+    }) => {
       const response = await apiCall('linkedin-analyze', 'POST', payload);
       if (response.error) throw new Error(response.error);
-      return response.data; // { score, improvements }
+      return response.data as { analysis: any; message: string };
     },
   });
 };
 
+/**
+ * Optimise a specific LinkedIn section using Master Prompt Step 3 formulas.
+ * Each section returns its own structured result.
+ */
 export const useLinkedinOptimizeMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { section: string; current_text: string }) => {
+    mutationFn: async (payload: {
+      section: LinkedInSection;
+      current_content?: string;
+      work_history?: { title: string; company: string; description: string }[];
+      target_roles: string[];
+      target_companies?: string[];
+      years_experience?: number;
+      spike?: LinkedInSpikeInput;
+      tone?: LinkedInTone;
+    }) => {
       const response = await apiCall('linkedin-optimize', 'POST', payload);
       if (response.error) throw new Error(response.error);
-      return response.data; // { optimized_text }
+      return response.data as { result: any; section: string; message: string };
+    },
+  });
+};
+
+/**
+ * Optional add-on: Generate a 30-day LinkedIn engagement plan.
+ * Master Prompt Step 5 — costs extra credits.
+ */
+export const useLinkedinEngagementPlanMutation = () => {
+  return useMutation({
+    mutationFn: async (payload: {
+      target_roles: string[];
+      target_companies?: string[];
+      industry?: string;
+      tone?: LinkedInTone;
+      top_achievement?: string;
+    }) => {
+      const response = await apiCall('linkedin-engagement-plan', 'POST', payload);
+      if (response.error) throw new Error(response.error);
+      return response.data as { plan: any; message: string };
     },
   });
 };

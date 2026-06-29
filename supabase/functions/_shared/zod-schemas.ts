@@ -259,33 +259,192 @@ export const INTERVIEW_SCORE_SCHEMA = z.object({
 
 export type InterviewScore = z.infer<typeof INTERVIEW_SCORE_SCHEMA>;
 
-// ─── LINKEDIN OPTIMIZER ──────────────────────────────────────────────────
+// ─── LINKEDIN OPTIMIZER ──────────────────────────────────────────────────────
 
+/**
+ * LINKEDIN_ANALYSIS_SCHEMA
+ * Returned by linkedin-analyze.
+ * Implements Master Prompt Steps 2A (keyword research), 1C (SPIKE), and 3 (scoring).
+ */
 export const LINKEDIN_ANALYSIS_SCHEMA = z.object({
+  // ── Section scores (0-100) ────────────────────────────────────────────────
   section_scores: z.object({
-    headline: z.number().min(0).max(100),
-    about: z.number().min(0).max(100),
+    headline:   z.number().min(0).max(100),
+    about:      z.number().min(0).max(100),
     experience: z.number().min(0).max(100),
-    skills: z.number().min(0).max(100),
+    skills:     z.number().min(0).max(100),
   }),
-  
+
   overall_score: z.number().min(0).max(100),
-  
+
+  /** Predicted score after implementing all AI suggestions */
+  estimated_score_after_optimization: z.number().min(0).max(100),
+
+  // ── Issues per section ────────────────────────────────────────────────────
   issues: z.object({
-    headline: z.array(z.string()).optional(),
-    about: z.array(z.string()).optional(),
+    headline:   z.array(z.string()).optional(),
+    about:      z.array(z.string()).optional(),
     experience: z.array(z.string()).optional(),
-    skills: z.array(z.string()).optional(),
+    skills:     z.array(z.string()).optional(),
   }),
-  
+
+  // ── Keyword Intelligence (Master Prompt Step 2A) ──────────────────────────
+  keyword_intelligence: z.object({
+    /**
+     * Top 15 recruiter-searched keywords for the target role(s).
+     * Categorised as ROLE_TITLE / SKILL / IMPACT / INDUSTRY.
+     */
+    top_keywords: z.array(z.object({
+      keyword:            z.string(),
+      category:           z.enum(['ROLE_TITLE', 'SKILL', 'IMPACT', 'INDUSTRY']),
+      present_in_profile: z.boolean(),
+    })).max(15),
+    /** High-priority keywords completely absent from the current profile */
+    missing_high_priority: z.array(z.string()),
+  }),
+
+  // ── SPIKE Differentiator (Master Prompt Step 1C) ──────────────────────────
+  spike: z.object({
+    /** The one thing that sets this candidate apart */
+    identified_differentiator: z.string(),
+    /** Concise value proposition derived from differentiator + experience */
+    unique_value_proposition:  z.string(),
+  }).optional(),
+
+  // ── Quick one-line suggestions (backward compat) ─────────────────────────
   suggestions: z.object({
-    headline: z.string().optional(),
-    about: z.string().optional(),
+    headline:           z.string().optional(),
+    about:              z.string().optional(),
     experience_bullets: z.array(z.string()).optional(),
   }),
 });
 
 export type LinkedInAnalysis = z.infer<typeof LINKEDIN_ANALYSIS_SCHEMA>;
+
+// ─── LINKEDIN HEADLINE (Master Prompt Step 3 – Headline) ─────────────────────
+/**
+ * 3 headline variants following the universal formula:
+ * [Target Role] | [Specialty] | [Quantified Metric] | [Differentiator]
+ * Each variant has a distinct strategic focus.
+ */
+export const LINKEDIN_HEADLINE_SCHEMA = z.object({
+  variants: z.array(z.object({
+    /** The headline text — must be ≤ 220 characters */
+    text:      z.string().max(220),
+    /** Why this option was written this way */
+    rationale: z.string(),
+    /** Primary optimisation axis */
+    focus:     z.enum(['SEARCH_RANK', 'DIFFERENTIATION', 'IMPACT_METRIC']),
+  })).length(3),
+});
+
+export type LinkedInHeadline = z.infer<typeof LINKEDIN_HEADLINE_SCHEMA>;
+
+// ─── LINKEDIN ABOUT (Master Prompt Step 3 – About Section) ───────────────────
+/**
+ * Full About / Summary section rewrite using the formula:
+ * Hook → Credibility → Value Delivery Framework → Human Element → CTA
+ */
+export const LINKEDIN_ABOUT_SCHEMA = z.object({
+  /** The full ready-to-paste About section (≤ 2600 characters LinkedIn limit) */
+  content: z.string().max(2600),
+  /** Map of keywords embedded, with placement notes for the user */
+  keyword_map: z.array(z.object({
+    keyword:   z.string(),
+    placement: z.string(), // e.g. "opening hook", "value delivery bullet 2"
+  })),
+});
+
+export type LinkedInAbout = z.infer<typeof LINKEDIN_ABOUT_SCHEMA>;
+
+// ─── LINKEDIN EXPERIENCE (Master Prompt Step 3 – Experience Bullets) ─────────
+/**
+ * Per-role rewrite using the bolded-outcome formula:
+ * **[Quantified Outcome]**: [Action Verb] + [Scope] + [Methodology] + [Impact]
+ */
+export const LINKEDIN_EXPERIENCE_SCHEMA = z.object({
+  rewritten_roles: z.array(z.object({
+    title:   z.string(),
+    company: z.string(),
+    /** Each bullet starts with a **bolded quantified outcome**: … */
+    bullets: z.array(z.string()),
+  })),
+});
+
+export type LinkedInExperience = z.infer<typeof LINKEDIN_EXPERIENCE_SCHEMA>;
+
+// ─── LINKEDIN SKILLS (Master Prompt Step 3 – Skills Section) ─────────────────
+/**
+ * Strategic skills list: top-5 pinned skills + categorised full list (30-50+).
+ */
+export const LINKEDIN_SKILLS_SCHEMA = z.object({
+  /** The 5 skills to pin — ordered by recruiter search priority */
+  pinned_top_5: z.array(z.string()).length(5),
+  /** Full categorised list for maximum Boolean-search coverage */
+  categorized: z.object({
+    core_technical:  z.array(z.string()),
+    industry_domain: z.array(z.string()),
+    tools_platforms: z.array(z.string()),
+    leadership:      z.array(z.string()),
+    soft_skills:     z.array(z.string()),
+  }),
+});
+
+export type LinkedInSkills = z.infer<typeof LINKEDIN_SKILLS_SCHEMA>;
+
+// ─── LINKEDIN FEATURED (Master Prompt Step 3 – Featured Section) ──────────────
+/**
+ * 3-5 proof artifact recommendations ordered by impact.
+ */
+export const LINKEDIN_FEATURED_SCHEMA = z.object({
+  recommended_items: z.array(z.object({
+    type:        z.enum(['CREDENTIAL', 'PORTFOLIO', 'CASE_STUDY', 'CERTIFICATION', 'THOUGHT_LEADERSHIP']),
+    /** Keyword-rich title for the featured card */
+    title:       z.string(),
+    /** 1-2 sentence description focused on relevance and impact */
+    description: z.string(),
+    /** Clear CTA text e.g. "View case study", "Download portfolio" */
+    cta:         z.string(),
+  })).min(3).max(5),
+});
+
+export type LinkedInFeatured = z.infer<typeof LINKEDIN_FEATURED_SCHEMA>;
+
+// ─── LINKEDIN OUTREACH KIT (Master Prompt Step 5) ────────────────────────────
+/**
+ * 3 customisable recruiter/hiring manager message templates.
+ */
+export const LINKEDIN_OUTREACH_SCHEMA = z.object({
+  /** For responding to an inbound recruiter message */
+  inbound_response: z.string(),
+  /** For proactive outreach to a hiring manager at a target company */
+  proactive_outreach: z.string(),
+  /** For requesting a referral from a mutual connection */
+  referral_request: z.string(),
+});
+
+export type LinkedInOutreach = z.infer<typeof LINKEDIN_OUTREACH_SCHEMA>;
+
+// ─── LINKEDIN ENGAGEMENT PLAN (Master Prompt Step 5 – Optional Add-on) ───────
+/**
+ * 30-day content + networking engagement plan.
+ * Generated by the separate linkedin-engagement-plan edge function.
+ */
+export const LINKEDIN_ENGAGEMENT_SCHEMA = z.object({
+  weeks: z.array(z.object({
+    week_label: z.string(), // e.g. "Week 1-2: Profile Launch"
+    theme:      z.string(),
+    tasks:      z.array(z.object({
+      day:         z.string(), // e.g. "Day 1", "Day 3-4"
+      action:      z.string(),
+      time_needed: z.string(), // e.g. "10 min"
+      type:        z.enum(['POST', 'COMMENT', 'CONNECT', 'PUBLISH', 'UPDATE', 'OUTREACH']),
+    })),
+  })),
+  monthly_cadence: z.array(z.string()),
+});
+
+export type LinkedInEngagementPlan = z.infer<typeof LINKEDIN_ENGAGEMENT_SCHEMA>;
 
 // ─── ELEVATOR PITCH ──────────────────────────────────────────────────────
 

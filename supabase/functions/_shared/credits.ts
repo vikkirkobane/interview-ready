@@ -15,8 +15,10 @@ const CREDIT_COSTS = {
   MOCK_INTERVIEW: 0,
   LINKEDIN_ANALYSIS: 0,
   LINKEDIN_SECTION_OPTIMIZE: 0,
+  LINKEDIN_ENGAGEMENT_PLAN: 0,   // Optional 30-day plan add-on
   PROFILE_ANALYSIS: 0,
 } as const;
+
 
 export type CreditType = keyof typeof CREDIT_COSTS;
 
