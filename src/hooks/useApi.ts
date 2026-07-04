@@ -64,6 +64,8 @@ export const useAnalyzeJobMutation = () => {
     },
   });
 };
+
+/**
  * Create Resume Mutation
  */
 export const useCreateResumeMutation = () => {

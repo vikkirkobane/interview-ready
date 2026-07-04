@@ -12,9 +12,9 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Typography, Spacing, Radius, Shadow, useTheme } from '../src/theme';
-import { ScoreRing } from '../src/components/ui';
-import { useInterviewFeedbackMutation } from '../src/hooks/useApi';
+import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+import { ScoreRing } from '../../src/components/ui';
+import { useInterviewFeedbackMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -83,7 +83,7 @@ export default function FeedbackScreen() {
     return (
       <View style={[styles.flex, { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgSecondary }]}>
         <Ionicons name="alert-circle-outline" size={48} color={colors.warning} />
-        <Text style={{ marginTop: 16, color: colors.textPrimary, ...Typography.titleLg }}>No Feedback Available</Text>
+        <Text style={{ marginTop: 16, color: colors.textPrimary, ...Typography.headingLg }}>No Feedback Available</Text>
         <Text style={{ marginTop: 8, color: colors.textMuted, textAlign: 'center', marginHorizontal: Spacing.xl }}>
           We couldn't generate feedback for this interview. It might have been too short or encountered an error.
         </Text>

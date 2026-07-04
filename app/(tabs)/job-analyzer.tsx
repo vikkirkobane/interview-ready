@@ -32,7 +32,7 @@ export default function JobFitScreen() {
   
   const analyzeJob = useAnalyzeJobMutation();
   const parseResume = useParseResumeMutation();
-  const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery(5);
+  const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery();
 
   const handleUploadResume = async () => {
     try {
@@ -115,7 +115,7 @@ export default function JobFitScreen() {
       });
       
       // Navigate to standalone results screen
-      router.push(`/job-match-results?id=${result.id}`);
+      router.push(`/job-match-results?id=${result.id}` as any);
     } catch (error: any) {
       if (error.message.includes('extract content from the provided URL') || error.message.includes('URL')) {
         setUrlError(error.message);
@@ -220,7 +220,7 @@ export default function JobFitScreen() {
                     <TouchableOpacity
                       key={match.id}
                       style={[styles.matchListItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-                      onPress={() => router.push(`/job-match-results?id=${match.id}`)}
+                      onPress={() => router.push(`/job-match-results?id=${match.id}` as any)}
                     >
                       <View style={[styles.matchIcon, { backgroundColor: `${colors.primary}15` }]}>
                         <Ionicons name="search" size={20} color={colors.primary} />

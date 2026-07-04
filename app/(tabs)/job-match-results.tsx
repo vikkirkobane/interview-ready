@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../src/theme';
-import { ScoreRing } from '../src/components/ui';
-import { useBreakpoint } from '../src/hooks/useBreakpoint';
-import { useJobApplicationQuery } from '../src/hooks/useApi';
+import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+import { ScoreRing } from '../../src/components/ui';
+import { useBreakpoint } from '../../src/hooks/useBreakpoint';
+import { useJobApplicationQuery } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -177,7 +177,7 @@ export default function JobMatchResultsScreen() {
           </View>
 
           <View style={[styles.inventoryGrid, { flexDirection: isDesktop ? 'row' : 'column' }]}>
-            {(analysisResult?.match_analysis?.length > 0) ? (
+            {(analysisResult?.match_analysis && analysisResult.match_analysis.length > 0) ? (
               analysisResult?.match_analysis?.map((item: any, idx: number) => {
                 let icon;
                 let color;

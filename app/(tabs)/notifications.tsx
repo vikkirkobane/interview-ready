@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
-import { Typography, Spacing, Radius, Shadow, useTheme } from '../src/theme';
+import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useRouter } from 'expo-router';
-import { useNotificationStore, AppNotification } from '../src/stores/notification-store';
-import { useAuthStore } from '../src/stores/auth-store';
-import { useProfileStore } from '../src/stores/profile-store';
+import { useNotificationStore, AppNotification } from '../../src/stores/notification-store';
+import { useAuthStore } from '../../src/stores/auth-store';
+import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
 
 const timeAgo = (dateStr: string) => {

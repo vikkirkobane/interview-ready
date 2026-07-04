@@ -586,7 +586,7 @@ export default function ResumeBuilderScreen() {
                   ]}
                   onPress={() => setSelectedTemplateId(t.id)}
                 >
-                  <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16 }}>{t.name}</Text>
+                  <Text style={{ color: colors.textPrimary, fontWeight: '600', fontSize: 16 }}>{t.name}</Text>
                   <Text style={{ color: colors.textMuted, fontSize: 12, marginTop: 4 }}>{t.description}</Text>
                   {t.isPremium && (
                     <View style={{ backgroundColor: '#FFD70030', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: 'flex-start', marginTop: 8 }}>
@@ -1181,7 +1181,7 @@ export default function ResumeBuilderScreen() {
             );
           })}
         </View>
-
+        )}
         {/* Awards */}
         {draft?.sections_to_include?.recognition !== false && (
         <View style={styles.sectionCard}>

@@ -112,7 +112,7 @@ export default function TrackerScreen() {
             
             {selectedApp && (
               <ScrollView style={{ marginTop: Spacing.md }}>
-                <Text style={[Typography.displaySm, { color: colors.textPrimary }]}>{selectedApp.job_title}</Text>
+                <Text style={[Typography.displayMd, { color: colors.textPrimary }]}>{selectedApp.job_title}</Text>
                 <Text style={[Typography.bodyLg, { color: colors.textMuted, marginBottom: Spacing.xl }]}>{selectedApp.company} {selectedApp.location ? ` ${selectedApp.location}` : ""}</Text>
 
                 <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Status</Text>
@@ -165,7 +165,7 @@ export default function TrackerScreen() {
                 <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Quick Actions</Text>
                 <View style={{ flexDirection: 'column', gap: Spacing.md, paddingBottom: Spacing.xxl }}>
                   <TouchableOpacity 
-                    style={[styles.secondaryBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                    style={[{ backgroundColor: colors.bgSecondary, borderColor: colors.border, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
                     onPress={() => {
                       setSelectedApp(null);
                       router.push({
@@ -260,7 +260,6 @@ export default function TrackerScreen() {
              <ActivityIndicator size="large" color={colors.primary} />
            </View>
         ) : (
-          {/* Kanban Board */}
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false} 
@@ -435,7 +434,7 @@ const styles = StyleSheet.create({
     ...Typography.headingLg,
   },
   inputLabel: {
-    ...Typography.headingSm,
+    ...Typography.headingMd,
     marginBottom: Spacing.xs,
   },
   input: {

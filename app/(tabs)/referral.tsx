@@ -1,23 +1,47 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Button } from '../../src/components/ui';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+import { useReferral } from '../../src/hooks/useReferral';
 
 export default function ReferralScreen() {
   const { colors } = useTheme();
-  const referralCode = 'ALEXPRO24'; // Mock
+  const { stats, loading } = useReferral();
 
   const handleCopyCode = async () => {
-    await Clipboard.setStringAsync(referralCode);
+    if (!stats?.referralCode) return;
+    
+    await Clipboard.setStringAsync(stats.referralCode);
     Toast.show({
       type: 'success',
       text1: 'Copied!',
       text2: 'Referral code copied to clipboard.',
     });
   };
+
+  const handleShare = async () => {
+    if (!stats?.referralCode) return;
+    
+    try {
+      await Share.share({
+        message: `Join Interview Ready and get 10 free AI credits! Use my referral code: ${stats.referralCode}\n\nDownload now: https://interviewready.app`,
+        title: 'Join Interview Ready',
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.flex, styles.center, { backgroundColor: colors.bgSecondary }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
@@ -35,7 +59,7 @@ export default function ReferralScreen() {
         <View style={[styles.codeCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
           <Text style={[styles.codeLabel, { color: colors.textMuted }]}>YOUR REFERRAL CODE</Text>
           <View style={[styles.codeRow, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
-            <Text style={[styles.codeText, { color: colors.textPrimary }]}>{referralCode}</Text>
+            <Text style={[styles.codeText, { color: colors.textPrimary }]}>{stats?.referralCode || 'Loading...'}</Text>
             <TouchableOpacity onPress={handleCopyCode} style={{ padding: Spacing.sm }}>
                <Text style={{ color: colors.primary, ...Typography.headingMd }}>Copy</Text>
             </TouchableOpacity>
@@ -44,10 +68,27 @@ export default function ReferralScreen() {
 
         <Button 
           title="Share Invite Link"
-          onPress={() => {}}
+          onPress={handleShare}
           fullWidth
           style={{ marginBottom: Spacing.xl }}
+          disabled={!stats?.referralCode}
         />
+
+        {stats && stats.totalReferrals > 0 && (
+          <View style={[styles.statsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
+            <Text style={[styles.statsTitle, { color: colors.textPrimary }]}>Your Referral Stats</Text>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{stats.totalReferrals}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Referrals</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{stats.creditsEarned}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Credits Earned</Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         <View style={[styles.howItWorksCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
           <Text style={[styles.howTitle, { color: colors.textPrimary }]}>How it works</Text>
@@ -93,6 +134,7 @@ export default function ReferralScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  center: { justifyContent: 'center', alignItems: 'center' },
   container: {
     padding: Spacing.lg,
     paddingTop: Spacing.xxl,
@@ -187,6 +229,31 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     borderLeftWidth: 2,
     borderStyle: 'dashed',
-    borderColor: '#ccc', // generic fallback or use theme border
+    borderColor: '#ccc',
+  },
+  statsCard: {
+    padding: Spacing.xl,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    ...Shadow.sm,
+  },
+  statsTitle: {
+    ...Typography.headingLg,
+    marginBottom: Spacing.lg,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    ...Typography.displayMd,
+    marginBottom: Spacing.xs,
+  },
+  statLabel: {
+    ...Typography.bodyMd,
   },
 });

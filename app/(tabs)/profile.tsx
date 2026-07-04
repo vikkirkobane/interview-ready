@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal, TextInput, Linking } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing, Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -9,6 +9,9 @@ import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
+import { useDashboardStore } from '../../src/stores/dashboard-store';
+import { useUIStore } from '../../src/stores/ui-store';
+declare const window: any;
 
 interface WorkHistoryItem {
   id?: string;

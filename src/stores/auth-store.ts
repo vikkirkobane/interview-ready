@@ -152,6 +152,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (res.type === 'success') {
           const { url } = res;
           // Capture the session directly from the returned URL
+          // @ts-ignore
           const { error: sessionError } = await supabase.auth.getSessionFromUrl(url);
           if (sessionError) return { error: sessionError.message };
           return { error: null };

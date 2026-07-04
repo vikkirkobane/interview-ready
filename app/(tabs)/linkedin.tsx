@@ -513,7 +513,7 @@ export default function LinkedinOptimizerScreen() {
           <FieldLabel label="What sets you apart from other candidates?" colors={colors} />
           <Text style={[s.hint, { color: colors.textMuted }]}>The one thing no one else can easily replicate about your background.</Text>
           <TextInput style={[s.input, s.multilineSm, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
-            placeholder='e.g. "I\'m the only PM with both an engineering degree and 5 years in emerging markets fintech"'
+            placeholder={"e.g. \"I'm the only PM with both an engineering degree and 5 years in emerging markets fintech\""}
             placeholderTextColor={colors.textMuted} multiline
             value={wizard.spike.differentiator}
             onChangeText={(v) => setWizard(w => ({ ...w, spike: { ...w.spike, differentiator: v } }))} />

@@ -31,7 +31,7 @@ export default function DashboardScreen() {
 
   const userName = user?.user_metadata?.first_name || 'Alex';
   const credits = 24; // Mock
-  const completeness = profile?.profile_completeness ?? profile?.profileCompleteness ?? 0;
+  const completeness = profile?.profileCompleteness ?? 0;
 
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
@@ -220,7 +220,7 @@ export default function DashboardScreen() {
         <View style={styles.feedSection}>
           <View style={styles.feedHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/activities')}>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/activities' as any)}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>SEE ALL</Text>
             </TouchableOpacity>
           </View>
@@ -230,10 +230,10 @@ export default function DashboardScreen() {
           ) : recentActivities && recentActivities.length > 0 ? (
             recentActivities.map((activity, i) => {
               const handlePress = () => {
-                if (activity.type === 'resume') router.push(`/(tabs)/new-resume?id=${activity.id}`);
-                else if (activity.type === 'cover_letter') router.push(`/(tabs)/cover-letter?id=${activity.id}`);
-                else if (activity.type === 'job_match') router.push(`/job-match-results?id=${activity.id}`);
-                else if (activity.type === 'interview') router.push(`/feedback?id=${activity.id}`);
+                if (activity.type === 'resume') router.push(`/(tabs)/new-resume?id=${activity.id}` as any);
+                else if (activity.type === 'cover_letter') router.push(`/(tabs)/cover-letter?id=${activity.id}` as any);
+                else if (activity.type === 'job_match') router.push(`/job-match-results?id=${activity.id}` as any);
+                else if (activity.type === 'interview') router.push(`/feedback?id=${activity.id}` as any);
               };
 
               return (

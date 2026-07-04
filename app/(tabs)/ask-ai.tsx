@@ -70,7 +70,7 @@ export default function AskAIScreen() {
               code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
               heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
               heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
-              heading3: { ...Typography.headingSm, color: colors.textPrimary, marginVertical: Spacing.xs },
+              heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
               paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
               list_item: { ...Typography.bodyMd, color: colors.textPrimary },
               link: { color: colors.primary, textDecorationLine: 'underline' },
