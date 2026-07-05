@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useAnswerQuestionMutation } from '../../src/hooks/useApi';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,6 +18,23 @@ export default function AskAIScreen() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const answerQuestionMutation = useAnswerQuestionMutation();
 
@@ -93,7 +110,7 @@ export default function AskAIScreen() {
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: colors.bgSecondary }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={90}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 120}
     >
       <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
         
@@ -117,7 +134,16 @@ export default function AskAIScreen() {
         )}
       </ScrollView>
       
-      <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
+      <View style={[
+        styles.inputArea, 
+        { 
+          backgroundColor: colors.bgPrimary, 
+          borderTopColor: colors.border,
+          paddingBottom: keyboardVisible 
+            ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) 
+            : 100 // Safe area offset above the absolutely positioned bottom tab nav (height 72 + margin)
+        }
+      ]}>
         <View style={styles.inputRow}>
           <TextInput 
              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
@@ -210,7 +236,6 @@ const styles = StyleSheet.create({
   },
   inputArea: { 
     padding: Spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? Spacing.xl : Spacing.md,
     borderTopWidth: 1, 
   },
   inputRow: { 
