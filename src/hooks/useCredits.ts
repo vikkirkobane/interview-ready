@@ -198,17 +198,18 @@ export function useCredits() {
 
   // Initial fetch
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBalance();
   }, [fetchBalance]);
 
   // Subscribe to credit balance changes
   useEffect(() => {
-    const { data: { user } } = supabase.auth.getUser();
-    
-    user.then((result) => {
-      if (!result.user) return;
+    let channel: any = null;
 
-      const channel = supabase
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      channel = supabase
         .channel('credit-changes')
         .on(
           'postgres_changes',
@@ -216,7 +217,7 @@ export function useCredits() {
             event: '*',
             schema: 'public',
             table: 'credit_transactions',
-            filter: `user_id=eq.${result.user.id}`,
+            filter: `user_id=eq.${user.id}`,
           },
           () => {
             // Refresh balance when transactions change
@@ -224,11 +225,13 @@ export function useCredits() {
           }
         )
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     });
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [fetchBalance]);
 
   return {

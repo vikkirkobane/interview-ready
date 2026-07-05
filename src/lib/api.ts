@@ -1,8 +1,8 @@
 import { supabase } from './supabase';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { router } from 'expo-router';
 
-declare var window: any;
+declare let window: any;
 
 /**
  * Helper to call Supabase Edge Functions with automatic auth header injection.

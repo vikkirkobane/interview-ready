@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, Clipboard } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
-import { useAnswerQuestionMutation } from '../../src/hooks/useApi';
+import { useAnswerQuestionMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import Toast from 'react-native-toast-message';
+import * as DocumentPicker from 'expo-document-picker';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
 export default function AskAIScreen() {
   const { colors } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
-    { 
-      id: '1', 
-      role: 'ai', 
-      text: 'Hello! Paste a job application question here and I will help you craft the perfect answer tailored from your profile or resume.' 
+    {
+      id: '1',
+      role: 'ai',
+      text: 'Hello! Paste a job application question here and I will help you craft the perfect answer tailored from your profile or resume.'
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [jdFileText, setJdFileText] = useState('');
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [extractJdLoading, setExtractJdLoading] = useState(false);
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -37,6 +41,7 @@ export default function AskAIScreen() {
     };
   }, []);
 
+  const extractJd = useExtractJdMutation();
   const answerQuestionMutation = useAnswerQuestionMutation();
 
   const copyToClipboard = (text: string) => {
@@ -48,9 +53,15 @@ export default function AskAIScreen() {
   };
 
   const handleSend = async () => {
-    if (!inputText.trim()) return;
+    // Determine final question: use file text if available, otherwise input text
+    const finalQuestion = jdFileText.trim().length > 0 ? jdFileText : inputText.trim();
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: inputText };
+    if (!finalQuestion) {
+      Toast.show({ type: 'error', text1: 'Question Required', text2: 'Please provide a question via text or file attachment.' });
+      return;
+    }
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: finalQuestion };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
     setIsTyping(true);
@@ -61,9 +72,9 @@ export default function AskAIScreen() {
         context_source: 'profile',
       });
 
-      const aiMsg: Message = { 
-        id: (Date.now() + 1).toString(), 
-        role: 'ai', 
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
         text: response.answer || "I generated an answer but it was empty."
       };
       setMessages(prev => [...prev, aiMsg]);
@@ -75,6 +86,62 @@ export default function AskAIScreen() {
     } finally {
       setIsTyping(false);
     }
+  };
+
+  // ── File Attachment Handlers ────────────────────────────────────────
+  const handleAttachJdFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
+        return;
+      }
+
+      const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
+      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        return;
+      }
+
+      setExtractJdLoading(true);
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType,
+        } as any);
+      }
+
+      const { extracted_text } = await extractJd.mutateAsync(formData);
+
+      setJdFileText(extracted_text);
+      setJdFileName(fileAsset.name);
+
+      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
+    } finally {
+      setExtractJdLoading(false);
+    }
+  };
+
+  const handleRemoveAttachedJd = () => {
+    setJdFileText('');
+    setJdFileName(null);
   };
 
   const renderMessage = (msg: Message) => {
@@ -169,7 +236,21 @@ export default function AskAIScreen() {
         }
       ]}>
         <View style={styles.inputRow}>
-          <TextInput 
+          <TouchableOpacity
+            style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}
+            onPress={handleAttachJdFile}
+            disabled={extractJdLoading}
+          >
+            {extractJdLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="attach" size={16} color={colors.primary} />
+                <Text style={styles.attachBtnText}>Attach file</Text>
+              </>
+            )}
+          </TouchableOpacity>
+          <TextInput
              style={[styles.textInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }]}
              placeholder="Paste application question here..."
              placeholderTextColor={colors.textMuted}
@@ -177,9 +258,9 @@ export default function AskAIScreen() {
              onChangeText={setInputText}
              multiline
           />
-          <TouchableOpacity 
-            style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() || isTyping) && { opacity: 0.5 }]} 
-            onPress={handleSend} 
+          <TouchableOpacity
+            style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() || isTyping) && { opacity: 0.5 }]}
+            onPress={handleSend}
             disabled={!inputText.trim() || isTyping}
           >
              <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
@@ -191,98 +272,110 @@ export default function AskAIScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
   },
-  chatArea: { 
-    flex: 1 
+  chatArea: {
+    flex: 1
   },
-  chatContent: { 
-    padding: Spacing.lg, 
+  chatContent: {
+    padding: Spacing.lg,
     paddingBottom: Spacing.xxl,
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',
   },
-  pageHeader: { 
-    marginBottom: Spacing.xl 
+  pageHeader: {
+    marginBottom: Spacing.xl
   },
-  pageTitle: { 
-    ...Typography.displayMd, 
-    marginBottom: 4 
+  pageTitle: {
+    ...Typography.displayMd,
+    marginBottom: 4
   },
-  pageSubtitle: { 
-    ...Typography.bodyMd, 
+  pageSubtitle: {
+    ...Typography.bodyMd,
   },
-  messageWrapper: { 
-    flexDirection: 'row', 
-    alignItems: 'flex-end', 
-    marginBottom: Spacing.md 
+  messageWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: Spacing.md
   },
-  messageWrapperUser: { 
-    justifyContent: 'flex-end' 
+  messageWrapperUser: {
+    justifyContent: 'flex-end'
   },
-  messageWrapperAi: { 
-    justifyContent: 'flex-start' 
+  messageWrapperAi: {
+    justifyContent: 'flex-start'
   },
-  avatarAi: { 
-    width: 28, 
-    height: 28, 
-    borderRadius: 14, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    marginRight: 8 
+  avatarAi: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8
   },
-  avatarUser: { 
-    width: 28, 
-    height: 28, 
-    borderRadius: 14, 
-    borderWidth: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    marginLeft: 8 
+  avatarUser: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8
   },
-  messageBubble: { 
-    maxWidth: '75%', 
-    padding: Spacing.md, 
-    borderRadius: Radius.lg 
-  },
-  messageBubbleAi: { 
-    borderBottomLeftRadius: 4, 
-    borderWidth: 1, 
-  },
-  messageBubbleUser: { 
-    borderBottomRightRadius: 4 
-  },
-  messageText: { 
-    ...Typography.bodyLg, 
-    lineHeight: 24 
-  },
-  inputArea: { 
+  messageBubble: {
+    maxWidth: '75%',
     padding: Spacing.md,
-    borderTopWidth: 1, 
+    borderRadius: Radius.lg
   },
-  inputRow: { 
-    flexDirection: 'row', 
-    alignItems: 'flex-end', 
-    gap: Spacing.sm 
+  messageBubbleAi: {
+    borderBottomLeftRadius: 4,
+    borderWidth: 1,
   },
-  textInput: { 
-    flex: 1, 
-    minHeight: 44, 
-    maxHeight: 120, 
-    borderRadius: Radius.md, 
-    borderWidth: 1, 
-    paddingHorizontal: Spacing.md, 
-    paddingTop: 12, 
-    paddingBottom: 12, 
-    ...Typography.bodyLg, 
+  messageBubbleUser: {
+    borderBottomRightRadius: 4
   },
-  sendBtn: { 
-    width: 44, 
-    height: 44, 
-    borderRadius: Radius.md, 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  }
+  messageText: {
+    ...Typography.bodyLg,
+    lineHeight: 24
+  },
+  inputArea: {
+    padding: Spacing.md,
+    borderTopWidth: 1,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.sm
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 120,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    paddingTop: 12,
+    paddingBottom: 12,
+    ...Typography.bodyLg,
+  },
+  sendBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  attachBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(107,70,254,0.08)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.md,
+  },
+  attachBtnText: {
+    ...Typography.label,
+    marginLeft: 4,
+  },
 });

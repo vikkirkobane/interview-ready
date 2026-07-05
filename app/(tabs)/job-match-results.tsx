@@ -32,7 +32,7 @@ export default function JobMatchResultsScreen() {
           onPress: async () => {
             try {
               await deleteMutation.mutateAsync(id as string);
-              router.replace('/(tabs)');
+              router.back();
             } catch (err) {
               Alert.alert('Error', 'Failed to delete analysis.');
             }

@@ -7,10 +7,9 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -18,7 +17,6 @@ import { useUpdateProfileMutation, useParseResumeMutation } from '../../src/hook
 import { supabase } from '../../src/lib/supabase';
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
-import { ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const SUGGESTED_SKILLS = [
@@ -29,14 +27,12 @@ const SUGGESTED_SKILLS = [
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const {
     currentRole, setCurrentRole,
     company, setCompany,
     skills, addSkill, removeSkill, setSkills,
   } = useOnboardingStore();
 
-  const [inputFocused, setInputFocused] = useState<'role' | 'company' | null>(null);
   const [hasResume, setHasResume] = useState(false);
   const { user } = useAuthStore();
 
@@ -149,11 +145,9 @@ export default function ProfileScreen() {
           company,
           title: currentRole || '',
           start_date: new Date().toISOString().split('T')[0],
-          current_role: targetRole, 
-        }],
-        resume_content: profileObj ? [{
-          ...profileObj,
-          parsed_at: new Date().toISOString()
+          end_date: null,
+          current: true,
+          description: ''
         }] : undefined,
       });
       

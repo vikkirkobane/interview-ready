@@ -296,7 +296,7 @@ export default function PricingScreen() {
         
         // Navigate to payment callback screen
         router.push({
-          pathname: '/payment/callback',
+          pathname: '/payment/callback' as any,
           params: {
             reference: data.data.reference,
           },

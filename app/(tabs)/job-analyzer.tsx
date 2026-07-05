@@ -121,7 +121,7 @@ export default function JobFitScreen() {
       }
 
       const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
-      if (!allowedTypes.includes(fileAsset.mimeType)) {
+      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
         Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
         return;
       }

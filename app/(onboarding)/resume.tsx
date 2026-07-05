@@ -26,7 +26,6 @@ import { Ionicons } from '@expo/vector-icons';
 export default function ResumeGenScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   
   // Stages: 0=Analyzing, 1=Matching, 2=Writing, 3=Formatting, 4=Done
   const [stage, setStage] = useState(0);
@@ -113,7 +112,8 @@ export default function ResumeGenScreen() {
       clearTimeout(t3);
       if (channel) supabase.removeChannel(channel);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisId, createResume, router]);
 
   const renderChecklistStep = (index: number, title: string, desc: string, isLast: boolean = false) => {
     const isCompleted = stage > index;

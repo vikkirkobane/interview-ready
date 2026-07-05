@@ -112,7 +112,7 @@ export default function FeedbackScreen() {
             try {
               if (!actualSessionId) return;
               await deleteMutation.mutateAsync(actualSessionId as string);
-              router.push('/(tabs)');
+              router.back();
             } catch (e: any) {
               Alert.alert('Error', e.message);
             }

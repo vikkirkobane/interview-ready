@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Animated, Easing, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { useStartInterviewMutation, useInterviewMessageMutation } from '../../src/hooks/useApi';
+import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
+import * as DocumentPicker from 'expo-document-picker';
 
 // Mock Message Data
 type Message = {
@@ -21,12 +22,16 @@ export default function InterviewScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
-  const [seconds, setSeconds] = useState(0); 
+  const [seconds, setSeconds] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [jdFileText, setJdFileText] = useState('');
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [extractJdLoading, setExtractJdLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const startMutation = useStartInterviewMutation();
   const messageMutation = useInterviewMessageMutation();
+  const extractJd = useExtractJdMutation();
 
   useEffect(() => {
     // Start interview session when screen mounts
@@ -37,8 +42,11 @@ export default function InterviewScreen() {
           interview_type: (type as string).toUpperCase().replace(' ', '_'),
           difficulty: (difficulty as string).toUpperCase()
         };
-        
-        if (jobDescription) {
+
+        // Use file text if available, otherwise use URL parameter
+        if (jdFileText.trim().length > 0) {
+          payload.job_description = jdFileText;
+        } else if (jobDescription) {
           payload.job_description = jobDescription;
         }
 
@@ -71,6 +79,62 @@ export default function InterviewScreen() {
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
     return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  // ── File Attachment Handlers ────────────────────────────────────────
+  const handleAttachJdFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
+        return;
+      }
+
+      const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
+      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        return;
+      }
+
+      setExtractJdLoading(true);
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType,
+        } as any);
+      }
+
+      const { extracted_text } = await extractJd.mutateAsync(formData);
+
+      setJdFileText(extracted_text);
+      setJdFileName(fileAsset.name);
+
+      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
+    } finally {
+      setExtractJdLoading(false);
+    }
+  };
+
+  const handleRemoveAttachedJd = () => {
+    setJdFileText('');
+    setJdFileName(null);
   };
 
   const handleSend = async () => {
@@ -249,8 +313,15 @@ export default function InterviewScreen() {
       {/* Bottom Input Area */}
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={[styles.micBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border, borderWidth: 1 }]}>
-            <Ionicons name="mic-outline" size={20} color={colors.textPrimary} />
+          <TouchableOpacity style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+            {extractJdLoading ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Ionicons name="attach" size={16} color={colors.primary} />
+                <Text style={styles.attachBtnText}>Attach file</Text>
+              </>
+            )}
           </TouchableOpacity>
           <View style={styles.inputWrapper}>
             <TextInput
@@ -262,6 +333,25 @@ export default function InterviewScreen() {
               onSubmitEditing={handleSend}
               returnKeyType="send"
             />
+
+            {/* Attached File Info */}
+            {jdFileName && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
+                  <Ionicons name="close-circle" size={16} color={colors.error} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Attach JD File Loading State */}
+            {extractJdLoading && (
+              <View style={{ marginTop: 4 }}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={{ marginLeft: 4, color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
+              </View>
+            )}
+
             <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
               <Ionicons name="send" size={14} color="#fff" style={{ transform: [{ translateX: 1 }] }} />
             </TouchableOpacity>
@@ -489,5 +579,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: Spacing.sm,
     letterSpacing: 1,
+  },
+  attachBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(107,70,254,0.08)',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.md,
+  },
+  attachBtnText: {
+    ...Typography.label,
+    marginLeft: 4,
   },
 });

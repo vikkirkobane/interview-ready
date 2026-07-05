@@ -2,8 +2,8 @@ import { Platform } from 'react-native';
 import { CoverLetter } from '../types/schemas';
 import { buildCoverLetterHTML } from './coverLetterHTML';
 
-declare var window: any;
-declare var document: any;
+declare let window: any;
+declare let document: any;
 
 // Helper for dynamic imports on native vs web
 let printToFileAsync: any;
@@ -11,22 +11,25 @@ let shareAsync: any;
 let FileSystem: any;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Print = require('expo-print');
   printToFileAsync = Print.printToFileAsync;
-} catch (e) {
+} catch {
   // Ignore
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Sharing = require('expo-sharing');
   shareAsync = Sharing.shareAsync;
-} catch (e) {
+} catch {
   // Ignore
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   FileSystem = require('expo-file-system');
-} catch (e) {
+} catch {
   // Ignore
 }
 

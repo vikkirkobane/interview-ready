@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation } from '../../src/hooks/useApi';
+import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
+import * as DocumentPicker from 'expo-document-picker';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
 import { CoverLetter } from '../../src/types/schemas';
@@ -26,12 +27,17 @@ export default function CoverLetterGeneratorScreen() {
   const [jobDescription, setJobDescription] = useState('');
   const [targetCompany, setTargetCompany] = useState('');
   const [targetRole, setTargetRole] = useState('');
+  const [jdFileText, setJdFileText] = useState('');
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [extractJdLoading, setExtractJdLoading] = useState(false);
 
   const { id, fromList } = useLocalSearchParams();
 
   const coverLetterMutation = useCreateCoverLetterMutation();
   const deleteMutation = useDeleteCoverLetterMutation();
+  const extractJd = useExtractJdMutation();
   const { data: pastCoverLetter } = useCoverLetterQuery(id as string);
+
 
   React.useEffect(() => {
     if (pastCoverLetter) {
@@ -47,13 +53,78 @@ export default function CoverLetterGeneratorScreen() {
     }
   }, [pastCoverLetter]);
 
+  // ── File Attachment Handlers ────────────────────────────────────────
+  const handleAttachJdFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
+        return;
+      }
+
+      const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
+      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        return;
+      }
+
+      setExtractJdLoading(true);
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType,
+        } as any);
+      }
+
+      const { extracted_text } = await extractJd.mutateAsync(formData);
+
+      setJdFileText(extracted_text);
+      setJdFileName(fileAsset.name);
+
+      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
+    } finally {
+      setExtractJdLoading(false);
+    }
+  };
+
+  const handleRemoveAttachedJd = () => {
+    setJdFileText('');
+    setJdFileName(null);
+  };
+
   const handleGenerate = async () => {
     setGenerating(true);
-    
+
     try {
+      // Use file text if available, otherwise use text input
+      const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
+
+      if (finalJobDescription.length === 0) {
+        Toast.show({ type: 'error', text1: 'Job Description Required', text2: 'Please provide a job description via text or file attachment.' });
+        setGenerating(false);
+        return;
+      }
+
       const result = await coverLetterMutation.mutateAsync({
         tone: selectedTone,
-        job_description: jobDescription,
+        job_description: finalJobDescription,
         target_company: targetCompany,
         target_role: targetRole,
       });
@@ -177,13 +248,19 @@ export default function CoverLetterGeneratorScreen() {
             <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
                 <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description</Text>
-                <TouchableOpacity style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]}>
-                  <Ionicons name="attach" size={16} color={colors.primary} />
-                  <Text style={[styles.attachBtnText, { color: colors.primary }]}>Attach file</Text>
+                <TouchableOpacity style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                  {extractJdLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <>
+                      <Ionicons name="attach" size={16} color={colors.primary} />
+                      <Text style={[styles.attachBtnText, { color: colors.primary }]}>Attach file</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
-              <TextInput 
-                style={[styles.textInput, styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]} 
+              <TextInput
+                style={[styles.textInput, styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
                 value={jobDescription}
                 onChangeText={setJobDescription}
                 placeholder="Paste the full job description here..."
@@ -191,6 +268,24 @@ export default function CoverLetterGeneratorScreen() {
                 multiline
                 textAlignVertical="top"
               />
+
+              {/* Attached File Info */}
+              {jdFileName && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                  <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
+                    <Ionicons name="close-circle" size={16} color={colors.error} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Attach JD File Loading State */}
+              {extractJdLoading && (
+                <View style={{ marginTop: 4 }}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={{ marginLeft: 4, color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
+                </View>
+              )}
             </View>
 
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Select Tone</Text>

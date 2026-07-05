@@ -98,6 +98,7 @@ export function useAppVersion(): UseAppVersionReturn {
 
   // Check version on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkVersion();
   }, []);
 

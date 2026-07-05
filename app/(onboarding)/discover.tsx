@@ -43,6 +43,7 @@ export default function DiscoverScreen() {
       Animated.timing(slideAnim2, { toValue: 0, duration: 600, useNativeDriver: true }),
       Animated.timing(slideAnim3, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const completeOnboardingApi = useCompleteOnboardingMutation();
@@ -53,7 +54,7 @@ export default function DiscoverScreen() {
       await completeOnboardingApi.mutateAsync();
       completeOnboarding();
       router.replace('/(tabs)');
-    } catch (error: any) {
+    } catch {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to finalize profile' });
       completeOnboarding();
       router.replace('/(tabs)');

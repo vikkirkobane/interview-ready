@@ -1,29 +1,31 @@
 import { Platform } from 'react-native';
 
-declare var window: any;
-declare var document: any;
+declare let window: any;
 
 let printToFileAsync: any;
 let shareAsync: any;
 let FileSystem: any;
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Print = require('expo-print');
   printToFileAsync = Print.printToFileAsync;
-} catch (e) {
+} catch {
   // Ignore
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Sharing = require('expo-sharing');
   shareAsync = Sharing.shareAsync;
-} catch (e) {
+} catch {
   // Ignore
 }
 
 try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   FileSystem = require('expo-file-system');
-} catch (e) {
+} catch {
   // Ignore
 }
 
@@ -54,7 +56,6 @@ export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
 
 function buildRoadmapHTML(analysisResult: any): string {
   const missingSkills = analysisResult?.missing_bonus_skills || [];
-  const requiredSkills = analysisResult?.required_skills || [];
   
   const skillsListHTML = missingSkills.length > 0 
     ? missingSkills.map((s: any, i: number) => `

@@ -17,7 +17,7 @@ export function CreditBadge({ showDetails = false, onPress }: CreditBadgeProps) 
     if (onPress) {
       onPress();
     } else {
-      router.push('/(tabs)/pricing');
+      router.push('/(tabs)/pricing' as any);
     }
   };
 
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     borderLeftColor: Colors.border,
   },
   detailText: {
-    ...Typography.bodyXs,
+    ...Typography.bodySm,
     color: Colors.textMuted,
   },
 });

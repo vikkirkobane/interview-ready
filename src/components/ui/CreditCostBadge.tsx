@@ -9,18 +9,24 @@ interface CreditCostBadgeProps {
 }
 
 export function CreditCostBadge({ cost, feature, size = 'medium' }: CreditCostBadgeProps) {
-  const sizeStyles = {
-    small: styles.small,
-    medium: styles.medium,
-    large: styles.large,
+  const containerSizeStyles = {
+    small: { paddingHorizontal: Spacing.xs, paddingVertical: 2 },
+    medium: {},
+    large: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
+  };
+
+  const textSizeStyles = {
+    small: { fontSize: 12 },
+    medium: { fontSize: 14 },
+    large: { fontSize: 16 },
   };
 
   return (
-    <View style={[styles.container, sizeStyles[size]]}>
-      <Text style={[styles.icon, sizeStyles[size]]}>⚡</Text>
-      <Text style={[styles.cost, sizeStyles[size]]}>{cost}</Text>
+    <View style={[styles.container, containerSizeStyles[size]]}>
+      <Text style={[styles.icon, textSizeStyles[size]]}>⚡</Text>
+      <Text style={[styles.cost, textSizeStyles[size]]}>{cost}</Text>
       {feature && (
-        <Text style={[styles.feature, sizeStyles[size]]}>{feature}</Text>
+        <Text style={[styles.feature, textSizeStyles[size]]}>{feature}</Text>
       )}
     </View>
   );
@@ -45,7 +51,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   feature: {
-    ...Typography.bodyXs,
+    ...Typography.bodySm,
     color: Colors.textMuted,
   },
   small: {

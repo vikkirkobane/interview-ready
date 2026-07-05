@@ -5,41 +5,43 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  KeyboardAvoidingView,
   Platform,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
-import { useAnalyzeJobMutation } from '../../src/hooks/useApi';
+import { useAnalyzeJobMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function AnalyzeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const insets = useSafeAreaInsets();
   const { jdText, setJdText, jdUrl, setJdUrl } = useOnboardingStore();
-  
-  const [inputType, setInputType] = useState<0 | 1>(0); // 0 = Text, 1 = URL
+
+  const [inputType, setInputType] = useState<0 | 1 | 2>(0); // 0 = Text, 1 = URL, 2 = File
   const [showResults, setShowResults] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [jdFileText, setJdFileText] = useState('');
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [extractJdLoading, setExtractJdLoading] = useState(false);
 
   const analyzeJob = useAnalyzeJobMutation();
+  const extractJd = useExtractJdMutation();
 
   const handleAnalyze = async () => {
     if (!hasInput) return;
-    
+
     try {
       const result = await analyzeJob.mutateAsync({
-        jdText: inputType === 0 ? jdText : undefined,
+        jdText: inputType === 0 ? jdText : inputType === 2 ? jdFileText : undefined,
         jdUrl: inputType === 1 ? jdUrl : undefined,
       });
-      
+
       useOnboardingStore.getState().setAnalysisId(result.id);
       setAnalysisResult(result.analysis);
       setShowResults(true);
@@ -52,7 +54,67 @@ export default function AnalyzeScreen() {
     }
   };
 
-  const hasInput = inputType === 0 ? jdText.length > 20 : jdUrl.length > 5;
+  const handleAttachJdFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
+        return;
+      }
+
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        return;
+      }
+
+      setExtractJdLoading(true);
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType,
+        } as any);
+      }
+
+      const { extracted_text } = await extractJd.mutateAsync(formData);
+
+      setJdFileText(extracted_text);
+      setJdFileName(fileAsset.name);
+      setInputType(2); // Switch to file input type
+
+      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for analysis.' });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
+    } finally {
+      setExtractJdLoading(false);
+    }
+  };
+
+  const handleRemoveAttachedJd = () => {
+    setJdFileText('');
+    setJdFileName(null);
+    setInputType(0); // Reset to text input
+  };
+
+  const hasInput =
+    (inputType === 0 && jdText.length > 20) ||
+    (inputType === 1 && jdUrl.length > 5) ||
+    (inputType === 2 && jdFileText.trim().length > 20);
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
@@ -105,15 +167,42 @@ export default function AnalyzeScreen() {
               <TextInput
                 style={[styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
                 multiline
-                placeholder={inputType === 0 ? "Paste the job description content here... e.g. 'We are looking for a Senior Product Designer with 5+ years of experience in SaaS...'" : "Enter the job posting URL (LinkedIn, Indeed, Glassdoor)..."}
+                placeholder={inputType === 0 ? "Paste the job description content here... e.g. 'We are looking for a Senior Product Designer with 5+ years of experience in SaaS...'" : inputType === 1 ? "Enter the job posting URL (LinkedIn, Indeed, Glassdoor)..." : "Text extracted from attached file will appear here..."}
                 placeholderTextColor={colors.textMuted}
-                value={inputType === 0 ? jdText : jdUrl}
-                onChangeText={inputType === 0 ? setJdText : setJdUrl}
+                value={inputType === 0 ? jdText : inputType === 1 ? jdUrl : jdFileText}
+                onChangeText={inputType === 0 ? setJdText : inputType === 1 ? setJdUrl : (text) => {}} // File text is read-only
                 textAlignVertical="top"
+                editable={inputType !== 2} // Not editable when showing file text
               />
               <View style={styles.inputFooter}>
                 <Ionicons name="information-circle" size={14} color={colors.textMuted} />
                 <Text style={[styles.inputFooterText, { color: colors.textMuted }]}>Min. 50 words recommended</Text>
+              </View>
+              <View style={styles.inputActions}>
+                {/* Attach JD File Button */}
+                <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                  {extractJdLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <>
+                      <Ionicons name="attach" size={24} color={colors.textMuted} />
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {/* Attached File Info */}
+                {jdFileName && (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginLeft: Spacing.sm
+                  }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                    <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                      <Ionicons name="close-circle" size={16} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -454,5 +543,22 @@ const styles = StyleSheet.create({
   continueBtnText: {
     ...Typography.headingMd,
     color: '#fff',
+  },
+  inputActions: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    right: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  attachBtn: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
 });

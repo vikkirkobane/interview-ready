@@ -30,6 +30,34 @@ interface UseEmailReturn {
   error: string | null;
 }
 
+export async function sendEmailDirectly(params: SendEmailParams): Promise<{ success: boolean; message_id?: string; error?: string }> {
+  try {
+    const { data, error: functionError } = await supabase.functions.invoke('email-send', {
+      body: params,
+    });
+
+    if (functionError) {
+      throw new Error(functionError.message);
+    }
+
+    if (!data?.success) {
+      throw new Error(data?.error || 'Failed to send email');
+    }
+
+    return {
+      success: true,
+      message_id: data.data.message_id,
+    };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    console.error('Error sending email:', err);
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}
+
 /**
  * Hook for sending emails and managing email operations
  * Uses Resend API via Supabase Edge Function
@@ -39,37 +67,14 @@ export function useEmail(): UseEmailReturn {
   const [error, setError] = useState<string | null>(null);
 
   const sendEmail = async (params: SendEmailParams) => {
-    try {
-      setIsSending(true);
-      setError(null);
-
-      const { data, error: functionError } = await supabase.functions.invoke('email-send', {
-        body: params,
-      });
-
-      if (functionError) {
-        throw new Error(functionError.message);
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Failed to send email');
-      }
-
-      return {
-        success: true,
-        message_id: data.data.message_id,
-      };
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMessage);
-      console.error('Error sending email:', err);
-      return {
-        success: false,
-        error: errorMessage,
-      };
-    } finally {
-      setIsSending(false);
+    setIsSending(true);
+    setError(null);
+    const result = await sendEmailDirectly(params);
+    if (!result.success) {
+      setError(result.error || 'Unknown error');
     }
+    setIsSending(false);
+    return result;
   };
 
   const getEmailStats = async (days: number = 30): Promise<EmailStats | null> => {
@@ -119,8 +124,7 @@ export const EmailHelpers = {
     planName: string;
     transactionId: string;
   }) => {
-    const { sendEmail } = useEmail();
-    return sendEmail({
+    return sendEmailDirectly({
       to: params.to,
       subject: 'Payment Successful - Interview Ready',
       templateKey: 'payment_success',
@@ -148,17 +152,18 @@ export const EmailHelpers = {
     amount: string;
     currency: string;
     errorMessage: string;
+    retryUrl?: string;
   }) => {
-    const { sendEmail } = useEmail();
-    return sendEmail({
+    return sendEmailDirectly({
       to: params.to,
-      subject: 'Payment Failed - Interview Ready',
+      subject: 'Payment Failed - Action Required',
       templateKey: 'payment_failed',
       templateVariables: {
         user_name: params.userName,
         amount: params.amount,
         currency: params.currency,
         error_message: params.errorMessage,
+        retry_url: params.retryUrl || 'https://interviewready.co/billing',
       },
       emailType: 'payment_failed',
     });
@@ -171,21 +176,23 @@ export const EmailHelpers = {
     to: string;
     userName: string;
     planName: string;
-    credits: string;
+    billingPeriod: string;
     nextBillingDate: string;
   }) => {
-    const { sendEmail } = useEmail();
-    return sendEmail({
+    return sendEmailDirectly({
       to: params.to,
-      subject: `Welcome to ${params.planName} - Interview Ready`,
+      subject: `Welcome to Interview Ready ${params.planName}!`,
       templateKey: 'subscription_created',
       templateVariables: {
         user_name: params.userName,
         plan_name: params.planName,
-        credits: params.credits,
+        billing_period: params.billingPeriod,
         next_billing_date: params.nextBillingDate,
       },
       emailType: 'subscription_created',
+      metadata: {
+        plan: params.planName,
+      },
     });
   },
 
@@ -200,8 +207,7 @@ export const EmailHelpers = {
     referralCode: string;
     totalReferrals: string;
   }) => {
-    const { sendEmail } = useEmail();
-    return sendEmail({
+    return sendEmailDirectly({
       to: params.to,
       subject: 'You Earned Referral Credits! - Interview Ready',
       templateKey: 'referral_reward',
@@ -222,16 +228,13 @@ export const EmailHelpers = {
   sendWelcome: async (params: {
     to: string;
     userName: string;
-    credits: string;
   }) => {
-    const { sendEmail } = useEmail();
-    return sendEmail({
+    return sendEmailDirectly({
       to: params.to,
       subject: 'Welcome to Interview Ready!',
       templateKey: 'welcome',
       templateVariables: {
         user_name: params.userName,
-        credits: params.credits,
       },
       emailType: 'welcome',
     });
@@ -244,17 +247,13 @@ export const EmailHelpers = {
     to: string;
     subject: string;
     html: string;
-    text?: string;
-    emailType: string;
     metadata?: Record<string, any>;
   }) => {
-    const { sendEmail } = useEmail();
-    return sendEmail({
+    return sendEmailDirectly({
       to: params.to,
       subject: params.subject,
       html: params.html,
-      text: params.text,
-      emailType: params.emailType,
+      emailType: 'custom',
       metadata: params.metadata,
     });
   },

@@ -5,7 +5,7 @@ interface ReferralStats {
   referralCode: string | null;
   totalReferrals: number;
   creditsEarned: number;
-  referrals: Array<{
+  referrals: {
     id: string;
     referred_user: {
       first_name: string;
@@ -14,7 +14,7 @@ interface ReferralStats {
     };
     credits_granted: number;
     created_at: string;
-  }>;
+  }[];
 }
 
 interface UseReferralReturn {
@@ -120,6 +120,7 @@ export function useReferral(): UseReferralReturn {
   }, [fetchStats]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats();
   }, [fetchStats]);
 

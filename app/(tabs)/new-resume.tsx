@@ -4,11 +4,13 @@ import {
   Platform, Image, Modal, TextInput, Alert, ActivityIndicator
 } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useResumeQuery, useUpdateResumeMutation,
-  useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation, useDeleteResumeMutation
+  useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation, useDeleteResumeMutation,
+  useExtractJdMutation
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
@@ -16,6 +18,7 @@ import { usePreviewStore } from '../../src/store/previewStore';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
 import { supabase } from '../../src/lib/supabase';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -204,6 +207,9 @@ export default function ResumeBuilderScreen() {
   const [isExporting, setIsExporting] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>('executive');
   const [jobDescription, setJobDescription] = useState('');
+  const [jdFileText, setJdFileText] = useState('');
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [extractJdLoading, setExtractJdLoading] = useState(false);
   const [aiGeneratedContent, setAiGeneratedContent] = useState<any>(null);
   const [expandedExp, setExpandedExp] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);
@@ -220,6 +226,7 @@ export default function ResumeBuilderScreen() {
   const rewriteMutation = useRewriteSectionMutation();
   const createResumeMutation = useCreateResumeMutation();
   const analyzeJobMutation = useAnalyzeJobMutation();
+  const extractJd = useExtractJdMutation();
   const deleteMutation = useDeleteResumeMutation();
 
   const handleGenerate = async () => {
@@ -230,18 +237,22 @@ export default function ResumeBuilderScreen() {
     try {
       Toast.show({ type: 'info', text1: 'Generating tailored resume...', text2: 'This may take a moment' });
       let job_analysis_id = undefined;
-      if (jobDescription.trim().length > 10) {
-        const analyzeRes = await analyzeJobMutation.mutateAsync({ jdText: jobDescription });
+
+      // Use file text if available, otherwise use text input
+      const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
+
+      if (finalJobDescription.length > 10) {
+        const analyzeRes = await analyzeJobMutation.mutateAsync({ jdText: finalJobDescription });
         job_analysis_id = analyzeRes.id;
       }
-      
+
       const res = await createResumeMutation.mutateAsync({
         title: jobDescription ? 'Tailored Resume' : 'Base Resume',
         template_id: selectedTemplateId,
         job_analysis_id,
-        is_base: !jobDescription
+        is_base: !jobDescription && jdFileText.trim().length === 0
       });
-      
+
       router.setParams({ id: res.resume_id });
       Toast.show({ type: 'success', text1: 'Resume generated!' });
     } catch (e: any) {
@@ -357,6 +368,30 @@ export default function ResumeBuilderScreen() {
     }
   };
 
+  // ── Delete ────────────────────────────────────────────────────────────────
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Resume",
+      "Are you sure you want to delete this resume? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (!id) return;
+              await deleteMutation.mutateAsync(id as string);
+              router.back();
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   // ── Export ────────────────────────────────────────────────────────────────
   const handleExport = async (format: 'pdf' | 'docx') => {
     if (!draft) return;
@@ -417,27 +452,62 @@ export default function ResumeBuilderScreen() {
     }
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Resume",
-      "Are you sure you want to delete this resume? This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              if (!id) return;
-              await deleteMutation.mutateAsync(id as string);
-              router.back();
-            } catch (e: any) {
-              Alert.alert('Error', e.message);
-            }
-          }
-        }
-      ]
-    );
+
+
+  // ── File Attachment Handlers ────────────────────────────────────────
+  const handleAttachJdFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
+        return;
+      }
+
+      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        return;
+      }
+
+      setExtractJdLoading(true);
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType,
+        } as any);
+      }
+
+      const { extracted_text } = await extractJd.mutateAsync(formData);
+
+      setJdFileText(extracted_text);
+      setJdFileName(fileAsset.name);
+
+      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
+    } finally {
+      setExtractJdLoading(false);
+    }
+  };
+
+  const handleRemoveAttachedJd = () => {
+    setJdFileText('');
+    setJdFileName(null);
   };
 
   // ── Experience helpers ────────────────────────────────────────────────────
@@ -586,15 +656,43 @@ export default function ResumeBuilderScreen() {
             <Text style={{ color: colors.textMuted, marginBottom: Spacing.md, fontSize: 14 }}>
               Paste the job description you're targeting. Our AI will analyze the requirements and automatically tailor your resume.
             </Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={jobDescription}
-              onChangeText={setJobDescription}
-              placeholder="Paste Job Description here..."
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={6}
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={jobDescription}
+                onChangeText={setJobDescription}
+                placeholder="Paste Job Description here..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                numberOfLines={6}
+              />
+              <View style={styles.inputActions}>
+                {/* Attach JD File Button */}
+                <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                  {extractJdLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <>
+                      <Ionicons name="attach" size={24} color={colors.textMuted} />
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {/* Attached File Info */}
+                {jdFileName && (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginLeft: Spacing.sm
+                  }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                    <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                      <Ionicons name="close-circle" size={16} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
           </View>
 
           <View style={styles.sectionCard}>
@@ -1873,4 +1971,22 @@ const makeStyles = (colors: any) => StyleSheet.create({
   exportOptionTitle: { ...Typography.headingMd, color: colors.textPrimary },
   exportOptionDesc: { ...Typography.bodySm, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
   exportNote: { ...Typography.bodySm, color: colors.textMuted, textAlign: 'center', marginTop: Spacing.lg, lineHeight: 18 },
+  inputContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  inputActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+  },
+  attachBtn: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
 });
