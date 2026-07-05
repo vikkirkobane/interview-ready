@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, Clipboard } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useAnswerQuestionMutation } from '../../src/hooks/useApi';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
+import Toast from 'react-native-toast-message';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -37,6 +38,14 @@ export default function AskAIScreen() {
   }, []);
 
   const answerQuestionMutation = useAnswerQuestionMutation();
+
+  const copyToClipboard = (text: string) => {
+    Clipboard.setString(text);
+    Toast.show({
+      type: 'success',
+      text1: 'Copied to clipboard',
+    });
+  };
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -77,25 +86,41 @@ export default function AskAIScreen() {
              <MaterialCommunityIcons name="robot" size={16} color="#fff" />
           </View>
         )}
-        <View style={[styles.messageBubble, isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]]}>
-          {isUser ? (
-            <Text style={[styles.messageText, { color: '#fff' }]}>{msg.text}</Text>
-          ) : (
-            <Markdown style={{
-              body: { ...Typography.bodyMd, color: colors.textPrimary },
-              code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
-              code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
-              heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
-              heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
-              heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-              paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-              list_item: { ...Typography.bodyMd, color: colors.textPrimary },
-              link: { color: colors.primary, textDecorationLine: 'underline' },
-              strong: { fontWeight: '700' },
-            }}>
-              {msg.text}
-            </Markdown>
-          )}
+        <View style={{ flexShrink: 1, maxWidth: '75%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
+          <View style={[styles.messageBubble, isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]]}>
+            {isUser ? (
+              <Text style={[styles.messageText, { color: '#fff' }]}>{msg.text}</Text>
+            ) : (
+              <Markdown style={{
+                body: { ...Typography.bodyMd, color: colors.textPrimary },
+                code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
+                code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
+                heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
+                heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
+                heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
+                paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
+                list_item: { ...Typography.bodyMd, color: colors.textPrimary },
+                link: { color: colors.primary, textDecorationLine: 'underline' },
+                strong: { fontWeight: '700' },
+              }}>
+                {msg.text}
+              </Markdown>
+            )}
+          </View>
+          <TouchableOpacity 
+            onPress={() => copyToClipboard(msg.text)} 
+            style={{ 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              marginTop: 4, 
+              marginLeft: isUser ? 0 : 8,
+              marginRight: isUser ? 8 : 0,
+              opacity: 0.6 
+            }}
+          >
+            <Ionicons name="copy-outline" size={13} color={colors.textMuted} />
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 3 }}>Copy</Text>
+          </TouchableOpacity>
         </View>
         {isUser && (
           <View style={[styles.avatarUser, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
