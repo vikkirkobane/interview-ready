@@ -74,7 +74,7 @@ export default function ResumesScreen() {
               <TouchableOpacity 
                 key={resume.id} 
                 style={[styles.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
-                onPress={() => router.push(`/(tabs)/new-resume?id=${resume.id}`)}
+                onPress={() => router.push(`/(tabs)/new-resume?id=${resume.id}&fromList=true`)}
               >
               <View style={styles.cardHeader}>
                 <View style={[styles.statusBadge, { backgroundColor: colors.bgSecondary }]}>

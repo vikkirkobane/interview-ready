@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Activi
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation } from '../../src/hooks/useApi';
+import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -14,6 +14,9 @@ export default function JobFitScreen() {
   const [jdText, setJdText] = useState('');
   const [jdUrl, setJdUrl] = useState('');
   const [urlError, setUrlError] = useState('');
+  const [jdFileText, setJdFileText] = useState('');
+  const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [extractJdLoading, setExtractJdLoading] = useState(false);
   const router = useRouter();
 
   // Load existing job application if job_id is provided
@@ -29,9 +32,10 @@ export default function JobFitScreen() {
   const { user } = useAuthStore();
   const { profile, updateProfile } = useProfileStore();
   const { colors, isDark } = useTheme();
-  
+
   const analyzeJob = useAnalyzeJobMutation();
   const parseResume = useParseResumeMutation();
+  const extractJd = useExtractJdMutation();
   const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery();
 
   const handleUploadResume = async () => {
@@ -98,22 +102,81 @@ export default function JobFitScreen() {
     }
   };
 
+  const handleAttachJdFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
+        return;
+      }
+
+      const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
+      if (!allowedTypes.includes(fileAsset.mimeType)) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        return;
+      }
+
+      setExtractJdLoading(true);
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType,
+        } as any);
+      }
+
+      const { extracted_text } = await extractJd.mutateAsync(formData);
+
+      setJdFileText(extracted_text);
+      setJdFileName(fileAsset.name);
+
+      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for analysis.' });
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
+    } finally {
+      setExtractJdLoading(false);
+    }
+  };
+
+  const handleRemoveAttachedJd = () => {
+    setJdFileText('');
+    setJdFileName(null);
+  };
+
   const handleAnalyze = async () => {
     setUrlError('');
-    if (jdText.length < 20 && !jdUrl) {
-      Toast.show({ type: 'error', text1: 'Input missing', text2: 'Please paste a job description or provide a valid URL.' });
+
+    // Use JD file text if available, otherwise use text input
+    const finalJdText = jdFileText.trim().length > 0 ? jdFileText : jdText.trim();
+
+    if (finalJdText.length < 20 && !jdUrl) {
+      Toast.show({ type: 'error', text1: 'Input missing', text2: 'Please paste a job description, provide a valid URL, or attach a file with job description text.' });
       return;
     }
 
     try {
       const finalJdUrl = jdText.trim().length >= 20 ? '' : jdUrl;
-      const result = await analyzeJob.mutateAsync({ 
-        job_id: job_id as string, 
-        jdText, 
-        jdUrl: finalJdUrl, 
-        profileData: profile 
+      const result = await analyzeJob.mutateAsync({
+        job_id: job_id as string,
+        jdText: finalJdText,
+        jdUrl: finalJdUrl,
+        profileData: profile
       });
-      
+
       // Navigate to standalone results screen
       router.push(`/job-match-results?id=${result.id}` as any);
     } catch (error: any) {
@@ -181,17 +244,47 @@ export default function JobFitScreen() {
                   textAlignVertical="top"
                 />
                 <View style={styles.inputActions}>
+                  {/* Attach Resume Button */}
                   <TouchableOpacity style={styles.attachBtn} onPress={handleUploadResume} disabled={parseResume.isPending}>
                      {parseResume.isPending ? (
                        <ActivityIndicator size="small" color={colors.primary} />
                      ) : (
                        <>
-                         <Ionicons name="document-attach" size={18} color={colors.textMuted} style={{ marginRight: 6 }} />
-                         <Text style={{ color: colors.textMuted, fontSize: 13, fontWeight: '500' }}>Replace Resume (Optional)</Text>
+                         <Ionicons name="document-attach" size={24} color={colors.textMuted} />
                        </>
                      )}
                   </TouchableOpacity>
-                  <TouchableOpacity 
+
+                  {/* Attach JD File Button */}
+                  <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                     {extractJdLoading ? (
+                       <ActivityIndicator size="small" color={colors.primary} />
+                     ) : (
+                       <>
+                         <Ionicons name="attach" size={24} color={colors.textMuted} />
+                       </>
+                     )}
+                  </TouchableOpacity>
+
+                  {/* Attached File Info */}
+                  {jdFileName && (
+                    <View style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: Radius.md,
+                      paddingHorizontal: Spacing.sm,
+                      paddingVertical: 4,
+                      borderWidth: 1,
+                      borderColor: 'transparent'
+                    }}>
+                      <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                      <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                        <Ionicons name="close-circle" size={16} color={colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Analyze Button */}
+                  <TouchableOpacity
                     style={[styles.analyzeBtn, { backgroundColor: colors.primary }, analyzeJob.isPending && { opacity: 0.7 }]}
                     onPress={handleAnalyze}
                     disabled={analyzeJob.isPending}
@@ -220,7 +313,7 @@ export default function JobFitScreen() {
                     <TouchableOpacity
                       key={match.id}
                       style={[styles.matchListItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-                      onPress={() => router.push(`/job-match-results?id=${match.id}` as any)}
+                      onPress={() => router.push(`/job-match-results?id=${match.id}&fromList=true` as any)}
                     >
                       <View style={[styles.matchIcon, { backgroundColor: `${colors.primary}15` }]}>
                         <Ionicons name="search" size={20} color={colors.primary} />

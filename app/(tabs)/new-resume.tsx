@@ -8,7 +8,7 @@ import { Button } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useResumeQuery, useUpdateResumeMutation,
-  useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation
+  useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation, useDeleteResumeMutation
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
@@ -195,8 +195,9 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 export default function ResumeBuilderScreen() {
   const { colors } = useTheme();
   const styles = makeStyles(colors);
-  const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { id, template, fromList } = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const [isEditMode, setIsEditMode] = useState(true);
   const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
@@ -219,6 +220,7 @@ export default function ResumeBuilderScreen() {
   const rewriteMutation = useRewriteSectionMutation();
   const createResumeMutation = useCreateResumeMutation();
   const analyzeJobMutation = useAnalyzeJobMutation();
+  const deleteMutation = useDeleteResumeMutation();
 
   const handleGenerate = async () => {
     if (!selectedTemplateId) {
@@ -415,7 +417,28 @@ export default function ResumeBuilderScreen() {
     }
   };
 
-
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Resume",
+      "Are you sure you want to delete this resume? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (!id) return;
+              await deleteMutation.mutateAsync(id as string);
+              router.back();
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   // ── Experience helpers ────────────────────────────────────────────────────
   const addExperience = () => {
@@ -1334,6 +1357,22 @@ export default function ResumeBuilderScreen() {
             <Ionicons name="download-outline" size={18} color={colors.primary} />
             <Text style={styles.exportBtnText}>Download</Text>
           </TouchableOpacity>
+          {id && fromList === 'true' && (
+            <TouchableOpacity 
+              style={[styles.exportBtn, { flex: 1, minWidth: '100%', borderColor: colors.error }]} 
+              onPress={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <ActivityIndicator size="small" color={colors.error} />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={18} color={colors.error} />
+                  <Text style={[styles.exportBtnText, { color: colors.error }]}>Delete Resume</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
@@ -1352,11 +1391,7 @@ export default function ResumeBuilderScreen() {
             <Text style={styles.pageTitle}>Resume Builder</Text>
             <Text style={styles.pageSubtitle}>Craft your professional story with AI precision.</Text>
           </View>
-          <TouchableOpacity style={styles.templatesBtn} onPress={() => setIsTemplateModalVisible(true)}>
-            <Ionicons name="document-text-outline" size={18} color={colors.primary} />
-            <Text style={styles.templatesBtnText}>Templates</Text>
-            <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
+
         </View>
         {draft && (
           <View style={styles.modeToggleContainer}>

@@ -109,8 +109,9 @@ export default function ProfileScreen() {
       
       if (extractedData.current_role) setCurrentRole(extractedData.current_role);
       if (extractedData.company) setCompany(extractedData.company);
-      if (extractedData.technical_skills && Array.isArray(extractedData.technical_skills)) {
-        const uniqueSkills = Array.from(new Set([...skills, ...extractedData.technical_skills]));
+      const skillsList = (extractedData as any).top_skills || (extractedData as any).technical_skills;
+      if (skillsList && Array.isArray(skillsList)) {
+        const uniqueSkills = Array.from(new Set([...skills, ...skillsList]));
         setSkills(uniqueSkills);
       }
 
@@ -148,9 +149,11 @@ export default function ProfileScreen() {
           company,
           title: currentRole || '',
           start_date: new Date().toISOString().split('T')[0],
-          end_date: null,
-          current: true,
-          description: ''
+          current_role: targetRole, 
+        }],
+        resume_content: profileObj ? [{
+          ...profileObj,
+          parsed_at: new Date().toISOString()
         }] : undefined,
       });
       

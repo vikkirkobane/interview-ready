@@ -15,7 +15,7 @@ import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useCompleteOnboardingMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
-
+import { supabase } from '../../src/lib/supabase';
 export default function DiscoverScreen() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -49,6 +49,7 @@ export default function DiscoverScreen() {
 
   const handleFinish = async () => {
     try {
+      await supabase.auth.updateUser({ data: { onboarding_completed: true } });
       await completeOnboardingApi.mutateAsync();
       completeOnboarding();
       router.replace('/(tabs)');

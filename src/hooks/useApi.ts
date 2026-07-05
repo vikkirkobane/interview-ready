@@ -32,8 +32,22 @@ export const useParseResumeMutation = () => {
       return response.data as {
         current_role: string;
         company: string;
-        technical_skills: string[];
+        top_skills: string[];
+        technical_skills?: string[];
       };
+    },
+  });
+};
+
+/**
+ * Extract Text from JD File Mutation
+ */
+export const useExtractJdMutation = () => {
+  return useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiCall('jd-extract-text', 'POST', formData);
+      if (response.error) throw new Error(response.error);
+      return response.data as { extracted_text: string };
     },
   });
 };
@@ -569,6 +583,90 @@ export const useUpdateJobApplicationStatusMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['job_applications', 'list'] });
+    },
+  });
+};
+
+/**
+ * Delete Job Application Mutation
+ */
+export const useDeleteJobApplicationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('job_applications')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['job_applications'] });
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
+    },
+  });
+};
+
+/**
+ * Delete Resume Mutation
+ */
+export const useDeleteResumeMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('resumes')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['resumes'] });
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
+    },
+  });
+};
+
+/**
+ * Delete Cover Letter Mutation
+ */
+export const useDeleteCoverLetterMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('cover_letters')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cover_letters'] });
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
+    },
+  });
+};
+
+/**
+ * Delete Mock Interview Mutation
+ */
+export const useDeleteMockInterviewMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data, error } = await supabase
+        .from('mock_interviews')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mock_interviews'] });
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
     },
   });
 };

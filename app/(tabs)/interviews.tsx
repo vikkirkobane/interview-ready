@@ -121,7 +121,7 @@ export default function InterviewsLobbyScreen() {
               </View>
               <TouchableOpacity 
                 style={[styles.viewFeedbackBtn, { borderTopColor: colors.border }]}
-                onPress={() => router.push({ pathname: '/feedback', params: { sessionId: interview.id } })}
+                onPress={() => router.push({ pathname: '/feedback', params: { sessionId: interview.id, fromList: 'true' } })}
               >
                 <Text style={[styles.viewFeedbackText, { color: colors.primary }]}>View Feedback →</Text>
               </TouchableOpacity>

@@ -164,9 +164,8 @@ export default function AskAIScreen() {
         { 
           backgroundColor: colors.bgSecondary, 
           borderTopColor: colors.border,
-          paddingBottom: keyboardVisible 
-            ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) 
-            : 100 // Safe area offset above the absolutely positioned bottom tab nav (height 72 + margin)
+          paddingBottom: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
+          marginBottom: keyboardVisible ? 0 : 120
         }
       ]}>
         <View style={styles.inputRow}>

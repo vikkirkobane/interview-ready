@@ -9,18 +9,19 @@ import {
   Image,
   Animated,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';
-import { useInterviewFeedbackMutation } from '../../src/hooks/useApi';
+import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function FeedbackScreen() {
   const router = useRouter();
-  const { sessionId, id } = useLocalSearchParams();
+  const { sessionId, id, fromList } = useLocalSearchParams();
   const actualSessionId = (sessionId || id) as string;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -28,6 +29,7 @@ export default function FeedbackScreen() {
   const [feedbackData, setFeedbackData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const feedbackMutation = useInterviewFeedbackMutation();
+  const deleteMutation = useDeleteMockInterviewMutation();
 
   // Animation values
   const slideAnim1 = useRef(new Animated.Value(20)).current;
@@ -96,6 +98,29 @@ export default function FeedbackScreen() {
       </View>
     );
   }
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Interview",
+      "Are you sure you want to delete this mock interview? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (!actualSessionId) return;
+              await deleteMutation.mutateAsync(actualSessionId as string);
+              router.push('/(tabs)');
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const overallScore = feedbackData?.overall_score || 0;
   const dimensionScores = feedbackData?.dimension_scores || {
@@ -228,6 +253,24 @@ export default function FeedbackScreen() {
             <Ionicons name="download-outline" size={20} color={colors.textPrimary} />
             <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>Download Report</Text>
           </TouchableOpacity>
+
+          {actualSessionId && fromList === 'true' && (
+            <TouchableOpacity 
+              style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.error, marginTop: Spacing.md }]} 
+              activeOpacity={0.6}
+              onPress={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <ActivityIndicator size="small" color={colors.error} />
+              ) : (
+                <>
+                  <Ionicons name="trash-outline" size={20} color={colors.error} />
+                  <Text style={[styles.secondaryBtnText, { color: colors.error }]}>Delete Interview</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
         </Animated.View>
 
       </ScrollView>

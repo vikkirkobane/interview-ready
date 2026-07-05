@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useCreateCoverLetterMutation, useCoverLetterQuery } from '../../src/hooks/useApi';
+import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import * as Clipboard from 'expo-clipboard';
@@ -27,9 +27,10 @@ export default function CoverLetterGeneratorScreen() {
   const [targetCompany, setTargetCompany] = useState('');
   const [targetRole, setTargetRole] = useState('');
 
-  const { id } = useLocalSearchParams();
+  const { id, fromList } = useLocalSearchParams();
 
   const coverLetterMutation = useCreateCoverLetterMutation();
+  const deleteMutation = useDeleteCoverLetterMutation();
   const { data: pastCoverLetter } = useCoverLetterQuery(id as string);
 
   React.useEffect(() => {
@@ -73,6 +74,29 @@ export default function CoverLetterGeneratorScreen() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      "Delete Cover Letter",
+      "Are you sure you want to delete this cover letter? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (!id) return;
+              await deleteMutation.mutateAsync(id as string);
+              router.back();
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleCopy = async () => {
@@ -236,6 +260,16 @@ export default function CoverLetterGeneratorScreen() {
                 style={styles.flex1}
               />
             </View>
+            {id && fromList === 'true' && (
+              <Button
+                title={deleteMutation.isPending ? "Deleting..." : "Delete Cover Letter"}
+                variant="outline"
+                onPress={handleDelete}
+                disabled={deleteMutation.isPending}
+                style={{ marginTop: Spacing.md, borderColor: colors.error }}
+                textStyle={{ color: colors.error }}
+              />
+            )}
           </View>
         )}
 

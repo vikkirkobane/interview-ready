@@ -1,25 +1,66 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';
 import { useBreakpoint } from '../../src/hooks/useBreakpoint';
-import { useJobApplicationQuery } from '../../src/hooks/useApi';
+import { useJobApplicationQuery, useDeleteJobApplicationMutation } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useCredits } from '../../src/hooks/useCredits';
+import { exportRoadmapPDF } from '../../src/lib/roadmapExport';
 
 export default function JobMatchResultsScreen() {
-  const { id } = useLocalSearchParams();
+  const { id, fromList } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { isDesktop } = useBreakpoint();
 
   const { data: jobApplication, isLoading, error } = useJobApplicationQuery(id as string);
+  const deleteMutation = useDeleteJobApplicationMutation();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { deductCredits } = useCredits();
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Analysis',
+      'Are you sure you want to delete this job match analysis? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteMutation.mutateAsync(id as string);
+              router.replace('/(tabs)');
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete analysis.');
+            }
+          }
+        }
+      ]
+    );
+  };
   const analysisResult = jobApplication?.jd_summary ? {
     fit_score: jobApplication.match_score,
     missing_bonus_skills: jobApplication.missing_skills?.map((s: string) => ({ skill: s })) || [],
     required_skills: jobApplication.required_skills?.map((s: string) => ({ skill: s })) || [],
     match_analysis: [] 
   } : null;
+
+  const handleDownloadRoadmap = async () => {
+    if (!analysisResult) return;
+    
+    setIsDownloading(true);
+    try {
+      await deductCredits('job_description_analysis', { amount: 2, metadata: { action: 'roadmap_pdf' } });
+      await exportRoadmapPDF(analysisResult);
+    } catch (e: any) {
+      Alert.alert('Download Failed', e.message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -147,8 +188,16 @@ export default function JobMatchResultsScreen() {
               <View style={styles.roadmapTextSection}>
                 <Text style={styles.roadmapTitle}>Bridge the gap in 14 days</Text>
                 <Text style={styles.roadmapDesc}>We've generated a customized roadmap to cover your missing skills before the interview cycle starts.</Text>
-                <TouchableOpacity style={[styles.roadmapBtn, { backgroundColor: colors.bgPrimary }]}>
-                  <Text style={[styles.roadmapBtnText, { color: colors.primary }]}>View Roadmap</Text>
+                <TouchableOpacity 
+                  style={[styles.roadmapBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={handleDownloadRoadmap}
+                  disabled={isDownloading}
+                >
+                  {isDownloading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Text style={[styles.roadmapBtnText, { color: colors.primary }]}>Download Roadmap (2 Credits)</Text>
+                  )}
                 </TouchableOpacity>
               </View>
               
@@ -267,6 +316,23 @@ export default function JobMatchResultsScreen() {
             )}
           </View>
         </View>
+
+        {id && fromList === 'true' && (
+          <TouchableOpacity 
+            style={[styles.deleteBtn, { backgroundColor: colors.error + '1A', borderColor: colors.error }]} 
+            onPress={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? (
+              <ActivityIndicator size="small" color={colors.error} />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={20} color={colors.error} />
+                <Text style={[styles.deleteBtnText, { color: colors.error }]}>Delete Analysis</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </View>
   );
@@ -540,5 +606,19 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 3,
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  deleteBtnText: {
+    ...Typography.bodyLg,
+    fontWeight: '600',
   },
 });

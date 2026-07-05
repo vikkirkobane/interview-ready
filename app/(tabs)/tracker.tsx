@@ -1,10 +1,10 @@
 
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, TextInput, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
 import { Typography, Spacing, Radius, Shadow, useTheme } from "../../src/theme";
 import { ScoreRing } from "../../src/components/ui";
 import { Ionicons } from "@expo/vector-icons";
-import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation } from "../../src/hooks/useApi";
+import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation, useDeleteJobApplicationMutation } from "../../src/hooks/useApi";
 import { useRouter } from "expo-router";
 
 export default function TrackerScreen() {
@@ -14,6 +14,7 @@ export default function TrackerScreen() {
   const { data: appsData, isLoading } = useJobApplicationsListQuery();
   const createJob = useCreateJobApplicationMutation();
   const updateStatus = useUpdateJobApplicationStatusMutation();
+  const deleteMutation = useDeleteJobApplicationMutation();
 
   const applications = appsData || [];
 
@@ -46,6 +47,29 @@ export default function TrackerScreen() {
     if (!selectedApp) return;
     await updateStatus.mutateAsync({ id: selectedApp.id, status: newStatus });
     setSelectedApp({ ...selectedApp, status: newStatus });
+  };
+
+  const handleDelete = () => {
+    if (!selectedApp) return;
+    Alert.alert(
+      "Delete Job",
+      "Are you sure you want to delete this job application? This will also delete any associated job match analysis.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMutation.mutateAsync(selectedApp.id);
+              setSelectedApp(null);
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -179,6 +203,21 @@ export default function TrackerScreen() {
                   >
                     <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} style={{ marginRight: 8 }} />
                     <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Practice Mock Interview</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={[{ backgroundColor: colors.bgSecondary, borderColor: colors.error, borderWidth: 1, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                    onPress={handleDelete}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? (
+                      <ActivityIndicator size="small" color={colors.error} />
+                    ) : (
+                      <>
+                        <Ionicons name="trash-outline" size={20} color={colors.error} style={{ marginRight: 8 }} />
+                        <Text style={{ color: colors.error, fontSize: 16, fontWeight: '600' }}>Delete Job</Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                 </View>
 

@@ -64,9 +64,8 @@ export default function ResumeGenScreen() {
             setStage(4);
             setIsDone(true);
             
-            // Mark onboarding as completed in user metadata so they aren't redirected again
-            await supabase.auth.updateUser({ data: { onboarding_completed: true } });
-
+            // Navigates to discover step next, onboarding completes there
+            
             Animated.timing(fadeAnim, {
               toValue: 1,
               duration: 600,
@@ -252,21 +251,19 @@ export default function ResumeGenScreen() {
 
             <TouchableOpacity 
               style={{ marginTop: 24, marginBottom: 8 }} 
-              onPress={async () => {
-                await supabase.auth.updateUser({ data: { onboarding_completed: true } });
-                router.push('/(tabs)');
+              onPress={() => {
+                router.push('/(onboarding)/discover');
               }}
             >
-               <Text style={[styles.editLink, { color: colors.primary, fontSize: 16 }]}>Continue to Dashboard</Text>
+               <Text style={[styles.editLink, { color: colors.primary, fontSize: 16 }]}>Continue to Final Step</Text>
             </TouchableOpacity>
 
             <Text style={[styles.editPrompt, { color: colors.textMuted }]}>
               Need adjustments?{' '}
               <Text 
                 style={[styles.editLink, { color: colors.primary }]}
-                onPress={async () => {
+                onPress={() => {
                   if (resumeId) {
-                    await supabase.auth.updateUser({ data: { onboarding_completed: true } });
                     router.push(`/(tabs)/new-resume?id=${resumeId}`);
                   }
                 }}

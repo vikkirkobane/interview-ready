@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: 120,
   },
   header: {
     marginBottom: Spacing.xl,
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     maxHeight: '80%',
-    paddingBottom: Spacing.xl,
+    paddingBottom: 120,
   },
   modalHeader: {
     flexDirection: 'row',

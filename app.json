@@ -4,7 +4,7 @@
     "slug": "interview-ready",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon_padded.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -24,7 +24,7 @@
       "package": "com.interviewready.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/icon_padded.png",
         "backgroundColor": "#ffffff"
       }
     },

@@ -230,10 +230,10 @@ export default function DashboardScreen() {
           ) : recentActivities && recentActivities.length > 0 ? (
             recentActivities.map((activity, i) => {
               const handlePress = () => {
-                if (activity.type === 'resume') router.push(`/(tabs)/new-resume?id=${activity.id}` as any);
-                else if (activity.type === 'cover_letter') router.push(`/(tabs)/cover-letter?id=${activity.id}` as any);
-                else if (activity.type === 'job_match') router.push(`/job-match-results?id=${activity.id}` as any);
-                else if (activity.type === 'interview') router.push(`/feedback?id=${activity.id}` as any);
+                if (activity.type === 'resume') router.push(`/(tabs)/new-resume?id=${activity.id}&fromList=true` as any);
+                else if (activity.type === 'cover_letter') router.push(`/(tabs)/cover-letter?id=${activity.id}&fromList=true` as any);
+                else if (activity.type === 'job_match') router.push(`/job-match-results?id=${activity.id}&fromList=true` as any);
+                else if (activity.type === 'interview') router.push(`/feedback?id=${activity.id}&fromList=true` as any);
               };
 
               return (
