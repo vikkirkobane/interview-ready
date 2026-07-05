@@ -110,7 +110,7 @@ export default function NotificationsScreen() {
     <View style={[styles.flex, dynamicStyles.container]}>
       <View style={[styles.header, dynamicStyles.header]}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityRole="button">
-          <Text style={[styles.navText, { color: colors.textSecondary }]}>← BACK</Text>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>Notifications</Text>
         <View style={{ width: 60 }} />
