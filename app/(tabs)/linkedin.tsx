@@ -17,6 +17,7 @@ import {
   useLinkedinAnalyzeMutation,
   useLinkedinOptimizeMutation,
   useLinkedinEngagementPlanMutation,
+  useLinkedinScrapeMutation,
   LinkedInSpikeInput,
   LinkedInTone,
 } from '../../src/hooks/useApi';
@@ -110,10 +111,12 @@ export default function LinkedinOptimizerScreen() {
   const [roleInput,    setRoleInput]    = useState('');
   const [companyInput, setCompanyInput] = useState('');
   const [skillInput,   setSkillInput]   = useState('');
+  const [linkedinUrl,  setLinkedinUrl]  = useState('');
 
   const analyzeMutation    = useLinkedinAnalyzeMutation();
   const optimizeMutation   = useLinkedinOptimizeMutation();
   const engagementMutation = useLinkedinEngagementPlanMutation();
+  const scrapeMutation     = useLinkedinScrapeMutation();
 
   // Refresh profile data when screen mounts so pre-fill is up-to-date
   useEffect(() => {
@@ -202,6 +205,30 @@ export default function LinkedinOptimizerScreen() {
     }
   };
 
+  const handleScrape = async () => {
+    if (!linkedinUrl.includes('linkedin.com/in/')) {
+      Toast.show({ type: 'error', text1: 'Invalid URL', text2: 'Please enter a valid LinkedIn profile URL (https://linkedin.com/in/...)' });
+      return;
+    }
+    try {
+      const result = await scrapeMutation.mutateAsync({ linkedin_url: linkedinUrl });
+      const data = result.data;
+      
+      setWizard(w => ({
+        ...w,
+        headline: data.headline || w.headline,
+        about: data.about || w.about,
+        experience: (data.experience && data.experience.length > 0) ? data.experience : w.experience,
+        skills: (data.skills && data.skills.length > 0) ? data.skills : w.skills,
+      }));
+      
+      Toast.show({ type: 'success', text1: 'Profile Scraped successfully!', text2: 'Please review your content.' });
+      setStep('content');
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Scrape Failed', text2: e.message });
+    }
+  };
+
   const handleEngagementPlan = async () => {
     try {
       const result = await engagementMutation.mutateAsync({
@@ -287,10 +314,10 @@ export default function LinkedinOptimizerScreen() {
 
           {/* Limitation note */}
           <Card style={[s.limitCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-            <Text style={[s.limitTitle, { color: colors.textPrimary }]}>📋 What LinkedIn login does NOT provide</Text>
+            <Text style={[s.limitTitle, { color: colors.textPrimary }]}>📋 What LinkedIn login provides</Text>
             <Text style={[s.limitBody, { color: colors.textSecondary }]}>
-              LinkedIn's API (like all social login providers) only shares basic identity data — your name, email, and photo.
-              {`\n\n`}It does {"not"} share your profile content (headline, about, experience, skills). Those sections must be pasted manually, which only takes a few minutes.
+              LinkedIn login only shares your basic identity data — your name, email, and photo.
+              {`\n\n`}In the next step, you can use our AI Scraper to automatically extract your profile content (headline, about, experience, skills) using your public profile URL.
             </Text>
           </Card>
 
@@ -351,34 +378,35 @@ export default function LinkedinOptimizerScreen() {
           {/* What LinkedIn login provides */}
           <View style={[s.oauthInfoBox, { backgroundColor: isLinkedInUser ? 'rgba(255,255,255,0.15)' : colors.bgSecondary }]}>
             <Text style={[s.oauthInfoTitle, { color: isLinkedInUser ? '#fff' : colors.textPrimary }]}>
-              ℹ️ What LinkedIn login provides:
+              ℹ️ LinkedIn Data Sync
             </Text>
             <Text style={[s.oauthInfoText, { color: isLinkedInUser ? 'rgba(255,255,255,0.85)' : colors.textSecondary }]}>
               {isLinkedInUser
-                ? '✓ Name  ✓ Email  ✓ Profile photo\n✗ Headline  ✗ About  ✗ Experience  ✗ Skills\n\nLinkedIn does not share profile content via login — you\'ll paste those below.'
-                : 'LinkedIn\'s OAuth only shares your name, email and photo. The full profile content (headline, about, experience, skills) must be pasted manually — LinkedIn does not allow apps to read this data automatically.'}
+                ? '✓ Name  ✓ Email  ✓ Profile photo\n\nUse the scraper below to pull in your headline, about, experience, and skills.'
+                : 'LinkedIn login only shares your name, email and photo. Use the AI Scraper below to pull in your full profile content.'}
             </Text>
           </View>
         </Card>
 
         {/* Profile data pre-fill status */}
-        <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>What we auto-filled from your profile</Text>
+        <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>Auto-Scrape Profile</Text>
         <Card style={[s.prefillCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-          {[
-            { label: 'Target Roles',  value: wizard.targetRoles.join(', ') || '—',     icon: 'briefcase-outline'  },
-            { label: 'Work History',  value: `${wizard.experience.filter(e => e.title).length} roles loaded`, icon: 'time-outline'       },
-            { label: 'Skills',        value: `${wizard.skills.length} skills loaded`,   icon: 'ribbon-outline'     },
-            { label: 'Summary',       value: wizard.about ? 'Loaded from profile' : '—', icon: 'document-text-outline' },
-          ].map((item, i) => (
-            <View key={i} style={[s.prefillRow, i > 0 && { borderTopColor: colors.border, borderTopWidth: 1 }]}>
-              <Ionicons name={item.icon as any} size={18} color={item.value === '—' ? colors.textMuted : '#10b981'} />
-              <View style={{ flex: 1, marginLeft: Spacing.sm }}>
-                <Text style={[s.prefillLabel, { color: colors.textMuted }]}>{item.label}</Text>
-                <Text style={[s.prefillValue, { color: item.value === '—' ? colors.textMuted : colors.textPrimary }]}>{item.value}</Text>
-              </View>
-              {item.value !== '—' && <Ionicons name="checkmark-circle" size={18} color="#10b981" />}
-            </View>
-          ))}
+          <Text style={[s.hint, { color: colors.textMuted, marginBottom: Spacing.md }]}>
+            Enter your public LinkedIn URL to automatically extract your profile content. This costs 2 credits.
+          </Text>
+          <TextInput 
+            style={[s.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary, marginBottom: Spacing.md }]}
+            placeholder="https://linkedin.com/in/your-profile" 
+            placeholderTextColor={colors.textMuted}
+            value={linkedinUrl} 
+            onChangeText={setLinkedinUrl} 
+            autoCapitalize="none"
+          />
+          <Button 
+            title={scrapeMutation.isPending ? 'Scraping Profile...' : 'Scrape My LinkedIn (2 Credits)'} 
+            onPress={handleScrape} 
+            disabled={scrapeMutation.isPending || !linkedinUrl.trim()} 
+          />
         </Card>
 
         {!hasProfileData && (
@@ -445,7 +473,7 @@ export default function LinkedinOptimizerScreen() {
           {/* About */}
           <FieldLabel label="About / Summary" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
-            {wizard.about ? 'Pre-filled from your profile. Paste your full LinkedIn About for better results.' : 'Paste your LinkedIn About section.'}
+            {wizard.about ? 'Loaded from profile. Review and edit as needed.' : 'Paste your LinkedIn About section.'}
           </Text>
           <TextInput style={[s.input, s.multiline, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder="Paste your About section here..."

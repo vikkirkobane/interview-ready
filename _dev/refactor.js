@@ -4,11 +4,11 @@ const path = require('path');
 const functionsDir = path.join(process.cwd(), 'supabase', 'functions');
 const subDirs = fs.readdirSync(functionsDir).filter(d => fs.statSync(path.join(functionsDir, d)).isDirectory());
 
-const ignoreDirs = ['_shared', 'answer-question'];
+const ignoreDirs = new Set(['_shared', 'answer-question']);
 let endpointsMapped = [];
 
 for (const dir of subDirs) {
-  if (ignoreDirs.includes(dir)) continue;
+  if (ignoreDirs.has(dir)) continue;
 
   const dirPath = path.join(functionsDir, dir);
   const files = fs.readdirSync(dirPath).filter(f => f.endsWith('.ts'));

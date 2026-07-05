@@ -295,6 +295,67 @@ export type LinkedInSection =
   | 'OUTREACH_KIT';
 
 /**
+ * Scrape the user's LinkedIn profile using ScrapeGraphAI.
+ */
+export const useLinkedinScrapeMutation = () => {
+  return useMutation({
+    mutationFn: async (payload: { linkedin_url: string }) => {
+      const response = await apiCall('linkedin-scrape', 'POST', payload);
+      if (response.error) throw new Error(response.error);
+      return response.data as {
+        data: {
+          headline?: string;
+          about?: string;
+          experience?: { title: string; company: string; description: string }[];
+          skills?: string[];
+        };
+        message: string;
+      };
+    },
+  });
+};
+
+export interface CompanyResearchResult {
+  company_name: string;
+  tagline?: string;
+  overview: string;
+  industry: string;
+  company_size?: string;
+  headquarters?: string;
+  founded?: string;
+  business_model: string;
+  key_products_services: string[];
+  mission_values: string;
+  recent_news?: { headline: string; summary: string }[];
+  financials?: string;
+  culture_insights: string;
+  tech_stack?: string[];
+  competitors?: string[];
+  growth_signals: string[];
+  red_flags: string[];
+  interview_talking_points: string[];
+  smart_questions_to_ask: string[];
+  cultural_fit_score?: number;
+  opportunity_score: number;
+  summary_verdict: string;
+}
+
+/**
+ * Research a company by URL: scrapes the website then generates a full AI analysis.
+ * Returns structured insights including culture, red flags, talking points, and questions to ask.
+ */
+export const useCompanyResearchMutation = () => {
+  return useMutation({
+    mutationFn: async (payload: { company_url: string; context?: string }) => {
+      const response = await apiCall('company-research', 'POST', payload);
+      if (response.error) throw new Error(response.error);
+      return response.data as { data: CompanyResearchResult; message: string };
+    },
+  });
+};
+
+
+/**
  * Analyse the user's LinkedIn profile sections.
  * Implements Master Prompt Steps 2A (keyword intel) + 1C (SPIKE) + 3 (scoring).
  */

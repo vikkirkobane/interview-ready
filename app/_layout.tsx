@@ -11,6 +11,8 @@ import { useTheme } from '../src/theme';
 import * as Font from 'expo-font';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNotificationStore } from '../src/stores/notification-store';
+import { useAppVersion } from '../src/hooks/useAppVersion';
+import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
 
 if (!(Toast as any)._isPatched) {
   const originalToastShow = Toast.show;
@@ -73,6 +75,7 @@ function AuthGuard() {
 export default function RootLayout() {
   const { initialize, initialized } = useAuthStore();
   const { colors, isDark } = useTheme();
+  const { isChecking, forceUpdate, versionInfo, checkVersion } = useAppVersion();
 
   const [fontsLoaded] = Font.useFonts({
     ...Ionicons.font,
@@ -84,12 +87,17 @@ export default function RootLayout() {
   }, []);
 
   // Wait for both session restore and font loading
-  if (!initialized || !fontsLoaded) {
+  if (!initialized || !fontsLoaded || isChecking) {
     return (
       <View style={[styles.loading, { backgroundColor: colors.bgPrimary }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
+  }
+
+  // Show force update screen if required
+  if (forceUpdate && versionInfo) {
+    return <ForceUpdateScreen versionInfo={versionInfo} onRetry={checkVersion} />;
   }
 
   return (
