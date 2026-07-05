@@ -40,11 +40,17 @@ export default function WelcomeScreen() {
   }, []);
 
   const handleGoogleAuth = async () => {
-    await signInWithOAuth('google');
+    const { error } = await signInWithOAuth('google');
+    if (!error) {
+      router.replace('/(tabs)');
+    }
   };
 
   const handleLinkedInAuth = async () => {
-    await signInWithOAuth('linkedin_oidc');
+    const { error } = await signInWithOAuth('linkedin_oidc');
+    if (!error) {
+      router.replace('/(tabs)');
+    }
   };
 
   return (

@@ -126,6 +126,7 @@ export default function TabLayout() {
             </TouchableOpacity>
           ),
           tabBarShowLabel: false,
+          tabBarHideOnKeyboard: true,
           tabBarStyle: {
             position: 'absolute',
             bottom: insets.bottom > 0 ? insets.bottom + 8 : Spacing.md,

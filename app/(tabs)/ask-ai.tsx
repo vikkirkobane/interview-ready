@@ -134,8 +134,8 @@ export default function AskAIScreen() {
   return (
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: colors.bgSecondary }]} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 120}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
         
@@ -162,7 +162,7 @@ export default function AskAIScreen() {
       <View style={[
         styles.inputArea, 
         { 
-          backgroundColor: colors.bgPrimary, 
+          backgroundColor: colors.bgSecondary, 
           borderTopColor: colors.border,
           paddingBottom: keyboardVisible 
             ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) 
@@ -171,7 +171,7 @@ export default function AskAIScreen() {
       ]}>
         <View style={styles.inputRow}>
           <TextInput 
-             style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
+             style={[styles.textInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }]}
              placeholder="Paste application question here..."
              placeholderTextColor={colors.textMuted}
              value={inputText}
