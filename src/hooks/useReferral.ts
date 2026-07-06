@@ -58,11 +58,23 @@ export function useReferral(): UseReferralReturn {
         throw new Error(result.error || 'Failed to fetch referral stats');
       }
 
+      let referralCode = result.data.referral_code;
+
+      // Auto-generate code if missing (for legacy users)
+      if (!referralCode) {
+        const { data: newCode, error: genError } = await supabase.rpc('generate_referral_code', {
+          p_user_id: session.user.id,
+        });
+        if (!genError && newCode) {
+          referralCode = newCode;
+        }
+      }
+
       setStats({
-        referralCode: result.data.referral_code,
-        totalReferrals: result.data.total_referrals,
-        creditsEarned: result.data.credits_earned,
-        referrals: result.data.referrals,
+        referralCode: referralCode,
+        totalReferrals: result.data.total_referrals || 0,
+        creditsEarned: result.data.credits_earned || 0,
+        referrals: result.data.referrals || [],
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';

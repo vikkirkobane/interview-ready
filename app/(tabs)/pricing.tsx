@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { PricingCard, PricingPlan } from '../../src/components/features/payments/PricingCard';
-import { Colors, Spacing, Typography, Radius } from '../../src/theme/tokens';
+import { Spacing, Typography, Radius } from '../../src/theme/tokens';
+import { useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { COUNTRIES, Country, getPaymentMethods } from '../../src/constants/countries';
 
@@ -191,6 +192,8 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
 
 export default function PricingScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]); // Default to Kenya
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [loading, setLoading] = useState(false);
@@ -376,7 +379,7 @@ export default function PricingScreen() {
             <TextInput
               style={styles.searchInput}
               placeholder="Search countries..."
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
@@ -445,7 +448,7 @@ export default function PricingScreen() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={Colors.textInverse} />
+              <ActivityIndicator color={colors.textInverse} />
             ) : (
               <Text style={styles.subscribeButtonText}>
                 Subscribe to {selectedPlan.name}
@@ -458,10 +461,10 @@ export default function PricingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgSecondary,
+    backgroundColor: colors.bgSecondary,
   },
   content: {
     padding: Spacing.lg,
@@ -473,37 +476,37 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.displayLg,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   subtitle: {
     ...Typography.bodyLg,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     maxWidth: 400,
   },
   countrySelector: {
-    backgroundColor: Colors.bgCard,
+    backgroundColor: colors.bgCard,
     padding: Spacing.lg,
     borderRadius: Radius.lg,
     marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   countrySelectorLabel: {
     ...Typography.headingMd,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.md,
   },
   countryButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.bgSecondary,
+    backgroundColor: colors.bgSecondary,
     padding: Spacing.lg,
     borderRadius: Radius.md,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     marginBottom: Spacing.lg,
   },
   countryFlag: {
@@ -515,17 +518,17 @@ const styles = StyleSheet.create({
   },
   countryName: {
     ...Typography.bodyLg,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginBottom: Spacing.xs,
   },
   countryCurrency: {
     ...Typography.bodySm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   countryChevron: {
     ...Typography.displayMd,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: '300',
   },
   modalOverlay: {
@@ -534,7 +537,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.bgCard,
+    backgroundColor: colors.bgCard,
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     maxHeight: '80%',
@@ -546,30 +549,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     ...Typography.headingLg,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '700',
+    marginBottom: Spacing.sm,
   },
   modalCloseButton: {
     padding: Spacing.sm,
   },
   modalCloseText: {
     ...Typography.headingLg,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: '300',
   },
   searchInput: {
-    backgroundColor: Colors.bgSecondary,
+    backgroundColor: colors.bgSecondary,
     margin: Spacing.lg,
     padding: Spacing.md,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     ...Typography.bodyMd,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   countryList: {
     paddingHorizontal: Spacing.lg,
@@ -582,7 +586,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   countryItemSelected: {
-    backgroundColor: Colors.violetLight,
+    backgroundColor: colors.violetLight,
   },
   countryItemFlag: {
     fontSize: 28,
@@ -593,28 +597,28 @@ const styles = StyleSheet.create({
   },
   countryItemName: {
     ...Typography.bodyMd,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     fontWeight: '600',
     marginBottom: Spacing.xs,
   },
   countryItemCurrency: {
     ...Typography.bodySm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   countryItemCheck: {
     ...Typography.headingMd,
-    color: Colors.violet,
+    color: colors.violet,
     fontWeight: '700',
   },
   paymentMethods: {
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: colors.border,
   },
   paymentMethodsLabel: {
     ...Typography.bodyMd,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginBottom: Spacing.sm,
   },
   paymentMethodsList: {
@@ -623,32 +627,32 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   paymentMethodBadge: {
-    backgroundColor: Colors.successLight,
+    backgroundColor: colors.successLight,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
   },
   paymentMethodText: {
     ...Typography.bodySm,
-    color: Colors.success,
+    color: colors.success,
     fontWeight: '600',
   },
   freePlanCard: {
-    backgroundColor: Colors.bgCard,
+    backgroundColor: colors.bgCard,
     padding: Spacing.lg,
     borderRadius: Radius.lg,
     marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   freePlanTitle: {
     ...Typography.headingMd,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.sm,
   },
   freePlanText: {
     ...Typography.bodyMd,
-    color: Colors.textBody,
+    color: colors.textBody,
     lineHeight: 24,
   },
   plansContainer: {
@@ -659,12 +663,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     ...Typography.bodySm,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: 'center',
     marginBottom: Spacing.lg,
   },
   subscribeButton: {
-    backgroundColor: Colors.violet,
+    backgroundColor: colors.violet,
     paddingVertical: Spacing.lg,
     borderRadius: Radius.lg,
     alignItems: 'center',
@@ -676,7 +680,7 @@ const styles = StyleSheet.create({
   },
   subscribeButtonText: {
     ...Typography.headingMd,
-    color: Colors.textInverse,
+    color: colors.textInverse,
     fontWeight: '700',
   },
 });

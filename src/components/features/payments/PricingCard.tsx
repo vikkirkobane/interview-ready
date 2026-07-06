@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Colors, Spacing, Radius, Typography, Shadow } from '../../../theme/tokens';
+import { Spacing, Radius, Typography, Shadow } from '../../../theme/tokens';
+import { useTheme } from '../../../theme';
 
 export interface PricingPlan {
   id: string;
@@ -27,6 +28,9 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   isSelected = false,
   disabled = false,
 }) => {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
+
   const formatPrice = (price: number, currency: string) => {
     if (currency === 'NGN') {
       return `₦${price.toLocaleString()}`;
@@ -99,18 +103,18 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any) => StyleSheet.create({
   card: {
-    backgroundColor: Colors.bgCard,
+    backgroundColor: colors.bgCard,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     ...Shadow.card,
   },
   cardSelected: {
-    borderColor: Colors.violet,
+    borderColor: colors.violet,
     ...Shadow.modal,
   },
   cardDisabled: {
@@ -120,14 +124,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -12,
     right: Spacing.lg,
-    backgroundColor: Colors.violet,
+    backgroundColor: colors.violet,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.full,
   },
   popularText: {
     ...Typography.label,
-    color: Colors.textInverse,
+    color: colors.textInverse,
     fontWeight: '700',
   },
   header: {
@@ -135,7 +139,7 @@ const styles = StyleSheet.create({
   },
   planName: {
     ...Typography.headingLg,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   priceContainer: {
@@ -145,16 +149,16 @@ const styles = StyleSheet.create({
   },
   price: {
     ...Typography.displayMd,
-    color: Colors.violet,
+    color: colors.violet,
     fontWeight: '800',
   },
   interval: {
     ...Typography.bodyMd,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginLeft: Spacing.xs,
   },
   savingsBadge: {
-    backgroundColor: Colors.successLight,
+    backgroundColor: colors.successLight,
     paddingHorizontal: Spacing.sm,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
@@ -162,12 +166,12 @@ const styles = StyleSheet.create({
   },
   savingsText: {
     ...Typography.bodySm,
-    color: Colors.success,
+    color: colors.success,
     fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: colors.border,
     marginVertical: Spacing.md,
   },
   features: {
@@ -180,35 +184,35 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     ...Typography.bodyLg,
-    color: Colors.success,
+    color: colors.success,
     marginRight: Spacing.sm,
     fontWeight: '700',
   },
   featureText: {
     ...Typography.bodyMd,
-    color: Colors.textBody,
+    color: colors.textBody,
     flex: 1,
   },
   selectButton: {
-    backgroundColor: Colors.bgSecondary,
+    backgroundColor: colors.bgSecondary,
     paddingVertical: Spacing.md,
     borderRadius: Radius.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   selectButtonSelected: {
-    backgroundColor: Colors.violet,
-    borderColor: Colors.violet,
+    backgroundColor: colors.violet,
+    borderColor: colors.violet,
   },
   selectButtonDisabled: {
     opacity: 0.5,
   },
   selectButtonText: {
     ...Typography.headingMd,
-    color: Colors.textPrimary,
+    color: colors.textPrimary,
   },
   selectButtonTextSelected: {
-    color: Colors.textInverse,
+    color: colors.textInverse,
   },
 });

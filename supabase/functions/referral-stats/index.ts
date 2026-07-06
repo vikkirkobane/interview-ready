@@ -54,15 +54,28 @@ serve(async (req) => {
       );
     }
 
+    let statsData = data || {
+      referral_code: null,
+      total_referrals: 0,
+      credits_earned: 0,
+      referrals: [],
+    };
+
+    // Auto-generate referral code for existing users who don't have one
+    if (!statsData.referral_code) {
+      const { data: newCode, error: genError } = await supabaseClient.rpc('generate_referral_code', {
+        p_user_id: user.id,
+      });
+      
+      if (!genError && newCode) {
+        statsData.referral_code = newCode;
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        data: data || {
-          referral_code: null,
-          total_referrals: 0,
-          credits_earned: 0,
-          referrals: [],
-        },
+        data: statsData,
       }),
       {
         status: 200,
