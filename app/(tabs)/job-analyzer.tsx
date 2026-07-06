@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 
@@ -290,7 +290,7 @@ export default function JobFitScreen() {
 
                   {/* Analyze Button */}
                   <TouchableOpacity
-                    style={[styles.analyzeBtn, { backgroundColor: colors.primary }, analyzeJob.isPending && { opacity: 0.7 }]}
+                    style={[styles.analyzeBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }, analyzeJob.isPending && { opacity: 0.7 }]}
                     onPress={handleAnalyze}
                     disabled={analyzeJob.isPending}
                   >
@@ -298,8 +298,8 @@ export default function JobFitScreen() {
                       <ActivityIndicator size="small" color={colors.textInverse} />
                     ) : (
                       <>
-                        <Text style={[styles.analyzeBtnText, { color: colors.textInverse }]}>Analyze Fit</Text>
-                        <Text style={{ color: colors.textInverse, ...Typography.headingMd }}>→</Text>
+                        <MaterialCommunityIcons name="star-four-points" size={20} color={colors.textInverse} />
+                        <Text style={[styles.analyzeBtnText, { color: colors.textInverse, fontWeight: '600' }]}>Analyze Job Match</Text>
                       </>
                     )}
                   </TouchableOpacity>

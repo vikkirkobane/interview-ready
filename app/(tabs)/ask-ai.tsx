@@ -153,7 +153,7 @@ export default function AskAIScreen() {
              <MaterialCommunityIcons name="robot" size={16} color="#fff" />
           </View>
         )}
-        <View style={{ flexShrink: 1, maxWidth: '75%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
+        <View style={{ flexShrink: 1, maxWidth: '88%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
           <View style={[styles.messageBubble, isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]]}>
             {isUser ? (
               <Text style={[styles.messageText, { color: '#fff' }]}>{msg.text}</Text>
@@ -201,8 +201,8 @@ export default function AskAIScreen() {
   return (
     <KeyboardAvoidingView 
       style={[styles.container, { backgroundColor: colors.bgSecondary }]} 
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={90}
     >
       <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
         
@@ -245,8 +245,7 @@ export default function AskAIScreen() {
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
               <>
-                <Ionicons name="attach" size={16} color={colors.primary} />
-                <Text style={styles.attachBtnText}>Attach file</Text>
+                <Ionicons name="attach" size={20} color={colors.primary} />
               </>
             )}
           </TouchableOpacity>

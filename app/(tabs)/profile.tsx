@@ -402,13 +402,13 @@ export default function ProfileScreen() {
             <View style={styles.premiumActions}>
               <TouchableOpacity 
                 style={[styles.upgradeBtn, { backgroundColor: colors.textInverse }]}
-                onPress={() => setUpgradeModal(true)}
+                onPress={() => router.push('/(tabs)/pricing')}
               >
                 <Text style={[styles.upgradeBtnText, { color: colors.primary }]}>Upgrade Plan</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.addCreditsBtn}
-                onPress={() => setUpgradeModal(true)}
+                onPress={() => router.push('/(tabs)/pricing')}
               >
                 <Text style={styles.addCreditsBtnText}>Add Credits</Text>
               </TouchableOpacity>
@@ -947,6 +947,7 @@ const styles = StyleSheet.create({
   },
   premiumActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.md,
   },
   upgradeBtn: {

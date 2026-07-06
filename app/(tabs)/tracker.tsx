@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
 import { Typography, Spacing, Radius, Shadow, useTheme } from "../../src/theme";
 import { ScoreRing } from "../../src/components/ui";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation, useDeleteJobApplicationMutation } from "../../src/hooks/useApi";
 import { useRouter } from "expo-router";
 
@@ -168,13 +168,14 @@ export default function TrackerScreen() {
                   <View style={{ marginBottom: Spacing.xl }}>
                     <Text style={[Typography.bodyMd, { color: colors.textMuted, marginBottom: Spacing.md }]}>No ATS score or analysis found for this job.</Text>
                     <TouchableOpacity 
-                      style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
+                      style={[styles.primaryBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}
                       onPress={() => {
                         setSelectedApp(null);
                         router.push(`/job-analyzer?job_id=${selectedApp.id}`);
                       }}
                     >
-                      <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Analyze Job Match</Text>
+                      <MaterialCommunityIcons name="star-four-points" size={20} color={colors.textInverse} />
+                      <Text style={[styles.primaryBtnText, { color: colors.textInverse, fontWeight: '600' }]}>Analyze Job Match</Text>
                     </TouchableOpacity>
                   </View>
                 )}

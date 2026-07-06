@@ -12,7 +12,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
 import { CoverLetter } from '../../src/types/schemas';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 const TONES = ['Professional', 'Enthusiastic', 'Concise', 'Storytelling', 'Formal'];
 
@@ -303,11 +303,22 @@ export default function CoverLetterGeneratorScreen() {
               ))}
             </View>
 
-            <Button 
-              title="Generate (2 Credits)" 
-              onPress={handleGenerate} 
-              style={{ marginTop: Spacing.xl }}
-            />
+            <TouchableOpacity 
+              style={[styles.primaryBtn, { marginTop: Spacing.xl, height: 54 }]} 
+              onPress={handleGenerate}
+              disabled={coverLetterMutation.isPending}
+            >
+              {coverLetterMutation.isPending ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
+                  <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
+                    Generate Cover Letter
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
           </Card>
         )}
 
@@ -510,5 +521,20 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
+  },
+  primaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full,
+    gap: 8,
+    ...Shadow.card,
+  },
+  primaryBtnText: {
+    ...Typography.headingMd,
+    color: '#fff',
   },
 });

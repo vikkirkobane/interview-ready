@@ -730,7 +730,7 @@ export default function ResumeBuilderScreen() {
               <>
                 <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
                 <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
-                  {jobDescription.trim().length > 10 ? 'Generate Tailored Resume (3 Credits)' : 'Generate Base Resume (3 Credits)'}
+                  {jobDescription.trim().length > 10 ? 'Generate Tailored Resume' : 'Generate Resume'}
                 </Text>
               </>
             )}
