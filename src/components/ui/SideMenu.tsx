@@ -17,6 +17,7 @@ import { useNavigationStore } from '../../stores/navigation-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = Math.min(width * 0.75, 320);
@@ -27,6 +28,7 @@ export function SideMenu() {
   const { isMenuOpen, closeMenu } = useNavigationStore();
   const { user, signOut } = useAuthStore();
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -87,6 +89,7 @@ export function SideMenu() {
     { name: 'Company Research', path: '/(tabs)/company-research',  icon: 'business-outline',       iconActive: 'business',        lib: 'ion' },
     { name: 'LinkedIn',        path: '/(tabs)/linkedin',          icon: 'logo-linkedin',          iconActive: 'logo-linkedin',   lib: 'ion' },
     { name: 'Onboarding',      path: '/(onboarding)/role',        icon: 'compass-outline',        iconActive: 'compass',         lib: 'ion' },
+    { name: 'Billing',         path: '/(tabs)/pricing',           icon: 'card-outline',           iconActive: 'card',            lib: 'ion' },
     { name: 'Referral',        path: '/(tabs)/referral',          icon: 'gift-outline',           iconActive: 'gift',            lib: 'ion' },
   ];
 
@@ -113,7 +116,15 @@ export function SideMenu() {
         </TouchableWithoutFeedback>
 
         {/* Sliding Drawer */}
-        <Animated.View style={[styles.drawer, { backgroundColor: colors.bgPrimary, transform: [{ translateX: slideAnim }] }]}>
+        <Animated.View style={[
+          styles.drawer, 
+          { 
+            backgroundColor: colors.bgPrimary, 
+            transform: [{ translateX: slideAnim }],
+            paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.md : Spacing.xl,
+            paddingTop: insets.top > 0 ? insets.top + Spacing.md : Spacing.xl,
+          }
+        ]}>
           <View style={styles.drawerHeader}>
             <View style={styles.headerTitleContainer}>
               <Image 

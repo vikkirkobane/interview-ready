@@ -19,19 +19,21 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { ScoreRing, GoldenBox, ShimmerEffect } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useCredits } from '../../src/hooks/useCredits';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
-  const { profile } = useProfileStore();
+  const { profile, fetchProfile } = useProfileStore();
   const { unreadCount } = useNotificationStore();
   const [refreshing, setRefreshing] = useState(false);
   const { colors, isDark } = useTheme();
+  const { balance, refreshBalance } = useCredits();
 
   const userName = user?.user_metadata?.first_name || 'Alex';
-  const credits = 24; // Mock
-  const completeness = profile?.profileCompleteness ?? 0;
+  const credits = balance?.balance ?? 0;
+  const completeness = (profile as any)?.profile_completeness ?? 0;
 
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
@@ -71,12 +73,19 @@ export default function DashboardScreen() {
     };
   }, [shakeAnim]);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await Promise.all([
+        fetchProfile(),
+        refreshBalance(),
+      ]);
+    } catch (e) {
+      console.error(e);
+    } finally {
       setRefreshing(false);
-    }, 1500);
-  }, []);
+    }
+  }, [fetchProfile, refreshBalance]);
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>

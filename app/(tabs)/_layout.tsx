@@ -230,6 +230,7 @@ export default function TabLayout() {
             href: null,
           }}
         />
+        <Tabs.Screen name="pricing" options={{ href: null }} />
         <Tabs.Screen name="interview" options={{ href: null }} />
         <Tabs.Screen name="interviews" options={{ href: null }} />
         <Tabs.Screen name="referral" options={{ href: null }} />

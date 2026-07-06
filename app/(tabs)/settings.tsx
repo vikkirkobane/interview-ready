@@ -97,7 +97,7 @@ export default function SettingsScreen() {
           title="Upgrade to Pro" 
           variant="primary" 
           style={{ marginTop: Spacing.md }}
-          onPress={() => setUpgradeModal(true)}
+          onPress={() => router.push('/(tabs)/pricing')}
         />
       </Card>
 
