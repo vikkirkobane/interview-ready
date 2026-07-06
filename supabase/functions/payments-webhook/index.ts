@@ -101,6 +101,12 @@ serve(async (req) => {
             p_current_period_end: currentPeriodEnd.toISOString(),
           });
 
+          // Sync credit_balance to match ai_credits (both systems)
+          await supabase
+            .from('users')
+            .update({ credit_balance: 999999, updated_at: new Date().toISOString() })
+            .eq('id', txData.user_id);
+
           console.log(`Subscription created: ${data.subscription_code}`);
         }
         break;
@@ -151,7 +157,7 @@ serve(async (req) => {
             })
             .eq('paystack_subscription_code', data.subscription.subscription_code);
 
-          // Reset credits for the user
+          // Reset credits for the user — update BOTH credit columns
           const { data: subData } = await supabase
             .from('subscriptions')
             .select('user_id, plan')
@@ -159,10 +165,12 @@ serve(async (req) => {
             .single();
 
           if (subData) {
+            const isPremium = subData.plan !== 'FREE';
             await supabase
               .from('users')
               .update({
-                ai_credits: subData.plan === 'FREE' ? 10 : 999999,
+                ai_credits: isPremium ? 999999 : 10,
+                credit_balance: isPremium ? 999999 : 10,
                 updated_at: new Date().toISOString(),
               })
               .eq('id', subData.user_id);

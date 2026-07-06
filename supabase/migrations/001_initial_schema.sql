@@ -352,6 +352,7 @@ ALTER TABLE public.networking_contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscriptions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.usage_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scraped_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.resume_templates ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users own their data" ON public.users
   FOR ALL USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
@@ -391,6 +392,9 @@ CREATE POLICY "Users own their usage events" ON public.usage_events
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Scraped jobs readable by all" ON public.scraped_jobs
+  FOR SELECT USING (true);
+
+CREATE POLICY "Resume templates readable by all" ON public.resume_templates
   FOR SELECT USING (true);
 
 -- ─── CREDIT DEDUCTION FUNCTION ─────────────────────────────────────────────

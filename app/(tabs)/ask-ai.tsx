@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard, Clipboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useAnswerQuestionMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
+import * as Clipboard from 'expo-clipboard';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -45,7 +46,7 @@ export default function AskAIScreen() {
   const answerQuestionMutation = useAnswerQuestionMutation();
 
   const copyToClipboard = (text: string) => {
-    Clipboard.setString(text);
+    Clipboard.setStringAsync(text);
     Toast.show({
       type: 'success',
       text1: 'Copied to clipboard',

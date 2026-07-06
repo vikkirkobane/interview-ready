@@ -7,6 +7,63 @@ import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import * as DocumentPicker from 'expo-document-picker';
+import { useReducedMotion } from 'react-native-reanimated';
+
+const TypingIndicator = ({ colors }: { colors: any }) => {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (reducedMotion) {
+      dot1.setValue(1);
+      dot2.setValue(1);
+      dot3.setValue(1);
+      return;
+    }
+    const animateDot = (anim: Animated.Value, delay: number) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 400,
+            delay: delay,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 400,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.delay(400) // pause between loops
+        ])
+      ).start();
+    };
+
+    animateDot(dot1, 0);
+    animateDot(dot2, 200);
+    animateDot(dot3, 400);
+  }, [reducedMotion]);
+
+  return (
+    <View style={styles.messageRowLeft}>
+      <View style={styles.messageMetaLeft}>
+        <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
+          <MaterialCommunityIcons name="robot" size={12} color={colors.primary} />
+        </View>
+        <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Analyzing Response...</Text>
+      </View>
+      <View style={[styles.typingBubble, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot1 }] }]} />
+        <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot2 }] }]} />
+        <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot3 }] }]} />
+      </View>
+    </View>
+  );
+};
 
 // Mock Message Data
 type Message = {
@@ -170,54 +227,7 @@ export default function InterviewScreen() {
     }
   };
 
-  const TypingIndicator = () => {
-    const dot1 = useRef(new Animated.Value(0)).current;
-    const dot2 = useRef(new Animated.Value(0)).current;
-    const dot3 = useRef(new Animated.Value(0)).current;
 
-    useEffect(() => {
-      const animateDot = (anim: Animated.Value, delay: number) => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(anim, {
-              toValue: 1,
-              duration: 400,
-              delay: delay,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim, {
-              toValue: 0,
-              duration: 400,
-              easing: Easing.inOut(Easing.ease),
-              useNativeDriver: true,
-            }),
-            Animated.delay(400) // pause between loops
-          ])
-        ).start();
-      };
-
-      animateDot(dot1, 0);
-      animateDot(dot2, 200);
-      animateDot(dot3, 400);
-    }, []);
-
-    return (
-      <View style={styles.messageRowLeft}>
-        <View style={styles.messageMetaLeft}>
-          <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
-            <MaterialCommunityIcons name="robot" size={12} color={colors.primary} />
-          </View>
-          <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Analyzing Response...</Text>
-        </View>
-        <View style={[styles.typingBubble, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-          <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot1 }] }]} />
-          <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot2 }] }]} />
-          <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot3 }] }]} />
-        </View>
-      </View>
-    );
-  };
 
   return (
     <KeyboardAvoidingView style={[styles.flex, { backgroundColor: colors.bgPrimary }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
@@ -307,7 +317,7 @@ export default function InterviewScreen() {
           );
         })}
 
-        {isTyping && <TypingIndicator />}
+        {isTyping && <TypingIndicator colors={colors} />}
       </ScrollView>
 
       {/* Bottom Input Area */}

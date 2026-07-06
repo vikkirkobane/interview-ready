@@ -6,13 +6,13 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  Linking,
   TouchableOpacity,
   Modal,
   TextInput,
   FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { PricingCard, PricingPlan } from '../../src/components/features/payments/PricingCard';
 import { Spacing, Typography, Radius } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme';
@@ -292,20 +292,28 @@ export default function PricingScreen() {
         throw new Error('Invalid payment response');
       }
 
-      // Open Paystack payment page
-      const canOpen = await Linking.canOpenURL(data.data.authorization_url);
-      if (canOpen) {
-        await Linking.openURL(data.data.authorization_url);
-        
-        // Navigate to payment callback screen
+      // Open Paystack payment page and wait for redirect back to the app
+      const callbackDeepLink = 'interviewready://payment/callback';
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.data.authorization_url,
+        callbackDeepLink
+      );
+
+      if (result.type === 'success' && result.url) {
+        // Extract reference from the callback URL
+        // Paystack appends ?reference=... or we use the reference we generated
+        const callbackUrl = new URL(result.url);
+        const returnedReference = callbackUrl.searchParams.get('reference') || data.data.reference;
+
         router.push({
           pathname: '/payment/callback' as any,
-          params: {
-            reference: data.data.reference,
-          },
+          params: { reference: returnedReference },
         });
+      } else if (result.type === 'cancel' || result.type === 'dismiss') {
+        // User closed the browser without completing payment — do nothing
+        Alert.alert('Payment Cancelled', 'You closed the payment page. No charge was made.');
       } else {
-        throw new Error('Cannot open payment page');
+        throw new Error('Payment window closed unexpectedly');
       }
     } catch (error) {
       console.error('Payment initialization error:', error);

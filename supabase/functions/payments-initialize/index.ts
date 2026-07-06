@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { PaystackClient } from '../_shared/paystack-client.ts';
+import { createPaystackClient } from '../_shared/paystack-client.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,7 +69,7 @@ serve(async (req) => {
     // Get user profile for email
     const { data: profile, error: profileError } = await supabaseClient
       .from('users')
-      .select('email, full_name')
+      .select('email, first_name, last_name')
       .eq('id', user.id)
       .single();
 
@@ -103,13 +103,12 @@ serve(async (req) => {
     }
 
     // Initialize Paystack client
-    const paystack = new PaystackClient(Deno.env.get('PAYSTACK_SECRET_KEY') ?? '');
+    const paystack = createPaystackClient();
 
     // Initialize transaction
-    const initResponse = await paystack.initializeTransaction({
+    const initResponse = await paystack.initializePayment({
       email: profile.email,
       amount: Math.round(plan.amount * 100), // Convert to smallest currency unit (cents/kobo)
-      currency: plan.currency,
       reference,
       callback_url: callbackUrl,
       channels,

@@ -264,7 +264,7 @@ export class PaystackClient {
   /**
    * Verify webhook signature
    */
-  verifyWebhookSignature(payload: string, signature: string): boolean {
+  async verifyWebhookSignature(payload: string, signature: string): Promise<boolean> {
     const crypto = globalThis.crypto;
     const encoder = new TextEncoder();
     const key = encoder.encode(this.secretKey);

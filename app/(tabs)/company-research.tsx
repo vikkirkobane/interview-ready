@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  Clipboard,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { Card, Button, ScoreRing } from '../../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,8 +29,8 @@ type ResultTab =
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const copy = (text: string) => {
-  Clipboard.setString(text);
+const copy = async (text: string) => {
+  await Clipboard.setStringAsync(text);
   Toast.show({ type: 'success', text1: 'Copied!' });
 };
 

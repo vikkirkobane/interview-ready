@@ -402,13 +402,13 @@ export default function ProfileScreen() {
             <View style={styles.premiumActions}>
               <TouchableOpacity 
                 style={[styles.upgradeBtn, { backgroundColor: colors.textInverse }]}
-                onPress={() => router.push('/(tabs)/pricing')}
+                onPress={() => router.push('/(tabs)/pricing' as any)}
               >
                 <Text style={[styles.upgradeBtnText, { color: colors.primary }]}>Upgrade Plan</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.addCreditsBtn}
-                onPress={() => router.push('/(tabs)/pricing')}
+                onPress={() => router.push('/(tabs)/pricing' as any)}
               >
                 <Text style={styles.addCreditsBtnText}>Add Credits</Text>
               </TouchableOpacity>

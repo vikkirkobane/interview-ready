@@ -57,6 +57,10 @@ CREATE TABLE IF NOT EXISTS public.paystack_plans (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Enable RLS on paystack_plans
+ALTER TABLE public.paystack_plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Paystack plans readable by all" ON public.paystack_plans FOR SELECT USING (true);
+
 -- Insert default Paystack plans (Nigerian Naira pricing)
 INSERT INTO public.paystack_plans (plan_code, plan_type, name, amount, currency, interval, description) VALUES
   ('PLN_premium_monthly', 'PREMIUM', 'Premium Monthly', 5000.00, 'NGN', 'MONTHLY', 'Unlimited AI credits, all templates, priority support'),
