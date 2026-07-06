@@ -3,20 +3,23 @@ import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, Activit
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';
 import { useBreakpoint } from '../../src/hooks/useBreakpoint';
-import { useJobApplicationQuery, useDeleteJobApplicationMutation } from '../../src/hooks/useApi';
+import { useJobApplicationQuery, useDeleteJobApplicationMutation, useGenerateRoadmapMutation } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCredits } from '../../src/hooks/useCredits';
 import { exportRoadmapPDF } from '../../src/lib/roadmapExport';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function JobMatchResultsScreen() {
   const { id, fromList } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { isDesktop } = useBreakpoint();
+  const insets = useSafeAreaInsets();
 
   const { data: jobApplication, isLoading, error } = useJobApplicationQuery(id as string);
   const deleteMutation = useDeleteJobApplicationMutation();
+  const generateRoadmap = useGenerateRoadmapMutation();
   const [isDownloading, setIsDownloading] = useState(false);
   const { deductCredits } = useCredits();
 
@@ -32,7 +35,7 @@ export default function JobMatchResultsScreen() {
           onPress: async () => {
             try {
               await deleteMutation.mutateAsync(id as string);
-              router.back();
+              router.replace('/(tabs)/job-analyzer');
             } catch (err) {
               Alert.alert('Error', 'Failed to delete analysis.');
             }
@@ -41,22 +44,30 @@ export default function JobMatchResultsScreen() {
       ]
     );
   };
-  const analysisResult = jobApplication?.jd_summary ? {
-    fit_score: jobApplication.match_score,
-    missing_bonus_skills: jobApplication.missing_skills?.map((s: string) => ({ skill: s })) || [],
-    required_skills: jobApplication.required_skills?.map((s: string) => ({ skill: s })) || [],
-    match_analysis: [] 
+  let parsedSummary = null;
+  try {
+    parsedSummary = jobApplication?.jd_summary ? JSON.parse(jobApplication.jd_summary) : null;
+  } catch (e) {
+    console.error("Failed to parse jd_summary", e);
+  }
+
+  const analysisResult = parsedSummary ? {
+    fit_score: jobApplication?.match_score || parsedSummary.fit_score || 0,
+    missing_bonus_skills: parsedSummary.missing_bonus_skills?.map((s: any) => typeof s === 'string' ? { skill: s } : s) || jobApplication?.missing_skills?.map((s: string) => ({ skill: s })) || [],
+    required_skills: parsedSummary.required_skills?.map((s: any) => typeof s === 'string' ? { skill: s } : s) || jobApplication?.required_skills?.map((s: string) => ({ skill: s })) || [],
+    match_analysis: parsedSummary.match_analysis || []
   } : null;
 
   const handleDownloadRoadmap = async () => {
-    if (!analysisResult) return;
+    if (!id) return;
     
     setIsDownloading(true);
     try {
-      await deductCredits('job_description_analysis', { amount: 2, metadata: { action: 'roadmap_pdf' } });
-      await exportRoadmapPDF(analysisResult);
+      const roadmapResult = await generateRoadmap.mutateAsync({ job_id: id as string });
+      await exportRoadmapPDF(roadmapResult.data);
+      Alert.alert('Success', 'Your personalized skill roadmap has been downloaded.');
     } catch (e: any) {
-      Alert.alert('Download Failed', e.message);
+      Alert.alert('Error', e.message || 'Failed to generate roadmap.');
     } finally {
       setIsDownloading(false);
     }
@@ -74,7 +85,7 @@ export default function JobMatchResultsScreen() {
     return (
       <View style={[styles.flex, styles.center, { backgroundColor: colors.bgSecondary }]}>
         <Text style={[Typography.bodyLg, { color: colors.error }]}>Failed to load match results.</Text>
-        <TouchableOpacity style={{ marginTop: Spacing.md }} onPress={() => router.back()}>
+        <TouchableOpacity style={{ marginTop: Spacing.md }} onPress={() => router.replace('/(tabs)/job-analyzer')}>
           <Text style={{ color: colors.primary }}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -84,10 +95,10 @@ export default function JobMatchResultsScreen() {
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
-        contentContainerStyle={styles.container} 
+        contentContainerStyle={[styles.container, { paddingBottom: 140 + insets.bottom }]} 
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/job-analyzer')}>
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           <Text style={[styles.backBtnText, { color: colors.textPrimary }]}>Back</Text>
         </TouchableOpacity>
@@ -196,7 +207,7 @@ export default function JobMatchResultsScreen() {
                   {isDownloading ? (
                     <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
-                    <Text style={[styles.roadmapBtnText, { color: colors.primary }]}>Download Roadmap (2 Credits)</Text>
+                    <Text style={[styles.roadmapBtnText, { color: colors.primary }]}>Download Roadmap</Text>
                   )}
                 </TouchableOpacity>
               </View>

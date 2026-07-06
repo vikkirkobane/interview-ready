@@ -151,12 +151,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         
         if (res.type === 'success') {
           const { url } = res;
-          // Capture the session directly from the returned URL
-          // @ts-ignore
+          // @ts-ignore — getSessionFromUrl is available in supabase-js
           const { error: sessionError } = await supabase.auth.getSessionFromUrl(url);
           if (sessionError) return { error: sessionError.message };
+
+          // Confirm the session was actually stored
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            set({ session, user: session.user });
+          }
+
           return { error: null };
-        } else {
+        } else if (res.type === 'cancel' || res.type === 'dismiss') {
           return { error: 'Authentication canceled.' };
         }
       }

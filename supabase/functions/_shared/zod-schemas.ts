@@ -475,3 +475,21 @@ export const JD_SUMMARY_SCHEMA = z.object({
 });
 
 export type JDSummary = z.infer<typeof JD_SUMMARY_SCHEMA>;
+
+// ─── ROADMAP GENERATION ──────────────────────────────────────────────────
+
+export const ROADMAP_SCHEMA = z.object({
+  duration_days: z.number().min(1).max(30),
+  title: z.string().min(1),
+  overview: z.string().min(10),
+  modules: z.array(z.object({
+    module_title: z.string(),
+    days_allocated: z.string(), // e.g., "Days 1-3"
+    focus_skill: z.string(),
+    action_items: z.array(z.string()).min(1),
+    estimated_hours: z.number().min(1),
+    resources_to_use: z.array(z.string()).optional(),
+  })).min(1),
+});
+
+export type Roadmap = z.infer<typeof ROADMAP_SCHEMA>;

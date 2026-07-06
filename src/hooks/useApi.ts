@@ -80,6 +80,19 @@ export const useAnalyzeJobMutation = () => {
 };
 
 /**
+ * Generate 14-Day Roadmap Mutation
+ */
+export const useGenerateRoadmapMutation = () => {
+  return useMutation({
+    mutationFn: async (payload: { job_id: string }) => {
+      const response = await apiCall('jobs-roadmap-generate', 'POST', payload);
+      if (response.error) throw new Error(response.error);
+      return response.data; // { data: Roadmap }
+    },
+  });
+};
+
+/**
  * Create Resume Mutation
  */
 export const useCreateResumeMutation = () => {

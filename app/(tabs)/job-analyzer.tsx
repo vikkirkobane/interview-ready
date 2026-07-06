@@ -203,12 +203,28 @@ export default function JobFitScreen() {
               <Text style={[styles.heroTitle, { color: colors.textInverse }]}>Job Fit Analyzer</Text>
               <Text style={styles.heroDesc}>Benchmark your profile against specific roles to identify high-impact gaps.</Text>
               
-              <View style={styles.profileBadge}>
-                <Ionicons name="person" size={14} color={colors.textInverse} style={{ marginRight: 8 }} />
-                <View>
-                  <Text style={styles.profileBadgeLabel}>CURRENT PROFILE</Text>
-                  <Text style={[styles.profileBadgeRole, { color: colors.textInverse }]}>{(profile as any)?.current_role || 'Candidate'}</Text>
+              <View style={[styles.profileBadge, { justifyContent: 'space-between' }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="person" size={14} color={colors.textInverse} style={{ marginRight: 8 }} />
+                  <View>
+                    <Text style={styles.profileBadgeLabel}>CURRENT PROFILE</Text>
+                    <Text style={[styles.profileBadgeRole, { color: colors.textInverse }]}>{(profile as any)?.current_role || 'Candidate'}</Text>
+                  </View>
                 </View>
+                <TouchableOpacity 
+                  onPress={handleUploadResume} 
+                  disabled={parseResume.isPending}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: Spacing.sm, borderRadius: Radius.md, flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                >
+                  {parseResume.isPending ? (
+                    <ActivityIndicator size="small" color={colors.textInverse} />
+                  ) : (
+                    <>
+                      <Ionicons name="cloud-upload-outline" size={18} color={colors.textInverse} />
+                      <Text style={{ color: colors.textInverse, ...Typography.label }}>Update</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -244,17 +260,6 @@ export default function JobFitScreen() {
                   textAlignVertical="top"
                 />
                 <View style={styles.inputActions}>
-                  {/* Attach Resume Button */}
-                  <TouchableOpacity style={styles.attachBtn} onPress={handleUploadResume} disabled={parseResume.isPending}>
-                     {parseResume.isPending ? (
-                       <ActivityIndicator size="small" color={colors.primary} />
-                     ) : (
-                       <>
-                         <Ionicons name="document-attach" size={24} color={colors.textMuted} />
-                       </>
-                     )}
-                  </TouchableOpacity>
-
                   {/* Attach JD File Button */}
                   <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                      {extractJdLoading ? (

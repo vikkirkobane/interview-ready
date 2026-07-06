@@ -54,27 +54,51 @@ export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
   }
 }
 
-function buildRoadmapHTML(analysisResult: any): string {
-  const missingSkills = analysisResult?.missing_bonus_skills || [];
-  
-  const skillsListHTML = missingSkills.length > 0 
-    ? missingSkills.map((s: any, i: number) => `
-      <div class="step">
-        <div class="step-number">${i + 1}</div>
-        <div class="step-content">
-          <h3>Master ${s.skill}</h3>
-          <p>This is a critical gap identified in your profile. Allocate time to understand the core concepts, build a small project, and be prepared to discuss it in your interview.</p>
-        </div>
+function buildRoadmapHTML(roadmapData: any): string {
+  if (!roadmapData || !roadmapData.modules) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Interview Ready - Roadmap</title>
+        <style>
+          body { font-family: 'Inter', sans-serif; text-align: center; padding: 40px; color: #1a1a1a; }
+          .success-box { background: #e8f5e9; color: #2e7d32; padding: 20px; border-radius: 12px; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <div class="success-box">You have no critical gaps! Continue reviewing your core strengths.</div>
+      </body>
+      </html>
+    `;
+  }
+
+  const modulesHTML = roadmapData.modules.map((m: any, i: number) => `
+    <div class="step">
+      <div class="step-number">${i + 1}</div>
+      <div class="step-content">
+        <h3>${m.module_title} (${m.days_allocated})</h3>
+        <p style="margin-bottom: 15px; color: #5221E6; font-weight: 600; font-size: 14px;">Focus: ${m.focus_skill} • Estimated Time: ${m.estimated_hours}h</p>
+        <ul style="margin-top: 0; padding-left: 20px; color: #555;">
+          ${m.action_items.map((item: string) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+        </ul>
+        ${m.resources_to_use && m.resources_to_use.length > 0 ? `
+          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ddd;">
+            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #333;">Recommended Resources:</p>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #666;">${m.resources_to_use.join(', ')}</p>
+          </div>
+        ` : ''}
       </div>
-    `).join('')
-    : `<div class="success-box">You have no critical gaps! Continue reviewing your core strengths.</div>`;
+    </div>
+  `).join('');
 
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Interview Ready - 14 Day Roadmap</title>
+      <title>Interview Ready - ${roadmapData.duration_days} Day Roadmap</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
         
@@ -87,7 +111,6 @@ function buildRoadmapHTML(analysisResult: any): string {
           background: #ffffff;
         }
 
-        /* Watermark */
         .watermark {
           position: fixed;
           top: 50%;
@@ -148,24 +171,27 @@ function buildRoadmapHTML(analysisResult: any): string {
         }
 
         .main-title {
-          font-size: 36px;
+          font-size: 32px;
           font-weight: 700;
           color: #5221E6;
-          margin-bottom: 10px;
+          margin-bottom: 15px;
         }
 
         .sub-title {
-          font-size: 18px;
+          font-size: 16px;
           color: #555;
+          max-width: 600px;
+          margin: 0 auto;
         }
 
         .roadmap-container {
-          margin-top: 30px;
+          margin-top: 40px;
         }
 
         .step {
           display: flex;
           margin-bottom: 30px;
+          page-break-inside: avoid;
         }
 
         .step-number {
@@ -185,7 +211,7 @@ function buildRoadmapHTML(analysisResult: any): string {
 
         .step-content {
           background: #f8f9fa;
-          padding: 20px;
+          padding: 24px;
           border-radius: 12px;
           flex-grow: 1;
           border: 1px solid #eee;
@@ -193,7 +219,7 @@ function buildRoadmapHTML(analysisResult: any): string {
 
         .step-content h3 {
           margin-top: 0;
-          margin-bottom: 10px;
+          margin-bottom: 5px;
           color: #1a1a1a;
           font-size: 20px;
         }
@@ -202,15 +228,6 @@ function buildRoadmapHTML(analysisResult: any): string {
           margin: 0;
           color: #555;
           font-size: 15px;
-        }
-
-        .success-box {
-          background: #e8f5e9;
-          color: #2e7d32;
-          padding: 20px;
-          border-radius: 12px;
-          text-align: center;
-          font-weight: 600;
         }
 
         .footer {
@@ -236,12 +253,12 @@ function buildRoadmapHTML(analysisResult: any): string {
         </div>
 
         <div class="title-section">
-          <h2 class="main-title">14-Day Action Plan</h2>
-          <p class="sub-title">A step-by-step roadmap to bridge your skill gaps before the interview</p>
+          <h2 class="main-title">${roadmapData.title}</h2>
+          <p class="sub-title">${roadmapData.overview}</p>
         </div>
 
         <div class="roadmap-container">
-          ${skillsListHTML}
+          ${modulesHTML}
         </div>
 
         <div class="footer">
