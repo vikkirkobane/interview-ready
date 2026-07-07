@@ -91,7 +91,7 @@ serve(async (req) => {
     // Initialize Paystack client
     const paystack = createPaystackClient();
 
-    // Initialize transaction
+    // Initialize transaction (one-time payment, subscription created after success)
     const initResponse = await paystack.initializePayment({
       email: profile.email,
       amount: Math.round(plan.amount * 100), // Convert to smallest currency unit (cents/kobo)

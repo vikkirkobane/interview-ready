@@ -25,7 +25,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
   USD: [
     {
       id: '1',
-      planCode: 'PLN_premium_monthly',
+      planCode: 'PLN_0jg6lfy4ttw68tj',
       name: 'Premium',
       price: 5,
       currency: 'USD',
@@ -45,7 +45,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
     },
     {
       id: '2',
-      planCode: 'PLN_premium_yearly',
+      planCode: 'PLN_2uob7t7251usns5',
       name: 'Premium',
       price: 50,
       currency: 'USD',
@@ -68,7 +68,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
     },
     {
       id: '3',
-      planCode: 'PLN_premium_plus_monthly',
+      planCode: 'PLN_fkvsy1vdlgcnp0p',
       name: 'Premium Plus',
       price: 10,
       currency: 'USD',
@@ -86,7 +86,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
     },
     {
       id: '4',
-      planCode: 'PLN_premium_plus_yearly',
+      planCode: 'PLN_35hurhal4nnj3n9',
       name: 'Premium Plus',
       price: 100,
       currency: 'USD',
@@ -108,7 +108,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
   KES: [
     {
       id: '1',
-      planCode: 'PLN_premium_monthly_kes',
+      planCode: 'PLN_7l2u2vr9r7844sz',
       name: 'Premium',
       price: 500,
       currency: 'KES',
@@ -128,7 +128,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
     },
     {
       id: '2',
-      planCode: 'PLN_premium_yearly_kes',
+      planCode: 'PLN_rsxpxfrt13zyatj',
       name: 'Premium',
       price: 5000,
       currency: 'KES',
@@ -151,9 +151,9 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
     },
     {
       id: '3',
-      planCode: 'PLN_premium_plus_monthly_kes',
+      planCode: 'PLN_gi0q6ldgfi6e0cd',
       name: 'Premium Plus',
-      price: 3000,
+      price: 1000,
       currency: 'KES',
       interval: 'MONTHLY',
       features: [
@@ -169,9 +169,9 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
     },
     {
       id: '4',
-      planCode: 'PLN_premium_plus_yearly_kes',
+      planCode: 'PLN_qy200k9hkdd183d',
       name: 'Premium Plus',
-      price: 30000,
+      price: 10000,
       currency: 'KES',
       interval: 'YEARLY',
       savings: 'Save 2 months',
@@ -184,7 +184,7 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
         'Custom resume templates',
         'API access (coming soon)',
         'Pay with M-Pesa or Card',
-        '2 months free (KES 6,000 savings)',
+        '2 months free (KES 2,000 savings)',
       ],
     },
   ],
@@ -432,39 +432,41 @@ export default function PricingScreen() {
       </View>
 
       <View style={styles.plansContainer}>
-        {currentPlans.map((plan) => (
-          <PricingCard
-            key={plan.id}
-            plan={plan}
-            onSelect={handleSelectPlan}
-            isSelected={selectedPlan?.id === plan.id}
-            disabled={loading}
-          />
-        ))}
+        {currentPlans.map((plan) => {
+          const isSelected = selectedPlan?.id === plan.id;
+          return (
+            <View key={plan.id} style={{ marginBottom: Spacing.sm }}>
+              <PricingCard
+                plan={plan}
+                onSelect={handleSelectPlan}
+                isSelected={isSelected}
+                disabled={loading}
+              />
+              {isSelected && (
+                <View style={styles.inlineSubscribeContainer}>
+                  <TouchableOpacity
+                    style={[styles.subscribeButton, loading && styles.subscribeButtonDisabled]}
+                    onPress={handleSubscribe}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.textInverse} />
+                    ) : (
+                      <Text style={styles.subscribeButtonText}>
+                        Subscribe to {plan.name}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={styles.footerTextInline}>
+                    By subscribing, you agree to our Terms of Service and Privacy Policy.
+                    Your subscription will auto-renew unless cancelled.
+                  </Text>
+                </View>
+              )}
+            </View>
+          );
+        })}
       </View>
-
-      {selectedPlan && (
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            By subscribing, you agree to our Terms of Service and Privacy Policy.
-            Your subscription will auto-renew unless cancelled.
-          </Text>
-          
-          <TouchableOpacity
-            style={[styles.subscribeButton, loading && styles.subscribeButtonDisabled]}
-            onPress={handleSubscribe}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.textInverse} />
-            ) : (
-              <Text style={styles.subscribeButtonText}>
-                Subscribe to {selectedPlan.name}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -674,6 +676,16 @@ const getStyles = (colors: any) => StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginBottom: Spacing.lg,
+  },
+  inlineSubscribeContainer: {
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  footerTextInline: {
+    ...Typography.bodySm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
   subscribeButton: {
     backgroundColor: colors.violet,

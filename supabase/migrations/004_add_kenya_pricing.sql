@@ -6,8 +6,8 @@
 INSERT INTO public.paystack_plans (plan_code, plan_type, name, amount, currency, interval, description) VALUES
   ('PLN_premium_monthly_kes', 'PREMIUM', 'Premium Monthly (M-Pesa)', 500.00, 'KES', 'MONTHLY', 'Unlimited AI credits, all templates, priority support - Pay with M-Pesa'),
   ('PLN_premium_yearly_kes', 'PREMIUM', 'Premium Yearly (M-Pesa)', 5000.00, 'KES', 'YEARLY', 'Unlimited AI credits, all templates, priority support (2 months free) - Pay with M-Pesa'),
-  ('PLN_premium_plus_monthly_kes', 'PREMIUM_PLUS', 'Premium Plus Monthly (M-Pesa)', 3000.00, 'KES', 'MONTHLY', 'Everything in Premium + priority queue, advanced analytics - Pay with M-Pesa'),
-  ('PLN_premium_plus_yearly_kes', 'PREMIUM_PLUS', 'Premium Plus Yearly (M-Pesa)', 30000.00, 'KES', 'YEARLY', 'Everything in Premium + priority queue, advanced analytics (2 months free) - Pay with M-Pesa')
+  ('PLN_premium_plus_monthly_kes', 'PREMIUM_PLUS', 'Premium Plus Monthly (M-Pesa)', 1000.00, 'KES', 'MONTHLY', 'Everything in Premium + priority queue, advanced analytics - Pay with M-Pesa'),
+  ('PLN_premium_plus_yearly_kes', 'PREMIUM_PLUS', 'Premium Plus Yearly (M-Pesa)', 10000.00, 'KES', 'YEARLY', 'Everything in Premium + priority queue, advanced analytics (2 months free) - Pay with M-Pesa')
 ON CONFLICT (plan_code) DO NOTHING;
 
 -- Update existing plans to use USD as primary currency
