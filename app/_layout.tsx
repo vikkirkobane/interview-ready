@@ -60,7 +60,7 @@ function AuthGuard() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
-    const isCallback = segments[1] === 'callback';
+    const isCallback = (segments[1] as string) === 'callback';
 
     // Never interfere with the OAuth callback screen — let it handle itself
     if (inAuthGroup && isCallback) return;

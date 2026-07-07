@@ -65,18 +65,14 @@ export default function JobFitScreen() {
 
       setExtractJdLoading(true);
 
-      const formData = new FormData();
-      if (Platform.OS === 'web' && fileAsset.file) {
-        formData.append('file', fileAsset.file as unknown as Blob);
-      } else {
-        formData.append('file', {
-          uri: fileAsset.uri,
-          name: fileAsset.name,
-          type: fileAsset.mimeType,
-        } as any);
-      }
+      const payload = {
+        fileUri: fileAsset.uri,
+        fileName: fileAsset.name,
+        mimeType: fileAsset.mimeType || 'application/octet-stream',
+        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
+      };
 
-      const { extracted_text } = await extractJd.mutateAsync(formData);
+      const { extracted_text } = await extractJd.mutateAsync(payload);
 
       setJdFileText(extracted_text);
       setJdFileName(fileAsset.name);

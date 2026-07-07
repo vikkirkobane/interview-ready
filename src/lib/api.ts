@@ -125,6 +125,61 @@ export async function apiCall<T = any>(
 }
 
 /**
+ * Upload a file directly to a Supabase Edge Function.
+ * Bypasses React Native's fetch FormData issues by using expo-file-system on native.
+ */
+export async function apiUploadFile<T = any>(
+  functionName: string,
+  fileUri: string,
+  fileName: string,
+  mimeType: string,
+  webFile?: Blob | null
+): Promise<ApiResponse<T>> {
+  try {
+    let { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.access_token) {
+      return { data: null, error: 'Not authenticated' };
+    }
+
+    if (Platform.OS === 'web' && webFile) {
+      const formData = new FormData();
+      formData.append('file', webFile);
+      return apiCall<T>(functionName, 'POST', formData);
+    } else {
+      const FileSystem = await import('expo-file-system');
+      
+      const response = await FileSystem.uploadAsync(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
+        fileUri,
+        {
+          httpMethod: 'POST',
+          uploadType: 1, // FileSystemUploadType.MULTIPART
+          fieldName: 'file',
+          mimeType: mimeType || 'application/octet-stream',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          }
+        }
+      );
+
+      if (response.status !== 200) {
+        let errorMsg = 'Upload failed';
+        try {
+          const errJson = JSON.parse(response.body);
+          errorMsg = errJson.error || errorMsg;
+        } catch (e) {}
+        return { data: null, error: errorMsg };
+      }
+
+      const data = JSON.parse(response.body);
+      return { data, error: null };
+    }
+  } catch (err: any) {
+    return { data: null, error: err.message || 'Upload failed' };
+  }
+}
+
+/**
  * Error codes returned by Edge Functions.
  * Match the codes defined in _shared/errors.ts
  */

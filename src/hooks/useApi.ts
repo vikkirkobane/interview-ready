@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiCall } from '../lib/api';
+import { apiCall, apiUploadFile } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -26,8 +26,8 @@ export const useUpdateProfileMutation = () => {
  */
 export const useParseResumeMutation = () => {
   return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await apiCall('profile-parse-resume', 'POST', formData);
+    mutationFn: async (params: { fileUri: string, fileName: string, mimeType: string, webFile?: Blob | null }) => {
+      const response = await apiUploadFile('profile-parse-resume', params.fileUri, params.fileName, params.mimeType, params.webFile);
       if (response.error) throw new Error(response.error);
       return response.data as {
         current_role: string;
@@ -47,8 +47,8 @@ export const useParseResumeMutation = () => {
  */
 export const useExtractJdMutation = () => {
   return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const response = await apiCall('jd-extract-text', 'POST', formData);
+    mutationFn: async (params: { fileUri: string, fileName: string, mimeType: string, webFile?: Blob | null }) => {
+      const response = await apiUploadFile('jd-extract-text', params.fileUri, params.fileName, params.mimeType, params.webFile);
       if (response.error) throw new Error(response.error);
       return response.data as { extracted_text: string };
     },

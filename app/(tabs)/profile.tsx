@@ -277,20 +277,16 @@ export default function ProfileScreen() {
         return;
       }
 
-      const formData = new FormData();
-      if (Platform.OS === 'web' && fileAsset.file) {
-        formData.append('file', fileAsset.file as unknown as Blob);
-      } else {
-        formData.append('file', {
-          uri: fileAsset.uri,
-          name: fileAsset.name,
-          type: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-        } as any);
-      }
+      const payload = {
+        fileUri: fileAsset.uri,
+        fileName: fileAsset.name,
+        mimeType: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
+      };
 
       Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
       
-      const extractedData = await parseResume.mutateAsync(formData);
+      const extractedData = await parseResume.mutateAsync(payload);
       
       // Update the user profile completely
       await updateProfile({

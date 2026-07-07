@@ -89,19 +89,14 @@ export default function ProfileScreen() {
         return;
       }
 
-      const formData = new FormData();
-      
-      if (Platform.OS === 'web' && fileAsset.file) {
-        formData.append('file', fileAsset.file as unknown as Blob);
-      } else {
-        formData.append('file', {
-          uri: fileAsset.uri,
-          name: fileAsset.name,
-          type: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-        } as any);
-      }
+      const payload = {
+        fileUri: fileAsset.uri,
+        fileName: fileAsset.name,
+        mimeType: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
+      };
 
-      const extractedData = await parseResume.mutateAsync(formData);
+      const extractedData = await parseResume.mutateAsync(payload);
       
       if (extractedData.current_role) setCurrentRole(extractedData.current_role);
       if (extractedData.company) setCompany(extractedData.company);
