@@ -9,10 +9,12 @@ import { toastConfig } from '../src/components/ui';
 import { useAuthStore } from '../src/stores/auth-store';
 import { useTheme } from '../src/theme';
 import * as Font from 'expo-font';
+import * as Linking from 'expo-linking';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNotificationStore } from '../src/stores/notification-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
+import { supabase } from '../src/lib/supabase';
 
 if (!(Toast as any)._isPatched) {
   const originalToastShow = Toast.show;
@@ -58,15 +60,16 @@ function AuthGuard() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboardingGroup = segments[0] === '(onboarding)';
+    const isCallback = segments[1] === 'callback';
+
+    // Never interfere with the OAuth callback screen — let it handle itself
+    if (inAuthGroup && isCallback) return;
 
     if (!session && !inAuthGroup) {
-      // Not signed in and not on an auth screen → go to welcome
       router.replace('/(auth)/welcome');
     } else if (session && inAuthGroup) {
-      // Signed in but still on an auth screen → go to main app
       router.replace('/(tabs)');
     }
-    // If in onboarding, let onboarding manage its own flow
   }, [session, initialized, segments]);
 
   return null;
@@ -84,6 +87,41 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
+  }, []);
+
+  // Handle OAuth deep links (interviewready://auth/callback?code=...)
+  // This fires when the app is opened via the OAuth redirect URI.
+  useEffect(() => {
+    async function handleDeepLink(url: string) {
+      // Only handle auth callbacks
+      if (!url.includes('auth/callback')) return;
+
+      try {
+        const { data, error } = await (supabase.auth as any).getSessionFromUrl(url);
+        if (error) {
+          console.error('[DeepLink] getSessionFromUrl error:', error.message);
+          // Try getSession as fallback — onAuthStateChange may have already set it
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) useAuthStore.getState().setSession(session);
+        } else if (data?.session) {
+          useAuthStore.getState().setSession(data.session);
+        }
+      } catch (err) {
+        console.error('[DeepLink] Unexpected error:', err);
+      }
+    }
+
+    // Handle link that launched the app from cold start
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
+    // Handle link while app is already open (foreground)
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    return () => subscription.remove();
   }, []);
 
   // Wait for both session restore and font loading
