@@ -32,8 +32,11 @@ export const useParseResumeMutation = () => {
       return response.data as {
         current_role: string;
         company: string;
-        top_skills: string[];
-        technical_skills?: string[];
+        summary: string;
+        technical_skills: string[];
+        soft_skills: string[];
+        work_history: any[];
+        education: any[];
       };
     },
   });

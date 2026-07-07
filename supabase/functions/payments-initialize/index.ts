@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { createAuthClient } from '../_shared/supabase-client.ts';
 import { createPaystackClient } from '../_shared/paystack-client.ts';
 
 const corsHeaders = {
@@ -20,22 +20,8 @@ serve(async (req) => {
   }
 
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
-    }
-
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
+    // Create authenticated Supabase client
+    const supabaseClient = createAuthClient(req);
 
     // Get authenticated user
     const {
@@ -169,14 +155,18 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Payment initialization error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    const isAuthError = errorMessage.includes('Unauthorized') || errorMessage.includes('Authorization');
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Internal server error',
+        error: errorMessage,
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: isAuthError ? 401 : 400,
       }
     );
   }

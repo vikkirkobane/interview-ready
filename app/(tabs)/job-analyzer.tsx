@@ -34,73 +34,10 @@ export default function JobFitScreen() {
   const { colors, isDark } = useTheme();
 
   const analyzeJob = useAnalyzeJobMutation();
-  const parseResume = useParseResumeMutation();
   const extractJd = useExtractJdMutation();
   const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery();
 
-  const handleUploadResume = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        copyToCacheDirectory: true,
-      });
 
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const fileAsset = result.assets[0];
-
-      if (fileAsset.size && fileAsset.size > 5 * 1024 * 1024) {
-        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 5MB.' });
-        return;
-      }
-
-      const isPdf = fileAsset.mimeType === 'application/pdf' || fileAsset.name.toLowerCase().endsWith('.pdf');
-      const isDocx = fileAsset.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileAsset.name.toLowerCase().endsWith('.docx');
-
-      if (!isPdf && !isDocx) {
-        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PDF and DOCX files are supported.' });
-        return;
-      }
-
-      const formData = new FormData();
-      if (Platform.OS === 'web' && fileAsset.file) {
-        formData.append('file', fileAsset.file as unknown as Blob);
-      } else {
-        formData.append('file', {
-          uri: fileAsset.uri,
-          name: fileAsset.name,
-          type: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-        } as any);
-      }
-
-      Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
-      
-      const extractedData = await parseResume.mutateAsync(formData);
-      
-      // Update the user profile with the newly parsed data
-      await updateProfile({
-        current_role: extractedData.current_role,
-        company: extractedData.company,
-        technical_skills: extractedData.technical_skills,
-      } as any);
-
-      Toast.show({ type: 'success', text1: 'Resume Uploaded', text2: 'Your main resume has been replaced successfully.' });
-    } catch (error: any) {
-      if (error.message?.includes('PROMPT_INJECTION')) {
-        Toast.show({
-          type: 'error',
-          text1: 'Security Violation',
-          text2: 'Injection attempt detected. You have been logged out.',
-        });
-        useAuthStore.getState().signOut();
-        router.replace('/(auth)/login');
-      } else {
-        Toast.show({ type: 'error', text1: 'Upload Failed', text2: error.message || 'Please check your file and try again.' });
-      }
-    }
-  };
 
   const handleAttachJdFile = async () => {
     try {
@@ -211,20 +148,6 @@ export default function JobFitScreen() {
                     <Text style={[styles.profileBadgeRole, { color: colors.textInverse }]}>{(profile as any)?.current_role || 'Candidate'}</Text>
                   </View>
                 </View>
-                <TouchableOpacity 
-                  onPress={handleUploadResume} 
-                  disabled={parseResume.isPending}
-                  style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: Spacing.sm, borderRadius: Radius.md, flexDirection: 'row', alignItems: 'center', gap: 4 }}
-                >
-                  {parseResume.isPending ? (
-                    <ActivityIndicator size="small" color={colors.textInverse} />
-                  ) : (
-                    <>
-                      <Ionicons name="cloud-upload-outline" size={18} color={colors.textInverse} />
-                      <Text style={{ color: colors.textInverse, ...Typography.label }}>Update</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
               </View>
             </View>
 

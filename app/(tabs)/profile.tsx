@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal, TextInput, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal, TextInput, Linking, ActivityIndicator, Image } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing, Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useRouter } from 'expo-router';
-import { useDeleteAccountMutation, useUpdateProfileMutation } from '../../src/hooks/useApi';
+import { useDeleteAccountMutation, useUpdateProfileMutation, useParseResumeMutation } from '../../src/hooks/useApi';
+import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
@@ -40,6 +41,7 @@ export default function ProfileScreen() {
   const { addNotification } = useNotificationStore();
   const deleteAccountMutation = useDeleteAccountMutation();
   const updateProfileMutation = useUpdateProfileMutation();
+  const parseResume = useParseResumeMutation();
   const { colors, isDark } = useTheme();
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
@@ -249,6 +251,73 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleUploadResume = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const fileAsset = result.assets[0];
+
+      if (fileAsset.size && fileAsset.size > 5 * 1024 * 1024) {
+        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 5MB.' });
+        return;
+      }
+
+      const isPdf = fileAsset.mimeType === 'application/pdf' || fileAsset.name.toLowerCase().endsWith('.pdf');
+      const isDocx = fileAsset.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileAsset.name.toLowerCase().endsWith('.docx');
+
+      if (!isPdf && !isDocx) {
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PDF and DOCX files are supported.' });
+        return;
+      }
+
+      const formData = new FormData();
+      if (Platform.OS === 'web' && fileAsset.file) {
+        formData.append('file', fileAsset.file as unknown as Blob);
+      } else {
+        formData.append('file', {
+          uri: fileAsset.uri,
+          name: fileAsset.name,
+          type: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        } as any);
+      }
+
+      Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+      
+      const extractedData = await parseResume.mutateAsync(formData);
+      
+      // Update the user profile completely
+      await updateProfile({
+        current_role: extractedData.current_role || (profile as any)?.current_role || '',
+        summary: extractedData.summary || profile?.summary || '',
+        technical_skills: extractedData.technical_skills && extractedData.technical_skills.length > 0 ? extractedData.technical_skills : (profile as any)?.technical_skills,
+        soft_skills: extractedData.soft_skills && extractedData.soft_skills.length > 0 ? extractedData.soft_skills : (profile as any)?.soft_skills,
+        work_history: extractedData.work_history && extractedData.work_history.length > 0 ? extractedData.work_history : (profile as any)?.work_history,
+        education: extractedData.education && extractedData.education.length > 0 ? extractedData.education : (profile as any)?.education,
+      } as any);
+
+      Toast.show({ type: 'success', text1: 'Resume Uploaded', text2: 'Your profile has been fully populated from the resume.' });
+    } catch (error: any) {
+      if (error.message?.includes('PROMPT_INJECTION')) {
+        Toast.show({
+          type: 'error',
+          text1: 'Security Violation',
+          text2: 'Injection attempt detected. You have been logged out.',
+        });
+        useAuthStore.getState().signOut();
+        router.replace('/(auth)/login');
+      } else {
+        Toast.show({ type: 'error', text1: 'Upload Failed', text2: error.message || 'Please check your file and try again.' });
+      }
+    }
+  };
+
   const openEduModal = (index: number | null) => {
     if (index !== null && index >= 0) {
       const edu = education[index];
@@ -309,6 +378,7 @@ export default function ProfileScreen() {
   const userName = user?.user_metadata?.first_name 
     ? `${user?.user_metadata?.first_name} ${user?.user_metadata?.last_name || ''}`
     : 'Your Name';
+  const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
   
   const userTitle = (profile as any)?.current_role || 'Add your current role';
   const userLocation = profile?.location || 'Add your location';
@@ -351,12 +421,8 @@ export default function ProfileScreen() {
         <View style={styles.bioSection}>
           <View style={styles.avatarWrapper}>
             <ScoreRing score={completeness} size="xl" color={colors.primary} />
-            <View style={[styles.avatarImageContainer, { backgroundColor: colors.bgPrimary }]}>
-              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.bgMuted }]}>
-                <Text style={[styles.avatarInitials, { color: colors.textMuted }]}>
-                  {userName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
+            <View style={[styles.avatarImageContainer, { backgroundColor: colors.bgPrimary, overflow: 'hidden' }]}>
+              <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%', borderRadius: 999 }} />
             </View>
             <View style={[styles.progressBadge, { backgroundColor: colors.primary, borderColor: colors.bgPrimary }]}>
               <Text style={styles.progressBadgeText}>{completeness}% Complete</Text>
@@ -422,6 +488,19 @@ export default function ProfileScreen() {
         >
           <Ionicons name="logo-linkedin" size={18} color={colors.primary} style={{ marginRight: 8 }} />
           <Text style={[styles.importBtnText, { color: colors.primary }]}>Import Profile from LinkedIn</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.importBtn, { borderColor: colors.primary, backgroundColor: colors.primary, marginTop: Spacing.md }]}
+          onPress={handleUploadResume}
+          disabled={parseResume.isPending}
+        >
+          {parseResume.isPending ? (
+            <ActivityIndicator size="small" color={colors.textInverse} style={{ marginRight: 8 }} />
+          ) : (
+            <Ionicons name="cloud-upload-outline" size={18} color={colors.textInverse} style={{ marginRight: 8 }} />
+          )}
+          <Text style={[styles.importBtnText, { color: colors.textInverse }]}>Upload Resume to Auto-Fill</Text>
         </TouchableOpacity>
 
         <View style={styles.section}>

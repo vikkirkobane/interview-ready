@@ -304,7 +304,7 @@ export default function CoverLetterGeneratorScreen() {
             </View>
 
             <TouchableOpacity 
-              style={[styles.primaryBtn, { marginTop: Spacing.xl, height: 54 }]} 
+              style={[styles.primaryBtn, { marginTop: Spacing.xl, height: 54, backgroundColor: colors.primary }]} 
               onPress={handleGenerate}
               disabled={coverLetterMutation.isPending}
             >

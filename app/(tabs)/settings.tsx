@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Platform, Image } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { Card, Button, Badge } from '../../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +33,8 @@ export default function SettingsScreen() {
     .substring(0, 2)
     .toUpperCase() || 'IR';
 
+  const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=ffffff&size=128`;
+
   const credits = stats?.creditsAvailable ?? 0;
 
   const handleLogout = async () => {
@@ -63,8 +65,8 @@ export default function SettingsScreen() {
       
       {/* Profile Section */}
       <View style={styles.profileSection}>
-        <View style={[styles.avatarContainer, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.avatarText, { color: colors.textInverse }]}>{initials}</Text>
+        <View style={[styles.avatarContainer, { backgroundColor: colors.primary, overflow: 'hidden' }]}>
+          <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} />
         </View>
         <Text style={[styles.nameText, { color: colors.textPrimary }]}>{name}</Text>
         <Text style={[styles.emailText, { color: colors.textSecondary }]}>{email}</Text>

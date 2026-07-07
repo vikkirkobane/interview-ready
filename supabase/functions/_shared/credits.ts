@@ -18,7 +18,7 @@ const CREDIT_COSTS = {
   LINKEDIN_ENGAGEMENT_PLAN: 0,   // Optional 30-day plan add-on
   LINKEDIN_SCRAPE: 2,
   COMPANY_RESEARCH: 2,
-  PROFILE_ANALYSIS: 0,
+  PROFILE_ANALYSIS: 2,
 } as const;
 
 

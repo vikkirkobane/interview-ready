@@ -197,7 +197,7 @@ export default function InterviewsLobbyScreen() {
           </View>
 
           <TouchableOpacity 
-            style={[styles.primaryBtn, { marginTop: Spacing.md, height: 54 }]} 
+            style={[styles.primaryBtn, { marginTop: Spacing.md, height: 54, backgroundColor: colors.primary }]} 
             onPress={handleStart}
           >
             <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />

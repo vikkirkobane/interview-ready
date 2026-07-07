@@ -154,7 +154,7 @@ export default function AskAIScreen() {
              <MaterialCommunityIcons name="robot" size={16} color="#fff" />
           </View>
         )}
-        <View style={{ flexShrink: 1, maxWidth: '88%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
+        <View style={{ flexShrink: 1, maxWidth: '95%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
           <View style={[styles.messageBubble, isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]]}>
             {isUser ? (
               <Text style={[styles.messageText, { color: '#fff' }]}>{msg.text}</Text>
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     marginLeft: 8
   },
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: '95%',
     padding: Spacing.md,
     borderRadius: Radius.lg
   },
@@ -346,33 +346,37 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: Spacing.sm
+    gap: Spacing.sm,
+    maxWidth: 768,
+    width: '100%',
+    alignSelf: 'center'
   },
   textInput: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 52,
     maxHeight: 120,
-    borderRadius: Radius.md,
+    borderRadius: 26,
     borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: 14,
+    paddingBottom: 14,
     ...Typography.bodyLg,
   },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.md,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center'
   },
   attachBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgba(107,70,254,0.08)',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.md,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
   },
   attachBtnText: {
     ...Typography.label,

@@ -9,9 +9,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
+import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, ScoreRing } from '../../src/components/ui';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   useCompanyResearchMutation,
   CompanyResearchResult,
@@ -183,12 +183,24 @@ export default function CompanyResearchScreen() {
             multiline
           />
 
-          <Button
-            title={isLoading ? 'Researching...' : 'Research Company (2 Credits)'}
+          <TouchableOpacity 
+            style={[
+              s.primaryBtn, 
+              { backgroundColor: colors.primary, marginTop: Spacing.lg },
+              (isLoading || !companyUrl.trim()) && { opacity: 0.5 }
+            ]} 
             onPress={handleResearch}
             disabled={isLoading || !companyUrl.trim()}
-            style={{ marginTop: Spacing.lg }}
-          />
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
+                <Text style={s.primaryBtnText}>Research Company</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </Card>
 
         {isLoading && (
@@ -596,4 +608,10 @@ const s = StyleSheet.create({
   // New research CTA
   newResearchBtn:  { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm, borderWidth: 1, borderRadius: Radius.full, paddingVertical: Spacing.md },
   newResearchText: { ...Typography.bodyMd },
+  primaryBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 14, paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full, gap: 8, ...Shadow.card,
+  },
+  primaryBtnText: { ...Typography.headingMd, color: '#fff' },
 });
