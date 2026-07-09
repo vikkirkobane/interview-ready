@@ -151,9 +151,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         
         if (res.type === 'success') {
           const { url } = res;
-          // @ts-ignore — getSessionFromUrl is available in supabase-js
-          const { error: sessionError } = await supabase.auth.getSessionFromUrl(url);
-          if (sessionError) return { error: sessionError.message };
+
+          // Extract the `code` query param from the redirect URL and exchange
+          // it for a session. exchangeCodeForSession is the correct public API
+          // in @supabase/auth-js v2 (getSessionFromUrl is private).
+          const parsedUrl = new URL(url);
+          const code = parsedUrl.searchParams.get('code');
+
+          if (code) {
+            const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+            if (sessionError) return { error: sessionError.message };
+          } else {
+            // Fallback: if the URL contains a fragment-based token (implicit flow),
+            // onAuthStateChange will have already set the session — just confirm.
+            console.warn('[OAuth] No `code` param in redirect URL, relying on onAuthStateChange.');
+          }
 
           // Confirm the session was actually stored
           const { data: { session } } = await supabase.auth.getSession();

@@ -97,14 +97,24 @@ export default function RootLayout() {
       if (!url.includes('auth/callback')) return;
 
       try {
-        const { data, error } = await (supabase.auth as any).getSessionFromUrl(url);
-        if (error) {
-          console.error('[DeepLink] getSessionFromUrl error:', error.message);
-          // Try getSession as fallback — onAuthStateChange may have already set it
+        // Extract the `code` query param and exchange it for a session.
+        // exchangeCodeForSession is the correct public API in @supabase/auth-js v2.
+        const parsedUrl = new URL(url);
+        const code = parsedUrl.searchParams.get('code');
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.error('[DeepLink] exchangeCodeForSession error:', error.message);
+            // Fallback: session may already be set via onAuthStateChange
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) useAuthStore.getState().setSession(session);
+          }
+        } else {
+          // No code param — check if onAuthStateChange already set a session
+          console.warn('[DeepLink] No `code` in callback URL, checking existing session.');
           const { data: { session } } = await supabase.auth.getSession();
           if (session) useAuthStore.getState().setSession(session);
-        } else if (data?.session) {
-          useAuthStore.getState().setSession(data.session);
         }
       } catch (err) {
         console.error('[DeepLink] Unexpected error:', err);
