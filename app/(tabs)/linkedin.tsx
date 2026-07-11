@@ -118,10 +118,16 @@ export default function LinkedinOptimizerScreen() {
   const engagementMutation = useLinkedinEngagementPlanMutation();
   const scrapeMutation     = useLinkedinScrapeMutation();
 
+  // Track if the user has imported data via scraping — prevents profile refetch from overwriting it
+  const hasScrapedRef = React.useRef(false);
+
   // Refresh profile data when screen mounts so pre-fill is up-to-date
   useEffect(() => {
     fetchProfile().then(() => {
-      setWizard(buildInitialWizard());
+      // Only reset wizard from profile if the user hasn't already imported via URL
+      if (!hasScrapedRef.current) {
+        setWizard(buildInitialWizard());
+      }
     });
   }, []);
 
@@ -213,15 +219,18 @@ export default function LinkedinOptimizerScreen() {
     try {
       const result = await scrapeMutation.mutateAsync({ linkedin_url: linkedinUrl });
       const data = result.data;
-      
+
+      // Mark that scrape data is now loaded — prevents profile refetch from overwriting
+      hasScrapedRef.current = true;
+
       setWizard(w => ({
         ...w,
-        headline: data.headline || w.headline,
-        about: data.about || w.about,
+        headline:   data.headline   || w.headline,
+        about:      data.about      || w.about,
         experience: (data.experience && data.experience.length > 0) ? data.experience : w.experience,
-        skills: (data.skills && data.skills.length > 0) ? data.skills : w.skills,
+        skills:     (data.skills    && data.skills.length    > 0) ? data.skills    : w.skills,
       }));
-      
+
       Toast.show({ type: 'success', text1: 'Profile Imported successfully!', text2: 'Please review your content.' });
       setStep('content');
     } catch (e: any) {
@@ -462,7 +471,9 @@ export default function LinkedinOptimizerScreen() {
           {/* LinkedIn Headline */}
           <FieldLabel label="LinkedIn Headline" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
-            Copy this from your LinkedIn profile header. This is the most important field.
+            {hasScrapedRef.current && wizard.headline
+              ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
+              : 'Copy this from your LinkedIn profile header. This is the most important field.'}
           </Text>
           <TextInput style={[s.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder='e.g. "Senior Product Manager | SaaS | ex-Google"'
@@ -473,7 +484,9 @@ export default function LinkedinOptimizerScreen() {
           {/* About */}
           <FieldLabel label="About / Summary" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
-            {wizard.about ? 'Loaded from profile. Review and edit as needed.' : 'Paste your LinkedIn About section.'}
+            {hasScrapedRef.current && wizard.about
+              ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
+              : wizard.about ? 'Loaded from profile. Review and edit as needed.' : 'Paste your LinkedIn About section.'}
           </Text>
           <TextInput style={[s.input, s.multiline, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder="Paste your About section here..."

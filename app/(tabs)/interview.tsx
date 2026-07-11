@@ -322,17 +322,10 @@ export default function InterviewScreen() {
 
       {/* Bottom Input Area */}
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { flexDirection: 'column', alignItems: 'stretch', gap: Spacing.xs }]}>
           <View style={styles.inputWrapper}>
-            <TouchableOpacity style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
-              {extractJdLoading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Ionicons name="add" size={24} color={colors.textMuted} />
-              )}
-            </TouchableOpacity>
             <TextInput
-              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
+              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, paddingLeft: 24 }]}
               placeholder="Type your response..."
               placeholderTextColor={colors.textMuted}
               value={inputText}
@@ -340,10 +333,23 @@ export default function InterviewScreen() {
               onSubmitEditing={handleSend}
               returnKeyType="send"
             />
+            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
+              <Ionicons name="send" size={14} color="#fff" style={{ transform: [{ translateX: 1 }] }} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.inputActions}>
+            <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+              {extractJdLoading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons name="attach" size={20} color={colors.textMuted} />
+              )}
+            </TouchableOpacity>
 
             {/* Attached File Info */}
             {jdFileName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
                 <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
                   <Ionicons name="close-circle" size={16} color={colors.error} />
@@ -353,15 +359,10 @@ export default function InterviewScreen() {
 
             {/* Attach JD File Loading State */}
             {extractJdLoading && (
-              <View style={{ marginTop: 4 }}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={{ marginLeft: 4, color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
+              <View style={{ marginLeft: Spacing.sm, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
               </View>
             )}
-
-            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
-              <Ionicons name="send" size={14} color="#fff" style={{ transform: [{ translateX: 1 }] }} />
-            </TouchableOpacity>
           </View>
         </View>
         <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>
@@ -588,16 +589,19 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
     letterSpacing: 1,
   },
-  attachBtn: {
-    position: 'absolute',
-    left: 6,
-    top: 6,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  inputActions: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
+    paddingHorizontal: Spacing.xs,
+  },
+  attachBtn: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   attachBtnText: {
     ...Typography.label,

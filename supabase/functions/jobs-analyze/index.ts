@@ -129,28 +129,25 @@ app.post('/*', async (c: any) => {
           extractedData.benefits?.length ? `\nBenefits:\n${extractedData.benefits.map((b: string) => `- ${b}`).join('\n')}` : '',
         ].filter(Boolean).join('\n');
         
-        if (!scrapedText || scrapedText.trim().length < 50) {
-          console.error('ScrapeGraphAI returned insufficient content:', JSON.stringify(extractedData).substring(0, 200));
-          throw new Error('Extracted content is too short or empty');
+        if (!scrapedText || scrapedText.trim().length < 100) {
+          // Soft fallback: some sites (LinkedIn, Greenhouse) block scrapers.
+          // Log and continue — the AI will generate based on the user's profile only.
+          console.warn('ScrapeGraphAI returned insufficient content (possibly bot-protected page). Falling back to profile-only generation.', JSON.stringify(extractedData).substring(0, 200));
+        } else {
+          actualJobDescription = actualJobDescription
+            ? actualJobDescription + '\n\n' + scrapedText
+            : scrapedText;
+          console.log(`Successfully scraped ${scrapedText.length} characters from URL using ScrapeGraphAI`);
         }
-        
-        actualJobDescription = actualJobDescription 
-          ? actualJobDescription + '\n\n' + scrapedText 
-          : scrapedText;
-          
-        console.log(`Successfully scraped ${scrapedText.length} characters from URL using ScrapeGraphAI`);
       } catch (err: any) {
-        console.error('URL scraping error:', err.message);
-        throw new ValidationError(
-          `Could not extract content from the provided URL. ${err.message || 'Please paste the job description text manually.'}`, 
-          { url: input.job_url, error: err.message }
-        );
+        // Non-fatal: log the error but don't block the user.
+        // Many job boards (LinkedIn, Workday, Greenhouse) actively block scrapers.
+        console.warn('URL scraping failed (non-fatal), proceeding without URL context:', err.message);
       }
     }
 
-    if (actualJobDescription.trim().length < 50) {
-       throw new ValidationError('The extracted job description is too short or could not be fully loaded. Please copy and paste the text manually.');
-    }
+    // If no job description was extracted/provided, the AI will generate based on profile only.
+    // This is a valid use-case (base resume, generic cover letter, etc.).
 
     // Call AI to analyze job
     const systemPrompt = `You are an expert career coach and ATS (Applicant Tracking System) specialist. 

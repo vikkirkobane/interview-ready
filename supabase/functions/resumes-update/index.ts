@@ -12,7 +12,7 @@ app.use('/*', cors());
 const UpdateResumeInput = z.object({
   id: z.string().uuid(),
   title: z.string().min(1).max(100).optional(),
-  template_id: z.string().uuid().optional(),
+  template_id: z.string().min(1).optional(), // Template name e.g. 'executive', 'minimal'
   resume_contents: z.array(RESUME_CONTENT_SCHEMA).min(1).optional(),
 });
 

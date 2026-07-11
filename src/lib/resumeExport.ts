@@ -28,7 +28,7 @@ try {
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  FileSystem = require('expo-file-system');
+  FileSystem = require('expo-file-system/next');
 } catch {
   // Ignore
 }
@@ -98,11 +98,7 @@ export async function exportResumePDF(resume: ResumeContent, templateId?: string
       throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
     }
     const { uri } = await printToFileAsync({ html });
-    const filename = `${resume.header.name.replace(/\\s+/g, '_')}_Resume.pdf`;
-    const newUri = `${FileSystem.documentDirectory}${filename}`;
-    await FileSystem.moveAsync({ from: uri, to: newUri });
-    
-    await shareAsync(newUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Resume PDF' });
+    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Resume PDF' });
   }
 }
 
@@ -254,11 +250,12 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
         throw new Error('DOCX export requires expo-file-system and expo-sharing.');
       }
       const base64Data = await Packer.toBase64String(doc);
-      const fileUri = `${FileSystem.documentDirectory}${filename}`;
-      await FileSystem.writeAsStringAsync(fileUri, base64Data, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      await shareAsync(fileUri, {
+      const file = new FileSystem.File(
+        new FileSystem.Directory(FileSystem.Paths.document),
+        filename
+      );
+      file.write(base64Data, { encoding: 'base64' });
+      await shareAsync(file.uri, {
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         dialogTitle: 'Download Resume DOCX',
         UTI: 'org.openxmlformats.wordprocessingml.document',

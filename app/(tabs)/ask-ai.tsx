@@ -207,7 +207,10 @@ export default function AskAIScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={90}
     >
-      <ScrollView style={styles.chatArea} contentContainerStyle={styles.chatContent}>
+      <ScrollView 
+        style={styles.chatArea} 
+        contentContainerStyle={[styles.chatContent, { paddingBottom: keyboardVisible ? 100 : 200 }]}
+      >
         
         {/* Page Header */}
         <View style={styles.pageHeader}>
@@ -232,9 +235,13 @@ export default function AskAIScreen() {
       <View style={[
         styles.inputArea, 
         { 
-          backgroundColor: colors.bgSecondary, 
-          borderTopColor: colors.border,
-          paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) : (Platform.OS === 'ios' ? 100 : 80),
+          position: 'absolute',
+          bottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) : (Platform.OS === 'ios' ? 90 : 80),
+          left: 0,
+          right: 0,
+          backgroundColor: 'transparent', 
+          borderTopColor: 'transparent',
+          paddingBottom: 0,
           marginBottom: 0
         }
       ]}>

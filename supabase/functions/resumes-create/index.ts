@@ -13,7 +13,7 @@ app.use('/*', cors());
 
 const CreateResumeInput = z.object({
   title: z.string().min(1).max(100),
-  template_id: z.string().uuid().optional(),
+  template_id: z.string().min(1).optional(), // Template name e.g. 'executive', 'minimal'
   job_analysis_id: z.string().uuid().optional(), // If tailoring to specific job
   is_base: z.boolean().default(false),
 });

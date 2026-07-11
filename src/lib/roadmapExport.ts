@@ -46,11 +46,7 @@ export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
       throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
     }
     const { uri } = await printToFileAsync({ html });
-    const filename = `Interview_Ready_Roadmap_${Date.now()}.pdf`;
-    const newUri = `${FileSystem.documentDirectory}${filename}`;
-    await FileSystem.moveAsync({ from: uri, to: newUri });
-    
-    await shareAsync(newUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Roadmap PDF' });
+    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Roadmap PDF' });
   }
 }
 

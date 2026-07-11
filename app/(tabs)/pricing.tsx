@@ -12,8 +12,8 @@ import {
   FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import { PricingCard, PricingPlan } from '../../src/components/features/payments/PricingCard';
+import { PaystackWebViewComponent, PaystackPaymentData } from '../../src/components/features/payments/PaystackWebView';
 import { Spacing, Typography, Radius } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
@@ -198,6 +198,8 @@ export default function PricingScreen() {
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showPaystackWebView, setShowPaystackWebView] = useState(false);
+  const [paystackPaymentData, setPaystackPaymentData] = useState<PaystackPaymentData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const selectedMode: PaymentMode = selectedCountry.isKenya ? 'KES' : 'USD';
@@ -242,79 +244,89 @@ export default function PricingScreen() {
     setLoading(true);
 
     try {
-      // Get current user
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      // Get current user and session
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (authError || !user) {
+      if (authError || !user || !session) {
         Alert.alert('Error', 'Please sign in to continue');
         router.push('/(auth)/login');
         return;
       }
 
-      // Get auth token
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // Get user profile for email
+      const { data: profile } = await supabase
+        .from('users')
+        .select('email, first_name, last_name')
+        .eq('id', user.id)
+        .single();
 
-      if (!session) {
-        Alert.alert('Error', 'Session expired. Please sign in again.');
-        router.push('/(auth)/login');
+      if (!profile) {
+        Alert.alert('Error', 'User profile not found');
         return;
       }
 
-      // Initialize payment
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/payments-initialize`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            planCode: selectedPlan.planCode,
-            callbackUrl: 'interviewready://payment/callback',
-            countryCode: selectedCountry.isKenya ? selectedCountry.code : null,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to initialize payment');
+      // Get Paystack public key
+      const publicKey = process.env.EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY;
+      if (!publicKey) {
+        Alert.alert('Error', 'Payment system not configured. Please contact support.');
+        return;
       }
 
-      if (!data.success || !data.data.authorization_url) {
-        throw new Error('Invalid payment response');
+      // Generate unique reference
+      const reference = `IR_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      
+      // Convert amount to smallest currency unit (kobo for NGN, cents for USD, cents for KES)
+      const amount = Math.round(selectedPlan.price * 100);
+
+      // Determine channels based on currency and country
+      let channels: string[] = ['card'];
+      if (selectedPlan.currency === 'KES' && selectedCountry.isKenya) {
+        channels = ['mobile_money', 'card'];
       }
 
-      // Open Paystack payment page and wait for redirect back to the app
-      const callbackDeepLink = 'interviewready://payment/callback';
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.data.authorization_url,
-        callbackDeepLink
-      );
+      // Store transaction in database first
+      const { error: txError } = await supabase.from('payment_transactions').insert({
+        user_id: user.id,
+        reference,
+        amount: selectedPlan.price,
+        currency: selectedPlan.currency,
+        country_code: selectedCountry.isKenya ? selectedCountry.code : null,
+        status: 'pending',
+        payment_provider: 'paystack',
+        payment_method: selectedPlan.currency === 'KES' ? 'mobile_money' : 'card',
+        metadata: {
+          plan_code: selectedPlan.planCode,
+          plan_name: selectedPlan.name,
+          plan_type: selectedPlan.name.includes('Plus') ? 'PREMIUM_PLUS' : 'PREMIUM',
+          interval: selectedPlan.interval,
+          channels,
+        },
+      });
 
-      if (result.type === 'success' && result.url) {
-        // Extract reference from the callback URL
-        // Paystack appends ?reference=... or we use the reference we generated
-        const callbackUrl = new URL(result.url);
-        const returnedReference = callbackUrl.searchParams.get('reference') || data.data.reference;
-
-        router.push({
-          pathname: '/payment/callback' as any,
-          params: { reference: returnedReference },
-        });
-      } else if (result.type === 'cancel' || result.type === 'dismiss') {
-        // User closed the browser without completing payment — do nothing
-        Alert.alert('Payment Cancelled', 'You closed the payment page. No charge was made.');
-      } else {
-        throw new Error('Payment window closed unexpectedly');
+      if (txError) {
+        console.error('Transaction creation error:', txError);
+        throw new Error('Failed to initialize transaction');
       }
+
+      // Prepare WebView payment data
+      const paymentData: PaystackPaymentData = {
+        email: profile.email,
+        amount,
+        reference,
+        publicKey,
+        currency: selectedPlan.currency as 'USD' | 'KES' | 'NGN',
+        channels,
+        metadata: {
+          user_id: user.id,
+          plan_code: selectedPlan.planCode,
+          plan_type: selectedPlan.name.includes('Plus') ? 'PREMIUM_PLUS' : 'PREMIUM',
+          plan_interval: selectedPlan.interval,
+        },
+      };
+
+      setPaystackPaymentData(paymentData);
+      setShowPaystackWebView(true);
     } catch (error) {
       console.error('Payment initialization error:', error);
       Alert.alert(
@@ -324,6 +336,29 @@ export default function PricingScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePaystackSuccess = async (transactionRef: any) => {
+    setShowPaystackWebView(false);
+    setPaystackPaymentData(null);
+    
+    // Navigate to callback with reference for verification
+    router.push({
+      pathname: '/payment/callback' as any,
+      params: { reference: transactionRef.reference || transactionRef.transaction },
+    });
+  };
+
+  const handlePaystackCancel = () => {
+    setShowPaystackWebView(false);
+    setPaystackPaymentData(null);
+    Alert.alert('Payment Cancelled', 'You closed the payment page. No charge was made.');
+  };
+
+  const handlePaystackError = (error: any) => {
+    setShowPaystackWebView(false);
+    setPaystackPaymentData(null);
+    Alert.alert('Payment Error', 'Payment failed. Please try again.');
   };
 
   return (
@@ -354,7 +389,7 @@ export default function PricingScreen() {
 
         {/* Payment Methods */}
         <View style={styles.paymentMethods}>
-          <Text style={styles.paymentMethodsLabel}>Available payment methods:</Text>
+          <Text style={styles.paymentMethodsLabel}>Secure payment with:</Text>
           <View style={styles.paymentMethodsList}>
             {paymentMethods.map((method, index) => (
               <View key={index} style={styles.paymentMethodBadge}>
@@ -440,14 +475,14 @@ export default function PricingScreen() {
                 plan={plan}
                 onSelect={handleSelectPlan}
                 isSelected={isSelected}
-                disabled={loading}
+                disabled={loading || showPaystackWebView}
               />
               {isSelected && (
                 <View style={styles.inlineSubscribeContainer}>
                   <TouchableOpacity
-                    style={[styles.subscribeButton, loading && styles.subscribeButtonDisabled]}
+                    style={[styles.subscribeButton, (loading || showPaystackWebView) && styles.subscribeButtonDisabled]}
                     onPress={handleSubscribe}
-                    disabled={loading}
+                    disabled={loading || showPaystackWebView}
                   >
                     {loading ? (
                       <ActivityIndicator color={colors.textInverse} />
@@ -467,6 +502,25 @@ export default function PricingScreen() {
           );
         })}
       </View>
+
+      {/* Paystack WebView Modal */}
+      <Modal
+        visible={showPaystackWebView}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowPaystackWebView(false)}
+      >
+        <View style={styles.webViewModalContainer}>
+          {paystackPaymentData && (
+            <PaystackWebViewComponent
+              paymentData={paystackPaymentData}
+              onSuccess={handlePaystackSuccess}
+              onCancel={handlePaystackCancel}
+              onError={handlePaystackError}
+            />
+          )}
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -680,6 +734,10 @@ const getStyles = (colors: any) => StyleSheet.create({
   inlineSubscribeContainer: {
     marginTop: Spacing.xs,
     marginBottom: Spacing.md,
+  },
+  webViewModalContainer: {
+    flex: 1,
+    backgroundColor: colors.bgPrimary,
   },
   footerTextInline: {
     ...Typography.bodySm,

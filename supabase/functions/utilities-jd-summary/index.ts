@@ -102,9 +102,7 @@ app.post('/*', async (c: any) => {
       }
     }
 
-    if (actualJobDescription.trim().length < 50) {
-      throw new ValidationError('The extracted job description is too short or could not be fully loaded. Please provide more text.');
-    }
+    // Proceed even if description is short — the AI will extract what it can.
 
     const systemPrompt = `You are an expert technical recruiter. Analyze the job description and extract a concise summary.
 Focus on identifying the core responsibilities, must-have requirements, nice-to-haves, and any potential red flags or culture signals.

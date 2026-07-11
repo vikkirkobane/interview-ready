@@ -269,19 +269,7 @@ export default function CoverLetterGeneratorScreen() {
               ) : null}
             </View>
             <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional if URL provided)</Text>
-                <TouchableOpacity style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
-                  {extractJdLoading ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <>
-                      <Ionicons name="attach" size={16} color={colors.primary} />
-                      <Text style={[styles.attachBtnText, { color: colors.primary }]}>Attach file</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8 }]}>Job Description (Optional if URL provided)</Text>
               <TextInput
                 style={[styles.textInput, styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
                 value={jobDescription}
@@ -291,24 +279,30 @@ export default function CoverLetterGeneratorScreen() {
                 multiline
                 textAlignVertical="top"
               />
+              <View style={styles.inputActions}>
+                {/* Attach JD File Button */}
+                <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                  {extractJdLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Ionicons name="attach" size={24} color={colors.textMuted} />
+                  )}
+                </TouchableOpacity>
 
-              {/* Attached File Info */}
-              {jdFileName && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                  <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
-                    <Ionicons name="close-circle" size={16} color={colors.error} />
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* Attach JD File Loading State */}
-              {extractJdLoading && (
-                <View style={{ marginTop: 4 }}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={{ marginLeft: 4, color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
-                </View>
-              )}
+                {/* Attached File Info */}
+                {jdFileName && (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginLeft: Spacing.sm
+                  }}>
+                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                    <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                      <Ionicons name="close-circle" size={16} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
             </View>
 
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Select Tone</Text>
@@ -463,16 +457,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  attachBtn: {
+  inputActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
+    marginTop: Spacing.sm,
   },
-  attachBtnText: {
-    ...Typography.label,
+  attachBtn: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   toneGrid: {
     flexDirection: 'row',

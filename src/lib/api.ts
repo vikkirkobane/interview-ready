@@ -126,7 +126,7 @@ export async function apiCall<T = any>(
 
 /**
  * Upload a file directly to a Supabase Edge Function.
- * Bypasses React Native's fetch FormData issues by using expo-file-system on native.
+ * Uses native fetch + FormData which works correctly in Expo SDK 56+ on both web and native.
  */
 export async function apiUploadFile<T = any>(
   functionName: string,
@@ -141,39 +141,43 @@ export async function apiUploadFile<T = any>(
       return { data: null, error: 'Not authenticated' };
     }
 
+    const formData = new FormData();
+
     if (Platform.OS === 'web' && webFile) {
-      const formData = new FormData();
-      formData.append('file', webFile);
-      return apiCall<T>(functionName, 'POST', formData);
+      // Web: use the Blob directly
+      formData.append('file', webFile, fileName);
     } else {
-      const FileSystem = await import('expo-file-system');
-      
-      const response = await FileSystem.uploadAsync(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
-        fileUri,
-        {
-          httpMethod: 'POST',
-          uploadType: 1, // FileSystemUploadType.MULTIPART
-          fieldName: 'file',
-          mimeType: mimeType || 'application/octet-stream',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          }
-        }
-      );
-
-      if (response.status !== 200) {
-        let errorMsg = 'Upload failed';
-        try {
-          const errJson = JSON.parse(response.body);
-          errorMsg = errJson.error || errorMsg;
-        } catch (e) {}
-        return { data: null, error: errorMsg };
-      }
-
-      const data = JSON.parse(response.body);
-      return { data, error: null };
+      // Native: React Native's fetch accepts a URI-based file object in FormData
+      formData.append('file', {
+        uri: fileUri,
+        name: fileName,
+        type: mimeType || 'application/octet-stream',
+      } as any);
     }
+
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          // Do NOT set Content-Type — fetch sets multipart/form-data boundary automatically
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      let errorMsg = 'Upload failed';
+      try {
+        const errJson = await response.json();
+        errorMsg = errJson.error || errorMsg;
+      } catch (e) {}
+      return { data: null, error: errorMsg };
+    }
+
+    const data = await response.json();
+    return { data, error: null };
   } catch (err: any) {
     return { data: null, error: err.message || 'Upload failed' };
   }
