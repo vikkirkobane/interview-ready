@@ -15,6 +15,8 @@ export default function InterviewsLobbyScreen() {
   
   const [role, setRole] = useState((params.role as string) || 'Product Manager');
   const [jobDescription, setJobDescription] = useState((params.jobDescription as string) || '');
+  const [jobUrl, setJobUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
   const [type, setType] = useState('Behavioral');
   const [difficulty, setDifficulty] = useState('Intermediate');
   
@@ -85,10 +87,17 @@ export default function InterviewsLobbyScreen() {
 
   const handleStart = () => {
     const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
+    const finalJobUrl = jobUrl.trim();
     // Navigate to the chat screen
     router.push({
       pathname: '/interview',
-      params: { role, type, difficulty, jobDescription: finalJobDescription }
+      params: { 
+        role, 
+        type, 
+        difficulty, 
+        jobDescription: finalJobDescription,
+        jobUrl: finalJobUrl
+      }
     });
   };
 
@@ -121,8 +130,30 @@ export default function InterviewsLobbyScreen() {
           </View>
 
           <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job URL (Optional)</Text>
+            <TextInput
+              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }, urlError ? { borderColor: colors.error } : null]}
+              placeholder="https://www.linkedin.com/jobs/view/..."
+              placeholderTextColor={colors.textMuted}
+              value={jobUrl}
+              onChangeText={(text) => {
+                setJobUrl(text);
+                if (urlError) setUrlError('');
+              }}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+            {urlError ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, padding: 8, backgroundColor: `${colors.error}1A`, borderRadius: 4 }}>
+                <Ionicons name="alert-circle" size={14} color={colors.error} />
+                <Text style={{ marginLeft: 4, color: colors.error, fontSize: 12 }}>{urlError}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional if URL provided)</Text>
               <TouchableOpacity style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                 {extractJdLoading ? (
                   <ActivityIndicator size="small" color={colors.primary} />
@@ -138,7 +169,7 @@ export default function InterviewsLobbyScreen() {
               style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, minHeight: 80 }]}
               value={jobDescription}
               onChangeText={setJobDescription}
-              placeholder="Paste the target job description here to guide the interview..."
+              placeholder="Or paste the target job description here to guide the interview..."
               placeholderTextColor={colors.textMuted}
               multiline={true}
               textAlignVertical="top"

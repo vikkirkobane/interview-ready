@@ -62,6 +62,11 @@ export default function AskAIScreen() {
       return;
     }
 
+    // Extract URL from question if present
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = finalQuestion.match(urlRegex);
+    const extractedUrl = urls ? urls[0] : undefined;
+
     const userMsg: Message = { id: Date.now().toString(), role: 'user', text: finalQuestion };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
@@ -71,6 +76,7 @@ export default function AskAIScreen() {
       const response = await answerQuestionMutation.mutateAsync({
         question: userMsg.text,
         context_source: 'profile',
+        job_url: extractedUrl,
       });
 
       const aiMsg: Message = {
@@ -228,8 +234,8 @@ export default function AskAIScreen() {
         { 
           backgroundColor: colors.bgSecondary, 
           borderTopColor: colors.border,
-          paddingBottom: Platform.OS === 'ios' ? Spacing.lg : Spacing.md,
-          marginBottom: keyboardVisible ? 0 : 120
+          paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) : (Platform.OS === 'ios' ? 100 : 80),
+          marginBottom: 0
         }
       ]}>
         <View style={styles.inputRow}>

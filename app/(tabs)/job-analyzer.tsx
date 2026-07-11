@@ -95,18 +95,19 @@ export default function JobFitScreen() {
 
     // Use JD file text if available, otherwise use text input
     const finalJdText = jdFileText.trim().length > 0 ? jdFileText : jdText.trim();
+    const finalJdUrl = jdUrl.trim();
 
-    if (finalJdText.length < 20 && !jdUrl) {
+    // Require either text/file OR URL
+    if (finalJdText.length < 20 && !finalJdUrl) {
       Toast.show({ type: 'error', text1: 'Input missing', text2: 'Please paste a job description, provide a valid URL, or attach a file with job description text.' });
       return;
     }
 
     try {
-      const finalJdUrl = jdText.trim().length >= 20 ? '' : jdUrl;
       const result = await analyzeJob.mutateAsync({
         job_id: job_id as string,
-        jdText: finalJdText,
-        jdUrl: finalJdUrl,
+        jdText: finalJdText.length >= 20 ? finalJdText : undefined,
+        jdUrl: finalJdUrl || undefined,
         profileData: profile
       });
 

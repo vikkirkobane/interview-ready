@@ -65,26 +65,86 @@ app.post('/*', async (c: any) => {
 
     let actualJobDescription = input.job_description || '';
 
-    // Extract job URL if provided
+    // Extract job URL if provided using ScrapeGraphAI
     if (input.job_url) {
       console.log(`Scraping job from URL: ${input.job_url}`);
+      
+      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
+      if (!SGAI_API_KEY) {
+        throw new ValidationError('SGAI_API_KEY is not configured. Cannot scrape URL.', { url: input.job_url });
+      }
+      
       try {
-        const jinaResponse = await fetch(`https://r.jina.ai/${input.job_url}`, {
+        const scrapePayload = {
+          url: input.job_url,
+          prompt: `Extract the complete job description from this page. Include: job title, company name, location, job type (remote/hybrid/onsite), salary range if mentioned, required qualifications, responsibilities, required skills, preferred skills, benefits, and any other relevant job details. Return all text content in a structured, readable format.`,
+          schema: {
+            type: 'object',
+            properties: {
+              job_title: { type: 'string' },
+              company: { type: 'string' },
+              location: { type: 'string' },
+              job_type: { type: 'string' },
+              salary: { type: 'string' },
+              description: { type: 'string' },
+              responsibilities: { type: 'array', items: { type: 'string' } },
+              required_qualifications: { type: 'array', items: { type: 'string' } },
+              required_skills: { type: 'array', items: { type: 'string' } },
+              preferred_skills: { type: 'array', items: { type: 'string' } },
+              benefits: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        };
+
+        const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
+          method: 'POST',
           headers: {
-            'Accept': 'text/plain',
-          }
+            'Content-Type': 'application/json',
+            'SGAI-APIKEY': SGAI_API_KEY,
+          },
+          body: JSON.stringify(scrapePayload),
         });
+
+        if (!scrapeResponse.ok) {
+          const errorText = await scrapeResponse.text().catch(() => 'Unknown error');
+          console.error(`ScrapeGraphAI failed with status ${scrapeResponse.status}:`, errorText);
+          throw new Error(`Scraper returned ${scrapeResponse.status}: ${errorText}`);
+        }
+
+        const scrapeResult = await scrapeResponse.json();
+        const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
         
-        if (!jinaResponse.ok) {
-           throw new Error(`Scraper returned ${jinaResponse.status}`);
+        // Convert structured data to readable text
+        const scrapedText = [
+          extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
+          extractedData.company ? `Company: ${extractedData.company}` : '',
+          extractedData.location ? `Location: ${extractedData.location}` : '',
+          extractedData.job_type ? `Job Type: ${extractedData.job_type}` : '',
+          extractedData.salary ? `Salary: ${extractedData.salary}` : '',
+          extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
+          extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
+          extractedData.required_qualifications?.length ? `\nRequired Qualifications:\n${extractedData.required_qualifications.map((q: string) => `- ${q}`).join('\n')}` : '',
+          extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
+          extractedData.preferred_skills?.length ? `\nPreferred Skills:\n${extractedData.preferred_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
+          extractedData.benefits?.length ? `\nBenefits:\n${extractedData.benefits.map((b: string) => `- ${b}`).join('\n')}` : '',
+        ].filter(Boolean).join('\n');
+        
+        if (!scrapedText || scrapedText.trim().length < 50) {
+          console.error('ScrapeGraphAI returned insufficient content:', JSON.stringify(extractedData).substring(0, 200));
+          throw new Error('Extracted content is too short or empty');
         }
         
-        const markdown = await jinaResponse.text();
         actualJobDescription = actualJobDescription 
-          ? actualJobDescription + '\n\n' + markdown 
-          : markdown;
+          ? actualJobDescription + '\n\n' + scrapedText 
+          : scrapedText;
+          
+        console.log(`Successfully scraped ${scrapedText.length} characters from URL using ScrapeGraphAI`);
       } catch (err: any) {
-        throw new ValidationError('Could not extract content from the provided URL. Please paste the job description text manually.', { url: input.job_url });
+        console.error('URL scraping error:', err.message);
+        throw new ValidationError(
+          `Could not extract content from the provided URL. ${err.message || 'Please paste the job description text manually.'}`, 
+          { url: input.job_url, error: err.message }
+        );
       }
     }
 

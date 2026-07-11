@@ -292,7 +292,7 @@ export const useInterviewFeedbackMutation = () => {
 
 export const useCreateCoverLetterMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { resume_id?: string; job_description?: string; tone: string; target_company: string; target_role: string }) => {
+    mutationFn: async (payload: { resume_id?: string; job_description?: string; job_url?: string; tone: string; target_company: string; target_role: string }) => {
       const mappedPayload = {
         ...payload,
         tone: payload.tone?.toUpperCase() || 'PROFESSIONAL',
@@ -466,7 +466,7 @@ export const useElevatorPitchMutation = () => {
 
 export const useJdSummaryMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { jd_text: string }) => {
+    mutationFn: async (payload: { job_description?: string, job_url?: string }) => {
       const response = await apiCall('utilities-jd-summary', 'POST', payload);
       if (response.error) throw new Error(response.error);
       return response.data; // { summary, red_flags, key_requirements }
@@ -486,7 +486,7 @@ export const useAutofillMutation = () => {
 
 export const useAnswerQuestionMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { question: string; context_source: 'profile' | 'resume'; resume_id?: string }) => {
+    mutationFn: async (payload: { question: string; context_source: 'profile' | 'resume'; resume_id?: string; job_url?: string }) => {
       const response = await apiCall('answer-question', 'POST', payload);
       if (response.error) throw new Error(response.error);
       return response.data; // { answer: string }

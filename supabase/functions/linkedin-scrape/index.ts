@@ -14,7 +14,7 @@ const reqSchema = z.object({
   linkedin_url: z.string().url(),
 });
 
-app.post('/', async (c) => {
+app.post('/*', async (c) => {
   const supabaseClient = createAuthClient(c.req.raw);
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) throw new UnauthorizedError();

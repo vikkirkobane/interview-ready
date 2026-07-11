@@ -18,6 +18,7 @@ const CreateCoverLetterInput = z.object({
   tone: z.enum(['PROFESSIONAL', 'ENTHUSIASTIC', 'CONCISE', 'STORYTELLING', 'FORMAL']),
   resume_id: z.string().uuid().optional(),
   job_description: z.string().optional(),
+  job_url: z.string().url().optional(),
 });
 
 type CreateCoverLetterInputType = z.infer<typeof CreateCoverLetterInput>;
@@ -98,6 +99,61 @@ app.post('/*', async (c: any) => {
         
       if (jobApp) {
         jobDescriptionText = jobApp.raw_jd || JSON.stringify(jobApp.jd_summary);
+      }
+    }
+
+    if (input.job_url) {
+      console.log(`Scraping job from URL: ${input.job_url}`);
+      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
+      if (!SGAI_API_KEY) {
+        throw new ValidationError('SGAI_API_KEY is not configured. Cannot scrape URL.', { url: input.job_url });
+      }
+      try {
+        const scrapePayload = {
+          url: input.job_url,
+          prompt: `Extract the complete job description from this page. Include: job title, company name, location, job type, required qualifications, responsibilities, required skills, preferred skills, benefits, and any other relevant job details. Return all text content in a structured, readable format.`,
+          schema: {
+            type: 'object',
+            properties: {
+              job_title: { type: 'string' },
+              company: { type: 'string' },
+              description: { type: 'string' },
+              responsibilities: { type: 'array', items: { type: 'string' } },
+              required_skills: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        };
+
+        const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'SGAI-APIKEY': SGAI_API_KEY,
+          },
+          body: JSON.stringify(scrapePayload),
+        });
+
+        if (scrapeResponse.ok) {
+          const scrapeResult = await scrapeResponse.json();
+          const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
+          
+          const scrapedText = [
+            extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
+            extractedData.company ? `Company: ${extractedData.company}` : '',
+            extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
+            extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
+            extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
+          ].filter(Boolean).join('\n');
+          
+          if (scrapedText.trim().length > 50) {
+            jobDescriptionText = jobDescriptionText 
+              ? jobDescriptionText + '\n\n' + scrapedText 
+              : scrapedText;
+          }
+        }
+      } catch (err: any) {
+        console.warn('Failed to scrape job URL for cover letter:', err.message);
+        // Continue with the text we already have
       }
     }
 

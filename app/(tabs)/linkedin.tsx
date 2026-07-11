@@ -222,10 +222,10 @@ export default function LinkedinOptimizerScreen() {
         skills: (data.skills && data.skills.length > 0) ? data.skills : w.skills,
       }));
       
-      Toast.show({ type: 'success', text1: 'Profile Scraped successfully!', text2: 'Please review your content.' });
+      Toast.show({ type: 'success', text1: 'Profile Imported successfully!', text2: 'Please review your content.' });
       setStep('content');
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Scrape Failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Import Failed', text2: e.message });
     }
   };
 
@@ -317,7 +317,7 @@ export default function LinkedinOptimizerScreen() {
             <Text style={[s.limitTitle, { color: colors.textPrimary }]}>📋 What LinkedIn login provides</Text>
             <Text style={[s.limitBody, { color: colors.textSecondary }]}>
               LinkedIn login only shares your basic identity data — your name, email, and photo.
-              {`\n\n`}In the next step, you can use our AI Scraper to automatically extract your profile content (headline, about, experience, skills) using your public profile URL.
+              {`\n\n`}In the next step, you can use our AI Importer to automatically extract your profile content (headline, about, experience, skills) using your public profile URL.
             </Text>
           </Card>
 
@@ -382,14 +382,14 @@ export default function LinkedinOptimizerScreen() {
             </Text>
             <Text style={[s.oauthInfoText, { color: isLinkedInUser ? 'rgba(255,255,255,0.85)' : colors.textSecondary }]}>
               {isLinkedInUser
-                ? '✓ Name  ✓ Email  ✓ Profile photo\n\nUse the scraper below to pull in your headline, about, experience, and skills.'
-                : 'LinkedIn login only shares your name, email and photo. Use the AI Scraper below to pull in your full profile content.'}
+                ? '✓ Name  ✓ Email  ✓ Profile photo\n\nUse the importer below to pull in your headline, about, experience, and skills.'
+                : 'LinkedIn login only shares your name, email and photo. Use the AI Importer below to pull in your full profile content.'}
             </Text>
           </View>
         </Card>
 
         {/* Profile data pre-fill status */}
-        <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>Auto-Scrape Profile</Text>
+        <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>Auto-Import Profile</Text>
         <Card style={[s.prefillCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
           <Text style={[s.hint, { color: colors.textMuted, marginBottom: Spacing.md }]}>
             Enter your public LinkedIn URL to automatically extract your profile content. This costs 2 credits.
@@ -403,7 +403,7 @@ export default function LinkedinOptimizerScreen() {
             autoCapitalize="none"
           />
           <Button 
-            title={scrapeMutation.isPending ? 'Scraping Profile...' : 'Scrape My LinkedIn (2 Credits)'} 
+            title={scrapeMutation.isPending ? 'Importing Profile...' : 'Import My LinkedIn'} 
             onPress={handleScrape} 
             disabled={scrapeMutation.isPending || !linkedinUrl.trim()} 
           />
@@ -565,7 +565,7 @@ export default function LinkedinOptimizerScreen() {
           <Button title="← Back" variant="outline" onPress={() => setStep('content')} style={{ flex: 1 }} />
           <View style={{ width: Spacing.md }} />
           <Button
-            title={analyzeMutation.isPending ? 'Analysing...' : 'Analyse Profile (2 Credits)'}
+            title={analyzeMutation.isPending ? 'Analysing...' : 'Analyse Profile'}
             onPress={handleAnalyze} disabled={analyzeMutation.isPending} style={{ flex: 1 }} />
         </View>
         {analyzeMutation.isPending && (
@@ -800,8 +800,8 @@ export default function LinkedinOptimizerScreen() {
                 <Text style={[s.bodyText, { color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.xs }]}>
                   Weekly posting, commenting, and networking schedule to maximise visibility after optimisation.
                 </Text>
-                <Button
-                  title={engagementMutation.isPending ? 'Generating…' : 'Generate Plan (2 Credits)'}
+                <Button 
+                  title={engagementMutation.isPending ? 'Generating…' : 'Generate Plan'}
                   onPress={handleEngagementPlan}
                   disabled={engagementMutation.isPending}
                   style={{ marginTop: Spacing.lg }}

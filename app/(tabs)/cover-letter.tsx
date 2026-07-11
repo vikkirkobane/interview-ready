@@ -25,6 +25,8 @@ export default function CoverLetterGeneratorScreen() {
   const [generatedLetter, setGeneratedLetter] = useState<string | null>(null);
   const [coverLetterObj, setCoverLetterObj] = useState<CoverLetter | null>(null);
   const [jobDescription, setJobDescription] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
   const [targetCompany, setTargetCompany] = useState('');
   const [targetRole, setTargetRole] = useState('');
   const [jdFileText, setJdFileText] = useState('');
@@ -107,20 +109,24 @@ export default function CoverLetterGeneratorScreen() {
 
   const handleGenerate = async () => {
     setGenerating(true);
+    setUrlError('');
 
     try {
       // Use file text if available, otherwise use text input
       const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
+      const finalJobUrl = jobUrl.trim();
 
-      if (finalJobDescription.length === 0) {
-        Toast.show({ type: 'error', text1: 'Job Description Required', text2: 'Please provide a job description via text or file attachment.' });
+      // Require either text/file OR URL
+      if (finalJobDescription.length === 0 && !finalJobUrl) {
+        Toast.show({ type: 'error', text1: 'Input Required', text2: 'Please provide a job description via text, file, or URL.' });
         setGenerating(false);
         return;
       }
 
       const result = await coverLetterMutation.mutateAsync({
         tone: selectedTone,
-        job_description: finalJobDescription,
+        job_description: finalJobDescription || undefined,
+        job_url: finalJobUrl || undefined,
         target_company: targetCompany,
         target_role: targetRole,
       });
@@ -242,8 +248,29 @@ export default function CoverLetterGeneratorScreen() {
               />
             </View>
             <View style={styles.inputGroup}>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job URL (Optional)</Text>
+              <TextInput
+                style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }, urlError ? { borderColor: colors.error } : null]}
+                placeholder="https://www.linkedin.com/jobs/view/..."
+                placeholderTextColor={colors.textMuted}
+                value={jobUrl}
+                onChangeText={(text) => {
+                  setJobUrl(text);
+                  if (urlError) setUrlError('');
+                }}
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+              {urlError ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, padding: 8, backgroundColor: `${colors.error}1A`, borderRadius: 4 }}>
+                  <Ionicons name="alert-circle" size={14} color={colors.error} />
+                  <Text style={{ marginLeft: 4, color: colors.error, fontSize: 12 }}>{urlError}</Text>
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.inputGroup}>
               <View style={styles.labelRow}>
-                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description</Text>
+                <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional if URL provided)</Text>
                 <TouchableOpacity style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                   {extractJdLoading ? (
                     <ActivityIndicator size="small" color={colors.primary} />
@@ -259,7 +286,7 @@ export default function CoverLetterGeneratorScreen() {
                 style={[styles.textInput, styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
                 value={jobDescription}
                 onChangeText={setJobDescription}
-                placeholder="Paste the full job description here..."
+                placeholder="Or paste the full job description here..."
                 placeholderTextColor={colors.textMuted}
                 multiline
                 textAlignVertical="top"

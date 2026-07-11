@@ -12,6 +12,8 @@ export default function JdSummaryScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const [jdText, setJdText] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
   const [generating, setGenerating] = useState(false);
   const [summaryData, setSummaryData] = useState<{
     title: string;
@@ -23,11 +25,22 @@ export default function JdSummaryScreen() {
   const jdSummaryMutation = useJdSummaryMutation();
 
   const handleGenerate = async () => {
-    if (!jdText.trim()) return;
+    setUrlError('');
+    const finalJobUrl = jobUrl.trim();
+    const finalJobDescription = jdText.trim();
+    
+    if (!finalJobDescription && !finalJobUrl) {
+      Toast.show({ type: 'error', text1: 'Input Required', text2: 'Please provide a job description or URL.' });
+      return;
+    }
+    
     setGenerating(true);
     
     try {
-      const result = await jdSummaryMutation.mutateAsync({ jd_text: jdText });
+      const result = await jdSummaryMutation.mutateAsync({ 
+        job_description: finalJobDescription || undefined,
+        job_url: finalJobUrl || undefined,
+      });
       setSummaryData({
         title: result.title || "Job Summary",
         mustHaves: result.key_requirements || result.mustHaves || [],
@@ -60,6 +73,31 @@ export default function JdSummaryScreen() {
               Paste a lengthy job description below. We'll extract the key requirements, nice-to-haves, and potential red flags instantly.
             </Text>
             
+            <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8, marginTop: 16 }]}>Job URL (Optional)</Text>
+            <TextInput
+              style={[
+                styles.textInput, 
+                { backgroundColor: colors.bgSecondary, borderColor: colors.borderGlass, color: colors.textPrimary, minHeight: 48, marginBottom: 16 },
+                urlError ? { borderColor: colors.error } : null
+              ]}
+              placeholder="https://www.linkedin.com/jobs/view/..."
+              placeholderTextColor={colors.textMuted}
+              value={jobUrl}
+              onChangeText={(text) => {
+                setJobUrl(text);
+                if (urlError) setUrlError('');
+              }}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+            {urlError ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16, padding: 8, backgroundColor: `${colors.error}1A`, borderRadius: 4 }}>
+                <Ionicons name="alert-circle" size={14} color={colors.error} />
+                <Text style={{ marginLeft: 4, color: colors.error, fontSize: 12 }}>{urlError}</Text>
+              </View>
+            ) : null}
+
+            <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8 }]}>Job Description Text</Text>
             <TextInput
               style={[
                 styles.textInput, 
@@ -163,6 +201,9 @@ export default function JdSummaryScreen() {
 }
 
 const styles = StyleSheet.create({
+  inputLabel: {
+    ...Typography.label,
+  },
   container: {
     flex: 1,
   },

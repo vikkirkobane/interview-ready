@@ -207,6 +207,8 @@ export default function ResumeBuilderScreen() {
   const [isExporting, setIsExporting] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>('executive');
   const [jobDescription, setJobDescription] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [extractJdLoading, setExtractJdLoading] = useState(false);
@@ -240,17 +242,21 @@ export default function ResumeBuilderScreen() {
 
       // Use file text if available, otherwise use text input
       const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
+      const finalJobUrl = jobUrl.trim();
 
-      if (finalJobDescription.length > 10) {
-        const analyzeRes = await analyzeJobMutation.mutateAsync({ jdText: finalJobDescription });
+      if (finalJobDescription.length > 10 || finalJobUrl.length > 5) {
+        const analyzeRes = await analyzeJobMutation.mutateAsync({ 
+          jdText: finalJobDescription.length > 10 ? finalJobDescription : undefined,
+          jdUrl: finalJobUrl.length > 5 ? finalJobUrl : undefined 
+        });
         job_analysis_id = analyzeRes.id;
       }
 
       const res = await createResumeMutation.mutateAsync({
-        title: jobDescription ? 'Tailored Resume' : 'Base Resume',
+        title: jobDescription || finalJobUrl ? 'Tailored Resume' : 'Base Resume',
         template_id: selectedTemplateId,
         job_analysis_id,
-        is_base: !jobDescription && jdFileText.trim().length === 0
+        is_base: !jobDescription && jdFileText.trim().length === 0 && !finalJobUrl
       });
 
       router.setParams({ id: res.resume_id });
@@ -652,12 +658,34 @@ export default function ResumeBuilderScreen() {
             <Text style={{ color: colors.textMuted, marginBottom: Spacing.md, fontSize: 14 }}>
               Paste the job description you're targeting. Our AI will analyze the requirements and automatically tailor your resume.
             </Text>
+            <View style={[styles.inputContainer, { marginBottom: Spacing.md }]}>
+              <Text style={{ color: colors.textPrimary, marginBottom: 8, fontSize: 14, fontWeight: '500' }}>Job URL (Optional)</Text>
+              <TextInput
+                style={[styles.input, urlError ? { borderColor: colors.error } : null]}
+                placeholder="https://www.linkedin.com/jobs/view/..."
+                placeholderTextColor={colors.textMuted}
+                value={jobUrl}
+                onChangeText={(text) => {
+                  setJobUrl(text);
+                  if (urlError) setUrlError('');
+                }}
+                keyboardType="url"
+                autoCapitalize="none"
+              />
+              {urlError ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, padding: 8, backgroundColor: `${colors.error}1A`, borderRadius: 4 }}>
+                  <Ionicons name="alert-circle" size={14} color={colors.error} />
+                  <Text style={{ marginLeft: 4, color: colors.error, fontSize: 12 }}>{urlError}</Text>
+                </View>
+              ) : null}
+            </View>
             <View style={styles.inputContainer}>
+              <Text style={{ color: colors.textPrimary, marginBottom: 8, fontSize: 14, fontWeight: '500' }}>Job Description (Optional if URL provided)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={jobDescription}
                 onChangeText={setJobDescription}
-                placeholder="Paste Job Description here..."
+                placeholder="Or paste the full job description here..."
                 placeholderTextColor={colors.textMuted}
                 multiline
                 numberOfLines={6}
@@ -726,7 +754,7 @@ export default function ResumeBuilderScreen() {
               <>
                 <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
                 <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
-                  {jobDescription.trim().length > 10 ? 'Generate Tailored Resume' : 'Generate Resume'}
+                  {jobDescription.trim().length > 10 || jobUrl.trim().length > 5 ? 'Generate Tailored Resume' : 'Generate Resume'}
                 </Text>
               </>
             )}

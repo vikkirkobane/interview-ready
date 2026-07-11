@@ -61,12 +61,13 @@ CREATE TABLE IF NOT EXISTS public.paystack_plans (
 ALTER TABLE public.paystack_plans ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Paystack plans readable by all" ON public.paystack_plans FOR SELECT USING (true);
 
--- Insert default Paystack plans (Nigerian Naira pricing)
+-- Insert default Paystack plans with actual Paystack plan codes
+-- USD Plans (International - Primary)
 INSERT INTO public.paystack_plans (plan_code, plan_type, name, amount, currency, interval, description) VALUES
-  ('PLN_premium_monthly', 'PREMIUM', 'Premium Monthly', 5000.00, 'NGN', 'MONTHLY', 'Unlimited AI credits, all templates, priority support'),
-  ('PLN_premium_yearly', 'PREMIUM', 'Premium Yearly', 50000.00, 'NGN', 'YEARLY', 'Unlimited AI credits, all templates, priority support (2 months free)'),
-  ('PLN_premium_plus_monthly', 'PREMIUM_PLUS', 'Premium Plus Monthly', 10000.00, 'NGN', 'MONTHLY', 'Everything in Premium + priority queue, advanced analytics'),
-  ('PLN_premium_plus_yearly', 'PREMIUM_PLUS', 'Premium Plus Yearly', 100000.00, 'NGN', 'YEARLY', 'Everything in Premium + priority queue, advanced analytics (2 months free)')
+  ('PLN_0jg6lfy4ttw68tj', 'PREMIUM', 'Premium Monthly', 5.00, 'USD', 'MONTHLY', 'Unlimited AI credits, all templates, priority support'),
+  ('PLN_2uob7t7251usns5', 'PREMIUM', 'Premium Yearly', 50.00, 'USD', 'YEARLY', 'Unlimited AI credits, all templates, priority support (2 months free)'),
+  ('PLN_fkvsy1vdlgcnp0p', 'PREMIUM_PLUS', 'Premium Plus Monthly', 10.00, 'USD', 'MONTHLY', 'Everything in Premium + priority queue, advanced analytics'),
+  ('PLN_35hurhal4nnj3n9', 'PREMIUM_PLUS', 'Premium Plus Yearly', 100.00, 'USD', 'YEARLY', 'Everything in Premium + priority queue, advanced analytics (2 months free)')
 ON CONFLICT (plan_code) DO NOTHING;
 
 -- Function to create or update Paystack subscription

@@ -11,7 +11,10 @@ const app = new Hono();
 app.use('/*', cors());
 
 const JDSummaryInput = z.object({
-  job_description: z.string().min(50).max(10000),
+  job_description: z.string().max(10000).optional(),
+  job_url: z.string().url().optional(),
+}).refine((data: any) => data.job_description || data.job_url, {
+  message: "Either job_description or job_url must be provided",
 });
 
 type JDSummaryInputType = z.infer<typeof JDSummaryInput>;
@@ -43,11 +46,71 @@ app.post('/*', async (c: any) => {
       throw error;
     }
 
+    let actualJobDescription = input.job_description || '';
+
+    if (input.job_url) {
+      console.log(`Scraping job from URL: ${input.job_url}`);
+      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
+      if (!SGAI_API_KEY) {
+        throw new ValidationError('SGAI_API_KEY is not configured. Cannot scrape URL.', { url: input.job_url });
+      }
+      try {
+        const scrapePayload = {
+          url: input.job_url,
+          prompt: `Extract the complete job description from this page. Include: job title, company name, location, job type, required qualifications, responsibilities, required skills, preferred skills, benefits, and any other relevant job details. Return all text content in a structured, readable format.`,
+          schema: {
+            type: 'object',
+            properties: {
+              job_title: { type: 'string' },
+              company: { type: 'string' },
+              description: { type: 'string' },
+              responsibilities: { type: 'array', items: { type: 'string' } },
+              required_skills: { type: 'array', items: { type: 'string' } },
+            },
+          },
+        };
+
+        const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'SGAI-APIKEY': SGAI_API_KEY,
+          },
+          body: JSON.stringify(scrapePayload),
+        });
+
+        if (scrapeResponse.ok) {
+          const scrapeResult = await scrapeResponse.json();
+          const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
+          
+          const scrapedText = [
+            extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
+            extractedData.company ? `Company: ${extractedData.company}` : '',
+            extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
+            extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
+            extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
+          ].filter(Boolean).join('\n');
+          
+          if (scrapedText.trim().length > 50) {
+            actualJobDescription = actualJobDescription 
+              ? actualJobDescription + '\n\n' + scrapedText 
+              : scrapedText;
+          }
+        }
+      } catch (err: any) {
+        console.warn('Failed to scrape job URL for JD summary:', err.message);
+      }
+    }
+
+    if (actualJobDescription.trim().length < 50) {
+      throw new ValidationError('The extracted job description is too short or could not be fully loaded. Please provide more text.');
+    }
+
     const systemPrompt = `You are an expert technical recruiter. Analyze the job description and extract a concise summary.
 Focus on identifying the core responsibilities, must-have requirements, nice-to-haves, and any potential red flags or culture signals.
 Return exactly in the JSON format specified.`;
 
-    const userPrompt = `Job Description:\n${input.job_description}`;
+    const userPrompt = `Job Description:\n${actualJobDescription}`;
 
     const summary = await aiClient.callWithJson(
       systemPrompt,

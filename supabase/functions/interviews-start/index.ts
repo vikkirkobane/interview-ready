@@ -14,6 +14,7 @@ const StartInterviewInput = z.object({
   role: z.string().min(1),
   company: z.string().optional(),
   job_description: z.string().optional(),
+  job_url: z.string().url().optional(),
   interview_type: z.enum(['TECHNICAL', 'BEHAVIORAL', 'SYSTEM_DESIGN', 'MIXED', 'CASE_STUDY']),
   difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'SENIOR']).optional().default('INTERMEDIATE'),
 });
@@ -59,6 +60,61 @@ app.post('/*', async (c: any) => {
       interview_type: input.interview_type,
     });
 
+    // Extract job description from URL if provided
+    let actualJobDescription = input.job_description || '';
+    if (input.job_url) {
+      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
+      if (SGAI_API_KEY) {
+        try {
+          const scrapePayload = {
+            url: input.job_url,
+            prompt: `Extract the complete job description from this page. Include: job title, company name, responsibilities, required skills, and any other relevant job details.`,
+            schema: {
+              type: 'object',
+              properties: {
+                job_title: { type: 'string' },
+                company: { type: 'string' },
+                description: { type: 'string' },
+                responsibilities: { type: 'array', items: { type: 'string' } },
+                required_skills: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          };
+
+          const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'SGAI-APIKEY': SGAI_API_KEY,
+            },
+            body: JSON.stringify(scrapePayload),
+          });
+
+          if (scrapeResponse.ok) {
+            const scrapeResult = await scrapeResponse.json();
+            const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
+            
+            const scrapedText = [
+              extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
+              extractedData.company ? `Company: ${extractedData.company}` : '',
+              extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
+              extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
+              extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
+            ].filter(Boolean).join('\n');
+            
+            if (scrapedText.trim().length > 50) {
+              actualJobDescription = actualJobDescription 
+                ? actualJobDescription + '\n\n' + scrapedText 
+                : scrapedText;
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to scrape job URL for interview:', err);
+          // Non-fatal, continue with provided description
+        }
+      }
+    }
+
     // Generate first message (System/Interviewer greeting)
     const companyText = input.company ? ` at ${input.company}` : '';
     const initialMessage = {
@@ -75,7 +131,7 @@ app.post('/*', async (c: any) => {
         job_application_id: input.job_application_id || null,
         role: input.role,
         company: input.company || null,
-        job_description: input.job_description || null,
+        job_description: actualJobDescription || null,
         interview_type: input.interview_type,
         status: 'IN_PROGRESS',
         messages: [initialMessage],

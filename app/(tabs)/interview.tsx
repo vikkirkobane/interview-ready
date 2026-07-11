@@ -74,7 +74,7 @@ type Message = {
 
 export default function InterviewScreen() {
   const router = useRouter();
-  const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '' } = useLocalSearchParams();
+  const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
   const { colors, isDark } = useTheme();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -105,6 +105,10 @@ export default function InterviewScreen() {
           payload.job_description = jdFileText;
         } else if (jobDescription) {
           payload.job_description = jobDescription;
+        }
+        
+        if (jobUrl) {
+          payload.job_url = jobUrl;
         }
 
         const res = await startMutation.mutateAsync(payload);
@@ -319,17 +323,14 @@ export default function InterviewScreen() {
       {/* Bottom Input Area */}
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
         <View style={styles.inputContainer}>
-          <TouchableOpacity style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
-            {extractJdLoading ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <>
-                <Ionicons name="attach" size={16} color={colors.primary} />
-                <Text style={styles.attachBtnText}>Attach file</Text>
-              </>
-            )}
-          </TouchableOpacity>
           <View style={styles.inputWrapper}>
+            <TouchableOpacity style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+              {extractJdLoading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons name="add" size={24} color={colors.textMuted} />
+              )}
+            </TouchableOpacity>
             <TextInput
               style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
               placeholder="Type your response..."
@@ -564,6 +565,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 24,
     paddingHorizontal: 24,
+    paddingLeft: 46,
     paddingVertical: 12,
     paddingRight: 56,
     ...Typography.bodyLg,
@@ -587,12 +589,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   attachBtn: {
-    flexDirection: 'row',
+    position: 'absolute',
+    left: 6,
+    top: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: 'rgba(107,70,254,0.08)',
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: Radius.md,
+    justifyContent: 'center',
+    zIndex: 10,
   },
   attachBtnText: {
     ...Typography.label,
