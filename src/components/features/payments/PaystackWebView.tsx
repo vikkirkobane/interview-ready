@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { PaystackWebView } from 'react-native-paystack-webview';
+import { Paystack as PaystackWebView } from 'react-native-paystack-webview';
 import { useTheme } from '../../../theme';
 
 export interface PaystackPaymentData {
@@ -26,7 +26,7 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
   onCancel,
   onError,
 }) => {
-  const paystackWebViewRef = useRef<any>();
+  const paystackWebViewRef = useRef<any>(null);
   const { colors } = useTheme();
 
   const handlePaymentSuccess = (res: any) => {
@@ -52,7 +52,7 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
         amount={paymentData.amount}
         billingEmail={paymentData.email}
         currency={paymentData.currency}
-        channels={paymentData.channels || ['card', 'bank', 'ussd', 'qr', 'mobile_money']}
+        channels={(paymentData.channels || ['card', 'bank', 'ussd', 'qr', 'mobile_money']) as any}
         refNumber={paymentData.reference}
         billingName="Interview Ready User"
         handleWebViewMessage={handlePaymentSuccess}
@@ -60,7 +60,9 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
         onSuccess={handlePaymentSuccess}
         autoStart={true}
         activityIndicatorColor={colors.primary}
+        // @ts-ignore - types are missing in older version 4.6.7
         SafeAreaViewContainer={{ backgroundColor: colors.bgPrimary }}
+        // @ts-ignore
         modalProps={{
           animationType: 'slide',
           transparent: false,

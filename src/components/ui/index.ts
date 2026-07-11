@@ -11,4 +11,5 @@ export { GoldenBox } from './GoldenBox';
 export { SideMenu } from './SideMenu';
 export { ShimmerEffect } from './ShimmerEffect';
 export { toastConfig } from './ToastConfig';
+export { AdBanner } from './AdBanner';
 

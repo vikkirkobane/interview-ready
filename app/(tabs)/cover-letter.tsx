@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Card, Button } from '../../src/components/ui';
+import { Card, Button, AdBanner } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
+import { useAuthStore } from '../../src/stores/auth-store';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import * as DocumentPicker from 'expo-document-picker';
@@ -20,6 +21,8 @@ export default function CoverLetterGeneratorScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { addNotification } = useNotificationStore();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const [selectedTone, setSelectedTone] = useState('Professional');
   const [generating, setGenerating] = useState(false);
   const [generatedLetter, setGeneratedLetter] = useState<string | null>(null);
@@ -396,6 +399,7 @@ export default function CoverLetterGeneratorScreen() {
           </View>
         )}
 
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

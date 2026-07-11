@@ -17,7 +17,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
-import { ScoreRing, GoldenBox, ShimmerEffect } from '../../src/components/ui';
+import { ScoreRing, GoldenBox, ShimmerEffect, AdBanner } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCredits } from '../../src/hooks/useCredits';
 
@@ -272,6 +272,7 @@ export default function DashboardScreen() {
           )}
         </View>
 
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

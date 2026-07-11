@@ -15,6 +15,7 @@ import { useNotificationStore } from '../src/stores/notification-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
 import { supabase } from '../src/lib/supabase';
+import mobileAds from 'react-native-google-mobile-ads';
 
 if (!(Toast as any)._isPatched) {
   const originalToastShow = Toast.show;
@@ -65,7 +66,7 @@ function AuthGuard() {
     // Never interfere with the OAuth callback screen — let it handle itself
     if (inAuthGroup && isCallback) return;
     // Also skip the non-grouped auth/callback route
-    if (segments[0] === 'auth' && (segments[1] as string) === 'callback') return;
+    if ((segments[0] as string) === 'auth' && (segments[1] as string) === 'callback') return;
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
@@ -89,6 +90,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
+    mobileAds().initialize();
   }, []);
 
   // Handle OAuth deep links (interviewready://auth/callback?code=...)

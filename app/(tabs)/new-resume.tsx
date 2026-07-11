@@ -5,8 +5,9 @@ import {
 } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button } from '../../src/components/ui';
+import { Button, AdBanner } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuthStore } from '../../src/stores/auth-store';
 import {
   useResumeQuery, useUpdateResumeMutation,
   useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation, useDeleteResumeMutation,
@@ -201,6 +202,8 @@ export default function ResumeBuilderScreen() {
   const router = useRouter();
   const { id, template, fromList } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const [isEditMode, setIsEditMode] = useState(true);
   const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
@@ -1496,6 +1499,8 @@ export default function ResumeBuilderScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {!isPro && <AdBanner />}
       </ScrollView>
 
       {renderTemplateModal()}

@@ -145,7 +145,7 @@ export async function apiUploadFile<T = any>(
 
     if (Platform.OS === 'web' && webFile) {
       // Web: use the Blob directly
-      formData.append('file', webFile, fileName);
+      (formData as any).append('file', webFile, fileName);
     } else {
       // Native: React Native's fetch accepts a URI-based file object in FormData
       formData.append('file', {
