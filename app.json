@@ -47,7 +47,16 @@
           "androidAppId": "ca-app-pub-9822168149949485~6162462516"
         }
       ],
-      "expo-build-properties",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildFeatures": {
+              "buildConfig": true
+            }
+          }
+        }
+      ],
       "./withAndroidAllowBackup.js"
     ],
     "experiments": {
