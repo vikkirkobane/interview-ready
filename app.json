@@ -46,7 +46,9 @@
         {
           "androidAppId": "ca-app-pub-9822168149949485~6162462516"
         }
-      ]
+      ],
+      "expo-build-properties",
+      "./withAndroidAllowBackup.js"
     ],
     "experiments": {
       "typedRoutes": true
