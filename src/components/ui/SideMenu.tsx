@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -30,8 +30,8 @@ export function SideMenu() {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   
-  const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [slideAnim] = useState(() => new Animated.Value(-DRAWER_WIDTH));
+  const [fadeAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     // useNativeDriver for transform/opacity is not supported on web
@@ -63,7 +63,7 @@ export function SideMenu() {
         })
       ]).start();
     }
-  }, [isMenuOpen]);
+  }, [isMenuOpen, slideAnim, fadeAnim]);
 
   const handleNavigation = (path: string) => {
     closeMenu();

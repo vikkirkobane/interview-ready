@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Animated, StyleSheet, ViewStyle } from 'react-native';
 import { Colors, Radius } from '../../theme';
 
@@ -14,7 +14,7 @@ interface SkeletonProps {
  * Use preset shapes for common patterns.
  */
 export function Skeleton({ width = '100%', height = 16, borderRadius = Radius.sm, style }: SkeletonProps) {
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const [shimmerAnim] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -33,7 +33,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = Radius.sm
     );
     animation.start();
     return () => animation.stop();
-  }, []);
+  }, [shimmerAnim]);
 
   const opacity = shimmerAnim.interpolate({
     inputRange: [0, 1],

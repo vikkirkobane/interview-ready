@@ -87,7 +87,7 @@ export default function ResumeGenScreen() {
     };
 
     // Pulse animation for active step and icon
-    Animated.loop(
+    const loopAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.1,
@@ -102,11 +102,13 @@ export default function ResumeGenScreen() {
           useNativeDriver: true,
         })
       ])
-    ).start();
+    );
+    loopAnimation.start();
 
     startGeneration();
 
     return () => {
+      loopAnimation.stop();
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
