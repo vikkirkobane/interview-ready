@@ -176,7 +176,15 @@ You MUST return a valid JSON object matching EXACTLY this structure:
   "posted_date": "string" | null,
   "application_deadline": "string" | null,
   "company_size": "string" | null,
-  "industry": "string" | null
+  "industry": "string" | null,
+  "fit_score": number | null,
+  "missing_bonus_skills": [{ "skill": "string" }] | null,
+  "match_analysis": [{
+    "title": "string",
+    "description": "string",
+    "score_percentage": number,
+    "type": "SUCCESS" | "WARNING" | "INFO" | "PRIMARY"
+  }] | null
 }
 
 CRITICAL:
@@ -185,8 +193,8 @@ CRITICAL:
 ${input.user_profile ? `
 Additionally, you have been provided with the candidate's profile. You MUST cross-reference the candidate's profile against the job description to generate:
 - 'fit_score': A realistic score from 0-100 indicating how well the candidate fits the role.
-- 'missing_bonus_skills': Skills mentioned in the JD that the candidate lacks.
-- 'match_analysis': A granular breakdown of how their background matches the requirements. Provide 3-4 items. Each item must have a 'type' of 'SUCCESS' (100% Match), 'WARNING' (Partial Match), 'PRIMARY' (Bonus Multiplier), or 'INFO' (Neutral). For example, if they have 8 years of experience and the JD asks for 5, create a 'SUCCESS' item with score 100.
+- 'missing_bonus_skills': Skills mentioned in the JD that the candidate lacks. Format as an array of objects with a 'skill' property.
+- 'match_analysis': A granular breakdown of how their background matches the requirements. Provide 3-4 items. Each item MUST include 'title', 'description', 'score_percentage' (0-100), and a 'type' of 'SUCCESS' (100% Match), 'WARNING' (Partial Match), 'PRIMARY' (Bonus Multiplier), or 'INFO' (Neutral).
 ` : `
 Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skills', and 'match_analysis' blank or null.
 `}`;
@@ -277,7 +285,7 @@ Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skill
     console.error('Error in /jobs/analyze:', error);
     return c.json(
       { 
-        error: 'Failed to analyze job', 
+        error: `Failed to analyze job: ${error instanceof Error ? error.message : JSON.stringify(error)}`, 
         code: 'INTERNAL_ERROR',
         details: error instanceof Error ? { message: error.message } : undefined
       },

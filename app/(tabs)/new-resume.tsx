@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, AdBanner } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { useProfileStore } from '../../src/stores/profile-store';
 import {
   useResumeQuery, useUpdateResumeMutation,
   useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation, useDeleteResumeMutation,
@@ -223,20 +224,6 @@ export default function ResumeBuilderScreen() {
   const [expandedAward, setExpandedAward] = useState<string | null>(null);
   const { addNotification } = useNotificationStore();
 
-  const { data: resumeData, isLoading } = useResumeQuery(id as string);
-  const remoteResume = resumeData?.resume_contents?.[0];
-
-  const [draft, setDraft] = useState<DraftResume | null>(null);
-  const generationChannelRef = useRef<any>(null);
-
-  useEffect(() => {
-    return () => {
-      if (generationChannelRef.current) {
-        supabase.removeChannel(generationChannelRef.current);
-      }
-    };
-  }, []);
-
   const updateMutation = useUpdateResumeMutation();
   const rewriteMutation = useRewriteSectionMutation();
   const createResumeMutation = useCreateResumeMutation();
@@ -260,9 +247,10 @@ export default function ResumeBuilderScreen() {
       if (finalJobDescription.length > 10 || finalJobUrl.length > 5) {
         const analyzeRes = await analyzeJobMutation.mutateAsync({ 
           jdText: finalJobDescription.length > 10 ? finalJobDescription : undefined,
-          jdUrl: finalJobUrl.length > 5 ? finalJobUrl : undefined 
+          jdUrl: finalJobUrl.length > 5 ? finalJobUrl : undefined,
+          profileData: profile
         });
-        job_analysis_id = analyzeRes.id;
+        job_analysis_id = analyzeRes.job_id;
       }
 
       const res = await createResumeMutation.mutateAsync({
@@ -278,6 +266,21 @@ export default function ResumeBuilderScreen() {
       Toast.show({ type: 'error', text1: 'Generation failed', text2: e.message });
     }
   };
+
+  const { data: resumeData, isLoading } = useResumeQuery(id as string);
+  const remoteResume = resumeData?.resume_contents?.[0];
+  const { profile } = useProfileStore();
+
+  const [draft, setDraft] = useState<DraftResume | null>(null);
+  const generationChannelRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (generationChannelRef.current) {
+        supabase.removeChannel(generationChannelRef.current);
+      }
+    };
+  }, []);
 
   // Sync from remote when loaded
   React.useEffect(() => {

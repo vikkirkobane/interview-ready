@@ -83,12 +83,14 @@ function getTemplateStyles(templateId?: string) {
 
 export async function exportResumePDF(resume: ResumeContent, templateId?: string): Promise<void> {
   const html = buildResumeHTML(resume, templateId);
+  const filename = `${resume.header.name.replace(/\s+/g, '_')}_Resume.pdf`;
 
   if (Platform.OS === 'web') {
     const win = window.open('', '_blank');
     if (win) {
       win.document.write(html);
       win.document.close();
+      win.document.title = filename;
       win.focus();
       setTimeout(() => win.print(), 500);
     }
@@ -98,7 +100,20 @@ export async function exportResumePDF(resume: ResumeContent, templateId?: string
       throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Resume PDF' });
+    
+    let finalUri = uri;
+    try {
+      // Use standard expo-file-system to rename the file before sharing
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const LegacyFS = require('expo-file-system');
+      const newUri = `${LegacyFS.cacheDirectory}${filename}`;
+      await LegacyFS.moveAsync({ from: uri, to: newUri });
+      finalUri = newUri;
+    } catch (e) {
+      console.warn("Could not rename PDF file:", e);
+    }
+
+    await shareAsync(finalUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Resume PDF' });
   }
 }
 

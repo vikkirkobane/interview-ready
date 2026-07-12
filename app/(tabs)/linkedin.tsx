@@ -215,8 +215,13 @@ export default function LinkedinOptimizerScreen() {
       Toast.show({ type: 'error', text1: 'Invalid URL', text2: 'Please enter a valid LinkedIn profile URL (https://linkedin.com/in/...)' });
       return;
     }
+    let formattedUrl = linkedinUrl.trim();
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
     try {
-      const result = await scrapeMutation.mutateAsync({ linkedin_url: linkedinUrl });
+      const result = await scrapeMutation.mutateAsync({ linkedin_url: formattedUrl });
       const data = result.data;
 
       // Mark that scrape data is now loaded — prevents profile refetch from overwriting

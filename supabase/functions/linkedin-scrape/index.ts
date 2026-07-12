@@ -1,12 +1,13 @@
 import { Hono } from 'npm:hono@4.0.0';
 import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient } from '../_shared/supabase-client.ts';
-import { UnauthorizedError, InsufficientCreditsError } from '../_shared/errors.ts';
+import { UnauthorizedError, InsufficientCreditsError, errorHandler, ValidationError } from '../_shared/errors.ts';
 import { checkCredits, deductCredits } from '../_shared/credits.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
 app.use('/*', cors());
+app.onError(errorHandler);
 
 const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
 
@@ -20,7 +21,11 @@ app.post('/*', async (c) => {
   if (!user) throw new UnauthorizedError();
 
   const body = await c.req.json();
-  const { linkedin_url } = reqSchema.parse(body);
+  const parseResult = reqSchema.safeParse(body);
+  if (!parseResult.success) {
+    throw new ValidationError('Invalid request body', { errors: parseResult.error.format() });
+  }
+  const { linkedin_url } = parseResult.data;
 
   if (!SGAI_API_KEY) {
     return c.json({ error: 'SGAI_API_KEY is not configured on the server.' }, 500);

@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
 
 declare let window: any;
 
@@ -142,60 +141,39 @@ export async function apiUploadFile<T = any>(
       return { data: null, error: 'Not authenticated' };
     }
 
-    if (Platform.OS === 'web') {
-      const formData = new FormData();
-      if (webFile) {
-        (formData as any).append('file', webFile, fileName);
-      }
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        let errorMsg = 'Upload failed';
-        try {
-          const errJson = await response.json();
-          errorMsg = errJson.error || errorMsg;
-        } catch (e) {}
-        return { data: null, error: errorMsg };
-      }
-
-      const data = await response.json();
-      return { data, error: null };
+    const formData = new FormData();
+    if (Platform.OS === 'web' && webFile) {
+      (formData as any).append('file', webFile, fileName);
     } else {
-      // Native (Android/iOS): Use expo-file-system uploadAsync to bypass React Native fetch limitations and Blob conversion issues
-      const uploadUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`;
-      
-      const response = await FileSystem.uploadAsync(uploadUrl, fileUri, {
-        httpMethod: 'POST',
-        // @ts-ignore: expo-file-system types are mismatched between UploadType and FileSystemUploadType
-        uploadType: FileSystem.UploadType.MULTIPART,
-        fieldName: 'file',
-        mimeType: mimeType || 'application/octet-stream',
+      (formData as any).append('file', {
+        uri: fileUri,
+        name: fileName,
+        type: mimeType || 'application/octet-stream',
+      } as any);
+    }
+
+    const response = await fetch(
+      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
+      {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-      });
-
-      if (response.status < 200 || response.status >= 300) {
-        let errorMsg = 'Upload failed';
-        try {
-          const errJson = JSON.parse(response.body);
-          errorMsg = errJson.error || errorMsg;
-        } catch (e) {}
-        return { data: null, error: errorMsg };
+        body: formData,
       }
+    );
 
-      const data = JSON.parse(response.body);
-      return { data, error: null };
+    if (!response.ok) {
+      let errorMsg = 'Upload failed';
+      try {
+        const errJson = await response.json();
+        errorMsg = errJson.error || errorMsg;
+      } catch (e) {}
+      return { data: null, error: errorMsg };
     }
+
+    const data = await response.json();
+    return { data, error: null };
   } catch (err: any) {
     return { data: null, error: err.message || 'Upload failed' };
   }

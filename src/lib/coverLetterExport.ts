@@ -35,12 +35,14 @@ try {
 
 export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
   const html = buildCoverLetterHTML(cl);
+  const filename = `${cl.header.candidate_name.replace(/\s+/g, '_')}_Cover_Letter.pdf`;
 
   if (Platform.OS === 'web') {
     const win = window.open('', '_blank');
     if (win) {
       win.document.write(html);
       win.document.close();
+      win.document.title = filename;
       win.focus();
       setTimeout(() => win.print(), 500);
     }
@@ -49,7 +51,20 @@ export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
       throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Cover Letter PDF' });
+    
+    let finalUri = uri;
+    try {
+      // Use standard expo-file-system to rename the file before sharing
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const LegacyFS = require('expo-file-system');
+      const newUri = `${LegacyFS.cacheDirectory}${filename}`;
+      await LegacyFS.moveAsync({ from: uri, to: newUri });
+      finalUri = newUri;
+    } catch (e) {
+      console.warn("Could not rename PDF file:", e);
+    }
+
+    await shareAsync(finalUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Cover Letter PDF' });
   }
 }
 

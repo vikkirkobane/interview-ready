@@ -114,7 +114,7 @@ export default function JobFitScreen() {
       });
 
       // Navigate to standalone results screen
-      router.push(`/job-match-results?id=${result.id}` as any);
+      router.push(`/job-match-results?id=${result.job_id}` as any);
     } catch (error: any) {
       if (error.message.includes('extract content from the provided URL') || error.message.includes('URL')) {
         setUrlError(error.message);

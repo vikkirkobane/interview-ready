@@ -77,7 +77,7 @@ export const useAnalyzeJobMutation = () => {
 
       const response = await apiCall('jobs-analyze', 'POST', finalPayload);
       if (response.error) throw new Error(response.error);
-      return response.data; // { id: string, analysis: JD_ANALYSIS_SCHEMA }
+      return response.data; // { job_id: string, analysis: JD_ANALYSIS_SCHEMA }
     },
   });
 };
