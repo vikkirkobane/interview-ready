@@ -21,6 +21,7 @@
     "expo": "~56.0.15",
     "expo-asset": "~56.0.17",
     "expo-auth-session": "~56.0.15",
+    "expo-build-properties": "~56.0.22",
     "expo-clipboard": "~56.0.4",
     "expo-constants": "~56.0.18",
     "expo-document-picker": "~56.0.4",
@@ -64,7 +65,7 @@
     "babel-plugin-transform-imports": "^2.0.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~56.0.4",
-    "react-doctor": "^0.7.1",
+    "react-doctor": "^0.7.6",
     "supabase": "^2.107.0",
     "typescript": "~6.0.3"
   },
