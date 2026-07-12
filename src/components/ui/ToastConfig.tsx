@@ -48,7 +48,7 @@ function SubtleToast({ text1, text2, type }: CustomToastProps) {
         {
           backgroundColor: colors.bgCard,
           borderColor: colors.border,
-          shadowColor: isDark ? 'rgba(0,0,0,0.6)' : '#000',
+          boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
         },
       ]}
     >

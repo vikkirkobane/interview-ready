@@ -135,49 +135,71 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         scheme: 'interviewready',
         path: 'auth/callback',
       });
-      
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo,
-          skipBrowserRedirect: true, // Let WebBrowser handle it
+          skipBrowserRedirect: true,
         },
       });
-      
+
       if (error) return { error: error.message };
-      
+
       if (data?.url) {
         const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-        
-        if (res.type === 'success') {
-          const { url } = res;
 
-          // Extract the `code` query param from the redirect URL and exchange
-          // it for a session. exchangeCodeForSession is the correct public API
-          // in @supabase/auth-js v2 (getSessionFromUrl is private).
-          const parsedUrl = new URL(url);
-          const code = parsedUrl.searchParams.get('code');
+        // User explicitly tapped the back/cancel button — nothing to do.
+        if (res.type === 'cancel') {
+          return { error: 'Authentication canceled.' };
+        }
 
-          if (code) {
-            const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
-            if (sessionError) return { error: sessionError.message };
-          } else {
-            // Fallback: if the URL contains a fragment-based token (implicit flow),
-            // onAuthStateChange will have already set the session — just confirm.
-            console.warn('[OAuth] No `code` param in redirect URL, relying on onAuthStateChange.');
+        // ─── iOS success path ────────────────────────────────────────────────
+        // On iOS, openAuthSessionAsync intercepts the redirect and returns the
+        // full callback URL in res.url. Exchange the code immediately here.
+        if (res.type === 'success' && res.url) {
+          try {
+            const parsedUrl = new URL(res.url);
+            const code = parsedUrl.searchParams.get('code');
+            if (code) {
+              const { data: sessionData, error: sessionError } =
+                await supabase.auth.exchangeCodeForSession(code);
+              if (sessionError) {
+                console.warn('[OAuth] exchangeCodeForSession error:', sessionError.message);
+              } else if (sessionData?.session) {
+                set({ session: sessionData.session, user: sessionData.session.user });
+                return { error: null };
+              }
+            }
+          } catch (parseErr) {
+            console.warn('[OAuth] Could not parse redirect URL:', parseErr);
           }
+        }
 
-          // Confirm the session was actually stored
+        // ─── Android / fallback path ─────────────────────────────────────────
+        // On Android the deep-link Intent closes the Custom Tab and
+        // openAuthSessionAsync returns 'dismiss' with no URL. The code was
+        // delivered to the Linking listener in _layout.tsx which calls
+        // exchangeCodeForSession and then setSession(). We just need to wait
+        // for that to complete before returning.
+        //
+        // Poll getSession() — it will be populated once the Linking handler
+        // finishes, which usually takes < 1 second.
+        for (let attempt = 0; attempt < 10; attempt++) {
+          await new Promise((resolve) => setTimeout(resolve, 400));
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             set({ session, user: session.user });
+            return { error: null };
           }
-
-          return { error: null };
-        } else if (res.type === 'cancel' || res.type === 'dismiss') {
-          return { error: 'Authentication canceled.' };
         }
+
+        // Still nothing after 4 seconds. onAuthStateChange will fire eventually
+        // and the welcome screen's session watcher will navigate away.
+        console.warn('[OAuth] Session not ready after polling. Relying on onAuthStateChange.');
+        return { error: null };
       }
+
       return { error: 'No URL returned from Supabase.' };
     } catch (err: any) {
       return { error: err.message };

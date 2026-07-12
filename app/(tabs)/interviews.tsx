@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Card, Button, ScoreRing } from '../../src/components/ui';
+import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePastInterviewsQuery, useDeleteMockInterviewMutation, useExtractJdMutation } from '../../src/hooks/useApi';
+import { useAuthStore } from '../../src/stores/auth-store';
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
 
@@ -12,6 +13,8 @@ export default function InterviewsLobbyScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors } = useTheme();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   
   const [role, setRole] = useState((params.role as string) || 'Product Manager');
   const [jobDescription, setJobDescription] = useState((params.jobDescription as string) || '');
@@ -154,7 +157,7 @@ export default function InterviewsLobbyScreen() {
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
               <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional if URL provided)</Text>
-              <TouchableOpacity style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+              <Pressable style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                 {extractJdLoading ? (
                   <ActivityIndicator size="small" color={colors.primary} />
                 ) : (
@@ -163,7 +166,7 @@ export default function InterviewsLobbyScreen() {
                     <Text style={[styles.attachBtnText, { color: colors.primary }]}>Attach file</Text>
                   </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
             <TextInput 
               style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, minHeight: 80 }]}
@@ -178,9 +181,9 @@ export default function InterviewsLobbyScreen() {
             {jdFileName && (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
+                <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
                   <Ionicons name="close-circle" size={16} color={colors.error} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 
@@ -197,13 +200,13 @@ export default function InterviewsLobbyScreen() {
             <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Interview Type</Text>
             <View style={styles.rowGrid}>
               {['Behavioral', 'Technical', 'Manager'].map((t) => (
-                <TouchableOpacity 
+                <Pressable 
                   key={t} 
                   style={[styles.chip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }, type === t && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                   onPress={() => setType(t)}
                 >
                   <Text style={[styles.chipText, { color: colors.textSecondary }, type === t && styles.chipTextActive]}>{t}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>
@@ -212,24 +215,24 @@ export default function InterviewsLobbyScreen() {
             <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Difficulty</Text>
             <View style={styles.rowGrid}>
               {['Beginner', 'Intermediate', 'Senior'].map((d) => (
-                <TouchableOpacity 
+                <Pressable 
                   key={d} 
                   style={[styles.chip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }, difficulty === d && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                   onPress={() => setDifficulty(d)}
                 >
                   <Text style={[styles.chipText, { color: colors.textSecondary }, difficulty === d && styles.chipTextActive]}>{d}</Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
           </View>
 
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.primaryBtn, { marginTop: Spacing.md, height: 54, backgroundColor: colors.primary }]} 
             onPress={handleStart}
           >
             <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
             <Text style={styles.primaryBtnText}>Start Interview</Text>
-          </TouchableOpacity>
+          </Pressable>
         </Card>
 
         <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Past Interviews</Text>
@@ -257,14 +260,14 @@ export default function InterviewsLobbyScreen() {
                 )}
               </View>
               {interview.feedback ? (
-                <TouchableOpacity 
+                <Pressable 
                   style={[styles.viewFeedbackBtn, { borderTopColor: colors.border }]}
                   onPress={() => router.push({ pathname: '/feedback', params: { sessionId: interview.id, fromList: 'true' } })}
                 >
                   <Text style={[styles.viewFeedbackText, { color: colors.primary }]}>View Feedback →</Text>
-                </TouchableOpacity>
+                </Pressable>
               ) : (
-                <TouchableOpacity 
+                <Pressable 
                   style={[styles.viewFeedbackBtn, { borderTopColor: colors.border }]}
                   onPress={() => {
                     Alert.alert(
@@ -283,7 +286,7 @@ export default function InterviewsLobbyScreen() {
                   disabled={deleteMutation.isPending}
                 >
                   <Text style={[styles.viewFeedbackText, { color: colors.error }]}>Delete Incomplete Interview</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
             </Card>
           ))
@@ -291,6 +294,7 @@ export default function InterviewsLobbyScreen() {
           <Text style={[styles.historyMeta, { color: colors.textMuted, textAlign: 'center', marginTop: 20 }]}>No past interviews yet.</Text>
         )}
 
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

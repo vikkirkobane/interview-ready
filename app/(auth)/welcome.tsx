@@ -1,3 +1,4 @@
+import { Pressable } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -5,8 +6,6 @@ import {
   StyleSheet,
   Animated,
   ScrollView,
-  TouchableOpacity,
-  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,16 +14,25 @@ import { Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import { Image } from 'expo-image';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signInWithOAuth } = useAuthStore();
+  const { signInWithOAuth, session } = useAuthStore();
   const { colors, isDark } = useTheme();
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'linkedin_oidc' | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
+
+  // If the session lands while we're still on this screen (e.g. onAuthStateChange
+  // fires after the browser closes), navigate to tabs immediately.
+  useEffect(() => {
+    if (session) {
+      router.replace('/(tabs)');
+    }
+  }, [session]);
 
   useEffect(() => {
     Animated.parallel([
@@ -44,21 +52,28 @@ export default function WelcomeScreen() {
   const handleGoogleAuth = async () => {
     setLoadingProvider('google');
     const { error } = await signInWithOAuth('google');
-    setLoadingProvider(null);
-    if (error && error !== 'Authentication canceled.') {
-      Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
+    // Only clear the loading state on explicit cancellation or error.
+    // On success, the session useEffect above will navigate away while
+    // the loading indicator is still showing — that's intentional.
+    if (error) {
+      setLoadingProvider(null);
+      if (error !== 'Authentication canceled.') {
+        Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
+      }
     }
-    // Navigation is handled by AuthGuard in _layout.tsx once session is set
+    // If no error, keep loading spinner visible until session arrives.
   };
 
   const handleLinkedInAuth = async () => {
     setLoadingProvider('linkedin_oidc');
     const { error } = await signInWithOAuth('linkedin_oidc');
-    setLoadingProvider(null);
-    if (error && error !== 'Authentication canceled.') {
-      Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
+    if (error) {
+      setLoadingProvider(null);
+      if (error !== 'Authentication canceled.') {
+        Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
+      }
     }
-    // Navigation is handled by AuthGuard in _layout.tsx once session is set
+    // If no error, keep loading spinner visible until session arrives.
   };
 
   return (
@@ -101,30 +116,30 @@ export default function WelcomeScreen() {
           ]}
         >
           {/* Google Auth */}
-          <TouchableOpacity
+          <Pressable
             style={[styles.socialButton, { backgroundColor: colors.bgSecondary, borderColor: colors.borderGlass, opacity: loadingProvider ? 0.6 : 1 }]}
             onPress={handleGoogleAuth}
-            activeOpacity={0.8}
+            
             disabled={!!loadingProvider}
           >
             <Ionicons name="logo-google" size={24} color={colors.textPrimary} />
             <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>
               {loadingProvider === 'google' ? 'Signing in...' : 'Continue with Google'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* LinkedIn Auth */}
-          <TouchableOpacity
+          <Pressable
             style={[styles.socialButton, styles.linkedInButton, { opacity: loadingProvider ? 0.6 : 1 }]}
             onPress={handleLinkedInAuth}
-            activeOpacity={0.8}
+            
             disabled={!!loadingProvider}
           >
             <Ionicons name="logo-linkedin" size={24} color={colors.textInverse} />
             <Text style={[styles.socialButtonText, styles.linkedInText, { color: colors.textInverse }]}>
               {loadingProvider === 'linkedin_oidc' ? 'Signing in...' : 'Continue with LinkedIn'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Divider */}
           <View style={styles.divider}>
@@ -149,12 +164,12 @@ export default function WelcomeScreen() {
             { paddingBottom: insets.bottom + 16, opacity: fadeAnim }
           ]}
         >
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+          <Pressable onPress={() => router.push('/(auth)/login')}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
               Already have an account?{' '}
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </Text>
-          </TouchableOpacity>
+          </Pressable>
 
           <Text style={[styles.termsText, { color: colors.textDisabled }]}>
             By continuing, you agree to our Terms of Service and Privacy Policy.

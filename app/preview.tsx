@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
@@ -8,14 +8,17 @@ import { usePreviewStore } from '../src/store/previewStore';
 import { exportResumePDF, exportResumeDOCX } from '../src/lib/resumeExport';
 import { exportCoverLetterPDF, exportCoverLetterDOCX } from '../src/lib/coverLetterExport';
 import Toast from 'react-native-toast-message';
-import { Button } from '../src/components/ui';
+import { Button, AdBanner } from '../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../src/stores/auth-store';
 
 export default function PreviewScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { documentType, documentData, htmlPreview, templateId, clearPreview } = usePreviewStore();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   if (!documentType || !documentData || !htmlPreview) {
     return (
@@ -60,9 +63,9 @@ export default function PreviewScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       <View style={[styles.header, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+        <Pressable style={styles.backButton} onPress={handleBack}>
            <Text style={{ ...Typography.headingLg, color: colors.textBody }}>←</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Ionicons name="document-text" size={24} color={colors.primary} style={{ marginRight: 8 }} />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Document Preview</Text>
       </View>
@@ -102,6 +105,7 @@ export default function PreviewScreen() {
           style={styles.flex1}
         />
       </View>
+      {!isPro && <AdBanner />}
     </SafeAreaView>
   );
 }

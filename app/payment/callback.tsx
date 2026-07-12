@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors, Spacing, Typography } from '../../src/theme/tokens';
@@ -162,23 +162,23 @@ export default function PaymentCallbackScreen() {
         )}
 
         {status !== 'verifying' && (
-          <TouchableOpacity
+          <Pressable
             style={[styles.button, { backgroundColor: getStatusColor() }]}
             onPress={handleContinue}
           >
             <Text style={styles.buttonText}>
               {status === 'success' ? 'Continue to Dashboard' : 'Try Again'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {status === 'failed' && (
-          <TouchableOpacity
+          <Pressable
             style={styles.supportButton}
             onPress={() => router.push('/(tabs)/settings')}
           >
             <Text style={styles.supportButtonText}>Contact Support</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     </View>

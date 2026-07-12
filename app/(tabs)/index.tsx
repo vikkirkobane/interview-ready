@@ -1,3 +1,4 @@
+import { Pressable } from 'react-native';
 import React, { useState } from 'react';
 import {
   View,
@@ -5,9 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
-  TouchableOpacity,
   RefreshControl,
-  Image,
   Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,6 +19,7 @@ import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { ScoreRing, GoldenBox, ShimmerEffect, AdBanner } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCredits } from '../../src/hooks/useCredits';
+import { Image } from 'expo-image';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function DashboardScreen() {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.iconBtn, { backgroundColor: colors.bgSecondary }]}
             onPress={() => router.push('/notifications')}
           >
@@ -120,7 +120,7 @@ export default function DashboardScreen() {
                 <Text style={styles.notificationBadgeText}>{unreadCount()}</Text>
               </View>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -186,7 +186,7 @@ export default function DashboardScreen() {
             { title: 'Build Resume',  color: colors.success,  route: '/(tabs)/new-resume',   icon: 'document-text-outline', lib: 'ion' },
             { title: 'Ask AI',        color: colors.warning,  route: '/(tabs)/ask-ai',       icon: 'robot-outline',    lib: 'mci' },
           ].map((action, i) => (
-            <TouchableOpacity 
+            <Pressable 
               key={i}
               style={[styles.quickCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
               onPress={() => router.push(action.route as any)}
@@ -199,13 +199,13 @@ export default function DashboardScreen() {
                 }
               </View>
               <Text style={[styles.quickCardTitle, { color: colors.textBody }]}>{action.title}</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
         </View>
 
-        <TouchableOpacity 
+        <Pressable 
           style={[styles.featureCard, { backgroundColor: colors.primary }]} 
-          activeOpacity={0.9}
+          
           onPress={() => router.push('/(tabs)/cover-letter')}
         >
           <ShimmerEffect duration={5000} opacity={0.6} />
@@ -224,14 +224,14 @@ export default function DashboardScreen() {
           <View style={styles.featureImagePlaceholder}>
             <Ionicons name="document-text" size={64} color="rgba(255,255,255,0.4)" />
           </View>
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.feedSection}>
           <View style={styles.feedHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/activities' as any)}>
+            <Pressable onPress={() => router.push('/(tabs)/activities' as any)}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>SEE ALL</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           {isActivitiesLoading ? (
@@ -246,11 +246,11 @@ export default function DashboardScreen() {
               };
 
               return (
-                <TouchableOpacity 
+                <Pressable 
                   key={i} 
                   style={[styles.feedItem, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
                   onPress={handlePress}
-                  activeOpacity={0.7}
+                  
                 >
                   <View style={[styles.feedIcon, { backgroundColor: `${activity.color}15` }]}>
                     <Ionicons name={activity.icon as any} size={18} color={activity.color} />
@@ -264,7 +264,7 @@ export default function DashboardScreen() {
                   <View style={styles.feedArrow}>
                     <Ionicons name="chevron-forward" size={18} color={colors.primary} />
                   </View>
-                </TouchableOpacity>
+                </Pressable>
               );
             })
           ) : (

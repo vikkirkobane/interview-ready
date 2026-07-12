@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
+import { useAuthStore } from '../../src/stores/auth-store';
+import { AdBanner } from '../../src/components/ui';
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
@@ -76,6 +78,8 @@ export default function InterviewScreen() {
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
   const { colors, isDark } = useTheme();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -259,9 +263,9 @@ export default function InterviewScreen() {
               <Text style={[styles.timerText, { color: colors.primary }]}>{formatTime(seconds)}</Text>
               <Text style={[styles.timerLabel, { color: colors.textMuted }]}>DURATION</Text>
             </View>
-            <TouchableOpacity style={[styles.endSessionBtn, { backgroundColor: colors.errorLight }]} onPress={handleEndSession}>
+            <Pressable style={[styles.endSessionBtn, { backgroundColor: colors.errorLight }]} onPress={handleEndSession}>
               <Text style={[styles.endSessionText, { color: colors.error }]}>END SESSION</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -318,6 +322,7 @@ export default function InterviewScreen() {
         })}
 
         {isTyping && <TypingIndicator colors={colors} />}
+        {!isPro && <AdBanner />}
       </ScrollView>
 
       {/* Bottom Input Area */}
@@ -333,27 +338,27 @@ export default function InterviewScreen() {
               onSubmitEditing={handleSend}
               returnKeyType="send"
             />
-            <TouchableOpacity style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
+            <Pressable style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
               <Ionicons name="send" size={14} color="#fff" style={{ transform: [{ translateX: 1 }] }} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
           
           <View style={styles.inputActions}>
-            <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+            <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
               {extractJdLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 <Ionicons name="attach" size={20} color={colors.textMuted} />
               )}
-            </TouchableOpacity>
+            </Pressable>
 
             {/* Attached File Info */}
             {jdFileName && (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm }}>
                 <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
+                <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
                   <Ionicons name="close-circle" size={16} color={colors.error} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
             )}
 

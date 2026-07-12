@@ -1,8 +1,8 @@
 import { CoverLetter } from '../types/schemas';
 
 export function buildCoverLetterHTML(cl: CoverLetter): string {
-  const h = cl.header;
-  const p = cl.paragraphs;
+  const h = cl.header || ({} as any);
+  const p = cl.paragraphs || ({} as any);
 
   const contactParts = [h.phone, h.email, h.linkedin, h.portfolio].filter(Boolean);
 
@@ -56,14 +56,14 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
   <div class="salutation">${cl.salutation}</div>
 
   <!-- BODY PARAGRAPHS -->
-  <div class="para">${p.opening.text}</div>
-  <div class="para">${p.body_1.text}</div>
-  <div class="para">${p.body_2.text}</div>
-  <div class="para">${p.closing.text}</div>
+  <div class="para">${p.opening?.text || ''}</div>
+  <div class="para">${p.body_1?.text || ''}</div>
+  <div class="para">${p.body_2?.text || ''}</div>
+  <div class="para">${p.closing?.text || ''}</div>
 
   <!-- SIGN-OFF -->
-  <div class="signoff">${cl.sign_off.closing_phrase}</div>
-  <div class="signname">${cl.sign_off.name}</div>
+  <div class="signoff">${cl.sign_off?.closing_phrase || ''}</div>
+  <div class="signname">${cl.sign_off?.name || ''}</div>
 
   <!-- OPTIONAL FOOTER -->
   <div class="footer">${contactParts.join(' &nbsp;·&nbsp; ')}</div>

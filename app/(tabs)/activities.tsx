@@ -1,14 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuthStore } from '../../src/stores/auth-store';
+import { AdBanner } from '../../src/components/ui';
 
 export default function AllActivitiesScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { data: recentActivities, isLoading } = useRecentActivitiesQuery();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
@@ -33,11 +37,11 @@ export default function AllActivitiesScreen() {
               };
 
               return (
-                <TouchableOpacity
+                <Pressable
                   key={i}
                   style={[styles.item, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
                   onPress={handlePress}
-                  activeOpacity={0.7}
+                  
                 >
                   <View style={[styles.iconContainer, { backgroundColor: `${activity.color}15` }]}>
                     <Ionicons name={activity.icon as any} size={20} color={activity.color} />
@@ -49,13 +53,14 @@ export default function AllActivitiesScreen() {
                     </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </View>
         ) : (
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent activities found.</Text>
         )}
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

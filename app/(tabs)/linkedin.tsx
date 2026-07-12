@@ -4,14 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator,
   TextInput,
-  Image,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
-import { Card, Button, ScoreRing } from '../../src/components/ui';
+import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useLinkedinAnalyzeMutation,
@@ -23,8 +21,9 @@ import {
 } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { Modal } from 'react-native';
+import { Pressable,  Modal } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { Image } from 'expo-image';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +63,7 @@ export default function LinkedinOptimizerScreen() {
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
-
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   // Detect LinkedIn OAuth user — must be computed BEFORE state that depends on it
   const isLinkedInUser = user?.app_metadata?.provider === 'linkedin_oidc';
   const oauthName   = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
@@ -308,7 +307,7 @@ export default function LinkedinOptimizerScreen() {
               ))}
             </View>
 
-            <TouchableOpacity
+            <Pressable
               style={[s.connectBtn, { backgroundColor: '#fff' }]}
               onPress={handleConnectLinkedIn}
               disabled={liConnecting}
@@ -318,7 +317,7 @@ export default function LinkedinOptimizerScreen() {
                 : <><Ionicons name="logo-linkedin" size={20} color="#0A66C2" />
                     <Text style={s.connectBtnText}>Sign in with LinkedIn</Text></>
               }
-            </TouchableOpacity>
+            </Pressable>
           </Card>
 
           {/* Limitation note */}
@@ -331,9 +330,10 @@ export default function LinkedinOptimizerScreen() {
           </Card>
 
           {/* Skip */}
-          <TouchableOpacity onPress={() => setShowLinkedInPrompt(false)} style={s.skipBtn}>
+          <Pressable onPress={() => setShowLinkedInPrompt(false)} style={s.skipBtn}>
             <Text style={[s.skipText, { color: colors.textMuted }]}>Skip — I'll enter my content manually →</Text>
-          </TouchableOpacity>
+          </Pressable>
+          {!isPro && <AdBanner />}
         </ScrollView>
       </View>
     );
@@ -428,6 +428,7 @@ export default function LinkedinOptimizerScreen() {
         )}
 
         <Button title="Continue → Review & Add Content" onPress={() => setStep('content')} style={{ marginTop: Spacing.lg }} />
+        {!isPro && <AdBanner />}
       </ScrollView>
     );
   }
@@ -449,9 +450,9 @@ export default function LinkedinOptimizerScreen() {
             <TextInput style={[s.input, { flex: 1, color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
               placeholder="e.g. Product Manager" placeholderTextColor={colors.textMuted}
               value={roleInput} onChangeText={setRoleInput} onSubmitEditing={() => addTag('targetRoles', roleInput, 3)} />
-            <TouchableOpacity style={s.addBtn} onPress={() => addTag('targetRoles', roleInput, 3)} disabled={wizard.targetRoles.length >= 3}>
+            <Pressable style={s.addBtn} onPress={() => addTag('targetRoles', roleInput, 3)} disabled={wizard.targetRoles.length >= 3}>
               <Ionicons name="add" size={22} color="#fff" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <TagRow tags={wizard.targetRoles} onRemove={(i) => removeTag('targetRoles', i)} />
 
@@ -459,12 +460,12 @@ export default function LinkedinOptimizerScreen() {
           <FieldLabel label="Communication Tone" colors={colors} style={{ marginTop: Spacing.lg }} />
           <View style={s.toneGrid}>
             {TONE_OPTIONS.map(t => (
-              <TouchableOpacity key={t.value}
+              <Pressable key={t.value}
                 style={[s.tonePill, { borderColor: wizard.tone === t.value ? '#0A66C2' : colors.border, backgroundColor: wizard.tone === t.value ? '#0A66C2' : colors.bgSecondary }]}
                 onPress={() => setWizard(w => ({ ...w, tone: t.value }))}>
                 <Ionicons name={t.icon as any} size={13} color={wizard.tone === t.value ? '#fff' : colors.textMuted} />
                 <Text style={[s.tonePillText, { color: wizard.tone === t.value ? '#fff' : colors.textMuted }]}>{t.label}</Text>
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
 
@@ -511,10 +512,10 @@ export default function LinkedinOptimizerScreen() {
                 multiline value={exp.description} onChangeText={(v) => updateExp(i, 'description', v)} />
             </View>
           ))}
-          <TouchableOpacity onPress={addExpRole} style={s.addRoleBtn}>
+          <Pressable onPress={addExpRole} style={s.addRoleBtn}>
             <Ionicons name="add-circle-outline" size={18} color="#0A66C2" />
             <Text style={[s.addRoleText, { color: '#0A66C2' }]}>Add Another Role</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Skills */}
           <FieldLabel label="Skills" colors={colors} style={{ marginTop: Spacing.lg }} />
@@ -524,18 +525,18 @@ export default function LinkedinOptimizerScreen() {
               placeholderTextColor={colors.textMuted}
               value={skillInput} onChangeText={setSkillInput}
               onSubmitEditing={() => addTag('skills', skillInput)} />
-            <TouchableOpacity style={s.addBtn} onPress={() => addTag('skills', skillInput)}>
+            <Pressable style={s.addBtn} onPress={() => addTag('skills', skillInput)}>
               <Ionicons name="add" size={22} color="#fff" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <TagRow tags={wizard.skills} onRemove={(i) => removeTag('skills', i)} />
         </Card>
 
         <View style={s.navRow}>
-          <Button title="← Back" variant="outline" onPress={() => setStep('prefill')} style={{ flex: 1 }} />
-          <View style={{ width: Spacing.md }} />
-          <Button title="Next: SPIKE →" onPress={() => setStep('spike')} disabled={wizard.targetRoles.length === 0} style={{ flex: 1 }} />
+          <Button title="← Back" variant="outline" onPress={() => setStep('prefill')} style={{ flex: 1, marginRight: Spacing.sm }} />
+          <Button title="Next → Custom Spike" onPress={() => setStep('spike')} style={{ flex: 1.5 }} />
         </View>
+        {!isPro && <AdBanner />}
       </ScrollView>
     );
   }
@@ -589,6 +590,7 @@ export default function LinkedinOptimizerScreen() {
             </Text>
           </View>
         )}
+        {!isPro && <AdBanner />}
       </ScrollView>
     );
   }
@@ -602,9 +604,9 @@ export default function LinkedinOptimizerScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
       {/* Results Header */}
       <View style={[s.resultsHeader, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => setStep('spike')} style={s.backBtn}>
+        <Pressable onPress={() => setStep('spike')} style={s.backBtn}>
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={[s.resultsTitle, { color: colors.textPrimary }]}>Optimisation Results</Text>
         <View style={{ width: 32 }} />
       </View>
@@ -621,7 +623,7 @@ export default function LinkedinOptimizerScreen() {
           { id: 'outreach', label: 'Outreach',   icon: 'mail-outline'     },
           { id: 'plan',     label: '30-Day Plan',icon: 'calendar-outline' },
         ] as const).map(tab => (
-          <TouchableOpacity key={tab.id}
+          <Pressable key={tab.id}
             style={[s.tab, activeTab === tab.id && s.tabActive]}
             onPress={() => setActiveTab(tab.id as ActiveTab)}>
             <Ionicons name={tab.icon as any} size={15}
@@ -629,7 +631,7 @@ export default function LinkedinOptimizerScreen() {
             <Text style={[s.tabLabel, { color: activeTab === tab.id ? '#0A66C2' : colors.textMuted }]}>
               {tab.label}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </ScrollView>
 
@@ -824,6 +826,7 @@ export default function LinkedinOptimizerScreen() {
           </View>
         )}
 
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );
@@ -851,9 +854,9 @@ function TagRow({ tags, onRemove }: { tags: string[]; onRemove: (i: number) => v
       {tags.map((t, i) => (
         <View key={i} style={[s.pill, { backgroundColor: '#0A66C2' }]}>
           <Text style={[s.pillText, { color: '#fff' }]}>{t}</Text>
-          <TouchableOpacity onPress={() => onRemove(i)} style={{ marginLeft: 4 }}>
+          <Pressable onPress={() => onRemove(i)} style={{ marginLeft: 4 }}>
             <Ionicons name="close" size={13} color="#fff" />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       ))}
     </View>
@@ -865,7 +868,7 @@ function SectionCard({ section, score, issues, suggestion, optimizing, done, onO
   const label = section === 'about' ? 'About / Summary' : section.charAt(0).toUpperCase() + section.slice(1);
   return (
     <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-      <TouchableOpacity onPress={() => setOpen(o => !o)} style={s.sectionRow}>
+      <Pressable onPress={() => setOpen(o => !o)} style={s.sectionRow}>
         <ScoreRing score={score} size={48} hideText />
         <View style={{ flex: 1, marginLeft: Spacing.md }}>
           <Text style={[s.cardTitle, { color: colors.textPrimary }]}>{label}</Text>
@@ -873,7 +876,7 @@ function SectionCard({ section, score, issues, suggestion, optimizing, done, onO
         </View>
         <Ionicons name={score >= 80 ? 'checkmark-circle' : 'warning-outline'} size={20} color={score >= 80 ? '#10b981' : '#f59e0b'} />
         <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={15} color={colors.textMuted} style={{ marginLeft: 4 }} />
-      </TouchableOpacity>
+      </Pressable>
       {open && (
         <View style={{ marginTop: Spacing.md }}>
           {suggestion && (

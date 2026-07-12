@@ -1,9 +1,10 @@
 import { Stack, useRouter } from 'expo-router';
 import { Typography, Spacing, useTheme } from '../../src/theme';
-import { TouchableOpacity, Text, View, StyleSheet, Image } from 'react-native';
+import { Pressable,  Text, View, StyleSheet } from 'react-native';
 import { useNavigationStore } from '../../src/stores/navigation-store';
 import { SideMenu } from '../../src/components/ui/SideMenu';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 export default function OnboardingLayout() {
   const { openMenu } = useNavigationStore();
@@ -19,7 +20,7 @@ export default function OnboardingLayout() {
         headerTitleAlign: 'left',
         headerShadowVisible: false,
         headerLeft: () => (
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.headerTitleContainer, { paddingLeft: Spacing.md }]}
             onPress={openMenu}
           >
@@ -31,13 +32,13 @@ export default function OnboardingLayout() {
               />
             </View>
             <Text style={[styles.headerTitleText, { color: colors.primary }]}>Interview Ready</Text>
-          </TouchableOpacity>
+          </Pressable>
         ),
         headerTitle: '',
         headerRight: () => (
-          <TouchableOpacity style={styles.headerRight} onPress={() => router.push('/(tabs)/settings')}>
+          <Pressable style={styles.headerRight} onPress={() => router.push('/(tabs)/settings')}>
             <Ionicons name="settings-outline" size={24} color={colors.primary} />
-          </TouchableOpacity>
+          </Pressable>
         ),
         contentStyle: { backgroundColor: colors.bgPrimary },
         animation: 'slide_from_right',

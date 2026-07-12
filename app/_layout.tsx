@@ -59,14 +59,22 @@ function AuthGuard() {
   useEffect(() => {
     if (!initialized) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const inOnboardingGroup = segments[0] === '(onboarding)';
-    const isCallback = (segments[1] as string) === 'callback';
+    // Expo Router may return segments with or without parens around group names
+    // depending on SDK version. Normalise by checking both forms.
+    const firstSegment = segments[0] as string;
+    const secondSegment = segments[1] as string;
 
-    // Never interfere with the OAuth callback screen — let it handle itself
-    if (inAuthGroup && isCallback) return;
-    // Also skip the non-grouped auth/callback route
-    if ((segments[0] as string) === 'auth' && (segments[1] as string) === 'callback') return;
+    const inAuthGroup =
+      firstSegment === '(auth)' || firstSegment === 'auth';
+    const onCallbackScreen =
+      secondSegment === 'callback' ||
+      (firstSegment === 'auth' && secondSegment === 'callback');
+
+    // Never interfere with the OAuth callback screen — it manages itself.
+    if (onCallbackScreen) return;
+
+    // Non-grouped auth/callback route (app/auth/callback.tsx → /auth/callback)
+    if (firstSegment === 'auth' && secondSegment === 'callback') return;
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
@@ -101,24 +109,30 @@ export default function RootLayout() {
       if (!url.includes('auth/callback')) return;
 
       try {
-        // Extract the `code` query param and exchange it for a session.
-        // exchangeCodeForSession is the correct public API in @supabase/auth-js v2.
         const parsedUrl = new URL(url);
         const code = parsedUrl.searchParams.get('code');
 
         if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
           if (error) {
             console.error('[DeepLink] exchangeCodeForSession error:', error.message);
-            // Fallback: session may already be set via onAuthStateChange
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) useAuthStore.getState().setSession(session);
+            // Fall through — try to pick up any existing session
           }
+          // Explicitly push the session into the Zustand store so that any
+          // subscriber (welcome screen, AuthGuard) reacts immediately.
+          if (data?.session) {
+            useAuthStore.getState().setSession(data.session);
+            return;
+          }
+        }
+
+        // No code or exchange failed — check if the session already exists
+        // (can happen if onAuthStateChange fired first).
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          useAuthStore.getState().setSession(session);
         } else {
-          // No code param — check if onAuthStateChange already set a session
-          console.warn('[DeepLink] No `code` in callback URL, checking existing session.');
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) useAuthStore.getState().setSession(session);
+          console.warn('[DeepLink] No session found after handling callback URL.');
         }
       } catch (err) {
         console.error('[DeepLink] Unexpected error:', err);

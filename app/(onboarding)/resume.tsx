@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Animated,
   Easing,
   Platform,
@@ -112,7 +112,7 @@ export default function ResumeGenScreen() {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      if (channel) supabase.removeChannel(channel);
+      if (channel) if (channel) supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analysisId, createResume, router]);
@@ -234,31 +234,31 @@ export default function ResumeGenScreen() {
 
             {/* Action Buttons */}
             <View style={styles.actionBlock}>
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]} 
                 onPress={() => resumeData ? exportResumeDOCX(resumeData) : null}
               >
                 <Ionicons name="document" size={20} color="#fff" />
                 <Text style={styles.primaryActionText}>Download .docx</Text>
-              </TouchableOpacity>
+              </Pressable>
               
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.secondaryActionBtn, { borderColor: colors.border }]} 
                 onPress={() => resumeData ? exportResumePDF(resumeData) : null}
               >
                 <Ionicons name="document" size={20} color={colors.textPrimary} />
                 <Text style={[styles.secondaryActionText, { color: colors.textPrimary }]}>Download PDF</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
-            <TouchableOpacity 
+            <Pressable 
               style={{ marginTop: 24, marginBottom: 8 }} 
               onPress={() => {
                 router.push('/(onboarding)/discover');
               }}
             >
                <Text style={[styles.editLink, { color: colors.primary, fontSize: 16 }]}>Continue to Final Step</Text>
-            </TouchableOpacity>
+            </Pressable>
 
             <Text style={[styles.editPrompt, { color: colors.textMuted }]}>
               Need adjustments?{' '}

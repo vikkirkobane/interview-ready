@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Platform,
   TextInput,
 } from 'react-native';
@@ -14,7 +13,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useUpdateProfileMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { ActivityIndicator } from 'react-native';
+import { Pressable,  ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -184,7 +183,7 @@ export default function RoleScreen() {
               {EXPERIENCE_OPTIONS.map((exp) => {
                 const isActive = yearsExperience === exp;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={exp}
                     style={[styles.segmentBtn, isActive && [styles.segmentBtnActive, { backgroundColor: colors.primary }]]}
                     onPress={() => setYearsExperience(exp)}
@@ -192,7 +191,7 @@ export default function RoleScreen() {
                     <Text style={[styles.segmentText, { color: colors.textMuted }, isActive && [styles.segmentTextActive, { color: '#fff' }]]}>
                       {exp}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -205,7 +204,7 @@ export default function RoleScreen() {
               {PREFERENCE_OPTIONS.map((pref) => {
                 const isActive = workPreference === pref.id;
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={pref.id}
                     style={[styles.prefCard, { backgroundColor: colors.bgCard, borderColor: colors.border }, isActive && [styles.prefCardActive, { borderColor: colors.primary, backgroundColor: `${colors.primary}1A` }]]}
                     onPress={() => setWorkPreference(pref.id as 'REMOTE' | 'HYBRID' | 'ONSITE')}
@@ -214,7 +213,7 @@ export default function RoleScreen() {
                     <Text style={[styles.prefLabel, { color: colors.textMuted }, isActive && [styles.prefLabelActive, { color: colors.primary }]]}>
                       {pref.label}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
@@ -224,7 +223,7 @@ export default function RoleScreen() {
 
         {/* Action Section */}
         <View style={styles.actionSection}>
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.continueBtn, { backgroundColor: colors.primary }, (!firstName || !lastName || !targetRole || updateProfile.isPending) && [styles.continueBtnDisabled, { backgroundColor: colors.textMuted }]]}
             onPress={handleContinue}
             disabled={!firstName || !lastName || !targetRole || updateProfile.isPending}
@@ -237,7 +236,7 @@ export default function RoleScreen() {
                 <Ionicons name="arrow-forward" size={20} color="#fff" />
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
       </ScrollView>

@@ -5,34 +5,37 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useTheme } from '../../src/theme';
 
 /**
- * OAuth callback screen for the deep link interviewready://auth/callback.
+ * OAuth callback screen — shown while the deep-link code exchange is in progress.
  *
- * The (auth) route group strips "auth" from its URL path, so it cannot match
- * this deep link. This non-grouped route at app/auth/callback.tsx resolves
- * to the path /auth/callback and correctly receives the OAuth redirect.
- *
- * The root _layout.tsx handles exchangeCodeForSession via its Linking listener.
- * This screen just waits for the session to be set then navigates home.
+ * Flow:
+ *  1. Supabase redirects to interviewready://auth/callback?code=...
+ *  2. The Linking listener in _layout.tsx calls exchangeCodeForSession(code)
+ *     and then setSession() on the store.
+ *  3. This screen watches the store's session field and navigates to /(tabs)
+ *     as soon as it's populated.
+ *  4. If no session after 8 seconds (network failure, etc.) fall back to welcome.
  */
 export default function AuthCallbackScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const session = useAuthStore((s) => s.session);
 
+  // Navigate as soon as the session lands in the store.
   useEffect(() => {
     if (session) {
       router.replace('/(tabs)');
     }
   }, [session]);
 
-  // Fallback: if no session after 5 seconds, go to welcome
+  // Safety net: if we never get a session, send the user back to welcome.
   useEffect(() => {
     const timer = setTimeout(() => {
       const { session } = useAuthStore.getState();
       if (!session) {
+        console.warn('[AuthCallback] Timed out waiting for session — redirecting to welcome.');
         router.replace('/(auth)/welcome');
       }
-    }, 5000);
+    }, 8000);
     return () => clearTimeout(timer);
   }, []);
 

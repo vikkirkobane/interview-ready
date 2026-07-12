@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useRouter } from 'expo-router';
 import { useNotificationStore, AppNotification } from '../../src/stores/notification-store';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
+import { AdBanner } from '../../src/components/ui';
 
 const timeAgo = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -81,7 +82,7 @@ export default function NotificationsScreen() {
     card: { 
       backgroundColor: colors.bgPrimary, 
       borderColor: colors.border,
-      shadowColor: isDark ? 'transparent' : '#000',
+      boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.1)',
     },
     cardUnread: { 
       backgroundColor: colors.bgSecondary, 
@@ -109,9 +110,9 @@ export default function NotificationsScreen() {
   return (
     <View style={[styles.flex, dynamicStyles.container]}>
       <View style={[styles.header, dynamicStyles.header]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} accessibilityRole="button">
+        <Pressable style={styles.backButton} onPress={() => router.back()} accessibilityRole="button">
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
         <Text style={[styles.headerTitle, dynamicStyles.headerTitle]}>Notifications</Text>
         <View style={{ width: 60 }} />
       </View>
@@ -121,12 +122,12 @@ export default function NotificationsScreen() {
           {displayNotifications.length} {displayNotifications.length === 1 ? 'Notification' : 'Notifications'}
         </Text>
         <View style={styles.actionButtons}>
-          <TouchableOpacity style={styles.actionBtn} onPress={markAllAsRead}>
+          <Pressable style={styles.actionBtn} onPress={markAllAsRead}>
             <Text style={[styles.actionBtnText, dynamicStyles.actionBtnText]}>MARK READ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={clearAll}>
+          </Pressable>
+          <Pressable style={styles.actionBtn} onPress={clearAll}>
             <Text style={[styles.actionBtnText, dynamicStyles.actionBtnErrorText]}>CLEAR</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -142,7 +143,7 @@ export default function NotificationsScreen() {
             const geomColor = getGeometryColor(notification.type);
             const isSystem = notification.id.startsWith('system-');
             return (
-              <TouchableOpacity 
+              <Pressable 
                 key={notification.id} 
                 style={[
                   styles.notificationCard, 
@@ -164,10 +165,11 @@ export default function NotificationsScreen() {
                     {isSystem ? 'System Action Required' : timeAgo(notification.timestamp)}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             );
           })
         )}
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

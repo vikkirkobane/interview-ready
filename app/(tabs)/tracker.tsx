@@ -1,14 +1,17 @@
 
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
+import { Pressable,  View, Text, StyleSheet, ScrollView, Dimensions, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
 import { Typography, Spacing, Radius, Shadow, useTheme } from "../../src/theme";
-import { ScoreRing } from "../../src/components/ui";
+import { ScoreRing, AdBanner } from "../../src/components/ui";
+import { useAuthStore } from "../../src/stores/auth-store";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation, useDeleteJobApplicationMutation } from "../../src/hooks/useApi";
 import { useRouter } from "expo-router";
 
 export default function TrackerScreen() {
   const { colors, isDark } = useTheme();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const router = useRouter();
 
   const { data: appsData, isLoading } = useJobApplicationsListQuery();
@@ -82,13 +85,13 @@ export default function TrackerScreen() {
     const dateColor = isOffer ? colors.success : colors.textMuted;
     
     return (
-      <TouchableOpacity 
+      <Pressable 
         key={app.id} 
         style={[
           styles.card, 
-          { backgroundColor: colors.bgPrimary, borderColor: colors.border, shadowColor: isDark ? "transparent" : "#000" }
+          { backgroundColor: colors.bgPrimary, borderColor: colors.border, boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.1)" }
         ]}
-        activeOpacity={0.8}
+        
         onPress={() => setSelectedApp(app)}
       >
         <View style={styles.cardTop}>
@@ -117,7 +120,7 @@ export default function TrackerScreen() {
             {formatDate(app.updated_at)}
           </Text>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -129,9 +132,9 @@ export default function TrackerScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bgPrimary }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Job Details</Text>
-              <TouchableOpacity onPress={() => setSelectedApp(null)}>
+              <Pressable onPress={() => setSelectedApp(null)}>
                 <Ionicons name="close" size={24} color={colors.textPrimary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             {selectedApp && (
@@ -142,7 +145,7 @@ export default function TrackerScreen() {
                 <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Status</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: Spacing.xl }}>
                   {COLUMNS.map(col => (
-                    <TouchableOpacity
+                    <Pressable
                       key={col.id}
                       style={[
                         styles.statusBtn,
@@ -154,7 +157,7 @@ export default function TrackerScreen() {
                       <Text style={{ color: selectedApp.status === col.id ? col.color : colors.textMuted, fontWeight: "600" }}>
                         {col.title}
                       </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </ScrollView>
 
@@ -167,7 +170,7 @@ export default function TrackerScreen() {
                 ) : (
                   <View style={{ marginBottom: Spacing.xl }}>
                     <Text style={[Typography.bodyMd, { color: colors.textMuted, marginBottom: Spacing.md }]}>No ATS score or analysis found for this job.</Text>
-                    <TouchableOpacity 
+                    <Pressable 
                       style={[styles.primaryBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }]}
                       onPress={() => {
                         setSelectedApp(null);
@@ -176,7 +179,7 @@ export default function TrackerScreen() {
                     >
                       <MaterialCommunityIcons name="star-four-points" size={20} color={colors.textInverse} />
                       <Text style={[styles.primaryBtnText, { color: colors.textInverse, fontWeight: '600' }]}>Analyze Job Match</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
 
@@ -189,8 +192,8 @@ export default function TrackerScreen() {
 
                 <Text style={[Typography.headingMd, { color: colors.textPrimary, marginBottom: Spacing.sm }]}>Quick Actions</Text>
                 <View style={{ flexDirection: 'column', gap: Spacing.md, paddingBottom: Spacing.xxl }}>
-                  <TouchableOpacity 
-                    style={[{ backgroundColor: colors.bgSecondary, borderColor: colors.border, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                  <Pressable 
+                    style={{ backgroundColor: colors.bgSecondary, borderColor: colors.border, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
                     onPress={() => {
                       setSelectedApp(null);
                       router.push({
@@ -204,10 +207,10 @@ export default function TrackerScreen() {
                   >
                     <Ionicons name="chatbubbles-outline" size={20} color={colors.textPrimary} style={{ marginRight: 8 }} />
                     <Text style={{ color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Practice Mock Interview</Text>
-                  </TouchableOpacity>
+                  </Pressable>
 
-                  <TouchableOpacity 
-                    style={[{ backgroundColor: colors.bgSecondary, borderColor: colors.error, borderWidth: 1, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }]}
+                  <Pressable 
+                    style={{ backgroundColor: colors.bgSecondary, borderColor: colors.error, borderWidth: 1, paddingVertical: 12, borderRadius: 8, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
                     onPress={handleDelete}
                     disabled={deleteMutation.isPending}
                   >
@@ -219,7 +222,7 @@ export default function TrackerScreen() {
                         <Text style={{ color: colors.error, fontSize: 16, fontWeight: '600' }}>Delete Job</Text>
                       </>
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
 
               </ScrollView>
@@ -234,9 +237,9 @@ export default function TrackerScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bgPrimary }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Add New Job</Text>
-              <TouchableOpacity onPress={() => setIsAddModalVisible(false)}>
+              <Pressable onPress={() => setIsAddModalVisible(false)}>
                 <Ionicons name="close" size={24} color={colors.textPrimary} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             <View style={{ marginTop: Spacing.lg }}>
@@ -269,7 +272,7 @@ export default function TrackerScreen() {
                 onChangeText={t => setNewJob({...newJob, jd: t})}
               />
 
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.primaryBtn, { backgroundColor: colors.primary, marginTop: Spacing.xl, opacity: createJob.isPending ? 0.7 : 1 }]}
                 onPress={handleAddNew}
                 disabled={createJob.isPending}
@@ -279,7 +282,7 @@ export default function TrackerScreen() {
                 ) : (
                    <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Save Job</Text>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -289,10 +292,10 @@ export default function TrackerScreen() {
         {/* Header Info */}
         <View style={styles.pageHeader}>
           <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Application Tracker</Text>
-          <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setIsAddModalVisible(true)}>
+          <Pressable style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setIsAddModalVisible(true)}>
             <Ionicons name="add" size={16} color={colors.textInverse} />
             <Text style={[styles.addButtonText, { color: colors.textInverse }]}>Add New</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {isLoading ? (
@@ -319,9 +322,9 @@ export default function TrackerScreen() {
                         <Text style={[styles.countText, { color: colors.textBody }]}>{columnApps.length}</Text>
                       </View>
                     </View>
-                    <TouchableOpacity>
+                    <Pressable>
                        <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
 
                   {/* Column Cards */}
@@ -334,6 +337,7 @@ export default function TrackerScreen() {
             })}
           </ScrollView>
         )}
+        {!isPro && <AdBanner />}
       </View>
     </View>
   );

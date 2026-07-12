@@ -1,17 +1,18 @@
+import { Pressable } from 'react-native';
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Card, Button, ScoreRing } from '../../src/components/ui';
+import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAuthStore } from '../../src/stores/auth-store';
 import {
   useCompanyResearchMutation,
   CompanyResearchResult,
@@ -93,6 +94,8 @@ const BulletList = ({
 export default function CompanyResearchScreen() {
   const { colors } = useTheme();
   const researchMutation = useCompanyResearchMutation();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   const [companyUrl, setCompanyUrl] = useState('');
   const [context, setContext] = useState('');
@@ -183,7 +186,7 @@ export default function CompanyResearchScreen() {
             multiline
           />
 
-          <TouchableOpacity 
+          <Pressable 
             style={[
               s.primaryBtn, 
               { backgroundColor: colors.primary, marginTop: Spacing.lg },
@@ -200,7 +203,7 @@ export default function CompanyResearchScreen() {
                 <Text style={s.primaryBtnText}>Research Company</Text>
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
         </Card>
 
         {isLoading && (
@@ -212,6 +215,7 @@ export default function CompanyResearchScreen() {
             </Text>
           </View>
         )}
+        {!isPro && <AdBanner />}
       </ScrollView>
     );
   }
@@ -229,9 +233,9 @@ export default function CompanyResearchScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
       {/* Results header */}
       <View style={[s.resultsHeader, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => { setResult(null); setCompanyUrl(''); setContext(''); }} style={s.backBtn}>
+        <Pressable onPress={() => { setResult(null); setCompanyUrl(''); setContext(''); }} style={s.backBtn}>
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={[s.resultsCompany, { color: colors.textPrimary }]} numberOfLines={1}>
             {result.company_name}
@@ -252,7 +256,7 @@ export default function CompanyResearchScreen() {
         contentContainerStyle={s.tabBarContent}
       >
         {TABS.map((tab) => (
-          <TouchableOpacity
+          <Pressable
             key={tab.id}
             style={[s.tab, activeTab === tab.id && s.tabActive]}
             onPress={() => setActiveTab(tab.id)}
@@ -261,7 +265,7 @@ export default function CompanyResearchScreen() {
             <Text style={[s.tabLabel, { color: activeTab === tab.id ? '#0ea5e9' : colors.textMuted }]}>
               {tab.label}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         ))}
       </ScrollView>
 
@@ -453,12 +457,12 @@ export default function CompanyResearchScreen() {
             <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
               <View style={s.cardTitleRow}>
                 <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Talking Points to Demonstrate</Text>
-                <TouchableOpacity
+                <Pressable
                   onPress={() => copy(result.interview_talking_points.join('\n'))}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons name="copy-outline" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <Text style={[s.hint, { color: colors.textMuted }]}>
                 Show knowledge of these in your interview answers.
@@ -476,12 +480,12 @@ export default function CompanyResearchScreen() {
             <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
               <View style={s.cardTitleRow}>
                 <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Smart Questions to Ask</Text>
-                <TouchableOpacity
+                <Pressable
                   onPress={() => copy(result.smart_questions_to_ask.map((q, i) => `${i + 1}. ${q}`).join('\n'))}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons name="copy-outline" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <Text style={[s.hint, { color: colors.textMuted }]}>
                 These questions show strategic thinking and genuine interest.
@@ -495,16 +499,17 @@ export default function CompanyResearchScreen() {
             </Card>
 
             {/* Research again CTA */}
-            <TouchableOpacity
+            <Pressable
               style={[s.newResearchBtn, { borderColor: colors.border }]}
               onPress={() => { setResult(null); setCompanyUrl(''); setContext(''); }}
             >
               <Ionicons name="search-outline" size={16} color={colors.textMuted} />
               <Text style={[s.newResearchText, { color: colors.textMuted }]}>Research Another Company</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

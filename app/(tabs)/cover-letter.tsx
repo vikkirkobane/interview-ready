@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, AdBanner } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -284,13 +284,13 @@ export default function CoverLetterGeneratorScreen() {
               />
               <View style={styles.inputActions}>
                 {/* Attach JD File Button */}
-                <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                   {extractJdLoading ? (
                     <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     <Ionicons name="attach" size={24} color={colors.textMuted} />
                   )}
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Attached File Info */}
                 {jdFileName && (
@@ -300,9 +300,9 @@ export default function CoverLetterGeneratorScreen() {
                     marginLeft: Spacing.sm
                   }}>
                     <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                    <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                    <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
                       <Ionicons name="close-circle" size={16} color={colors.error} />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
               </View>
@@ -311,7 +311,7 @@ export default function CoverLetterGeneratorScreen() {
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Select Tone</Text>
             <View style={styles.toneGrid}>
               {TONES.map(tone => (
-                <TouchableOpacity 
+                <Pressable 
                   key={tone}
                   style={[styles.toneChip, { backgroundColor: colors.bgSecondary, borderColor: colors.border }, selectedTone === tone && { backgroundColor: colors.primary, borderColor: colors.primary }]}
                   onPress={() => setSelectedTone(tone)}
@@ -319,11 +319,11 @@ export default function CoverLetterGeneratorScreen() {
                   <Text style={[styles.toneText, { color: colors.textPrimary }, selectedTone === tone && styles.toneTextActive]}>
                     {tone}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
 
-            <TouchableOpacity 
+            <Pressable 
               style={[styles.primaryBtn, { marginTop: Spacing.xl, height: 54, backgroundColor: colors.primary }]} 
               onPress={handleGenerate}
               disabled={coverLetterMutation.isPending}
@@ -338,7 +338,7 @@ export default function CoverLetterGeneratorScreen() {
                   </Text>
                 </>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </Card>
         )}
 
@@ -354,12 +354,12 @@ export default function CoverLetterGeneratorScreen() {
             <View style={styles.resultToolbar}>
               <Text style={[styles.resultLabel, { color: colors.textPrimary }]}>Your Cover Letter</Text>
               <View style={styles.actionRow}>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={handleCopy}>
+                <Pressable style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={handleCopy}>
                   <Ionicons name="copy-outline" size={18} color={colors.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={handlePreview}>
+                </Pressable>
+                <Pressable style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={handlePreview}>
                   <Ionicons name="eye-outline" size={18} color={colors.primary} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
 

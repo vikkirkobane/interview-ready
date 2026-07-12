@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable,  View, Text, StyleSheet } from 'react-native';
 import { Colors, Spacing, Typography, Radius } from '../../theme/tokens';
 import { useCredits } from '../../hooks/useCredits';
 import { useRouter } from 'expo-router';
@@ -33,14 +33,14 @@ export function CreditBadge({ showDetails = false, onPress }: CreditBadgeProps) 
   const isCritical = balance.balance < 10;
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[
         styles.container,
         isCritical && styles.containerCritical,
         isLow && !isCritical && styles.containerLow,
       ]}
       onPress={handlePress}
-      activeOpacity={0.7}
+      
     >
       <View style={styles.iconContainer}>
         <Text style={styles.icon}>⚡</Text>
@@ -56,7 +56,7 @@ export function CreditBadge({ showDetails = false, onPress }: CreditBadgeProps) 
           </Text>
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

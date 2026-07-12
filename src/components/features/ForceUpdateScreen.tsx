@@ -1,3 +1,4 @@
+import { Pressable } from 'react-native';
 import React from 'react';
 import {
   View,
@@ -5,11 +6,10 @@ import {
   StyleSheet,
   Platform,
   Linking,
-  TouchableOpacity,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 interface ForceUpdateScreenProps {
   versionInfo: {
@@ -86,25 +86,25 @@ export function ForceUpdateScreen({ versionInfo, onRetry }: ForceUpdateScreenPro
 
         {/* Update Button */}
         {versionInfo.store_url && (
-          <TouchableOpacity
+          <Pressable
             style={styles.updateButton}
             onPress={handleUpdate}
-            activeOpacity={0.8}
+            
           >
             <Ionicons name={getStoreIcon()} size={24} color="#667eea" />
             <Text style={styles.updateButtonText}>{getStoreButtonText()}</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {/* Retry Button (only if not force update) */}
         {!versionInfo.force_update && onRetry && (
-          <TouchableOpacity
+          <Pressable
             style={styles.retryButton}
             onPress={onRetry}
-            activeOpacity={0.8}
+            
           >
             <Text style={styles.retryButtonText}>Continue with Current Version</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
 
         {/* Info Text */}

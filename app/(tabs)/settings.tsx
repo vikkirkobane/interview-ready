@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Platform, Image } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, Switch, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { Card, Button, Badge } from '../../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { useDashboardStore } from '../../src/stores/dashboard-store';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
+import { Image } from 'expo-image';
 
 declare var window: any;
 
@@ -207,7 +208,7 @@ function SettingRow({
   );
 
   if (onPress) {
-    return <TouchableOpacity onPress={onPress}>{content}</TouchableOpacity>;
+    return <Pressable onPress={onPress}>{content}</Pressable>;
   }
   return content;
 }

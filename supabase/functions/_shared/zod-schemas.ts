@@ -44,16 +44,16 @@ export const JD_ANALYSIS_SCHEMA = z.object({
   industry: z.string().nullable(),
   
   // Profile Match Analysis
-  fit_score: z.number().min(0).max(100).optional(),
+  fit_score: z.number().min(0).max(100).nullish(),
   missing_bonus_skills: z.array(z.object({
     skill: z.string(),
-  })).optional(),
+  })).nullish(),
   match_analysis: z.array(z.object({
     title: z.string(),
     description: z.string(),
     score_percentage: z.number().min(0).max(100),
     type: z.enum(['SUCCESS', 'WARNING', 'INFO', 'PRIMARY']),
-  })).optional(),
+  })).nullish(),
 });
 
 export type JDAnalysis = z.infer<typeof JD_ANALYSIS_SCHEMA>;

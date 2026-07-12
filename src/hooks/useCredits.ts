@@ -205,9 +205,10 @@ export function useCredits() {
   // Subscribe to credit balance changes
   useEffect(() => {
     let channel: any = null;
+    let isMounted = true;
 
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
+      if (!isMounted || !user) return;
 
       channel = supabase
         .channel('credit-changes')
@@ -229,7 +230,7 @@ export function useCredits() {
 
     return () => {
       if (channel) {
-        supabase.removeChannel(channel);
+        if (channel) supabase.removeChannel(channel);
       }
     };
   }, [fetchBalance]);

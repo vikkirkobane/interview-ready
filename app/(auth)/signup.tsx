@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -70,13 +70,13 @@ export default function SignupScreen() {
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
+        <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
           accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Create your account</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -105,9 +105,9 @@ export default function SignupScreen() {
             autoCorrect={false}
             hint="Must be at least 8 characters, with letters and numbers"
             rightIcon={
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
+              <Pressable onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
                 <Text style={{ color: colors.textMuted, ...Typography.label }}>{showPassword ? 'Hide' : 'Show'}</Text>
-              </TouchableOpacity>
+              </Pressable>
             }
           />
           <Input
@@ -120,9 +120,9 @@ export default function SignupScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             rightIcon={
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ padding: 4 }}>
+              <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ padding: 4 }}>
                 <Text style={{ color: colors.textMuted, ...Typography.label }}>{showConfirmPassword ? 'Hide' : 'Show'}</Text>
-              </TouchableOpacity>
+              </Pressable>
             }
           />
 
@@ -137,12 +137,12 @@ export default function SignupScreen() {
         </View>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+          <Pressable onPress={() => router.push('/(auth)/login')}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
               Already have an account?{' '}
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </Text>
-          </TouchableOpacity>
+          </Pressable>
           <Text style={[styles.termsText, { color: colors.textMuted }]}>
             By creating an account, you agree to our Terms of Service and Privacy Policy.
           </Text>

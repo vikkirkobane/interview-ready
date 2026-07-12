@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   TextInput,
   Platform,
   ActivityIndicator,
@@ -191,7 +191,7 @@ export default function ProfileScreen() {
         )}
 
         {/* UploadSimple Resume Button */}
-        <TouchableOpacity 
+        <Pressable 
           style={[styles.uploadBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
           onPress={handleUploadResume}
           disabled={parseResume.isPending}
@@ -204,7 +204,7 @@ export default function ProfileScreen() {
               <Text style={[styles.uploadBtnText, { color: colors.primary }]}>Upload Resume (PDF) to auto-fill</Text>
             </>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Content Container */}
         <View style={[styles.cardContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -243,27 +243,27 @@ export default function ProfileScreen() {
               <View style={styles.skillsWrapper}>
                 
                 {skills.map(skill => (
-                  <TouchableOpacity 
+                  <Pressable 
                     key={skill} 
                     style={[styles.skillChipActive, { backgroundColor: `${colors.primary}1A` }]}
                     onPress={() => removeSkill(skill)}
-                    activeOpacity={0.8}
+                    
                   >
                     <Text style={[styles.skillChipTextActive, { color: colors.primary }]}>{skill}</Text>
                     <Ionicons name="close" size={14} color={colors.primary} />
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
 
                 {SUGGESTED_SKILLS.filter(s => !skills.includes(s)).slice(0, 3).map(skill => (
-                  <TouchableOpacity 
+                  <Pressable 
                     key={skill} 
                     style={[styles.skillChipInactive, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
                     onPress={() => addSkill(skill)}
-                    activeOpacity={0.8}
+                    
                   >
                     <Ionicons name="add" size={14} color={colors.textMuted} />
                     <Text style={[styles.skillChipTextInactive, { color: colors.textMuted }]}>{skill}</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 ))}
 
               </View>
@@ -271,10 +271,10 @@ export default function ProfileScreen() {
 
             {/* CTA Section */}
             <View style={styles.ctaSection}>
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.continueBtn, { backgroundColor: colors.primary }, updateProfile.isPending && [styles.continueBtnDisabled, { backgroundColor: colors.textMuted }]]}
                 onPress={handleContinue}
-                activeOpacity={0.9}
+                
                 disabled={updateProfile.isPending}
               >
                 {updateProfile.isPending ? (
@@ -285,7 +285,7 @@ export default function ProfileScreen() {
                     <Ionicons name="arrow-forward" size={20} color="#fff" />
                   </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
           </View>

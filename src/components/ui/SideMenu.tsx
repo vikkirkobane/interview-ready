@@ -1,16 +1,14 @@
+import { Pressable } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity, 
   Modal, 
-  Animated, 
-  TouchableWithoutFeedback,
+  Animated,
   Dimensions,
   ScrollView,
   Platform,
-  Image,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useNavigationStore } from '../../stores/navigation-store';
@@ -18,6 +16,7 @@ import { useAuthStore } from '../../stores/auth-store';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 
 const { width } = Dimensions.get('window');
 const DRAWER_WIDTH = Math.min(width * 0.75, 320);
@@ -111,9 +110,9 @@ export function SideMenu() {
     >
       <View style={styles.overlayContainer}>
         {/* Backdrop */}
-        <TouchableWithoutFeedback onPress={closeMenu}>
+        <Pressable onPress={closeMenu}>
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]} />
-        </TouchableWithoutFeedback>
+        </Pressable>
 
         {/* Sliding Drawer */}
         <Animated.View style={[
@@ -134,14 +133,14 @@ export function SideMenu() {
               />
               <Text style={[styles.appName, { color: colors.primary }]}>Interview Ready</Text>
             </View>
-            <TouchableOpacity onPress={closeMenu} style={styles.closeButton}>
+            <Pressable onPress={closeMenu} style={styles.closeButton}>
               <Ionicons name="close" size={24} color={colors.primary} style={{ color: colors.primary }} />
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
-          <TouchableOpacity 
+          <Pressable 
             style={styles.userInfo} 
-            activeOpacity={0.8}
+            
             onPress={() => handleNavigation('/(tabs)/profile')}
           >
             <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
@@ -155,7 +154,7 @@ export function SideMenu() {
               </Text>
               <Text style={[styles.userEmail, { color: colors.textMuted }]}>{user?.email}</Text>
             </View>
-          </TouchableOpacity>
+          </Pressable>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -163,7 +162,7 @@ export function SideMenu() {
             {menuItems.map((item, index) => {
               const isActive = pathname === item.path || (item.path === '/(tabs)/' && pathname === '/');
               return (
-                <TouchableOpacity
+                <Pressable
                   key={index}
                   style={[
                     styles.menuItem,
@@ -184,19 +183,19 @@ export function SideMenu() {
                   ]}>
                     {item.name}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </ScrollView>
 
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+          <Pressable style={styles.logoutButton} onPress={handleSignOut}>
             <View style={[styles.menuIconBox, { backgroundColor: `${colors.error}15` }]}>
               <Ionicons name="log-out-outline" size={22} color={colors.error} />
             </View>
             <Text style={[styles.logoutText, { color: colors.error }]}>Log Out</Text>
-          </TouchableOpacity>
+          </Pressable>
         </Animated.View>
       </View>
     </Modal>

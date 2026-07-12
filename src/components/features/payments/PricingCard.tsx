@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Pressable,  View, Text, StyleSheet } from 'react-native';
 import { Spacing, Radius, Typography, Shadow } from '../../../theme/tokens';
 import { useTheme } from '../../../theme';
 
@@ -41,7 +41,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   const intervalText = plan.interval === 'MONTHLY' ? '/month' : '/year';
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[
         styles.card,
         isSelected && styles.cardSelected,
@@ -49,7 +49,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       ]}
       onPress={() => !disabled && onSelect(plan)}
       disabled={disabled}
-      activeOpacity={0.7}
+      
     >
       {plan.isPopular && (
         <View style={styles.popularBadge}>
@@ -81,7 +81,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         ))}
       </View>
 
-      <TouchableOpacity
+      <Pressable
         style={[
           styles.selectButton,
           isSelected && styles.selectButtonSelected,
@@ -98,8 +98,8 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         >
           {isSelected ? 'Selected' : 'Select Plan'}
         </Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
+      </Pressable>
+    </Pressable>
   );
 };
 

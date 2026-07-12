@@ -57,7 +57,8 @@
           }
         }
       ],
-      "./withAndroidAllowBackup.js"
+      "./withAndroidAllowBackup.js",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true

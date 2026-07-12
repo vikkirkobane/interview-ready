@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing } from '../../src/components/ui';
+import { ScoreRing, AdBanner } from '../../src/components/ui';
 import { useBreakpoint } from '../../src/hooks/useBreakpoint';
 import { useJobApplicationQuery, useDeleteJobApplicationMutation, useGenerateRoadmapMutation } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCredits } from '../../src/hooks/useCredits';
 import { exportRoadmapPDF } from '../../src/lib/roadmapExport';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore } from '../../src/stores/auth-store';
 
 export default function JobMatchResultsScreen() {
   const { id, fromList } = useLocalSearchParams();
@@ -16,6 +17,8 @@ export default function JobMatchResultsScreen() {
   const { colors, isDark } = useTheme();
   const { isDesktop } = useBreakpoint();
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   const { data: jobApplication, isLoading, error } = useJobApplicationQuery(id as string);
   const deleteMutation = useDeleteJobApplicationMutation();
@@ -85,9 +88,9 @@ export default function JobMatchResultsScreen() {
     return (
       <View style={[styles.flex, styles.center, { backgroundColor: colors.bgSecondary }]}>
         <Text style={[Typography.bodyLg, { color: colors.error }]}>Failed to load match results.</Text>
-        <TouchableOpacity style={{ marginTop: Spacing.md }} onPress={() => router.replace('/(tabs)/job-analyzer')}>
+        <Pressable style={{ marginTop: Spacing.md }} onPress={() => router.replace('/(tabs)/job-analyzer')}>
           <Text style={{ color: colors.primary }}>Go Back</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -98,10 +101,10 @@ export default function JobMatchResultsScreen() {
         contentContainerStyle={[styles.container, { paddingBottom: 140 + insets.bottom }]} 
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/(tabs)/job-analyzer')}>
+        <Pressable style={styles.backBtn} onPress={() => router.replace('/(tabs)/job-analyzer')}>
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           <Text style={[styles.backBtnText, { color: colors.textPrimary }]}>Back</Text>
-        </TouchableOpacity>
+        </Pressable>
 
         <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>
           Match Analysis: {jobApplication.job_title} @ {jobApplication.company}
@@ -199,7 +202,7 @@ export default function JobMatchResultsScreen() {
               <View style={styles.roadmapTextSection}>
                 <Text style={styles.roadmapTitle}>Bridge the gap in 14 days</Text>
                 <Text style={styles.roadmapDesc}>We've generated a customized roadmap to cover your missing skills before the interview cycle starts.</Text>
-                <TouchableOpacity 
+                <Pressable 
                   style={[styles.roadmapBtn, { backgroundColor: colors.bgPrimary }]}
                   onPress={handleDownloadRoadmap}
                   disabled={isDownloading}
@@ -209,7 +212,7 @@ export default function JobMatchResultsScreen() {
                   ) : (
                     <Text style={[styles.roadmapBtnText, { color: colors.primary }]}>Download Roadmap</Text>
                   )}
-                </TouchableOpacity>
+                </Pressable>
               </View>
               
               <View style={styles.roadmapSteps}>
@@ -329,7 +332,7 @@ export default function JobMatchResultsScreen() {
         </View>
 
         {id && fromList === 'true' && (
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.deleteBtn, { backgroundColor: colors.error + '1A', borderColor: colors.error }]} 
             onPress={handleDelete}
             disabled={deleteMutation.isPending}
@@ -342,8 +345,9 @@ export default function JobMatchResultsScreen() {
                 <Text style={[styles.deleteBtnText, { color: colors.error }]}>Delete Analysis</Text>
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
         )}
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

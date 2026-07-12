@@ -95,15 +95,16 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     ${templateCSS}
   `;
 
+  const h = r.header || ({} as any);
   const header = `
-    <div class="name">${r.header.name}</div>
-    <div class="title">${r.header.title}</div>
-    <div class="subtitle">${r.header.subtitle || ''}</div>
+    <div class="name">${h.name || ''}</div>
+    <div class="title">${h.title || ''}</div>
+    <div class="subtitle">${h.subtitle || ''}</div>
     <div class="contact">
-      ${r.header.email} &nbsp;·&nbsp; ${r.header.phone}
-      ${r.header.linkedin ? ` &nbsp;·&nbsp; ${r.header.linkedin}` : ''}
-      ${r.header.portfolio ? ` &nbsp;·&nbsp; ${r.header.portfolio}` : ''}
-      &nbsp;·&nbsp; ${r.header.location}
+      ${h.email || ''} &nbsp;·&nbsp; ${h.phone || ''}
+      ${h.linkedin ? ` &nbsp;·&nbsp; ${h.linkedin}` : ''}
+      ${h.portfolio ? ` &nbsp;·&nbsp; ${h.portfolio}` : ''}
+      &nbsp;·&nbsp; ${h.location || ''}
     </div>
   `;
 

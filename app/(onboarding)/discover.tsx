@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Platform,
   Animated,
 } from 'react-native';
@@ -102,7 +102,7 @@ export default function DiscoverScreen() {
         <Animated.View style={[styles.gridContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim2 }] }]}>
           
           {/* Job Tracker Card */}
-          <TouchableOpacity style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]} activeOpacity={0.8} onPress={handleFinish}>
+          <Pressable style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  onPress={handleFinish}>
             <View style={[styles.popularTag, { backgroundColor: `${colors.primary}1A` }]}>
               <Text style={[styles.popularTagText, { color: colors.primary }]}>MOST POPULAR</Text>
             </View>
@@ -117,10 +117,10 @@ export default function DiscoverScreen() {
               <Text style={[styles.bentoLinkText, { color: colors.primary }]}>EXPLORE TOOL</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </View>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* Mock Interviews Card */}
-          <TouchableOpacity style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]} activeOpacity={0.8} onPress={handleFinish}>
+          <Pressable style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  onPress={handleFinish}>
             <View style={[styles.bentoIconWrapper, { backgroundColor: `${colors.primary}1A` }]}>
               <Ionicons name="mic" size={24} color={colors.primary} />
             </View>
@@ -132,10 +132,10 @@ export default function DiscoverScreen() {
               <Text style={[styles.bentoLinkText, { color: colors.primary }]}>START SESSION</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </View>
-          </TouchableOpacity>
+          </Pressable>
 
           {/* LinkedIn Optimizer Card */}
-          <TouchableOpacity style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]} activeOpacity={0.8} onPress={handleFinish}>
+          <Pressable style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  onPress={handleFinish}>
             <View style={[styles.bentoIconWrapper, { backgroundColor: colors.bgMuted }]}>
               <Ionicons name="logo-linkedin" size={24} color={colors.primary} />
             </View>
@@ -147,28 +147,28 @@ export default function DiscoverScreen() {
               <Text style={[styles.bentoLinkText, { color: colors.primary }]}>ANALYZE PROFILE</Text>
               <Ionicons name="arrow-forward" size={14} color={colors.primary} />
             </View>
-          </TouchableOpacity>
+          </Pressable>
 
         </Animated.View>
 
         {/* Call to Action */}
         <Animated.View style={[styles.ctaSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim3 }] }]}>
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.primaryBtn, { backgroundColor: colors.primary }]} 
-            activeOpacity={0.9}
+            
             onPress={handleFinish}
           >
             <Text style={styles.primaryBtnText}>Go to Dashboard</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.secondaryBtn, { borderColor: colors.border }]} 
-            activeOpacity={0.6}
+            
             onPress={handleFinish}
           >
             <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>Maybe later</Text>
-          </TouchableOpacity>
+          </Pressable>
         </Animated.View>
 
       </ScrollView>

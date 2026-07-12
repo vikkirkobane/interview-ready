@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Image, ColorValue } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, Platform, ColorValue } from 'react-native';
 import { Typography, Spacing, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNavigationStore } from '../../src/stores/navigation-store';
@@ -9,6 +9,7 @@ import { SideMenu } from '../../src/components/ui/SideMenu';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 
 // Custom Animated Icon Component for Bottom Tabs
 const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: boolean, color: ColorValue, size: number, name: any, isMaterial?: boolean }) => {
@@ -96,7 +97,7 @@ export default function TabLayout() {
           headerTitleAlign: 'left',
           headerShadowVisible: false,
           headerLeft: () => (
-            <TouchableOpacity
+            <Pressable
               style={[styles.headerTitleContainer, { paddingLeft: Spacing.md }]}
               onPress={openMenu}
             >
@@ -110,11 +111,11 @@ export default function TabLayout() {
                 )}
               </View>
               <Text style={[styles.headerTitleText, { color: colors.primary }]}>Interview Ready</Text>
-            </TouchableOpacity>
+            </Pressable>
           ),
           headerTitle: '',
           headerRight: () => (
-            <TouchableOpacity
+            <Pressable
               style={styles.headerRight}
               onPress={() => router.push('/(tabs)/settings')}
             >
@@ -123,7 +124,7 @@ export default function TabLayout() {
                   <Ionicons name="settings-outline" size={24} color={colors.primary} />
                 )}
               </View>
-            </TouchableOpacity>
+            </Pressable>
           ),
           tabBarShowLabel: false,
           tabBarHideOnKeyboard: true,

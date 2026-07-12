@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -60,13 +60,13 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
-        <TouchableOpacity
+        <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
           accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome back</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>Sign in to continue your job search</Text>
@@ -93,9 +93,9 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             rightIcon={
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
+              <Pressable onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
                 <Text style={{ color: colors.textMuted, ...Typography.label }}>{showPassword ? 'Hide' : 'Show'}</Text>
-              </TouchableOpacity>
+              </Pressable>
             }
           />
 
@@ -108,22 +108,22 @@ export default function LoginScreen() {
             fullWidth
           />
 
-          <TouchableOpacity 
+          <Pressable 
             style={styles.forgotButton}
             onPress={() => router.push('/(auth)/forgot-password')}
           >
             <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
+          <Pressable onPress={() => router.push('/(auth)/signup')}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
               Don't have an account?{' '}
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign Up</Text>
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

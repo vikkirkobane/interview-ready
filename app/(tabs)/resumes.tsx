@@ -1,3 +1,4 @@
+import { Pressable } from 'react-native';
 import React from 'react';
 import {
   View,
@@ -5,12 +6,12 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
-  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing } from '../../src/components/ui';
+import { ScoreRing, AdBanner } from '../../src/components/ui';
+import { useAuthStore } from '../../src/stores/auth-store';
 import { useResumesListQuery } from '../../src/hooks/useApi';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -29,6 +30,8 @@ export default function ResumesScreen() {
   const { colors, isDark } = useTheme();
   
   const { data: resumes, isLoading } = useResumesListQuery();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
@@ -42,13 +45,13 @@ export default function ResumesScreen() {
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Resumes</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/(tabs)/new-resume')}
           >
             <Ionicons name="add" size={16} color={colors.textInverse} />
             <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>New</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -71,7 +74,7 @@ export default function ResumesScreen() {
             </View>
           ) : (
             resumes.map((resume: any) => (
-              <TouchableOpacity 
+              <Pressable 
                 key={resume.id} 
                 style={[styles.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
                 onPress={() => router.push(`/(tabs)/new-resume?id=${resume.id}&fromList=true`)}
@@ -87,9 +90,9 @@ export default function ResumesScreen() {
                     {resume.status}
                   </Text>
                 </View>
-                <TouchableOpacity style={styles.iconBtn}>
+                <Pressable style={styles.iconBtn}>
                    <Ionicons name="ellipsis-horizontal" size={16} color={colors.textMuted} />
-                </TouchableOpacity>
+                </Pressable>
               </View>
 
               <View style={styles.cardBody}>
@@ -111,10 +114,11 @@ export default function ResumesScreen() {
                   </View>
                 )}
               </View>
-            </TouchableOpacity>
+            </Pressable>
             ))
           )}
         </View>
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

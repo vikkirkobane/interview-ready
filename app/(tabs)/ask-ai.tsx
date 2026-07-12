@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useAnswerQuestionMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,6 +7,8 @@ import Markdown from 'react-native-markdown-display';
 import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
+import { useAuthStore } from '../../src/stores/auth-store';
+import { AdBanner } from '../../src/components/ui';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -25,6 +27,8 @@ export default function AskAIScreen() {
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [extractJdLoading, setExtractJdLoading] = useState(false);
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -177,7 +181,7 @@ export default function AskAIScreen() {
               </Markdown>
             )}
           </View>
-          <TouchableOpacity 
+          <Pressable 
             onPress={() => copyToClipboard(msg.text)} 
             style={{ 
               flexDirection: 'row', 
@@ -190,7 +194,7 @@ export default function AskAIScreen() {
           >
             <Ionicons name="copy-outline" size={13} color={colors.textMuted} />
             <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 3 }}>Copy</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
         {isUser && (
           <View style={[styles.avatarUser, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
@@ -230,6 +234,7 @@ export default function AskAIScreen() {
             </View>
           </View>
         )}
+        {!isPro && <AdBanner />}
       </ScrollView>
       
       <View style={[
@@ -246,7 +251,7 @@ export default function AskAIScreen() {
         }
       ]}>
         <View style={styles.inputRow}>
-          <TouchableOpacity
+          <Pressable
             style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}
             onPress={handleAttachJdFile}
             disabled={extractJdLoading}
@@ -258,7 +263,7 @@ export default function AskAIScreen() {
                 <Ionicons name="attach" size={20} color={colors.primary} />
               </>
             )}
-          </TouchableOpacity>
+          </Pressable>
           <TextInput
              style={[styles.textInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }]}
              placeholder="Paste application question here..."
@@ -267,13 +272,13 @@ export default function AskAIScreen() {
              onChangeText={setInputText}
              multiline
           />
-          <TouchableOpacity
+          <Pressable
             style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() || isTyping) && { opacity: 0.5 }]}
             onPress={handleSend}
             disabled={!inputText.trim() || isTyping}
           >
              <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </KeyboardAvoidingView>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
+import { AdBanner } from '../../src/components/ui';
 
 export default function JobFitScreen() {
   const { job_id } = useLocalSearchParams();
@@ -32,6 +33,7 @@ export default function JobFitScreen() {
   const { user } = useAuthStore();
   const { profile, updateProfile } = useProfileStore();
   const { colors, isDark } = useTheme();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   const analyzeJob = useAnalyzeJobMutation();
   const extractJd = useExtractJdMutation();
@@ -181,7 +183,7 @@ export default function JobFitScreen() {
                 />
                 <View style={styles.inputActions}>
                   {/* Attach JD File Button */}
-                  <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                  <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                      {extractJdLoading ? (
                        <ActivityIndicator size="small" color={colors.primary} />
                      ) : (
@@ -189,7 +191,7 @@ export default function JobFitScreen() {
                          <Ionicons name="attach" size={24} color={colors.textMuted} />
                        </>
                      )}
-                  </TouchableOpacity>
+                  </Pressable>
 
                   {/* Attached File Info */}
                   {jdFileName && (
@@ -202,14 +204,14 @@ export default function JobFitScreen() {
                       borderColor: 'transparent'
                     }}>
                       <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                      <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                      <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
                         <Ionicons name="close-circle" size={16} color={colors.error} />
-                      </TouchableOpacity>
+                      </Pressable>
                     </View>
                   )}
 
                   {/* Analyze Button */}
-                  <TouchableOpacity
+                  <Pressable
                     style={[styles.analyzeBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }, analyzeJob.isPending && { opacity: 0.7 }]}
                     onPress={handleAnalyze}
                     disabled={analyzeJob.isPending}
@@ -222,7 +224,7 @@ export default function JobFitScreen() {
                         <Text style={[styles.analyzeBtnText, { color: colors.textInverse, fontWeight: '600' }]}>Analyze Job Match</Text>
                       </>
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </View>
@@ -235,7 +237,7 @@ export default function JobFitScreen() {
               ) : pastMatches && pastMatches.length > 0 ? (
                 <View style={styles.pastMatchesList}>
                   {pastMatches.map((match: any) => (
-                    <TouchableOpacity
+                    <Pressable
                       key={match.id}
                       style={[styles.matchListItem, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
                       onPress={() => router.push(`/job-match-results?id=${match.id}&fromList=true` as any)}
@@ -257,7 +259,7 @@ export default function JobFitScreen() {
                         </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                    </TouchableOpacity>
+                    </Pressable>
                   ))}
                 </View>
               ) : (
@@ -269,6 +271,7 @@ export default function JobFitScreen() {
 
           </View>
         </View>
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

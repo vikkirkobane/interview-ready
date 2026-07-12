@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -82,13 +82,13 @@ export default function ForgotPasswordScreen() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
-        <TouchableOpacity
+        <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
           accessibilityLabel="Go back"
         >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}1A` }]}>
           <Ionicons name="lock-closed" size={32} color={colors.primary} />
@@ -130,21 +130,21 @@ export default function ForgotPasswordScreen() {
             disabled={success}
           />
 
-          <TouchableOpacity
+          <Pressable
             style={styles.backToLoginButton}
             onPress={() => router.back()}
           >
             <Text style={[styles.backToLoginText, { color: colors.primary }]}>Back to Sign In</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           <Text style={[styles.footerText, { color: colors.textMuted }]}>
             Remember your password?{' '}
-            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+            <Pressable onPress={() => router.push('/(auth)/login')}>
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
-            </TouchableOpacity>
+            </Pressable>
           </Text>
         </View>
       </ScrollView>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Platform, Image, Modal, TextInput, Alert, ActivityIndicator
@@ -227,6 +227,16 @@ export default function ResumeBuilderScreen() {
   const remoteResume = resumeData?.resume_contents?.[0];
 
   const [draft, setDraft] = useState<DraftResume | null>(null);
+  const generationChannelRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (generationChannelRef.current) {
+        supabase.removeChannel(generationChannelRef.current);
+      }
+    };
+  }, []);
+
   const updateMutation = useUpdateResumeMutation();
   const rewriteMutation = useRewriteSectionMutation();
   const createResumeMutation = useCreateResumeMutation();
@@ -1275,12 +1285,12 @@ export default function ResumeBuilderScreen() {
             <Text style={styles.emptyHint}>No certifications added yet. Tap "Add" to get started.</Text>
           )}
 
-          {(draft?.certifications || []).filter(cert => 
-            cert.id === expandedCert || cert.name?.trim() || cert.issuer?.trim() || cert.year?.trim()
-          ).map((cert, index) => {
+          {(draft?.certifications || []).reduce((acc: any[], cert) => {
+            if (!(cert.id === expandedCert || cert.name?.trim() || cert.issuer?.trim() || cert.year?.trim())) return acc;
+            const index = acc.length;
             const displayName = cert.name?.trim() || 'New Certification';
             const displaySub = [cert.issuer || '', cert.year || ''].filter(Boolean).join(' · ') || 'Tap to add details';
-            return (
+            acc.push(
               <View key={cert.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
                 <TouchableOpacity 
                   style={styles.entryHeader} 
@@ -1327,7 +1337,8 @@ export default function ResumeBuilderScreen() {
               )}
             </View>
             );
-          })}
+            return acc;
+          }, [])}
         </View>
         )}
         {/* Awards */}
@@ -1357,12 +1368,12 @@ export default function ResumeBuilderScreen() {
             <Text style={styles.emptyHint}>No awards added yet. Tap "Add" to get started.</Text>
           )}
 
-          {(draft?.awards || []).filter(award => 
-            award.id === expandedAward || award.name?.trim() || award.issuer?.trim() || award.year?.trim()
-          ).map((award, index) => {
+          {(draft?.awards || []).reduce((acc: any[], award) => {
+            if (!(award.id === expandedAward || award.name?.trim() || award.issuer?.trim() || award.year?.trim())) return acc;
+            const index = acc.length;
             const displayName = award.name?.trim() || 'New Award';
             const displaySub = [award.issuer || '', award.year || ''].filter(Boolean).join(' · ') || 'Tap to add details';
-            return (
+            acc.push(
               <View key={award.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
                 <TouchableOpacity 
                   style={styles.entryHeader} 
@@ -1409,7 +1420,8 @@ export default function ResumeBuilderScreen() {
               )}
               </View>
             );
-          })}
+            return acc;
+          }, [])}
         </View>
         )}
 
@@ -1630,6 +1642,7 @@ export default function ResumeBuilderScreen() {
 
                     // Subscribe to the realtime channel
                     const channel = supabase.channel(res.stream_channel);
+                    generationChannelRef.current = channel;
                     channel
                       .on('broadcast', { event: 'generation_complete' }, (payload) => {
                         const content = payload.payload.content;

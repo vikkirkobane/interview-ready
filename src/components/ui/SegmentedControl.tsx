@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Radius, Typography, useTheme } from '../../theme';
 
 interface SegmentedControlProps {
@@ -30,18 +30,18 @@ export function SegmentedControl({
       {options.map((option, index) => {
         const isActive = index === selectedIndex;
         return (
-          <TouchableOpacity
+          <Pressable
             key={option}
             onPress={() => onChange(index)}
             style={[styles.option, isActive ? dynamicStyles.activeOption : dynamicStyles.inactiveOption]}
-            activeOpacity={0.8}
+            
             accessibilityRole="tab"
             accessibilityState={{ selected: isActive }}
           >
             <Text style={[styles.optionText, isActive ? dynamicStyles.activeText : dynamicStyles.inactiveText]}>
               {option}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         );
       })}
     </View>

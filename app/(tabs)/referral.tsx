@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Button } from '../../src/components/ui';
+import { Button, AdBanner } from '../../src/components/ui';
+import { useAuthStore } from '../../src/stores/auth-store';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +11,8 @@ import { useReferral } from '../../src/hooks/useReferral';
 export default function ReferralScreen() {
   const { colors } = useTheme();
   const { stats, loading } = useReferral();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   const handleCopyCode = async () => {
     if (!stats?.referralCode) return;
@@ -60,9 +63,9 @@ export default function ReferralScreen() {
           <Text style={[styles.codeLabel, { color: colors.textMuted }]}>YOUR REFERRAL CODE</Text>
           <View style={[styles.codeRow, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
             <Text style={[styles.codeText, { color: colors.textPrimary }]}>{stats?.referralCode || 'Loading...'}</Text>
-            <TouchableOpacity onPress={handleCopyCode} style={{ padding: Spacing.sm }}>
+            <Pressable onPress={handleCopyCode} style={{ padding: Spacing.sm }}>
                <Text style={{ color: colors.primary, ...Typography.headingMd }}>Copy</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </View>
 
@@ -127,6 +130,7 @@ export default function ReferralScreen() {
             </View>
           </View>
         </View>
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

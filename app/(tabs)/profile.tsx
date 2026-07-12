@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Modal, TextInput, Linking, ActivityIndicator, Image } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, Platform, Modal, TextInput, Linking, ActivityIndicator } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing, Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -12,6 +12,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
 import { useDashboardStore } from '../../src/stores/dashboard-store';
 import { useUIStore } from '../../src/stores/ui-store';
+import { Image } from 'expo-image';
 declare const window: any;
 
 interface WorkHistoryItem {
@@ -426,9 +427,9 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.bioTextSection}>
-            <TouchableOpacity onPress={() => setIsEditModalVisible(true)}>
+            <Pressable onPress={() => setIsEditModalVisible(true)}>
               <Text style={[styles.nameText, { color: colors.textPrimary }]}>{userName}</Text>
-            </TouchableOpacity>
+            </Pressable>
             <Text style={[styles.titleText, { color: colors.textMuted }]}>{userTitle}</Text>
             <View style={[styles.locationBadge, { backgroundColor: colors.bgSecondary }]}>
               <Ionicons name="location-outline" size={14} color={colors.textMuted} style={{ marginRight: 6 }} />
@@ -462,31 +463,31 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.premiumActions}>
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.upgradeBtn, { backgroundColor: colors.textInverse }]}
                 onPress={() => router.push('/(tabs)/pricing' as any)}
               >
                 <Text style={[styles.upgradeBtnText, { color: colors.primary }]}>Upgrade Plan</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
+              </Pressable>
+              <Pressable 
                 style={styles.addCreditsBtn}
                 onPress={() => router.push('/(tabs)/pricing' as any)}
               >
                 <Text style={styles.addCreditsBtnText}>Add Credits</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
 
-        <TouchableOpacity 
+        <Pressable 
           style={[styles.importBtn, { borderColor: colors.primary, backgroundColor: `${colors.primary}${isDark ? '1A' : '05'}` }]}
           onPress={() => router.push('/(tabs)/linkedin')}
         >
           <Ionicons name="logo-linkedin" size={18} color={colors.primary} style={{ marginRight: 8 }} />
           <Text style={[styles.importBtnText, { color: colors.primary }]}>Import Profile from LinkedIn</Text>
-        </TouchableOpacity>
+        </Pressable>
 
-        <TouchableOpacity 
+        <Pressable 
           style={[styles.importBtn, { borderColor: colors.primary, backgroundColor: colors.primary, marginTop: Spacing.md }]}
           onPress={handleUploadResume}
           disabled={parseResume.isPending}
@@ -497,14 +498,14 @@ export default function ProfileScreen() {
             <Ionicons name="cloud-upload-outline" size={18} color={colors.textInverse} style={{ marginRight: 8 }} />
           )}
           <Text style={[styles.importBtnText, { color: colors.textInverse }]}>Upload Resume to Auto-Fill</Text>
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Experience</Text>
-            <TouchableOpacity onPress={() => openExpModal(null)}>
+            <Pressable onPress={() => openExpModal(null)}>
               <Text style={[styles.editLink, { color: colors.primary }]}>+ Add</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.experienceList}>
@@ -523,12 +524,12 @@ export default function ProfileScreen() {
                     </Text>
                     <Text style={[styles.roleDesc, { color: colors.textBody }]} numberOfLines={2}>{job.description}</Text>
                   </View>
-                  <TouchableOpacity onPress={() => openExpModal(index)} style={{ padding: Spacing.sm }}>
+                  <Pressable onPress={() => openExpModal(index)} style={{ padding: Spacing.sm }}>
                      <Text style={{ color: colors.textMuted }}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDeleteExperience(index)} style={{ padding: Spacing.sm }}>
+                  </Pressable>
+                  <Pressable onPress={() => handleDeleteExperience(index)} style={{ padding: Spacing.sm }}>
                      <Text style={{ color: colors.error }}>Del</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               ))
             )}
@@ -538,9 +539,9 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Core Skills</Text>
-            <TouchableOpacity onPress={openSkillsModal}>
+            <Pressable onPress={openSkillsModal}>
               <Text style={[styles.editLink, { color: colors.primary }]}>Edit</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <View style={styles.skillsCloud}>
             {techSkills.length === 0 && softSkills.length === 0 && (
@@ -554,9 +555,9 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Education</Text>
-            <TouchableOpacity onPress={() => openEduModal(null)}>
+            <Pressable onPress={() => openEduModal(null)}>
               <Text style={[styles.editLink, { color: colors.primary }]}>+ Add</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
 
           <View style={styles.experienceList}>
@@ -574,12 +575,12 @@ export default function ProfileScreen() {
                       {edu.degree} in {edu.field} • {edu.start_date} — {edu.end_date || 'Present'}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={() => openEduModal(index)} style={{ padding: Spacing.sm }}>
+                  <Pressable onPress={() => openEduModal(index)} style={{ padding: Spacing.sm }}>
                      <Text style={{ color: colors.textMuted }}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDeleteEducation(index)} style={{ padding: Spacing.sm }}>
+                  </Pressable>
+                  <Pressable onPress={() => handleDeleteEducation(index)} style={{ padding: Spacing.sm }}>
                      <Text style={{ color: colors.error }}>Del</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               ))
             )}
@@ -587,7 +588,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.settingsGrid}>
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
             onPress={handleAccountSettingsPress}
           >
@@ -595,9 +596,9 @@ export default function ProfileScreen() {
                <Ionicons name="settings-outline" size={20} color={colors.textMuted} />
             </View>
             <Text style={[styles.settingsText, { color: colors.textPrimary }]}>Account Settings</Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
             onPress={() => Linking.openURL('mailto:support@interviewready.app')}
           >
@@ -605,7 +606,7 @@ export default function ProfileScreen() {
                <Ionicons name="help-circle-outline" size={20} color={colors.textMuted} />
             </View>
             <Text style={[styles.settingsText, { color: colors.textPrimary }]}>Support Center</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.xl }}>
@@ -630,9 +631,9 @@ export default function ProfileScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bgPrimary, maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit Basic Info</Text>
-              <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
+              <Pressable onPress={() => setIsEditModalVisible(false)}>
                 <Text style={{ color: colors.textMuted, ...Typography.headingMd }}>X</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -711,9 +712,9 @@ export default function ProfileScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bgPrimary, maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{editingExpIndex !== null ? 'Edit Experience' : 'Add Experience'}</Text>
-              <TouchableOpacity onPress={() => setIsExpModalVisible(false)}>
+              <Pressable onPress={() => setIsExpModalVisible(false)}>
                 <Text style={{ color: colors.textMuted, ...Typography.headingMd }}>X</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -736,12 +737,12 @@ export default function ProfileScreen() {
                 </View>
               </View>
               <View style={styles.formGroup}>
-                <TouchableOpacity onPress={() => setExpCurrent(!expCurrent)} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                <Pressable onPress={() => setExpCurrent(!expCurrent)} style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
                   <View style={{ width: 20, height: 20, borderWidth: 2, borderColor: colors.primary, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}>
                     {expCurrent && <View style={{ width: 10, height: 10, backgroundColor: colors.primary, borderRadius: 2 }} />}
                   </View>
                   <Text style={[styles.label, { color: colors.textPrimary }]}>I currently work here</Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Description</Text>
@@ -766,9 +767,9 @@ export default function ProfileScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bgPrimary, maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Edit Skills</Text>
-              <TouchableOpacity onPress={() => setIsSkillsModalVisible(false)}>
+              <Pressable onPress={() => setIsSkillsModalVisible(false)}>
                 <Text style={{ color: colors.textMuted, ...Typography.headingMd }}>X</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -777,9 +778,9 @@ export default function ProfileScreen() {
                 {editingTechSkills.map((s, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.primary}${isDark ? '33' : '1A'}`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full }}>
                     <Text style={{ color: colors.primary, marginRight: 4 }}>{s}</Text>
-                    <TouchableOpacity onPress={() => setEditingTechSkills(editingTechSkills.filter((_, idx) => idx !== i))}>
+                    <Pressable onPress={() => setEditingTechSkills(editingTechSkills.filter((_, idx) => idx !== i))}>
                       <Text style={{ color: colors.primary, ...Typography.bodySm }}>X</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -793,9 +794,9 @@ export default function ProfileScreen() {
                 {editingSoftSkills.map((s, i) => (
                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgSecondary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.full }}>
                     <Text style={{ color: colors.textPrimary, marginRight: 4 }}>{s}</Text>
-                    <TouchableOpacity onPress={() => setEditingSoftSkills(editingSoftSkills.filter((_, idx) => idx !== i))}>
+                    <Pressable onPress={() => setEditingSoftSkills(editingSoftSkills.filter((_, idx) => idx !== i))}>
                        <Text style={{ color: colors.textPrimary, ...Typography.bodySm }}>X</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -822,9 +823,9 @@ export default function ProfileScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.bgPrimary, maxHeight: '90%' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{editingEduIndex !== null ? 'Edit Education' : 'Add Education'}</Text>
-              <TouchableOpacity onPress={() => setIsEduModalVisible(false)}>
+              <Pressable onPress={() => setIsEduModalVisible(false)}>
                 <Text style={{ color: colors.textMuted, ...Typography.headingMd }}>X</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             <ScrollView showsVerticalScrollIndicator={false}>

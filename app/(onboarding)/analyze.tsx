@@ -1,10 +1,10 @@
+import { Pressable } from 'react-native';
 import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Platform,
   TextInput,
   ActivityIndicator,
@@ -144,18 +144,18 @@ export default function AnalyzeScreen() {
             
             {/* Segmented Control */}
             <View style={[styles.segmentedControl, { backgroundColor: colors.bgSecondary }]}>
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.segmentBtn, inputType === 0 && [styles.segmentBtnActive, { backgroundColor: colors.bgCard }]]}
                 onPress={() => setInputType(0)}
               >
                 <Text style={[styles.segmentText, { color: colors.textMuted }, inputType === 0 && [styles.segmentTextActive, { color: colors.primary }]]}>Paste Text</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
+              </Pressable>
+              <Pressable 
                 style={[styles.segmentBtn, inputType === 1 && [styles.segmentBtnActive, { backgroundColor: colors.bgCard }]]}
                 onPress={() => setInputType(1)}
               >
                 <Text style={[styles.segmentText, { color: colors.textMuted }, inputType === 1 && [styles.segmentTextActive, { color: colors.primary }]]}>Enter URL</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {/* Input Area */}
@@ -176,7 +176,7 @@ export default function AnalyzeScreen() {
               </View>
               <View style={styles.inputActions}>
                 {/* Attach JD File Button */}
-                <TouchableOpacity style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
                   {extractJdLoading ? (
                     <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
@@ -184,7 +184,7 @@ export default function AnalyzeScreen() {
                       <Ionicons name="attach" size={24} color={colors.textMuted} />
                     </>
                   )}
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Attached File Info */}
                 {jdFileName && (
@@ -194,9 +194,9 @@ export default function AnalyzeScreen() {
                     marginLeft: Spacing.sm
                   }}>
                     <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                    <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                    <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
                       <Ionicons name="close-circle" size={16} color={colors.error} />
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 )}
               </View>
@@ -204,11 +204,11 @@ export default function AnalyzeScreen() {
 
             {/* Primary Action */}
             {!showResults && (
-              <TouchableOpacity 
+              <Pressable 
                 style={[styles.primaryBtn, { backgroundColor: colors.primary }, (!hasInput || analyzeJob.isPending) && [styles.primaryBtnDisabled, { backgroundColor: colors.textMuted }]]}
                 onPress={handleAnalyze}
                 disabled={!hasInput || analyzeJob.isPending}
-                activeOpacity={0.8}
+                
               >
                 {analyzeJob.isPending ? (
                   <>
@@ -221,7 +221,7 @@ export default function AnalyzeScreen() {
                     <Ionicons name="sparkles" size={20} color="#fff" />
                   </>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             )}
             
             {showResults && (
@@ -300,14 +300,14 @@ export default function AnalyzeScreen() {
         {/* Footer Navigation */}
         {showResults && (
           <View style={styles.footer}>
-            <TouchableOpacity 
+            <Pressable 
               style={[styles.continueBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/(onboarding)/resume')}
-              activeOpacity={0.8}
+              
             >
               <Text style={styles.continueBtnText}>Continue</Text>
               <Ionicons name="arrow-forward" size={20} color="#fff" />
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 

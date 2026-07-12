@@ -1,3 +1,4 @@
+import { Pressable } from 'react-native';
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -6,7 +7,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  TouchableOpacity,
   Modal,
   TextInput,
   FlatList,
@@ -228,12 +228,12 @@ export default function PricingScreen() {
     setSelectedPlan(plan);
   };
 
-  const handleCountrySelect = (country: Country) => {
+  const handleCountrySelect = React.useCallback((country: Country) => {
     setSelectedCountry(country);
     setSelectedPlan(null); // Reset plan selection when country changes
     setShowCountryPicker(false);
     setSearchQuery('');
-  };
+  }, []);
 
   const handleSubscribe = async () => {
     if (!selectedPlan) {
@@ -361,6 +361,27 @@ export default function PricingScreen() {
     Alert.alert('Payment Error', 'Payment failed. Please try again.');
   };
 
+  const renderCountryItem = React.useCallback(({ item }: { item: any }) => (
+    <Pressable
+      style={[
+        styles.countryItem,
+        selectedCountry.code === item.code && styles.countryItemSelected,
+      ]}
+      onPress={() => handleCountrySelect(item)}
+    >
+      <Text style={styles.countryItemFlag}>{item.flag}</Text>
+      <View style={styles.countryItemInfo}>
+        <Text style={styles.countryItemName}>{item.name}</Text>
+        <Text style={styles.countryItemCurrency}>
+          {item.currency} • {getPaymentMethods(item).join(', ')}
+        </Text>
+      </View>
+      {selectedCountry.code === item.code && (
+        <Text style={styles.countryItemCheck}>✓</Text>
+      )}
+    </Pressable>
+  ), [selectedCountry.code, handleCountrySelect]);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
@@ -373,7 +394,7 @@ export default function PricingScreen() {
       {/* Country Selector */}
       <View style={styles.countrySelector}>
         <Text style={styles.countrySelectorLabel}>Select Your Country:</Text>
-        <TouchableOpacity
+        <Pressable
           style={styles.countryButton}
           onPress={() => setShowCountryPicker(true)}
         >
@@ -385,7 +406,7 @@ export default function PricingScreen() {
             </Text>
           </View>
           <Text style={styles.countryChevron}>›</Text>
-        </TouchableOpacity>
+        </Pressable>
 
         {/* Payment Methods */}
         <View style={styles.paymentMethods}>
@@ -411,12 +432,12 @@ export default function PricingScreen() {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Country</Text>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowCountryPicker(false)}
                 style={styles.modalCloseButton}
               >
                 <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <TextInput
@@ -431,26 +452,7 @@ export default function PricingScreen() {
             <FlatList
               data={filteredCountries}
               keyExtractor={(item) => item.code}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.countryItem,
-                    selectedCountry.code === item.code && styles.countryItemSelected,
-                  ]}
-                  onPress={() => handleCountrySelect(item)}
-                >
-                  <Text style={styles.countryItemFlag}>{item.flag}</Text>
-                  <View style={styles.countryItemInfo}>
-                    <Text style={styles.countryItemName}>{item.name}</Text>
-                    <Text style={styles.countryItemCurrency}>
-                      {item.currency} • {getPaymentMethods(item).join(', ')}
-                    </Text>
-                  </View>
-                  {selectedCountry.code === item.code && (
-                    <Text style={styles.countryItemCheck}>✓</Text>
-                  )}
-                </TouchableOpacity>
-              )}
+              renderItem={renderCountryItem}
               style={styles.countryList}
             />
           </View>
@@ -479,7 +481,7 @@ export default function PricingScreen() {
               />
               {isSelected && (
                 <View style={styles.inlineSubscribeContainer}>
-                  <TouchableOpacity
+                  <Pressable
                     style={[styles.subscribeButton, (loading || showPaystackWebView) && styles.subscribeButtonDisabled]}
                     onPress={handleSubscribe}
                     disabled={loading || showPaystackWebView}
@@ -491,7 +493,7 @@ export default function PricingScreen() {
                         Subscribe to {plan.name}
                       </Text>
                     )}
-                  </TouchableOpacity>
+                  </Pressable>
                   <Text style={styles.footerTextInline}>
                     By subscribing, you agree to our Terms of Service and Privacy Policy.
                     Your subscription will auto-renew unless cancelled.

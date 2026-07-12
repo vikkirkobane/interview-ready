@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Animated } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Animated } from 'react-native';
 import { Typography, Spacing, Radius, useTheme, Animations } from '../src/theme';
-import { Card, Button } from '../src/components/ui';
+import { Card, Button, AdBanner } from '../src/components/ui';
 import { useRouter } from 'expo-router';
 import { useJdSummaryMutation } from '../src/hooks/useApi';
+import { useAuthStore } from '../src/stores/auth-store';
 import Toast from 'react-native-toast-message';
 import { Skeleton } from '../src/components/ui/SkeletonLoader';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 export default function JdSummaryScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const [jdText, setJdText] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   const [urlError, setUrlError] = useState('');
@@ -58,9 +61,9 @@ export default function JdSummaryScreen() {
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       {/* Header - Minimalist */}
       <View style={[styles.header, { backgroundColor: colors.bgPrimary }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
+        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
           <Text style={[styles.navText, { color: colors.textSecondary }]}>← BACK</Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>JD Summarizer</Text>
       </View>
 
@@ -134,9 +137,9 @@ export default function JdSummaryScreen() {
           <View style={styles.resultsContainer}>
             <View style={styles.resultHeader}>
               <Text style={[styles.resultsTitle, { color: colors.textPrimary }]}>{summaryData.title}</Text>
-              <TouchableOpacity style={[styles.iconBtn, { backgroundColor: colors.bgSecondary }]} accessibilityRole="button">
+              <Pressable style={[styles.iconBtn, { backgroundColor: colors.bgSecondary }]} accessibilityRole="button">
                 <Text style={[styles.navText, { color: colors.textSecondary, fontSize: 12 }]}>COPY</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             
             <Card variant="feature" delay={100} style={styles.cardMustHaves}>
@@ -195,6 +198,8 @@ export default function JdSummaryScreen() {
             </Animated.View>
           </View>
         )}
+
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );

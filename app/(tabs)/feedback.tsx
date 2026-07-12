@@ -1,12 +1,11 @@
+import { Pressable } from 'react-native';
 import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Platform,
-  Image,
   Animated,
   ActivityIndicator,
   Alert,
@@ -14,10 +13,12 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing } from '../../src/components/ui';
+import { ScoreRing, AdBanner } from '../../src/components/ui';
 import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation } from '../../src/hooks/useApi';
+import { useAuthStore } from '../../src/stores/auth-store';
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 export default function FeedbackScreen() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function FeedbackScreen() {
   const actualSessionId = (sessionId || id) as string;
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   
   const [feedbackData, setFeedbackData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -89,12 +92,12 @@ export default function FeedbackScreen() {
         <Text style={{ marginTop: 8, color: colors.textMuted, textAlign: 'center', marginHorizontal: Spacing.xl }}>
           We couldn't generate feedback for this interview. It might have been too short or encountered an error.
         </Text>
-        <TouchableOpacity 
+        <Pressable 
           style={[styles.primaryBtn, { backgroundColor: colors.primary, marginTop: Spacing.xl }]} 
           onPress={() => router.push('/interviews')}
         >
           <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Return to Interviews</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     );
   }
@@ -236,28 +239,28 @@ export default function FeedbackScreen() {
 
         {/* CTA Section */}
         <Animated.View style={[styles.ctaSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim4 }] }]}>
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.primaryBtn, { backgroundColor: colors.primary }]} 
-            activeOpacity={0.8}
+            
             onPress={() => router.push('/interviews')}
           >
             <Ionicons name="refresh" size={20} color={colors.textInverse} />
             <Text style={[styles.primaryBtnText, { color: colors.textInverse }]}>Practice Again</Text>
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity 
+          <Pressable 
             style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
-            activeOpacity={0.6}
+            
             onPress={() => Toast.show({ type: 'info', text1: 'Downloading Report', text2: 'Your PDF report is being generated.' })}
           >
             <Ionicons name="download-outline" size={20} color={colors.textPrimary} />
             <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>Download Report</Text>
-          </TouchableOpacity>
+          </Pressable>
 
           {actualSessionId && fromList === 'true' && (
-            <TouchableOpacity 
+            <Pressable 
               style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.error, marginTop: Spacing.md }]} 
-              activeOpacity={0.6}
+              
               onPress={handleDelete}
               disabled={deleteMutation.isPending}
             >
@@ -269,10 +272,11 @@ export default function FeedbackScreen() {
                   <Text style={[styles.secondaryBtnText, { color: colors.error }]}>Delete Interview</Text>
                 </>
               )}
-            </TouchableOpacity>
+            </Pressable>
           )}
         </Animated.View>
 
+        {!isPro && <AdBanner />}
       </ScrollView>
     </View>
   );
