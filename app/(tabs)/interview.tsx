@@ -10,6 +10,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import * as DocumentPicker from 'expo-document-picker';
 import { useReducedMotion } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TypingIndicator = ({ colors }: { colors: any }) => {
   const dot1 = useRef(new Animated.Value(0)).current;
@@ -75,6 +76,7 @@ type Message = {
 };
 
 export default function InterviewScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
   const { colors, isDark } = useTheme();
@@ -323,7 +325,7 @@ export default function InterviewScreen() {
 
         {isTyping && <TypingIndicator colors={colors} />}
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
 
       {/* Bottom Input Area */}
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>

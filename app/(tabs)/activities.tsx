@@ -6,8 +6,10 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { AdBanner } from '../../src/components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AllActivitiesScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const { colors } = useTheme();
   const { data: recentActivities, isLoading } = useRecentActivitiesQuery();
@@ -61,7 +63,7 @@ export default function AllActivitiesScreen() {
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent activities found.</Text>
         )}
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -70,7 +72,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
     padding: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
     maxWidth: 800,
     width: '100%',
     alignSelf: 'center',

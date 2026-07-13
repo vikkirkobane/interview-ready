@@ -21,6 +21,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 
 export default function FeedbackScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const { sessionId, id, fromList } = useLocalSearchParams();
   const actualSessionId = (sessionId || id) as string;
@@ -139,7 +140,7 @@ export default function FeedbackScreen() {
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 120 }]} 
+        contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl }]} 
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Section: Overall Score */}
@@ -278,7 +279,7 @@ export default function FeedbackScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }

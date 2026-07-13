@@ -57,23 +57,23 @@ app.post('/*', async (c: any) => {
       throw new InsufficientCreditsError(1, 0);
     }
 
-    // 2. Read the uploaded PDF file
+    // 2. Read the uploaded resume file
     const formData = await c.req.formData();
     const file = formData.get('file') as File | null;
     
     if (!file) {
-      throw new Error('No resume file uploaded');
+      throw new Error('No resume file uploaded. Please select a PDF or DOCX file.');
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      throw new Error('File exceeds the 5MB size limit.');
+      throw new Error('File exceeds the 5MB size limit. Please compress your resume and try again.');
     }
     
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     const isDocx = file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.name.toLowerCase().endsWith('.docx');
 
     if (!isPdf && !isDocx) {
-      throw new Error('Invalid file type. Only PDFs and DOCX files are allowed.');
+      throw new Error('Unsupported file type. Please upload a PDF or DOCX resume file.');
     }
 
     // 3. Extract text from PDF or DOCX
@@ -82,15 +82,23 @@ app.post('/*', async (c: any) => {
     let resumeText = '';
 
     if (isPdf) {
-      const pdfData = await pdf(buffer);
-      resumeText = pdfData.text;
+      try {
+        const pdfData = await pdf(buffer);
+        resumeText = pdfData.text?.trim() || '';
+      } catch (pdfErr: any) {
+        throw new Error(`Could not read the PDF file: ${pdfErr.message}. Please ensure it is not password-protected or corrupted.`);
+      }
     } else if (isDocx) {
-      const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });
-      resumeText = result.value;
+      try {
+        const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });
+        resumeText = result.value?.trim() || '';
+      } catch (docxErr: any) {
+        throw new Error(`Could not read the DOCX file: ${docxErr.message}. Please ensure the file is not corrupted.`);
+      }
     }
 
     if (!resumeText || resumeText.trim().length === 0) {
-      throw new Error('Could not extract text from PDF');
+      throw new Error('Could not extract any text from your resume. The file may contain only images or scanned pages. Please try a text-based PDF or DOCX.');
     }
 
     // 4. Send text to Groq LLM to extract fields

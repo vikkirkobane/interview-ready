@@ -25,6 +25,7 @@ const TEMPLATES = [
 ];
 
 export default function ResumesScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -119,7 +120,7 @@ export default function ResumesScreen() {
           )}
         </View>
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
   },
   sectionDesc: {
     ...Typography.bodyMd,

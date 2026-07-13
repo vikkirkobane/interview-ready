@@ -7,6 +7,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
 import { AdBanner } from '../../src/components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const timeAgo = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -21,6 +22,7 @@ const timeAgo = (dateStr: string) => {
 };
 
 export default function NotificationsScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
   const { user } = useAuthStore();
@@ -170,7 +172,7 @@ export default function NotificationsScreen() {
           })
         )}
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
   },
   notificationCard: {
     flexDirection: 'row',

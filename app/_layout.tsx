@@ -115,18 +115,55 @@ export default function RootLayout() {
       try {
         const parsedUrl = new URL(url);
         const code = parsedUrl.searchParams.get('code');
+        const error = parsedUrl.searchParams.get('error');
+        const errorDescription = parsedUrl.searchParams.get('error_description');
+
+        // Handle OAuth errors from provider
+        if (error) {
+          console.error('[DeepLink] OAuth error:', error, errorDescription);
+          Toast.show({
+            type: 'error',
+            text1: 'Authentication failed',
+            text2: errorDescription || error,
+          });
+          return;
+        }
 
         if (code) {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (error) {
-            console.error('[DeepLink] exchangeCodeForSession error:', error.message);
-            // Fall through — try to pick up any existing session
-          }
-          // Explicitly push the session into the Zustand store so that any
-          // subscriber (welcome screen, AuthGuard) reacts immediately.
-          if (data?.session) {
-            useAuthStore.getState().setSession(data.session);
-            return;
+          // Retry logic for code exchange (handles network delays)
+          let retries = 0;
+          const maxRetries = 3;
+          
+          while (retries < maxRetries) {
+            try {
+              const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+              
+              if (exchangeError) {
+                console.error(`[DeepLink] exchangeCodeForSession error (attempt ${retries + 1}):`, exchangeError.message);
+                if (retries === maxRetries - 1) {
+                  // Final attempt failed, try to pick up any existing session
+                  break;
+                }
+                retries++;
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retry
+                continue;
+              }
+              
+              // Explicitly push the session into the Zustand store so that any
+              // subscriber (welcome screen, AuthGuard) reacts immediately.
+              if (data?.session) {
+                useAuthStore.getState().setSession(data.session);
+                console.log('[DeepLink] Session established successfully');
+                return;
+              }
+            } catch (retryErr) {
+              console.error(`[DeepLink] Network error during exchange (attempt ${retries + 1}):`, retryErr);
+              if (retries === maxRetries - 1) {
+                break;
+              }
+              retries++;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
           }
         }
 
@@ -135,21 +172,47 @@ export default function RootLayout() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           useAuthStore.getState().setSession(session);
+          console.log('[DeepLink] Session found via getSession fallback');
         } else {
           console.warn('[DeepLink] No session found after handling callback URL.');
+          // Additional fallback: wait and retry session check
+          setTimeout(async () => {
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            if (retrySession) {
+              useAuthStore.getState().setSession(retrySession);
+              console.log('[DeepLink] Session found on delayed retry');
+            }
+          }, 2000);
         }
       } catch (err) {
         console.error('[DeepLink] Unexpected error:', err);
+        // Final fallback attempt
+        setTimeout(async () => {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              useAuthStore.getState().setSession(session);
+            }
+          } catch (fallbackErr) {
+            console.error('[DeepLink] Fallback session check failed:', fallbackErr);
+          }
+        }, 3000);
       }
     }
 
     // Handle link that launched the app from cold start
     Linking.getInitialURL().then((url) => {
-      if (url) handleDeepLink(url);
+      if (url) {
+        console.log('[DeepLink] Handling initial URL:', url);
+        handleDeepLink(url);
+      }
+    }).catch((err) => {
+      console.error('[DeepLink] getInitialURL error:', err);
     });
 
     // Handle link while app is already open (foreground)
     const subscription = Linking.addEventListener('url', ({ url }) => {
+      console.log('[DeepLink] Handling foreground URL:', url);
       handleDeepLink(url);
     });
 

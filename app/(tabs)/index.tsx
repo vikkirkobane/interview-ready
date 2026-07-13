@@ -22,6 +22,7 @@ import { useCredits } from '../../src/hooks/useCredits';
 import { Image } from 'expo-image';
 
 export default function DashboardScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
@@ -274,7 +275,7 @@ export default function DashboardScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }

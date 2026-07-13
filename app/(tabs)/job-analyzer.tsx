@@ -9,8 +9,10 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { AdBanner } from '../../src/components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function JobFitScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const { job_id } = useLocalSearchParams();
   const [jdText, setJdText] = useState('');
   const [jdUrl, setJdUrl] = useState('');
@@ -272,7 +274,7 @@ export default function JobFitScreen() {
           </View>
         </View>
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: Spacing.lg,
-    paddingBottom: 120, // Bottom nav padding
+    paddingBottom: Spacing.xl, // Bottom nav padding
     maxWidth: 800, // Reduced max width since it's single column now
     width: '100%',
     alignSelf: 'center',

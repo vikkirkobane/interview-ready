@@ -18,6 +18,7 @@ import {
   CompanyResearchResult,
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ const BulletList = ({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CompanyResearchScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const { colors } = useTheme();
   const researchMutation = useCompanyResearchMutation();
   const { user } = useAuthStore();
@@ -217,7 +219,7 @@ export default function CompanyResearchScreen() {
           </View>
         )}
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     
 </View>);
   }
@@ -513,7 +515,7 @@ export default function CompanyResearchScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -522,7 +524,7 @@ export default function CompanyResearchScreen() {
 
 const s = StyleSheet.create({
   screen:          { flex: 1 },
-  content:         { padding: Spacing.lg, paddingBottom: 120 },
+  content:         { padding: Spacing.lg, paddingBottom: Spacing.xl },
 
   // Hero
   hero:            { alignItems: 'center', marginBottom: Spacing.xl, marginTop: Spacing.md },
@@ -562,7 +564,7 @@ const s = StyleSheet.create({
   tabActive:       { borderBottomColor: '#0ea5e9', borderBottomWidth: 2 },
   tabLabel:        { ...Typography.bodySm },
 
-  resultsContent:  { padding: Spacing.lg, paddingBottom: 120 },
+  resultsContent:  { padding: Spacing.lg, paddingBottom: Spacing.xl },
   gap:             { gap: Spacing.lg },
 
   // Cards

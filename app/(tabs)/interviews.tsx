@@ -8,8 +8,10 @@ import { usePastInterviewsQuery, useDeleteMockInterviewMutation, useExtractJdMut
 import { useAuthStore } from '../../src/stores/auth-store';
 import * as DocumentPicker from 'expo-document-picker';
 import Toast from 'react-native-toast-message';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function InterviewsLobbyScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors } = useTheme();
@@ -296,7 +298,7 @@ export default function InterviewsLobbyScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',

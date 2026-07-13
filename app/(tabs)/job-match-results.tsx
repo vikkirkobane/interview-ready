@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth-store';
 
 export default function JobMatchResultsScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const { id, fromList } = useLocalSearchParams();
   const router = useRouter();
   const { colors, isDark } = useTheme();
@@ -98,7 +99,7 @@ export default function JobMatchResultsScreen() {
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
-        contentContainerStyle={[styles.container, { paddingBottom: 140 + insets.bottom }]} 
+        contentContainerStyle={[styles.container, { paddingBottom: Spacing.xl + insets.bottom }]} 
         showsVerticalScrollIndicator={false}
       >
         <Pressable style={styles.backBtn} onPress={() => router.replace('/(tabs)/job-analyzer')}>
@@ -348,7 +349,7 @@ export default function JobMatchResultsScreen() {
           </Pressable>
         )}
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -359,7 +360,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: Spacing.lg,
-    paddingBottom: 120, // Bottom nav padding
+    paddingBottom: Spacing.xl, // Bottom nav padding
     maxWidth: 1000,
     width: '100%',
     alignSelf: 'center',

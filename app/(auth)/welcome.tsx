@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Animated,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -69,15 +70,35 @@ export default function WelcomeScreen() {
     // If no error, keep loading spinner visible until session arrives.
     // Also poll for session to handle cases where onAuthStateChange is slow
     if (!error) {
-      const pollInterval = setInterval(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          clearInterval(pollInterval);
-          setLoadingProvider(null);
+      // Platform-specific timing: Android needs longer polling due to deep linking delays
+      const pollInterval = Platform.OS === 'android' ? 750 : 500;
+      const maxPollTime = Platform.OS === 'android' ? 20000 : 15000; // 20s for Android, 15s for iOS
+      
+      let attempts = 0;
+      const maxAttempts = maxPollTime / pollInterval;
+      
+      const pollIntervalId = setInterval(async () => {
+        attempts++;
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            clearInterval(pollIntervalId);
+            setLoadingProvider(null);
+          } else if (attempts >= maxAttempts) {
+            // Max attempts reached without session
+            clearInterval(pollIntervalId);
+            setLoadingProvider(null);
+            Toast.show({ 
+              type: 'error', 
+              text1: 'Sign in timeout', 
+              text2: 'Please try again or check your connection' 
+            });
+          }
+        } catch (err) {
+          console.error('[OAuth] Session polling error:', err);
+          // Continue polling even on error
         }
-      }, 500);
-      // Clear polling after 10 seconds
-      setTimeout(() => clearInterval(pollInterval), 10000);
+      }, pollInterval);
     }
   };
 
@@ -93,15 +114,35 @@ export default function WelcomeScreen() {
     // If no error, keep loading spinner visible until session arrives.
     // Also poll for session to handle cases where onAuthStateChange is slow
     if (!error) {
-      const pollInterval = setInterval(async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          clearInterval(pollInterval);
-          setLoadingProvider(null);
+      // Platform-specific timing: Android needs longer polling due to deep linking delays
+      const pollInterval = Platform.OS === 'android' ? 750 : 500;
+      const maxPollTime = Platform.OS === 'android' ? 20000 : 15000; // 20s for Android, 15s for iOS
+      
+      let attempts = 0;
+      const maxAttempts = maxPollTime / pollInterval;
+      
+      const pollIntervalId = setInterval(async () => {
+        attempts++;
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            clearInterval(pollIntervalId);
+            setLoadingProvider(null);
+          } else if (attempts >= maxAttempts) {
+            // Max attempts reached without session
+            clearInterval(pollIntervalId);
+            setLoadingProvider(null);
+            Toast.show({ 
+              type: 'error', 
+              text1: 'Sign in timeout', 
+              text2: 'Please try again or check your connection' 
+            });
+          }
+        } catch (err) {
+          console.error('[OAuth] Session polling error:', err);
+          // Continue polling even on error
         }
-      }, 500);
-      // Clear polling after 10 seconds
-      setTimeout(() => clearInterval(pollInterval), 10000);
+      }, pollInterval);
     }
   };
 

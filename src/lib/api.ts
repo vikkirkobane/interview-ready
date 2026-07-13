@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
 
 declare let window: any;
 
@@ -143,13 +144,26 @@ export async function apiUploadFile<T = any>(
 
     const formData = new FormData();
     if (Platform.OS === 'web' && webFile) {
+      // Web: use the Blob directly
       (formData as any).append('file', webFile, fileName);
     } else {
-      (formData as any).append('file', {
-        uri: fileUri,
-        name: fileName,
-        type: mimeType || 'application/octet-stream',
-      } as any);
+      // Native: read the file bytes and create a real Blob
+      // This avoids the "Unsupported FormDataPart Implementation" error
+      // that occurs when a plain object { uri, name, type } is passed to FormData
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (!fileInfo.exists) {
+        return { data: null, error: 'File not found' };
+      }
+      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteNumbers], { type: mimeType || 'application/octet-stream' });
+      (formData as any).append('file', blob, fileName);
     }
 
     const response = await fetch(

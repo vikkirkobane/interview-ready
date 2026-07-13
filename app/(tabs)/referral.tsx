@@ -7,8 +7,10 @@ import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 import { useReferral } from '../../src/hooks/useReferral';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReferralScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const { colors } = useTheme();
   const { stats, loading } = useReferral();
   const { user } = useAuthStore();
@@ -131,7 +133,7 @@ export default function ReferralScreen() {
           </View>
         </View>
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -142,7 +144,7 @@ const styles = StyleSheet.create({
   container: {
     padding: Spacing.lg,
     paddingTop: Spacing.xxl,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
   },
   heroSection: {
     alignItems: 'center',

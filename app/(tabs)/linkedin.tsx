@@ -24,6 +24,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { Pressable,  Modal } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ const KW_COLOR: Record<string, string> = {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function LinkedinOptimizerScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
@@ -342,7 +344,7 @@ export default function LinkedinOptimizerScreen() {
             <Text style={[s.skipText, { color: colors.textMuted }]}>Skip — I'll enter my content manually →</Text>
           </Pressable>
           </ScrollView>
-          {!isPro && <AdBanner />}
+          {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
       </View>
     );
   }
@@ -438,7 +440,7 @@ export default function LinkedinOptimizerScreen() {
 
         <Button title="Continue → Review & Add Content" onPress={() => setStep('content')} style={{ marginTop: Spacing.lg }} />
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     
 </View>);
   }
@@ -548,7 +550,7 @@ export default function LinkedinOptimizerScreen() {
           <Button title="Next → Custom Spike" onPress={() => setStep('spike')} style={{ flex: 1.5 }} />
         </View>
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     
 </View>);
   }
@@ -604,7 +606,7 @@ export default function LinkedinOptimizerScreen() {
           </View>
         )}
         </ScrollView>
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     
 </View>);
   }
@@ -842,7 +844,7 @@ export default function LinkedinOptimizerScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -926,7 +928,7 @@ function CtaCard({ label, description, loading, onPress, colors }: any) {
 
 const s = StyleSheet.create({
   screen:          { flex: 1 },
-  content:         { padding: Spacing.lg, paddingBottom: 120 },
+  content:         { padding: Spacing.lg, paddingBottom: Spacing.xl },
   pageHeader:      { alignItems: 'center', marginBottom: Spacing.xl, marginTop: Spacing.md },
   liIcon:          { width: 64, height: 64, borderRadius: Radius.full, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md },
   pageTitle:       { ...Typography.headingLg, marginBottom: Spacing.xs, textAlign: 'center' },
@@ -977,7 +979,7 @@ const s = StyleSheet.create({
   tab:             { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
   tabActive:       { borderBottomColor: '#0A66C2', borderBottomWidth: 2 },
   tabLabel:        { ...Typography.bodySm },
-  resultsContent:  { padding: Spacing.lg, paddingBottom: 120 },
+  resultsContent:  { padding: Spacing.lg, paddingBottom: Spacing.xl },
   gap:             { gap: Spacing.lg },
   overallCard:     { alignItems: 'center', padding: Spacing.xl, borderRadius: Radius.lg, borderWidth: 1 },
   overallLabel:    { ...Typography.headingMd, marginTop: Spacing.lg, marginBottom: Spacing.xs },

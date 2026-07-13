@@ -14,10 +14,12 @@ import { usePreviewStore } from '../../src/store/previewStore';
 import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
 import { CoverLetter } from '../../src/types/schemas';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TONES = ['Professional', 'Enthusiastic', 'Concise', 'Storytelling', 'Formal'];
 
 export default function CoverLetterGeneratorScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const { colors } = useTheme();
   const { addNotification } = useNotificationStore();
@@ -401,7 +403,7 @@ export default function CoverLetterGeneratorScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
     </View>
   );
 }
@@ -415,7 +417,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',

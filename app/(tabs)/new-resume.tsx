@@ -198,6 +198,7 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ResumeBuilderScreen() {
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const router = useRouter();
@@ -1517,7 +1518,7 @@ export default function ResumeBuilderScreen() {
 
         </ScrollView>
 
-        {!isPro && <AdBanner />}
+        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
 
       {renderTemplateModal()}
       {renderExportModal()}
@@ -1754,7 +1755,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgSecondary },
   container: {
     padding: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xl,
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',

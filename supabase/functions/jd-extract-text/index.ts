@@ -3,11 +3,85 @@ import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient } from '../_shared/supabase-client.ts';
 import { UnauthorizedError } from '../_shared/errors.ts';
 import pdf from 'npm:pdf-parse@1.1.1';
-import { Buffer } from 'node:buffer';
 
 const app = new Hono();
 
 app.use('/*', cors());
+
+/**
+ * Safely convert a Uint8Array to a Base64 string without hitting the
+ * "Maximum call stack size exceeded" error that occurs when using
+ * `btoa(String.fromCharCode(...largeArray))` on files bigger than ~500KB.
+ */
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 8192; // Process in 8KB chunks to stay within stack limits
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
+/**
+ * Call the OCR.space API using the correct base64Image field (not the file field).
+ * The `base64Image` field is the proper way to send a base64-encoded image to OCR.space.
+ * The `file` field is for multipart binary uploads only.
+ */
+async function extractTextWithOcrSpace(
+  bytes: Uint8Array,
+  mimeType: string,
+  apiKey: string,
+): Promise<string> {
+  const base64 = uint8ArrayToBase64(bytes);
+  const dataUri = `data:${mimeType};base64,${base64}`;
+
+  const formData = new FormData();
+  // Use 'base64Image' — the correct field for base64 encoded images per OCR.space docs
+  formData.append('base64Image', dataUri);
+  formData.append('apikey', apiKey);
+  formData.append('language', 'eng');
+  formData.append('isOverlayRequired', 'false');
+  // Enable table detection for structured JD content
+  formData.append('detectOrientation', 'true');
+  formData.append('scale', 'true');
+  formData.append('OCREngine', '2'); // Engine 2 is more accurate for printed text
+
+  const response = await fetch('https://api.ocr.space/parse/image', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`OCR.space API request failed (${response.status}): ${errText}`);
+  }
+
+  const result = await response.json();
+
+  if (result.IsErroredOnProcessing) {
+    // OCR.space returns arrays for ErrorMessage in some cases
+    const msg = Array.isArray(result.ErrorMessage)
+      ? result.ErrorMessage.join(', ')
+      : result.ErrorMessage || 'OCR processing failed';
+    throw new Error(`OCR.space error: ${msg}`);
+  }
+
+  if (!result.ParsedResults || result.ParsedResults.length === 0) {
+    throw new Error('No text detected in the image. Please ensure the image is clear and contains readable text.');
+  }
+
+  const extractedText = result.ParsedResults
+    .map((r: any) => r.ParsedText || '')
+    .join('\n')
+    .trim();
+
+  if (!extractedText) {
+    throw new Error('OCR extracted empty text. The image may be too blurry or low-resolution.');
+  }
+
+  return extractedText;
+}
 
 app.post('/*', async (c: any) => {
   try {
@@ -22,73 +96,61 @@ app.post('/*', async (c: any) => {
       throw new UnauthorizedError('No active session');
     }
 
-    // 2. Read the uploaded file
+    // Read the uploaded file
     const formData = await c.req.formData();
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      throw new Error('No file uploaded');
+      throw new Error('No file uploaded. Please select a PDF or image file.');
     }
 
-    // 3. Validate file type and size
-    const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error('Invalid file type. Only PNG, JPEG, and PDF files are allowed.');
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isImage = file.type.startsWith('image/') ||
+      file.name.toLowerCase().endsWith('.png') ||
+      file.name.toLowerCase().endsWith('.jpg') ||
+      file.name.toLowerCase().endsWith('.jpeg');
+
+    if (!isPdf && !isImage) {
+      throw new Error('Unsupported file type. Please upload a PDF, PNG, or JPEG image.');
     }
 
+    // Validate file size (1MB limit)
     if (file.size > 1 * 1024 * 1024) {
-      throw new Error('File exceeds the 1MB size limit.');
+      throw new Error('File exceeds the 1MB size limit. Please compress your file and try again.');
     }
 
-    // 4. Extract text based on file type
+    // Extract text based on file type
     const arrayBuffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
     let extractedText = '';
 
-    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-      // Extract text from PDF
-      const pdfData = await pdf(arrayBuffer);
-      extractedText = pdfData.text;
-    } else {
-      // For images, use OCR.space API
+    if (isPdf) {
+      // Use pdf-parse for PDFs — fast, accurate, no external API needed
+      try {
+        const pdfData = await pdf(bytes);
+        extractedText = pdfData.text?.trim() || '';
+      } catch (pdfErr: any) {
+        throw new Error(`Could not read PDF: ${pdfErr.message}. Please ensure the file is not password-protected or corrupted.`);
+      }
+    } else if (isImage) {
+      // Use OCR.space for images
       const ocrSpaceApiKey = Deno.env.get('OCR_SPACE_API_KEY');
       if (!ocrSpaceApiKey) {
-        throw new Error('OCR.Space API key not configured');
+        throw new Error('OCR service is not configured. Please contact support.');
       }
 
-      // Convert ArrayBuffer to Base64 for OCR.space (they accept base64 encoded image)
-      const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      // Determine the correct MIME type for the data URI
-      const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      // Normalize MIME type — some devices report 'image/jpg' which is non-standard
+      const normalizedMime = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
 
-      const ocrFormData = new FormData();
-      ocrFormData.append('file', `data:${mimeType};base64,${base64Image}`);
-      ocrFormData.append('apikey', ocrSpaceApiKey);
-      ocrFormData.append('language', 'eng');
-      ocrFormData.append('isOverlayRequired', 'false');
-
-      const ocrResponse = await fetch('https://api.ocr.space/parse/image', {
-        method: 'POST',
-        body: ocrFormData,
-      });
-
-      const ocrResult = await ocrResponse.json();
-
-      if (ocrResult.IsErroredOnProcessing) {
-        throw new Error(ocrResult.ErrorMessage || 'OCR processing failed');
-      }
-
-      if (!ocrResult.ParsedResults || ocrResult.ParsedResults.length === 0) {
-        throw new Error('No text detected in the image');
-      }
-
-      extractedText = ocrResult.ParsedResults[0].ParsedText;
+      extractedText = await extractTextWithOcrSpace(bytes, normalizedMime, ocrSpaceApiKey);
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
-      throw new Error('Could not extract text from the provided file');
+      throw new Error('Could not extract any text from the provided file. Please try a different file or copy the job description text manually.');
     }
 
-    // 5. Return the extracted text
     return c.json({ extracted_text: extractedText }, 200);
 
   } catch (error: any) {
@@ -97,7 +159,8 @@ app.post('/*', async (c: any) => {
     }
 
     console.error('Error in jd-extract-text:', error.message);
-    return c.json({ error: error.message }, 400);
+    // Return user-friendly error messages — never expose internal stack traces
+    return c.json({ error: error.message || 'An unexpected error occurred. Please try again.' }, 400);
   }
 });
 
