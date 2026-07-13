@@ -294,8 +294,9 @@ export default function InterviewsLobbyScreen() {
           <Text style={[styles.historyMeta, { color: colors.textMuted, textAlign: 'center', marginTop: 20 }]}>No past interviews yet.</Text>
         )}
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

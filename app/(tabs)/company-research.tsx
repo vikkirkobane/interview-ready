@@ -125,7 +125,8 @@ export default function CompanyResearchScreen() {
   // ── Input Screen ─────────────────────────────────────────────────────────
   if (!result) {
     return (
-      <ScrollView
+      <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
+<ScrollView
         style={[s.screen, { backgroundColor: colors.bgSecondary }]}
         contentContainerStyle={s.content}
         keyboardShouldPersistTaps="handled"
@@ -215,9 +216,10 @@ export default function CompanyResearchScreen() {
             </Text>
           </View>
         )}
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
-    );
+    
+</View>);
   }
 
   // ── Results Screen ────────────────────────────────────────────────────────
@@ -509,8 +511,9 @@ export default function CompanyResearchScreen() {
           </View>
         )}
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

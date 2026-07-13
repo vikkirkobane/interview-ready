@@ -1515,8 +1515,9 @@ export default function ResumeBuilderScreen() {
           )}
         </View>
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
 
       {renderTemplateModal()}
       {renderExportModal()}

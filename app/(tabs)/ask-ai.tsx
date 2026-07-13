@@ -9,6 +9,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { AdBanner } from '../../src/components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -29,6 +30,11 @@ export default function AskAIScreen() {
   const [extractJdLoading, setExtractJdLoading] = useState(false);
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 72;
+  const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : 16;
+  const bottomNavPadding = tabBarHeight + tabBarBottomOffset + 10;
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -206,82 +212,88 @@ export default function AskAIScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: colors.bgSecondary }]} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={90}
-    >
-      <ScrollView 
-        style={styles.chatArea} 
-        contentContainerStyle={[styles.chatContent, { paddingBottom: keyboardVisible ? 100 : 200 }]}
+    <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        
-        {/* Page Header */}
-        <View style={styles.pageHeader}>
-          <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Ask AI</Text>
-          <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>Chat with AI to answer application questions flawlessly.</Text>
-        </View>
-
-        {messages.map(renderMessage)}
-        
-        {isTyping && (
-          <View style={[styles.messageWrapper, styles.messageWrapperAi]}>
-            <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
-              <MaterialCommunityIcons name="robot" size={16} color="#fff" />
-            </View>
-            <View style={[styles.messageBubble, styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
+        <ScrollView 
+          style={styles.chatArea} 
+          contentContainerStyle={[styles.chatContent, { paddingBottom: Spacing.xl }]}
+        >
+          
+          {/* Page Header */}
+          <View style={styles.pageHeader}>
+            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Ask AI</Text>
+            <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>Chat with AI to answer application questions flawlessly.</Text>
           </View>
-        )}
-        {!isPro && <AdBanner />}
-      </ScrollView>
-      
-      <View style={[
-        styles.inputArea, 
-        { 
-          position: 'absolute',
-          bottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.lg : Spacing.md) : (Platform.OS === 'ios' ? 90 : 80),
-          left: 0,
-          right: 0,
-          backgroundColor: 'transparent', 
-          borderTopColor: 'transparent',
-          paddingBottom: 0,
-          marginBottom: 0
-        }
-      ]}>
-        <View style={styles.inputRow}>
-          <Pressable
-            style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}
-            onPress={handleAttachJdFile}
-            disabled={extractJdLoading}
-          >
-            {extractJdLoading ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <>
-                <Ionicons name="attach" size={20} color={colors.primary} />
-              </>
-            )}
-          </Pressable>
-          <TextInput
-             style={[styles.textInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }]}
-             placeholder="Paste application question here..."
-             placeholderTextColor={colors.textMuted}
-             value={inputText}
-             onChangeText={setInputText}
-             multiline
-          />
-          <Pressable
-            style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() || isTyping) && { opacity: 0.5 }]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isTyping}
-          >
-             <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
-          </Pressable>
+
+          {messages.map(renderMessage)}
+          
+          {isTyping && (
+            <View style={[styles.messageWrapper, styles.messageWrapperAi]}>
+              <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
+                <MaterialCommunityIcons name="robot" size={16} color="#fff" />
+              </View>
+              <View style={[styles.messageBubble, styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            </View>
+          )}
+        </ScrollView>
+        
+        <View style={[
+          styles.inputArea, 
+          { 
+            backgroundColor: 'transparent', 
+            borderTopColor: 'transparent',
+            paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
+          }
+        ]}>
+          <View style={styles.inputRow}>
+            <Pressable
+              style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}
+              onPress={handleAttachJdFile}
+              disabled={extractJdLoading}
+            >
+              {extractJdLoading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <>
+                  <Ionicons name="attach" size={20} color={colors.primary} />
+                </>
+              )}
+            </Pressable>
+            <TextInput
+               style={[styles.textInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }]}
+               placeholder="Paste application question here..."
+               placeholderTextColor={colors.textMuted}
+               value={inputText}
+               onChangeText={setInputText}
+               multiline
+            />
+            <Pressable
+              style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() || isTyping) && { opacity: 0.5 }]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || isTyping}
+            >
+               <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+
+      {!keyboardVisible && (
+        <>
+          {!isPro ? (
+            <AdBanner />
+          ) : (
+            <View style={{ height: bottomNavPadding }} />
+          )}
+        </>
+      )}
+    </View>
   );
 }
 

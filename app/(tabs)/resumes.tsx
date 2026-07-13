@@ -118,8 +118,8 @@ export default function ResumesScreen() {
             ))
           )}
         </View>
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

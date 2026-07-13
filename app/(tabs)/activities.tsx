@@ -60,8 +60,8 @@ export default function AllActivitiesScreen() {
         ) : (
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent activities found.</Text>
         )}
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

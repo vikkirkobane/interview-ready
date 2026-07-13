@@ -276,8 +276,9 @@ export default function FeedbackScreen() {
           )}
         </Animated.View>
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

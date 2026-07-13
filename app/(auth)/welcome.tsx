@@ -15,6 +15,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { Image } from 'expo-image';
+import { supabase } from '../../src/lib/supabase';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -30,7 +31,11 @@ export default function WelcomeScreen() {
   // fires after the browser closes), navigate to tabs immediately.
   useEffect(() => {
     if (session) {
-      router.replace('/(tabs)');
+      // Small delay to ensure session is fully set
+      const timer = setTimeout(() => {
+        router.replace('/(tabs)');
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [session]);
 
@@ -62,6 +67,18 @@ export default function WelcomeScreen() {
       }
     }
     // If no error, keep loading spinner visible until session arrives.
+    // Also poll for session to handle cases where onAuthStateChange is slow
+    if (!error) {
+      const pollInterval = setInterval(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          clearInterval(pollInterval);
+          setLoadingProvider(null);
+        }
+      }, 500);
+      // Clear polling after 10 seconds
+      setTimeout(() => clearInterval(pollInterval), 10000);
+    }
   };
 
   const handleLinkedInAuth = async () => {
@@ -74,6 +91,18 @@ export default function WelcomeScreen() {
       }
     }
     // If no error, keep loading spinner visible until session arrives.
+    // Also poll for session to handle cases where onAuthStateChange is slow
+    if (!error) {
+      const pollInterval = setInterval(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          clearInterval(pollInterval);
+          setLoadingProvider(null);
+        }
+      }, 500);
+      // Clear polling after 10 seconds
+      setTimeout(() => clearInterval(pollInterval), 10000);
+    }
   };
 
   return (

@@ -347,8 +347,8 @@ export default function JobMatchResultsScreen() {
             )}
           </Pressable>
         )}
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

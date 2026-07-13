@@ -399,8 +399,9 @@ export default function CoverLetterGeneratorScreen() {
           </View>
         )}
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

@@ -265,7 +265,10 @@ export default function LinkedinOptimizerScreen() {
   const handleConnectLinkedIn = async () => {
     setLiConnecting(true);
     try {
-      await signInWithOAuth('linkedin_oidc');
+      const { error } = await signInWithOAuth('linkedin_oidc');
+      if (error) {
+        Toast.show({ type: 'error', text1: 'LinkedIn connection failed', text2: error });
+      }
       // OAuth redirects — session will update automatically via onAuthStateChange
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'LinkedIn connection failed', text2: e.message });
@@ -338,8 +341,8 @@ export default function LinkedinOptimizerScreen() {
           <Pressable onPress={() => setShowLinkedInPrompt(false)} style={s.skipBtn}>
             <Text style={[s.skipText, { color: colors.textMuted }]}>Skip — I'll enter my content manually →</Text>
           </Pressable>
+          </ScrollView>
           {!isPro && <AdBanner />}
-        </ScrollView>
       </View>
     );
   }
@@ -348,7 +351,8 @@ export default function LinkedinOptimizerScreen() {
   if (step === 'prefill') {
     const hasProfileData = wizard.targetRoles.length > 0 || wizard.experience.some(e => e.title);
     return (
-      <ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
+      <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
+<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
         {/* Header */}
         <View style={s.pageHeader}>
           <View style={[s.liIcon, { backgroundColor: colors.bgPrimary }]}>
@@ -433,15 +437,17 @@ export default function LinkedinOptimizerScreen() {
         )}
 
         <Button title="Continue → Review & Add Content" onPress={() => setStep('content')} style={{ marginTop: Spacing.lg }} />
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
-    );
+    
+</View>);
   }
 
   // ── STEP: Content ─────────────────────────────────────────────────────────
   if (step === 'content') {
     return (
-      <ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
+      <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
+<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
         <StepDots current={1} total={3} colors={colors} />
         <Text style={[s.stepTitle, { color: colors.textPrimary }]}>Review & Complete Content</Text>
         <Text style={[s.stepSubtitle, { color: colors.textMuted }]}>
@@ -541,15 +547,17 @@ export default function LinkedinOptimizerScreen() {
           <Button title="← Back" variant="outline" onPress={() => setStep('prefill')} style={{ flex: 1, marginRight: Spacing.sm }} />
           <Button title="Next → Custom Spike" onPress={() => setStep('spike')} style={{ flex: 1.5 }} />
         </View>
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
-    );
+    
+</View>);
   }
 
   // ── STEP: SPIKE ───────────────────────────────────────────────────────────
   if (step === 'spike') {
     return (
-      <ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
+      <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
+<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
         <StepDots current={2} total={3} colors={colors} />
         <Text style={[s.stepTitle, { color: colors.textPrimary }]}>Your SPIKE Differentiator</Text>
         <Text style={[s.stepSubtitle, { color: colors.textMuted }]}>
@@ -595,9 +603,10 @@ export default function LinkedinOptimizerScreen() {
             </Text>
           </View>
         )}
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
-    );
+    
+</View>);
   }
 
   // ── RESULTS ───────────────────────────────────────────────────────────────
@@ -831,8 +840,9 @@ export default function LinkedinOptimizerScreen() {
           </View>
         )}
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

@@ -76,6 +76,10 @@ function AuthGuard() {
     // Non-grouped auth/callback route (app/auth/callback.tsx → /auth/callback)
     if (firstSegment === 'auth' && secondSegment === 'callback') return;
 
+    // Don't redirect if we're on the welcome screen - let it handle OAuth redirects
+    const onWelcomeScreen = firstSegment === '(auth)' && secondSegment === 'welcome';
+    if (onWelcomeScreen) return;
+
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (session && inAuthGroup) {

@@ -322,8 +322,8 @@ export default function InterviewScreen() {
         })}
 
         {isTyping && <TypingIndicator colors={colors} />}
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
 
       {/* Bottom Input Area */}
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>

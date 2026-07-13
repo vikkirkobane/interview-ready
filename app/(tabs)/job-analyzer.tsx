@@ -271,8 +271,8 @@ export default function JobFitScreen() {
 
           </View>
         </View>
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

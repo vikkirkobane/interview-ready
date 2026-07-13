@@ -16,7 +16,8 @@ export const AdBanner = () => {
   const segments = useSegments();
 
   // Check if we are inside the tabs layout
-  const inTabs = segments.includes('(tabs)');
+  // Cast segments to string[] to avoid 'never' type errors with expo-router
+  const inTabs = (segments as string[]).includes('(tabs)');
   
   // Calculate the position above the floating tab bar:
   // tab bar height is 72, plus its bottom offset
@@ -33,17 +34,7 @@ export const AdBanner = () => {
     <View style={[
       styles.container,
       inTabs && {
-        position: 'absolute',
-        bottom: bottomPosition,
-        left: 0,
-        right: 0,
-        zIndex: 9999,
-        // Adding a subtle shadow makes it look better as a floating element
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 5,
+        paddingBottom: tabBarHeight + tabBarBottomOffset,
       }
     ]}>
       <BannerAd

@@ -169,8 +169,8 @@ export default function NotificationsScreen() {
             );
           })
         )}
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

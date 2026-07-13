@@ -272,8 +272,9 @@ export default function DashboardScreen() {
           )}
         </View>
 
+        </ScrollView>
+
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }

@@ -130,8 +130,8 @@ export default function ReferralScreen() {
             </View>
           </View>
         </View>
+        </ScrollView>
         {!isPro && <AdBanner />}
-      </ScrollView>
     </View>
   );
 }
