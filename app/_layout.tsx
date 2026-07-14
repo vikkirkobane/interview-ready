@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../src/lib/query-client';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, ActivityIndicator, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -36,14 +37,8 @@ if (!(Toast as any)._isPatched) {
   (Toast as any)._isPatched = true;
 }
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 2,
-    },
-  },
-});
+// QueryClient is imported from src/lib/query-client to ensure a single instance
+// (the auth store also uses it for cache clearing on sign-out)
 
 /**
  * Auth guard: watches session state and redirects to the correct route.
@@ -107,6 +102,36 @@ export default function RootLayout() {
   // This fires when the app is opened via the OAuth redirect URI.
   useEffect(() => {
     async function handleDeepLink(url: string) {
+      // Handle password reset deep links (interviewready://reset-password#access_token=...&type=recovery)
+      if (url.includes('reset-password')) {
+        try {
+          // Supabase sends recovery tokens in the URL hash fragment
+          const hashIndex = url.indexOf('#');
+          if (hashIndex !== -1) {
+            const hashParams = new URLSearchParams(url.substring(hashIndex + 1));
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            const type = hashParams.get('type');
+
+            if (type === 'recovery' && accessToken && refreshToken) {
+              const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              });
+              if (error) {
+                console.error('[DeepLink] Failed to set recovery session:', error.message);
+              }
+              // The reset-password screen will detect the session and show the form
+              console.log('[DeepLink] Recovery session set, reset-password screen will handle it');
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('[DeepLink] Reset password error:', err);
+        }
+        return;
+      }
+
       // Only handle auth callbacks
       if (!url.includes('auth/callback')) return;
 
@@ -196,6 +221,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="reset-password" options={{ headerShown: false }} />
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="payment" />

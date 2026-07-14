@@ -145,7 +145,7 @@ export default function ProfileScreen() {
         }] : undefined,
       });
       
-      await supabase.auth.updateUser({ data: { onboarding_completed: true } });
+      // onboarding_completed is set at Step 5 (discover.tsx), NOT here
 
       useOnboardingStore.getState().nextStep();
       router.push('/(onboarding)/analyze');

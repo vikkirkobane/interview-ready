@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
@@ -27,30 +27,69 @@ const TypingIndicator = ({ colors }: { colors: any }) => {
       dot3.setValue(1);
       return;
     }
-    const animateDot = (anim: Animated.Value, delay: number) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 400,
-            delay: delay,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 400,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.delay(400) // pause between loops
-        ])
-      ).start();
-    };
+    const anim1 = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dot1, {
+          toValue: 1,
+          duration: 400,
+          delay: 0,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dot1, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.delay(400)
+      ])
+    );
+    const anim2 = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dot2, {
+          toValue: 1,
+          duration: 400,
+          delay: 200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dot2, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.delay(400)
+      ])
+    );
+    const anim3 = Animated.loop(
+      Animated.sequence([
+        Animated.timing(dot3, {
+          toValue: 1,
+          duration: 400,
+          delay: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(dot3, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.delay(400)
+      ])
+    );
+    anim1.start();
+    anim2.start();
+    anim3.start();
 
-    animateDot(dot1, 0);
-    animateDot(dot2, 200);
-    animateDot(dot3, 400);
+    return () => {
+      anim1.stop();
+      anim2.stop();
+      anim3.stop();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reducedMotion]);
 
@@ -79,13 +118,13 @@ type Message = {
 };
 
 export default function InterviewScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -101,7 +140,7 @@ export default function InterviewScreen() {
   const extractJd = useExtractJdMutation();
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
-  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
   useEffect(() => {
     // Start interview session when screen mounts
@@ -142,13 +181,14 @@ export default function InterviewScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Timer Effect
+  // Timer Effect — only start when session exists
   useEffect(() => {
+    if (!sessionId) return;
     const interval = setInterval(() => {
       setSeconds(s => s + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [sessionId]);
 
   const formatTime = (totalSeconds: number) => {
     const m = Math.floor(totalSeconds / 60);
@@ -208,10 +248,13 @@ export default function InterviewScreen() {
     setJdFileName(null);
   };
 
+  const messageCounter = useRef(0);
+
   const handleSend = async () => {
     if (!inputText.trim() || !sessionId) return;
-    
-    const newMsg: Message = { id: Date.now().toString(), role: 'user', text: inputText };
+
+    messageCounter.current += 1;
+    const newMsg: Message = { id: `msg-${messageCounter.current}-${Date.now()}`, role: 'user', text: inputText };
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
     setIsTyping(true);
@@ -221,14 +264,16 @@ export default function InterviewScreen() {
         session_id: sessionId,
         content: newMsg.text
       });
+      messageCounter.current += 1;
       setMessages(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
+        id: `msg-ai-${messageCounter.current}-${Date.now()}`,
         role: 'ai',
         text: res.message?.content || res.content || "Thank you for your response."
       }]);
 
       incrementInterstitialCount();
-      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+      const updatedCount = useUIStore.getState().interstitialActionCount;
+      if (!isPro && interstitialLoaded && updatedCount >= 2) {
         showInterstitialAd();
         resetInterstitialCount();
       }
@@ -241,7 +286,18 @@ export default function InterviewScreen() {
 
   const handleEndSession = () => {
     if (sessionId) {
-      router.push({ pathname: '/feedback', params: { sessionId } });
+      Alert.alert(
+        'End Session?',
+        'Are you sure you want to end this interview session?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'End Session',
+            style: 'destructive',
+            onPress: () => router.push({ pathname: '/feedback', params: { sessionId } }),
+          },
+        ]
+      );
     } else {
       router.back();
     }
@@ -267,7 +323,7 @@ export default function InterviewScreen() {
         {/* Page Header */}
         <View style={styles.pageHeader}>
           <View style={styles.pageHeaderTitleArea}>
-            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Product Manager Role</Text>
+            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{role}</Text>
             <View style={styles.headerBadge}>
               <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
               <Text style={[styles.liveText, { color: colors.textMuted }]}>LIVE INTERVIEW SESSION</Text>

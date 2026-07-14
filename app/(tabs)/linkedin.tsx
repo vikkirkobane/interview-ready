@@ -62,11 +62,11 @@ const KW_COLOR: Record<string, string> = {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function LinkedinOptimizerScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   // Detect LinkedIn OAuth user — must be computed BEFORE state that depends on it
   const isLinkedInUser = user?.app_metadata?.provider === 'linkedin_oidc';
   const oauthName   = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
@@ -75,6 +75,12 @@ export default function LinkedinOptimizerScreen() {
   const [step, setStep]           = useState<WizardStep>('prefill');
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [showLinkedInPrompt, setShowLinkedInPrompt] = useState(!isLinkedInUser);
+
+  // Sync showLinkedInPrompt when user connects LinkedIn via OAuth
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isLinkedInUser) setShowLinkedInPrompt(false);
+  }, [isLinkedInUser]);
   const [liConnecting, setLiConnecting] = useState(false);
 
   // ── Build initial wizard from existing profile data ────────────────────────
@@ -122,13 +128,13 @@ export default function LinkedinOptimizerScreen() {
   const scrapeMutation     = useLinkedinScrapeMutation();
 
   // Track if the user has imported data via scraping — prevents profile refetch from overwriting it
-  const hasScrapedRef = React.useRef(false);
+  const [hasScraped, setHasScraped] = React.useState(false);
 
   // Refresh profile data when screen mounts so pre-fill is up-to-date
   useEffect(() => {
     fetchProfile().then(() => {
       // Only reset wizard from profile if the user hasn't already imported via URL
-      if (!hasScrapedRef.current) {
+      if (!hasScraped) {
         setWizard(buildInitialWizard());
       }
     });
@@ -166,6 +172,9 @@ export default function LinkedinOptimizerScreen() {
       Toast.show({ type: 'error', text1: 'Add at least one target role' });
       return;
     }
+    // Clear stale optimization results when re-analyzing
+    setSectionResults({});
+    setEngagementPlan(null);
     try {
       const result = await analyzeMutation.mutateAsync({
         headline:         wizard.headline || undefined,
@@ -174,7 +183,7 @@ export default function LinkedinOptimizerScreen() {
         skills:           wizard.skills.length > 0 ? wizard.skills : undefined,
         target_roles:     wizard.targetRoles,
         target_companies: wizard.targetCompanies.length > 0 ? wizard.targetCompanies : undefined,
-        years_experience: wizard.yearsExp ? parseInt(wizard.yearsExp) : undefined,
+        years_experience: wizard.yearsExp ? (parseInt(wizard.yearsExp) || undefined) : undefined,
         spike:            wizard.spike.differentiator ? wizard.spike : undefined,
         tone:             wizard.tone,
       });
@@ -193,7 +202,7 @@ export default function LinkedinOptimizerScreen() {
         section,
         target_roles:     wizard.targetRoles,
         target_companies: wizard.targetCompanies.length > 0 ? wizard.targetCompanies : undefined,
-        years_experience: wizard.yearsExp ? parseInt(wizard.yearsExp) : undefined,
+        years_experience: wizard.yearsExp ? (parseInt(wizard.yearsExp) || undefined) : undefined,
         spike:            wizard.spike.differentiator ? wizard.spike : undefined,
         tone:             wizard.tone,
       };
@@ -230,7 +239,7 @@ export default function LinkedinOptimizerScreen() {
       const data = result.data;
 
       // Mark that scrape data is now loaded — prevents profile refetch from overwriting
-      hasScrapedRef.current = true;
+      setHasScraped(true);
 
       setWizard(w => ({
         ...w,
@@ -416,7 +425,7 @@ export default function LinkedinOptimizerScreen() {
         <Text style={[s.sectionLabel, { color: colors.textPrimary }]}>Auto-Import Profile</Text>
         <Card style={[s.prefillCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
           <Text style={[s.hint, { color: colors.textMuted, marginBottom: Spacing.md }]}>
-            Enter your public LinkedIn URL to automatically extract your profile content. This costs 2 credits.
+            Enter your public LinkedIn URL to automatically extract your profile content.
           </Text>
           <TextInput 
             style={[s.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary, marginBottom: Spacing.md }]}
@@ -490,7 +499,7 @@ export default function LinkedinOptimizerScreen() {
           <FieldLabel label="LinkedIn Headline" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
             { }
-            {hasScrapedRef.current && wizard.headline
+            {hasScraped && wizard.headline
               ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
               : 'Copy this from your LinkedIn profile header. This is the most important field.'}
           </Text>
@@ -504,7 +513,7 @@ export default function LinkedinOptimizerScreen() {
           <FieldLabel label="About / Summary" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
             { }
-            {hasScrapedRef.current && wizard.about
+            {hasScraped && wizard.about
               ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
               : wizard.about ? 'Loaded from profile. Review and edit as needed.' : 'Paste your LinkedIn About section.'}
           </Text>
@@ -911,7 +920,7 @@ function SectionCard({ section, score, issues, suggestion, optimizing, done, onO
             <Text key={i} style={[s.issueItem, { color: colors.textSecondary }]}>• {iss}</Text>
           ))}
           <Button
-            title={optimizing ? 'Optimising…' : done ? '✓ Optimised — see tab' : 'AI Rewrite (1 Credit)'}
+            title={optimizing ? 'Optimising…' : done ? '✓ Optimised — see tab' : 'AI Rewrite'}
             variant="outline" size="sm" onPress={onOptimize} disabled={optimizing}
             style={{ marginTop: Spacing.md }} />
         </View>
@@ -925,7 +934,7 @@ function CtaCard({ label, description, loading, onPress, colors }: any) {
     <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border, alignItems: 'center' }]}>
       <Text style={[s.cardTitle, { color: colors.textPrimary, textAlign: 'center' }]}>{label}</Text>
       <Text style={[s.bodyText, { color: colors.textSecondary, textAlign: 'center', marginTop: Spacing.xs }]}>{description}</Text>
-      <Button title={loading ? 'Generating…' : 'Generate (1 Credit)'} onPress={onPress} disabled={loading} style={{ marginTop: Spacing.md }} />
+      <Button title={loading ? 'Generating…' : 'Generate'} onPress={onPress} disabled={loading} style={{ marginTop: Spacing.md }} />
     </Card>
   );
 }

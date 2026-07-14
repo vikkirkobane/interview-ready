@@ -3,6 +3,25 @@ import { apiCall, apiUploadFile } from '../lib/api';
 import { supabase } from '../lib/supabase';
 
 /**
+ * Lightweight credit refresh that works outside React components.
+ * Re-reads the user's ai_credits row so the useCredits hook picks
+ * up the new balance on its next render / refetch cycle.
+ */
+async function refreshCredits() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await supabase
+      .from('users')
+      .select('ai_credits')
+      .eq('id', session.user.id)
+      .single();
+  } catch {
+    // Silent fail — balance will refresh on next screen visit
+  }
+}
+
+/**
  * Update Profile Mutation
  */
 export const useUpdateProfileMutation = () => {
@@ -39,6 +58,7 @@ export const useParseResumeMutation = () => {
         education: any[];
       };
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -79,6 +99,7 @@ export const useAnalyzeJobMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data; // { job_id: string, analysis: JD_ANALYSIS_SCHEMA }
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -92,6 +113,7 @@ export const useGenerateRoadmapMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data; // { data: Roadmap }
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -105,6 +127,7 @@ export const useCreateResumeMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data; // { resume_id: string, message: string, stream_channel: string }
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -235,6 +258,7 @@ export const useRewriteSectionMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data; // { rewritten: string }
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -267,6 +291,7 @@ export const useStartInterviewMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data; // { session_id, initial_message }
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -303,6 +328,7 @@ export const useCreateCoverLetterMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data; // { cover_letter }
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -342,6 +368,7 @@ export const useLinkedinScrapeMutation = () => {
         message: string;
       };
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -381,6 +408,7 @@ export const useCompanyResearchMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data as { data: CompanyResearchResult; message: string };
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -408,6 +436,7 @@ export const useLinkedinAnalyzeMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data as { analysis: any; message: string };
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -431,6 +460,7 @@ export const useLinkedinOptimizeMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data as { result: any; section: string; message: string };
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 
@@ -451,6 +481,7 @@ export const useLinkedinEngagementPlanMutation = () => {
       if (response.error) throw new Error(response.error);
       return response.data as { plan: any; message: string };
     },
+    onSuccess: () => { refreshCredits(); },
   });
 };
 

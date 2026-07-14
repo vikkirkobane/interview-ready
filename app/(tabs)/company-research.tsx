@@ -94,11 +94,11 @@ const BulletList = ({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CompanyResearchScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const researchMutation = useCompanyResearchMutation();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
   const [companyUrl, setCompanyUrl] = useState('');
   const [context, setContext] = useState('');
@@ -335,7 +335,7 @@ export default function CompanyResearchScreen() {
             <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
               <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Key Products & Services</Text>
               <View style={s.chipRow}>
-                {result.key_products_services.map((p, i) => (
+                {(result.key_products_services || []).map((p, i) => (
                   <Chip key={i} text={p} color="#0ea5e9" colors={colors} />
                 ))}
               </View>
@@ -400,7 +400,7 @@ export default function CompanyResearchScreen() {
               </Card>
             )}
 
-            {result.red_flags.length > 0 && (
+            {(result.red_flags?.length ?? 0) > 0 && (
               <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: '#f59e0b' }]}>
                 <View style={s.sectionHeaderRow}>
                   <Ionicons name="warning-outline" size={18} color="#f59e0b" />
@@ -445,10 +445,10 @@ export default function CompanyResearchScreen() {
 
             <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
               <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Growth Signals</Text>
-              <BulletList items={result.growth_signals} icon="trending-up" iconColor="#10b981" colors={colors} />
+              <BulletList items={result.growth_signals || []} icon="trending-up" iconColor="#10b981" colors={colors} />
             </Card>
 
-            {result.red_flags.length > 0 && (
+            {(result.red_flags?.length ?? 0) > 0 && (
               <Card style={[s.card, { backgroundColor: colors.bgPrimary, borderColor: '#f59e0b' }]}>
                 <Text style={[s.cardTitle, { color: colors.textPrimary }]}>Risks & Red Flags</Text>
                 <BulletList items={result.red_flags} icon="warning-outline" iconColor="#f59e0b" colors={colors} />

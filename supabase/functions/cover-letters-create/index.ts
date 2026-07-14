@@ -1,7 +1,7 @@
 import { Hono } from 'npm:hono@4.0.0';
 import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient } from '../_shared/supabase-client.ts';
-import { UnauthorizedError, ValidationError, InsufficientCreditsError } from '../_shared/errors.ts';
+import { UnauthorizedError, ValidationError, InsufficientCreditsError, NotFoundError } from '../_shared/errors.ts';
 import { aiClient } from '../_shared/ai-client.ts';
 import { COVER_LETTER_SCHEMA } from '../_shared/zod-schemas.ts';
 import { deductCredits, checkCredits } from '../_shared/credits.ts';

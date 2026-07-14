@@ -51,14 +51,14 @@ export function useCredits() {
 
       const { data, error: fetchError } = await supabase
         .from('users')
-        .select('credit_balance, total_credits_earned, total_credits_used, credits_expire_at')
+        .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at')
         .eq('id', user.id)
         .single();
 
       if (fetchError) throw fetchError;
 
       setBalance({
-        balance: data.credit_balance || 0,
+        balance: data.ai_credits || 0,
         totalEarned: data.total_credits_earned || 0,
         totalUsed: data.total_credits_used || 0,
         expiresAt: data.credits_expire_at,

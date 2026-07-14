@@ -9,12 +9,12 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AllActivitiesScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { colors } = useTheme();
   const { data: recentActivities, isLoading } = useRecentActivitiesQuery();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>

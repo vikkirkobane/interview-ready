@@ -90,6 +90,7 @@ export async function apiCall<T = any>(
             router.replace('/(onboarding)/role');
           }, 100);
         }
+        return { data: null, error: null };
       }
 
       // Global interceptor for API Rate Limits and Resource Limits
@@ -166,27 +167,28 @@ export async function apiUploadFile<T = any>(
       // that occurs when a plain object { uri, name, type } is passed to FormData
       try {
         const fileInfo = await FileSystem.getInfoAsync(fileUri);
-        if (!fileInfo || fileInfo.size === 0) {
+        if (!fileInfo || !fileInfo.exists) {
           return { data: null, error: 'File not found or empty' };
         }
-        
+
         // Check file size (limit to 10MB to prevent memory issues)
         const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-        if (fileInfo.size > MAX_FILE_SIZE) {
+        const fileSize = (fileInfo as any).size ?? 0;
+        if (fileSize > MAX_FILE_SIZE) {
           return { data: null, error: 'File too large. Maximum size is 10MB.' };
         }
 
         const base64 = await FileSystem.readAsStringAsync(fileUri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-        
+
         // Use a safer base64 decode method that works across platforms
         const byteCharacters = decodeURIComponent(escape(atob(base64)));
         const byteNumbers = new Uint8Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-        const blob = new Blob([byteNumbers as any], { type: mimeType || 'application/octet-stream' });
+        const blob = new Blob([byteNumbers as any], { type: mimeType || 'application/octet-stream' } as any);
         (formData as any).append('file', blob, fileName);
       } catch (fileError: any) {
         console.error('[Upload] File processing error:', fileError);

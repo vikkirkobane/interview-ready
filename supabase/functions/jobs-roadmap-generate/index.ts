@@ -138,10 +138,20 @@ Generate a comprehensive roadmap to bridge these gaps.`;
 
     return c.json({ data: roadmap, message: 'Roadmap generated successfully' });
   } catch (error: any) {
-    console.error('Roadmap Generation Error:', error);
-    const status = error.status || 500;
-    return c.json({ error: error.message || 'Internal Server Error' }, status);
+    if (
+      error instanceof UnauthorizedError ||
+      error instanceof ValidationError ||
+      error instanceof InsufficientCreditsError
+    ) {
+      return c.json({ error: error.message, code: error.code }, error.status);
+    }
+
+    console.error('Error in /jobs-roadmap-generate:', error);
+    return c.json(
+      { error: 'Failed to generate roadmap', code: 'INTERNAL_ERROR' },
+      500
+    );
   }
 });
 
-export default app;
+Deno.serve(app.fetch);

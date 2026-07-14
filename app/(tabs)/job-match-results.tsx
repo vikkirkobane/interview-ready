@@ -7,13 +7,11 @@ import { useBreakpoint } from '../../src/hooks/useBreakpoint';
 import { useJobApplicationQuery, useDeleteJobApplicationMutation, useGenerateRoadmapMutation } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useCredits } from '../../src/hooks/useCredits';
 import { exportRoadmapPDF } from '../../src/lib/roadmapExport';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth-store';
 
 export default function JobMatchResultsScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { id, fromList } = useLocalSearchParams();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -22,13 +20,12 @@ export default function JobMatchResultsScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
   const { data: jobApplication, isLoading, error } = useJobApplicationQuery(id as string);
   const deleteMutation = useDeleteJobApplicationMutation();
   const generateRoadmap = useGenerateRoadmapMutation();
   const [isDownloading, setIsDownloading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { deductCredits } = useCredits();
 
   const handleDelete = () => {
     Alert.alert(

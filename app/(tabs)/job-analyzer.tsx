@@ -16,6 +16,12 @@ import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 
 export default function JobFitScreen() {
+  const { user } = useAuthStore();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { profile, updateProfile } = useProfileStore();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { colors, isDark } = useTheme();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { job_id } = useLocalSearchParams();
   const [jdText, setJdText] = useState('');
@@ -31,25 +37,18 @@ export default function JobFitScreen() {
   
   React.useEffect(() => {
     if (jobApplication) {
-       
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (jobApplication.raw_jd) setJdText(jobApplication.raw_jd);
       if (jobApplication.job_url) setJdUrl(jobApplication.job_url);
     }
   }, [jobApplication]);
-
-  const { user } = useAuthStore();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { profile, updateProfile } = useProfileStore();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { colors, isDark } = useTheme();
-  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   const analyzeJob = useAnalyzeJobMutation();
   const extractJd = useExtractJdMutation();
   const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery();
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
-  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
 
 
@@ -126,7 +125,8 @@ export default function JobFitScreen() {
       });
 
       incrementInterstitialCount();
-      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+      const updatedCount = useUIStore.getState().interstitialActionCount;
+      if (!isPro && interstitialLoaded && updatedCount >= 2) {
         showInterstitialAd();
         resetInterstitialCount();
       }

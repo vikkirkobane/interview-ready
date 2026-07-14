@@ -6,17 +6,17 @@ export const lightColors = {
   primary: '#0055FF', // Electric Blue
   primaryContainer: '#E5EEFF',
   onPrimary: '#FFFFFF',
-  
+
   tertiary: '#0033AA',
-  
+
   surface: '#FFFFFF',
   onSurface: '#111111',
-  
+
   bgPrimary: '#FAFAFA', // Ultra-clean almost white
   bgSecondary: '#F0F0F0', // Subtle glass-like background
   bgCard: '#FFFFFF',
   bgMuted: '#EAEAEA',
-  
+
   // Semantic
   success: '#00D15E', // Neon green tint
   successLight: '#E5FBF0',
@@ -39,9 +39,9 @@ export const lightColors = {
   borderGlass: 'rgba(0, 0, 0, 0.05)',
 
   // Legacy mappings
-  violet: '#0055FF', 
-  violetLight: '#E5EEFF', 
-  violetDark: '#0033AA', 
+  violet: '#0055FF',
+  violetLight: '#E5EEFF',
+  violetDark: '#0033AA',
   primaryLight: '#E5EEFF',
   primaryDark: '#0033AA',
 
@@ -56,17 +56,17 @@ export const darkColors = {
   primary: '#3377FF', // Brighter blue for dark mode
   primaryContainer: '#002266',
   onPrimary: '#FFFFFF',
-  
+
   tertiary: '#6699FF',
-  
+
   surface: '#111111',
   onSurface: '#FFFFFF',
-  
+
   bgPrimary: '#050505', // True deep space black
   bgSecondary: '#111111',
   bgCard: '#161616',
   bgMuted: '#222222',
-  
+
   // Semantic
   success: '#00E676', // Bright neon green
   successLight: '#00331A',
@@ -89,9 +89,9 @@ export const darkColors = {
   borderGlass: 'rgba(255, 255, 255, 0.05)',
 
   // Legacy mappings
-  violet: '#3377FF', 
-  violetLight: '#002266', 
-  violetDark: '#6699FF', 
+  violet: '#3377FF',
+  violetLight: '#002266',
+  violetDark: '#6699FF',
   primaryLight: '#002266',
   primaryDark: '#6699FF',
 

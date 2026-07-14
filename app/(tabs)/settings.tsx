@@ -9,7 +9,6 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { useDashboardStore } from '../../src/stores/dashboard-store';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
 import { Image } from 'expo-image';
@@ -24,7 +23,6 @@ export default function SettingsScreen() {
   const { user } = useAuthStore();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { profile } = useProfileStore();
-  const { stats } = useDashboardStore();
 
   const signOut = () => useAuthStore.getState().signOut();
 
@@ -41,7 +39,12 @@ export default function SettingsScreen() {
 
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=ffffff&size=128`;
 
-  const credits = stats?.creditsAvailable ?? 0;
+  const userPlan = user?.user_metadata?.plan || user?.user_metadata?.subscription || 'free';
+  const planDisplayName = userPlan === 'PREMIUM_PLUS' || userPlan === 'premium_plus'
+    ? 'Premium Plus'
+    : userPlan === 'PREMIUM' || userPlan === 'premium' || userPlan === 'pro'
+      ? 'Premium'
+      : 'Free';
 
   const handleLogout = async () => {
     if (Platform.OS === 'web') {
@@ -85,22 +88,17 @@ export default function SettingsScreen() {
         />
       </View>
 
-      {/* Subscription & Credits */}
+      {/* Subscription */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Subscription</Text>
       <Card style={[styles.settingsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
         <View style={styles.planHeader}>
           <View>
             <Text style={[styles.planTitle, { color: colors.textSecondary }]}>Current Plan</Text>
-            <Text style={[styles.planName, { color: colors.textPrimary }]}>InterviewReady Free</Text>
+            <Text style={[styles.planName, { color: colors.textPrimary }]}>{planDisplayName}</Text>
           </View>
           <Badge text="Active" variant="success" />
         </View>
-        
-        <View style={styles.creditsRow}>
-          <Text style={[styles.creditsLabel, { color: colors.textPrimary }]}>Available Credits</Text>
-          <Text style={[styles.creditsValue, { color: colors.primary }]}>{credits}</Text>
-        </View>
-        
+
         <Button 
           title="Upgrade to Pro" 
           variant="primary" 
@@ -275,19 +273,6 @@ const styles = StyleSheet.create({
   planName: {
     ...Typography.subtitle1,
     marginTop: 2,
-  },
-  creditsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-  },
-  creditsLabel: {
-    ...Typography.bodyMd,
-  },
-  creditsValue: {
-    ...Typography.headingMd,
   },
   settingRow: {
     flexDirection: 'row',

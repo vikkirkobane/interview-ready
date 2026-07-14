@@ -13,7 +13,7 @@ app.use('/*', cors());
  * Requires confirmation via email link (not enforced here, assumed verified)
  * Deletes user and all related data via cascade
  */
-app.delete('/*', async (c: any) => {
+app.post('/*', async (c: any) => {
   try {
     const authClient = createAuthClient(c.req.raw);
     const serviceClient = createServiceClient();
@@ -40,11 +40,14 @@ app.delete('/*', async (c: any) => {
       throw new Error(`Failed to delete user: ${deleteError.message}`);
     }
 
-    // Also delete auth user (this is destructive, requires service role)
-    // Note: In production, use Supabase Auth Admin API instead
-    // For now, just mark as deleted in public.users via cascade
+    // Delete auth user record via Supabase Auth Admin API (service role required)
+    const { error: authDeleteError } = await serviceClient.auth.admin.deleteUser(userId);
+    if (authDeleteError) {
+      console.error(`[GDPR] Failed to delete auth user ${userId}:`, authDeleteError.message);
+      // Continue — public data was already deleted, auth record can be cleaned up later
+    }
 
-    console.log(`[GDPR] User ${userId} account fully deleted`);
+    console.log(`[GDPR] User ${userId} account fully deleted (public + auth records)`);
 
     return c.json(
       {

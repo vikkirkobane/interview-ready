@@ -56,7 +56,6 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
         channels={(paymentData.channels || ['card', 'bank', 'ussd', 'qr', 'mobile_money']) as any}
         refNumber={paymentData.reference}
         billingName="Interview Ready User"
-        handleWebViewMessage={handlePaymentSuccess}
         onCancel={handlePaymentCancel}
         onSuccess={handlePaymentSuccess}
         autoStart={true}

@@ -41,7 +41,7 @@ export default function AnalyzeScreen() {
         jdUrl: inputType === 1 ? jdUrl : undefined,
       });
 
-      useOnboardingStore.getState().setAnalysisId(result.id);
+      useOnboardingStore.getState().setAnalysisId(result.job_id);
       setAnalysisResult(result.analysis);
       setShowResults(true);
     } catch (error: any) {
@@ -56,7 +56,7 @@ export default function AnalyzeScreen() {
   const handleAttachJdFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        type: ['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
         copyToCacheDirectory: true,
       });
 
@@ -71,9 +71,9 @@ export default function AnalyzeScreen() {
         return;
       }
 
-      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
-        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, PDF, and DOCX files are allowed.' });
         return;
       }
 
@@ -301,7 +301,10 @@ export default function AnalyzeScreen() {
           <View style={styles.footer}>
             <Pressable 
               style={[styles.continueBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.push('/(onboarding)/resume')}
+              onPress={() => {
+                useOnboardingStore.getState().nextStep();
+                router.push('/(onboarding)/resume');
+              }}
               
             >
               <Text style={styles.continueBtnText}>Continue</Text>

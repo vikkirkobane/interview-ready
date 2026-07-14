@@ -192,7 +192,7 @@ serve(async (req) => {
         data: {
           status: paymentData.status,
           reference: paymentData.reference,
-          amount: paymentData.amount / 100, // Convert from kobo to naira
+          amount: paymentData.currency === 'NGN' ? paymentData.amount / 100 : paymentData.amount, // Only NGN uses kobo sub-units
           currency: paymentData.currency,
           paid_at: paymentData.paid_at,
           gateway_response: paymentData.gateway_response,

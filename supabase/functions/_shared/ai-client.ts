@@ -1,8 +1,10 @@
 import { z } from 'npm:zod@3.22.4';
 
 /**
- * AI API client wrapper — primary: Qwen Cloud / DashScope (qwen-omni-turbo), fallback: Groq
- * API key: DASHSCOPE_API_KEY (https://www.alibabacloud.com/help/en/model-studio/get-api-key)
+ * AI API client wrapper — primary: Qwen Cloud / DashScope (qwen-omni-turbo), fallback: OpenRouter
+ * API keys:
+ *   DASHSCOPE_API_KEY (https://www.alibabacloud.com/help/en/model-studio/get-api-key)
+ *   OPENROUTER_API_KEY (https://openrouter.ai/keys)
  */
 
 interface AIMessage {
@@ -24,7 +26,7 @@ interface AIResponse {
 }
 
 interface AICallOptions {
-  model?: 'qwen' | 'groq';
+  model?: 'qwen' | 'openrouter';
   temperature?: number;
   max_tokens?: number;
 }
@@ -32,18 +34,22 @@ interface AICallOptions {
 const QWEN_BASE_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
 const QWEN_MODEL = 'qwen-omni-turbo';
 
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
+const OPENROUTER_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
+
 export class AIClient {
-  private groqApiKey: string;
+  private openrouterApiKey: string;
   private dashscopeApiKey: string;
 
   constructor() {
-    this.groqApiKey = Deno.env.get('GROQ_API_KEY') || '';
+    this.openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY') || '';
     this.dashscopeApiKey = Deno.env.get('DASHSCOPE_API_KEY') || '';
   }
 
   /**
    * Call AI API with JSON response format.
    * Always enforces JSON mode to ensure structured output.
+   * Fallback chain: Qwen → OpenRouter
    */
   async callWithJson<T>(
     systemPrompt: string,
@@ -51,7 +57,7 @@ export class AIClient {
     schema: z.Schema<T>,
     options: AICallOptions = {}
   ): Promise<T> {
-    const { model = 'qwen', temperature = 0.7, max_tokens = 4000 } = options;
+    const { model = 'qwen', temperature = 0.7, max_tokens = 2048 } = options;
 
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -59,13 +65,23 @@ export class AIClient {
     ];
 
     try {
-      if (model === 'qwen') {
-        return await this.callQwen(messages, schema, temperature, max_tokens);
+      if (model === 'openrouter') {
+        try {
+          return await this.callOpenRouter(messages, schema, temperature, max_tokens);
+        } catch (orError: any) {
+          console.warn('OpenRouter API failed, falling back to Qwen:', orError.message);
+          return await this.callQwen(messages, schema, temperature, max_tokens);
+        }
       } else {
-        return await this.callGroq(messages, schema, temperature, max_tokens);
+        try {
+          return await this.callQwen(messages, schema, temperature, max_tokens);
+        } catch (qwenError: any) {
+          console.warn('Qwen API failed, falling back to OpenRouter:', qwenError.message);
+          return await this.callOpenRouter(messages, schema, temperature, max_tokens);
+        }
       }
     } catch (error: any) {
-      console.error(`${model} API failed:`, error);
+      console.error(`All AI providers failed:`, error);
       throw error;
     }
   }
@@ -140,20 +156,22 @@ export class AIClient {
     throw lastError || new Error('Qwen API call failed');
   }
 
-  private async callGroq<T>(
+  private async callOpenRouter<T>(
     messages: AIMessage[],
     schema: z.Schema<T>,
     temperature: number,
     maxTokens: number
   ): Promise<T> {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.groqApiKey}`,
+        'Authorization': `Bearer ${this.openrouterApiKey}`,
         'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://interviewready.app',
+        'X-Title': 'Interview Ready',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: OPENROUTER_MODEL,
         messages,
         temperature,
         max_tokens: maxTokens,
@@ -163,35 +181,53 @@ export class AIClient {
 
     if (!response.ok) {
       const errorData = await response.text();
-      throw new Error(`Groq API error: ${response.status} - ${errorData}`);
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
     }
 
     const data = (await response.json()) as AIResponse;
     const content = data.choices[0]?.message?.content;
 
     if (!content) {
-      throw new Error('Empty response from Groq API');
+      throw new Error('Empty response from OpenRouter API');
     }
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
+      // Extract JSON object robustly
+      const startIndex = content.indexOf('{');
+      const endIndex = content.lastIndexOf('}');
+      if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+        parsed = JSON.parse(content.substring(startIndex, endIndex + 1));
+      } else {
+        parsed = JSON.parse(content);
+      }
     } catch {
-      throw new Error(`Invalid JSON from Groq: ${content.substring(0, 200)}`);
+      throw new Error(`Invalid JSON from OpenRouter: ${content.substring(0, 200)}`);
     }
 
-    return schema.parse(parsed);
+    try {
+      return schema.parse(parsed);
+    } catch (err: any) {
+      if (err.name === 'ZodError' && typeof parsed === 'object' && parsed !== null) {
+        const keys = Object.keys(parsed as object);
+        if (keys.length === 1) {
+          return schema.parse((parsed as any)[keys[0]]);
+        }
+      }
+      throw err;
+    }
   }
 
   /**
    * Simple text completion (no JSON required)
+   * Fallback chain: Qwen → OpenRouter
    */
   async callText(
     systemPrompt: string,
     userPrompt: string,
     options: AICallOptions = {}
   ): Promise<string> {
-    const { model = 'qwen', temperature = 0.7, max_tokens = 4000 } = options;
+    const { model = 'qwen', temperature = 0.7, max_tokens = 2048 } = options;
 
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -199,53 +235,83 @@ export class AIClient {
     ];
 
     try {
-      if (model === 'qwen') {
-        const response = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.dashscopeApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: QWEN_MODEL,
-            messages,
-            temperature,
-            max_tokens,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Qwen API error: ${response.status}`);
+      if (model === 'openrouter') {
+        try {
+          return await this.callOpenRouterText(messages, temperature, max_tokens);
+        } catch (orError: any) {
+          console.warn('OpenRouter text API failed, falling back to Qwen:', orError.message);
+          return await this.callQwenText(messages, temperature, max_tokens);
         }
-
-        const data = (await response.json()) as AIResponse;
-        return data.choices[0]?.message?.content || '';
       } else {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.groqApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages,
-            temperature,
-            max_tokens,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Groq API error: ${response.status}`);
+        try {
+          return await this.callQwenText(messages, temperature, max_tokens);
+        } catch (qwenError: any) {
+          console.warn('Qwen text API failed, falling back to OpenRouter:', qwenError.message);
+          return await this.callOpenRouterText(messages, temperature, max_tokens);
         }
-
-        const data = (await response.json()) as AIResponse;
-        return data.choices[0]?.message?.content || '';
       }
     } catch (error: any) {
-      console.error(`${model} text API failed:`, error);
+      console.error(`All AI text providers failed:`, error);
       throw error;
     }
+  }
+
+  private async callQwenText(
+    messages: AIMessage[],
+    temperature: number,
+    maxTokens: number
+  ): Promise<string> {
+    const response = await fetch(`${QWEN_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.dashscopeApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: QWEN_MODEL,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Qwen API error: ${response.status} - ${errorData}`);
+    }
+
+    const data = (await response.json()) as AIResponse;
+    return data.choices[0]?.message?.content || '';
+  }
+
+  private async callOpenRouterText(
+    messages: AIMessage[],
+    temperature: number,
+    maxTokens: number
+  ): Promise<string> {
+    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.openrouterApiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://interviewready.app',
+        'X-Title': 'Interview Ready',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
+    }
+
+    const data = (await response.json()) as AIResponse;
+    return data.choices[0]?.message?.content || '';
   }
 }
 

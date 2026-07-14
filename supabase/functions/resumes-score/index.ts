@@ -280,7 +280,7 @@ function formatResumeForAnalysis(content: any): string {
   if (content.experience && content.experience.length > 0) {
     lines.push('## EXPERIENCE');
     content.experience.forEach((job: any) => {
-      lines.push(`${job.title} at ${job.company} (${job.start_date} - ${job.end_date || 'Present'})`);
+      lines.push(`${job.title} at ${job.company} (${job.date_range || job.start_date || ''})`);
       if (job.bullets && Array.isArray(job.bullets)) {
         job.bullets.forEach((bullet: string) => {
           lines.push(`- ${bullet}`);
@@ -294,16 +294,27 @@ function formatResumeForAnalysis(content: any): string {
   if (content.education && content.education.length > 0) {
     lines.push('## EDUCATION');
     content.education.forEach((edu: any) => {
-      lines.push(`${edu.degree} in ${edu.field} from ${edu.school}`);
-      if (edu.gpa) {
-        lines.push(`GPA: ${edu.gpa}`);
+      const degreeLine = [edu.degree, edu.institution || edu.school, edu.year].filter(Boolean).join(' — ');
+      lines.push(degreeLine);
+      if (edu.note || edu.gpa) {
+        lines.push(`${edu.note || 'GPA: ' + edu.gpa}`);
       }
       lines.push('');
     });
   }
 
   // Skills
-  if (content.skills && typeof content.skills === 'object') {
+  if (content.skills && Array.isArray(content.skills)) {
+    lines.push('## SKILLS');
+    content.skills.forEach((skillGroup: any) => {
+      if (skillGroup.category && skillGroup.items) {
+        lines.push(`${skillGroup.category}: ${skillGroup.items.join(', ')}`);
+      } else if (typeof skillGroup === 'string') {
+        lines.push(`- ${skillGroup}`);
+      }
+    });
+    lines.push('');
+  } else if (content.skills && typeof content.skills === 'object') {
     lines.push('## SKILLS');
     Object.entries(content.skills).forEach(([category, skills]: any) => {
       if (Array.isArray(skills)) {

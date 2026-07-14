@@ -20,7 +20,7 @@ file_size_limit = "50MiB"
 
 [auth]
 site_url = "interviewready://"
-additional_redirect_urls = ["http://127.0.0.1:3000", "https://127.0.0.1:3000", "interviewready://auth/callback", "interviewready://payment/callback"]
+additional_redirect_urls = ["http://127.0.0.1:3000", "https://127.0.0.1:3000", "interviewready://auth/callback", "interviewready://payment/callback", "interviewready://reset-password"]
 jwt_expiry = 3600
 enable_signup = true
 email.enable_confirmations = false

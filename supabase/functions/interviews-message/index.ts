@@ -10,6 +10,7 @@ const app = new Hono();
 app.use('/*', cors());
 
 const MessageInput = z.object({
+  interview_id: z.string().uuid(),
   content: z.string().min(1).max(2000),
 });
 
@@ -28,9 +29,6 @@ app.post('/*', async (c: any) => {
       throw new UnauthorizedError('No active session');
     }
 
-    const url = new URL(c.req.url);
-    const parts = url.pathname.split('/');
-    const interviewId = parts[parts.length - 2];
     const body = await c.req.json();
     let input: MessageInputType;
 
@@ -44,6 +42,8 @@ app.post('/*', async (c: any) => {
       }
       throw error;
     }
+
+    const interviewId = input.interview_id;
 
     // Fetch existing interview
     const { data: interview, error: fetchError } = await client

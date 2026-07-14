@@ -17,7 +17,6 @@ import { Spacing, Typography, Radius } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { COUNTRIES, Country, getPaymentMethods } from '../../src/constants/countries';
-import { EarnCreditsButton } from '../../src/components/ui/EarnCreditsButton';
 import { useAuthStore } from '../../src/stores/auth-store';
 
 type PaymentMode = 'USD' | 'KES';
@@ -280,8 +279,11 @@ export default function PricingScreen() {
       // Generate unique reference
       const reference = `IR_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       
-      // Convert amount to smallest currency unit (kobo for NGN, cents for USD, cents for KES)
-      const amount = Math.round(selectedPlan.price * 100);
+      // Convert amount to smallest currency unit (cents for USD, kobo for NGN)
+      // KES is already in the smallest unit (shillings) — no multiplication needed
+      const amount = selectedPlan.currency === 'KES'
+        ? selectedPlan.price
+        : Math.round(selectedPlan.price * 100);
 
       // Determine channels based on currency and country
       let channels: string[] = ['card'];
@@ -353,13 +355,27 @@ export default function PricingScreen() {
     });
   };
 
-  const handlePaystackCancel = () => {
+  const handlePaystackCancel = async () => {
+    // Mark the pending transaction as cancelled before clearing state
+    if (paystackPaymentData?.reference) {
+      await supabase
+        .from('payment_transactions')
+        .update({ status: 'cancelled' })
+        .eq('reference', paystackPaymentData.reference);
+    }
     setShowPaystackWebView(false);
     setPaystackPaymentData(null);
     Alert.alert('Payment Cancelled', 'You closed the payment page. No charge was made.');
   };
 
-  const handlePaystackError = (error: any) => {
+  const handlePaystackError = async (error: any) => {
+    // Mark the pending transaction as failed before clearing state
+    if (paystackPaymentData?.reference) {
+      await supabase
+        .from('payment_transactions')
+        .update({ status: 'failed' })
+        .eq('reference', paystackPaymentData.reference);
+    }
     setShowPaystackWebView(false);
     setPaystackPaymentData(null);
     Alert.alert('Payment Error', 'Payment failed. Please try again.');
@@ -472,7 +488,6 @@ export default function PricingScreen() {
             • 2 basic resume templates{'\n'}
             • Limited features
           </Text>
-          <EarnCreditsButton />
         </View>
       )}
 
@@ -518,7 +533,7 @@ export default function PricingScreen() {
         visible={showPaystackWebView}
         animationType="slide"
         transparent={false}
-        onRequestClose={() => setShowPaystackWebView(false)}
+        onRequestClose={handlePaystackCancel}
       >
         <View style={styles.webViewModalContainer}>
           {paystackPaymentData && (

@@ -9,7 +9,7 @@ import { Pressable ,
   Alert,
 } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,7 +23,6 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 
 export default function FeedbackScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { sessionId, id, fromList } = useLocalSearchParams();
   const actualSessionId = (sessionId || id) as string;
@@ -33,6 +32,7 @@ export default function FeedbackScreen() {
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   
   const [feedbackData, setFeedbackData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);

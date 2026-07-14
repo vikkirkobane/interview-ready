@@ -94,7 +94,9 @@ serve(async (req) => {
     // Initialize transaction (one-time payment, subscription created after success)
     const initResponse = await paystack.initializePayment({
       email: profile.email,
-      amount: Math.round(plan.amount * 100), // Convert to smallest currency unit (cents/kobo)
+      // KES amounts are already in shillings (Paystack's smallest unit for KES)
+      // USD/NGN amounts must be converted to cents/kobo (* 100)
+      amount: plan.currency === 'KES' ? plan.amount : Math.round(plan.amount * 100),
       reference,
       callback_url: callbackUrl,
       channels,

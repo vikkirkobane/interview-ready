@@ -82,6 +82,8 @@ export default function AskAIScreen() {
     const userMsg: Message = { id: Date.now().toString(), role: 'user', text: finalQuestion };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
+    setJdFileText(''); // Clear file text after send to prevent stale data on next message
+    setJdFileName(null);
     setIsTyping(true);
 
     try {
@@ -277,9 +279,9 @@ export default function AskAIScreen() {
                multiline
             />
             <Pressable
-              style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() || isTyping) && { opacity: 0.5 }]}
+              style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() && !jdFileText.trim() || isTyping) && { opacity: 0.5 }]}
               onPress={handleSend}
-              disabled={!inputText.trim() || isTyping}
+              disabled={(!inputText.trim() && !jdFileText.trim()) || isTyping}
             >
                <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
             </Pressable>

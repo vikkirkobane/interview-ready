@@ -22,6 +22,6 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["supabase/functions/**"],
+  "exclude": ["supabase/functions/**", "interview-ready/**", "dist/**", "node_modules/**", "_dev/**", "android/**"],
   "extends": "expo/tsconfig.base"
 }

@@ -134,7 +134,7 @@ app.put('/*', async (c: any) => {
 
     console.error('Error in /profile/update:', error);
     return c.json(
-      { error: error.message || 'Internal server error', code: 'INTERNAL_ERROR', stack: error.stack },
+      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
       500
     );
   }

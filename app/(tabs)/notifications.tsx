@@ -24,7 +24,6 @@ const timeAgo = (dateStr: string) => {
 };
 
 export default function NotificationsScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
   const { user } = useAuthStore();
@@ -32,6 +31,7 @@ export default function NotificationsScreen() {
   const { colors, isDark } = useTheme();
 
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const completeness = profile?.profileCompleteness || 0;
   const isProfileIncomplete = completeness < 100 && !user?.user_metadata?.onboarding_completed;
 
@@ -42,7 +42,7 @@ export default function NotificationsScreen() {
       systemAlerts.push({
         id: 'system-upgrade-pro',
         title: 'Upgrade to Pro 🚀',
-        description: 'Unlock advanced AI features and unlimited credits.',
+        description: 'Unlock advanced AI features and get more out of Interview Ready.',
         timestamp: new Date().toISOString(),
         read: false,
         type: 'warning',

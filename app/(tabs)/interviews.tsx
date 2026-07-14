@@ -12,12 +12,12 @@ import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function InterviewsLobbyScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   
   const [role, setRole] = useState((params.role as string) || 'Product Manager');
   const [jobDescription, setJobDescription] = useState((params.jobDescription as string) || '');
@@ -28,7 +28,7 @@ export default function InterviewsLobbyScreen() {
   
   // Ensure fields populate even if the tab was previously mounted
   useEffect(() => {
-     
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (params.role) setRole(params.role as string);
     if (params.jobDescription) setJobDescription(params.jobDescription as string);
   }, [params.role, params.jobDescription]);
@@ -95,13 +95,21 @@ export default function InterviewsLobbyScreen() {
   const handleStart = () => {
     const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
     const finalJobUrl = jobUrl.trim();
+
+    // Validate URL if provided
+    if (finalJobUrl && !/^https?:\/\/.+/i.test(finalJobUrl)) {
+      setUrlError('Please enter a valid URL starting with http:// or https://');
+      return;
+    }
+    setUrlError('');
+
     // Navigate to the chat screen
     router.push({
       pathname: '/interview',
-      params: { 
-        role, 
-        type, 
-        difficulty, 
+      params: {
+        role,
+        type,
+        difficulty,
         jobDescription: finalJobDescription,
         jobUrl: finalJobUrl
       }
@@ -298,9 +306,9 @@ export default function InterviewsLobbyScreen() {
           <Text style={[styles.historyMeta, { color: colors.textMuted, textAlign: 'center', marginTop: 20 }]}>No past interviews yet.</Text>
         )}
 
+        <View style={{ height: bottomNavPadding }} />
         </ScrollView>
 
-        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

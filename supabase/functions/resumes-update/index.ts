@@ -88,13 +88,20 @@ app.post('/*', async (c: any) => {
     }, 200);
 
   } catch (error: any) {
+    if (
+      error instanceof UnauthorizedError ||
+      error instanceof NotFoundError ||
+      error instanceof ValidationError
+    ) {
+      return c.json({ error: error.message, code: error.code }, error.status);
+    }
+
     console.error('Error in resumes/update:', error);
-    const status = error.statusCode || 500;
     return c.json({
       error: error.message || 'Internal Server Error',
-      details: error.details || undefined,
-    }, status as any);
+      code: 'INTERNAL_ERROR',
+    }, 500);
   }
 });
 
-export default app;
+Deno.serve(app.fetch);

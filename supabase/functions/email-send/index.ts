@@ -71,12 +71,13 @@ serve(async (req) => {
     }: SendEmailRequest = await req.json();
 
     // Validate required fields
-    if (!to || !subject || !emailType) {
-      throw new Error('Missing required fields: to, subject, emailType');
+    if (!to || !emailType) {
+      throw new Error('Missing required fields: to, emailType');
     }
 
     let emailHtml = html;
     let emailText = text;
+    let emailSubject = subject;
 
     // If template key provided, fetch and render template
     if (templateKey) {
@@ -103,13 +104,21 @@ serve(async (req) => {
         });
       }
 
-      // Use template subject if not provided
-      if (!subject && template.subject) {
-        Object.entries(templateVariables || {}).forEach(([key, value]) => {
-          const regex = new RegExp(`{{${key}}}`, 'g');
-          subject = subject.replace(regex, value);
-        });
+      // Use template subject if user didn't provide one
+      if (!emailSubject && template.subject) {
+        emailSubject = template.subject;
+        if (templateVariables) {
+          Object.entries(templateVariables).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            emailSubject = emailSubject.replace(regex, value);
+          });
+        }
       }
+    }
+
+    // Validate subject after template resolution
+    if (!emailSubject) {
+      throw new Error('Missing required field: subject (provide directly or via template)');
     }
 
     // Validate email content
@@ -131,7 +140,7 @@ serve(async (req) => {
       p_user_id: user.id,
       p_email_to: to,
       p_email_type: emailType,
-      p_subject: subject,
+      p_subject: emailSubject,
       p_template_id: templateKey || null,
       p_metadata: metadata,
       p_status: 'pending',
@@ -154,7 +163,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: fromEmail,
         to: [to],
-        subject: subject,
+        subject: emailSubject,
         html: emailHtml,
         text: emailText,
       }),
@@ -191,7 +200,7 @@ serve(async (req) => {
           message_id: resendData.id,
           log_id: logId,
           to: to,
-          subject: subject,
+          subject: emailSubject,
         },
       }),
       {

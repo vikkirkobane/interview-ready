@@ -22,9 +22,12 @@ app.post('/*', async (c: any) => {
       throw new UnauthorizedError('No active session');
     }
 
-    const url = new URL(c.req.url);
-    const parts = url.pathname.split('/');
-    const interviewId = parts[parts.length - 2];
+    // Extract interviewId from query params or request body
+    const interviewId = c.req.query('interview_id') || c.req.query('interviewId');
+
+    if (!interviewId) {
+      throw new ValidationError('Missing interview_id query parameter');
+    }
 
     // Fetch existing interview
     const { data: interview, error: fetchError } = await client

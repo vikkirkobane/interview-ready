@@ -7,18 +7,20 @@ import { InsufficientCreditsError } from './errors.ts';
  */
 
 const CREDIT_COSTS = {
-  JD_ANALYSIS: 0,
-  RESUME_GENERATION: 0,
-  RESUME_SECTION_REWRITE: 0,
-  RESUME_ATS_SCORING: 0,
-  COVER_LETTER: 0,
-  MOCK_INTERVIEW: 0,
+  JD_ANALYSIS: 1,
+  RESUME_GENERATION: 3,
+  RESUME_SECTION_REWRITE: 1,
+  RESUME_ATS_SCORING: 1,
+  COVER_LETTER: 2,
+  MOCK_INTERVIEW: 5,
   LINKEDIN_ANALYSIS: 2,
-  LINKEDIN_SECTION_OPTIMIZE: 0,
+  LINKEDIN_SECTION_OPTIMIZE: 2,
   LINKEDIN_ENGAGEMENT_PLAN: 2,   // Optional 30-day plan add-on
   LINKEDIN_SCRAPE: 2,
   COMPANY_RESEARCH: 2,
   PROFILE_ANALYSIS: 2,
+  ELEVATOR_PITCH: 1,
+  ROADMAP_GENERATION: 5,
 } as const;
 
 
@@ -116,7 +118,7 @@ export async function logCreditEvent(
 
   await client.from('usage_events').insert({
     user_id: userId,
-    event_type: eventType,
+    event: eventType,
     credits_used: cost,
     metadata: metadata || null,
   });

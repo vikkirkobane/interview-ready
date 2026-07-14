@@ -225,7 +225,7 @@ export default function TabLayout() {
           options={{
             title: 'LinkedIn',
             tabBarIcon: ({ color, size, focused }) =>
-              isMounted ? <AnimatedTabIcon name="linkedin" size={size} color={color} focused={focused} isMaterial /> : null,
+              isMounted ? <AnimatedTabIcon name="linkedin-variant" size={size} color={color} focused={focused} isMaterial /> : null,
             href: null,
           }}
         />

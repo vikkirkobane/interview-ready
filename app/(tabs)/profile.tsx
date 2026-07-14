@@ -10,7 +10,6 @@ import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
-import { useDashboardStore } from '../../src/stores/dashboard-store';
 import { useUIStore } from '../../src/stores/ui-store';
 import { Image } from 'expo-image';
 declare const window: any;
@@ -391,10 +390,8 @@ export default function ProfileScreen() {
   const softSkills = (profile?.softSkills || (profile as any)?.soft_skills || []) as string[];
   const education = (profile?.education || (profile as any)?.education || []) as EducationItem[];
   
-  const { stats } = useDashboardStore();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { setUpgradeModal } = useUIStore();
-  const credits = stats?.creditsAvailable ?? 0;
   
   const renderSkillPill = (skill: string, variant: 'primary' | 'secondary' | 'neutral') => {
     let bg: string = colors.bgMuted;
@@ -462,24 +459,14 @@ export default function ProfileScreen() {
                 </View>
                 <Text style={styles.planTitle}>Free Plan</Text>
               </View>
-              <View style={styles.creditsContainer}>
-                <Text style={styles.creditsValue}>{credits}</Text>
-                <Text style={styles.creditsLabel}>Available Credits</Text>
-              </View>
             </View>
 
             <View style={styles.premiumActions}>
-              <Pressable 
+              <Pressable
                 style={[styles.upgradeBtn, { backgroundColor: colors.textInverse }]}
                 onPress={() => router.push('/(tabs)/pricing' as any)}
               >
                 <Text style={[styles.upgradeBtnText, { color: colors.primary }]}>Upgrade Plan</Text>
-              </Pressable>
-              <Pressable 
-                style={styles.addCreditsBtn}
-                onPress={() => router.push('/(tabs)/pricing' as any)}
-              >
-                <Text style={styles.addCreditsBtnText}>Add Credits</Text>
               </Pressable>
             </View>
           </View>
@@ -1016,17 +1003,6 @@ const styles = StyleSheet.create({
     ...Typography.displayMd,
     color: '#ffffff',
   },
-  creditsContainer: {
-    alignItems: 'flex-end',
-  },
-  creditsValue: {
-    ...Typography.displayMd,
-    color: '#ffffff',
-  },
-  creditsLabel: {
-    ...Typography.label,
-    color: 'rgba(255,255,255,0.7)',
-  },
   premiumActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1039,17 +1015,6 @@ const styles = StyleSheet.create({
   },
   upgradeBtnText: {
     ...Typography.headingMd,
-  },
-  addCreditsBtn: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-  },
-  addCreditsBtnText: {
-    ...Typography.headingMd,
-    color: '#ffffff',
   },
   importBtn: {
     flexDirection: 'row',

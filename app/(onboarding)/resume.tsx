@@ -73,7 +73,11 @@ export default function ResumeGenScreen() {
             }).start();
           })
           .on('broadcast', { event: 'generation_failed' }, (payload) => {
-            Toast.show({ type: 'error', text1: 'Generation Failed', text2: payload.payload.error });
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearTimeout(t3);
+            setStage(0);
+            Toast.show({ type: 'error', text1: 'Generation Failed', text2: (payload as any).error || 'Please try again.' });
           })
           .subscribe();
 
@@ -110,13 +114,14 @@ export default function ResumeGenScreen() {
 
     return () => {
       loopAnimation.stop();
+      pulseAnim.setValue(1);
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      if (channel) if (channel) supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [analysisId, createResume, router]);
+  }, []);
 
   const renderChecklistStep = (index: number, title: string, desc: string, isLast: boolean = false) => {
     const isCompleted = stage > index;
@@ -255,6 +260,7 @@ export default function ResumeGenScreen() {
             <Pressable 
               style={{ marginTop: 24, marginBottom: 8 }} 
               onPress={() => {
+                useOnboardingStore.getState().nextStep();
                 router.push('/(onboarding)/discover');
               }}
             >

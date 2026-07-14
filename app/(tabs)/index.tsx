@@ -22,7 +22,6 @@ import { useCredits } from '../../src/hooks/useCredits';
 import { Image } from 'expo-image';
 
 export default function DashboardScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
@@ -33,11 +32,14 @@ export default function DashboardScreen() {
   const { colors, isDark } = useTheme();
   const { balance, refreshBalance } = useCredits();
 
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
+
   const userName = user?.user_metadata?.first_name || 'Alex';
   const credits = balance?.balance ?? 0;
+  const maxCredits = (balance?.totalEarned ?? 0) > 0 ? balance!.totalEarned! : 10;
   const completeness = (profile as any)?.profile_completeness ?? 0;
 
-  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
 
   const getCompletenessMessage = (score: number) => {
@@ -142,9 +144,9 @@ export default function DashboardScreen() {
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{credits}</Text>
             <View style={[styles.progressBarBg, { backgroundColor: colors.bgMuted }]}>
-              <View style={[styles.progressBarFill, { width: `${(credits / 50) * 100}%`, backgroundColor: colors.primary }]} />
+              <View style={[styles.progressBarFill, { width: `${(credits / maxCredits) * 100}%`, backgroundColor: colors.primary }]} />
             </View>
-            <Text style={[styles.statSubText, { color: colors.textMuted }]}>{credits} of 50 remaining</Text>
+            <Text style={[styles.statSubText, { color: colors.textMuted }]}>{credits} of {maxCredits} remaining</Text>
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>

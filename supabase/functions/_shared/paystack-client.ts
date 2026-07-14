@@ -293,7 +293,21 @@ export class PaystackClient {
   }
 
   /**
-   * Convert amount to kobo (smallest currency unit)
+   * Convert amount to Paystack's smallest currency unit.
+   * USD/NGN/GHS/ZAR: multiply by 100 (cents/kobo/pesewas)
+   * KES/RWF: already in smallest unit — no conversion needed
+   */
+  static toSmallestUnit(amount: number, currency: string): number {
+    const noConversionCurrencies = ['KES', 'RWF'];
+    if (noConversionCurrencies.includes(currency.toUpperCase())) {
+      return Math.round(amount);
+    }
+    return Math.round(amount * 100);
+  }
+
+  /**
+   * @deprecated Use toSmallestUnit(amount, currency) instead
+   * Convert amount to kobo (smallest currency unit for NGN only)
    */
   static toKobo(amount: number): number {
     return Math.round(amount * 100);

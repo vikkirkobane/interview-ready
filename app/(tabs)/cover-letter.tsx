@@ -21,12 +21,12 @@ import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 const TONES = ['Professional', 'Enthusiastic', 'Concise', 'Storytelling', 'Formal'];
 
 export default function CoverLetterGeneratorScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { colors } = useTheme();
   const { addNotification } = useNotificationStore();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const [selectedTone, setSelectedTone] = useState('Professional');
   const [generating, setGenerating] = useState(false);
   const [generatedLetter, setGeneratedLetter] = useState<string | null>(null);
@@ -53,15 +53,62 @@ export default function CoverLetterGeneratorScreen() {
 
   React.useEffect(() => {
     if (pastCoverLetter) {
-       
-      if (pastCoverLetter.title) setTargetRole(pastCoverLetter.title.split(' - ')[0] || ''); // Attempt to parse title
-      if (pastCoverLetter.tone) {
-        const toneStr = pastCoverLetter.tone.charAt(0) + pastCoverLetter.tone.slice(1).toLowerCase();
-        setSelectedTone(toneStr);
+      // Parse title: format is "{company_name} - {job_title} Cover Letter"
+      if (pastCoverLetter.title) {
+        const titleParts = pastCoverLetter.title.split(' - ');
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (titleParts[0]) setTargetCompany(titleParts[0]);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        if (titleParts[1]) setTargetRole(titleParts[1].replace(/\s*Cover Letter\s*$/i, ''));
       }
+
+      // Match DB tone (e.g. "PROFESSIONAL") to TONES array values
+      if (pastCoverLetter.tone) {
+        const matchedTone = TONES.find(t => t.toUpperCase() === pastCoverLetter.tone);
+        if (matchedTone) {
+          setSelectedTone(matchedTone);
+        } else {
+          // Fallback: capitalise first letter
+          const toneStr = pastCoverLetter.tone.charAt(0) + pastCoverLetter.tone.slice(1).toLowerCase();
+          setSelectedTone(toneStr);
+        }
+      }
+
       if (pastCoverLetter.body) {
         setGeneratedLetter(pastCoverLetter.body);
-        setCoverLetterObj(pastCoverLetter as CoverLetter);
+
+        // Map flat DB row → structured CoverLetter type
+        const signatureParts = (pastCoverLetter.signature || '').split('\n');
+        const mappedCoverLetter: CoverLetter = {
+          meta: {
+            tone: pastCoverLetter.tone,
+            word_count: pastCoverLetter.word_count ?? undefined,
+            generated_at: pastCoverLetter.created_at,
+          },
+          header: {
+            candidate_name: '',
+            phone: '',
+            email: '',
+            linkedin: '',
+            portfolio: '',
+            date: pastCoverLetter.created_at || '',
+            hiring_manager: '',
+            company_name: pastCoverLetter.title?.split(' - ')[0] || '',
+            company_address: '',
+          },
+          salutation: pastCoverLetter.greeting || '',
+          paragraphs: {
+            opening: { text: pastCoverLetter.body },
+            body_1: { text: '' },
+            body_2: { text: '' },
+            closing: { text: '' },
+          },
+          sign_off: {
+            closing_phrase: signatureParts[0] || '',
+            name: signatureParts.slice(1).join(' ').trim(),
+          },
+        };
+        setCoverLetterObj(mappedCoverLetter);
       }
     }
   }, [pastCoverLetter]);
@@ -141,12 +188,16 @@ export default function CoverLetterGeneratorScreen() {
         target_company: targetCompany,
         target_role: targetRole,
       });
-      const letterData: CoverLetter = result.cover_letter || result.coverLetter;
-      
+      const letterData: CoverLetter | undefined = result.cover_letter || result.coverLetter;
+
+      if (!letterData) {
+        throw new Error('No cover letter data returned from the server.');
+      }
+
       setCoverLetterObj(letterData);
 
       const p = letterData.paragraphs;
-      const formattedLetter = letterData ? `${letterData.salutation}\n\n${p.opening?.text}\n\n${p.body_1?.text}\n\n${p.body_2?.text}\n\n${p.closing?.text}\n\n${letterData.sign_off?.closing_phrase}\n${letterData.sign_off?.name}` : "Your customized cover letter goes here.";
+      const formattedLetter = `${letterData.salutation || ''}\n\n${p?.opening?.text || ''}\n\n${p?.body_1?.text || ''}\n\n${p?.body_2?.text || ''}\n\n${p?.closing?.text || ''}\n\n${letterData.sign_off?.closing_phrase || ''}\n${letterData.sign_off?.name || ''}`.trim();
       setGeneratedLetter(formattedLetter);
       addNotification({
         title: 'Cover Letter Generated',
@@ -155,7 +206,8 @@ export default function CoverLetterGeneratorScreen() {
       });
 
       incrementInterstitialCount();
-      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+      const updatedCount = useUIStore.getState().interstitialActionCount;
+      if (!isPro && interstitialLoaded && updatedCount >= 2) {
         showInterstitialAd();
         resetInterstitialCount();
       }

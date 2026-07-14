@@ -10,11 +10,11 @@ import { useReferral } from '../../src/hooks/useReferral';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReferralScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const { stats, loading } = useReferral();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
   const handleCopyCode = async () => {
     if (!stats?.referralCode) return;

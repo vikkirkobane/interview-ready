@@ -116,7 +116,7 @@ const TEMPLATES = [
 // ─── Blank resume scaffold ─────────────────────────────────────────────────────
 
 const blankResume = (templateId: string | null): DraftResume => ({
-  templateId: templateId || 'modern',
+  templateId: templateId || 'executive',
   header: { name: '', title: '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
   summary: '',
   experience: [],
@@ -138,7 +138,7 @@ const blankResume = (templateId: string | null): DraftResume => ({
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const aiResume = (templateId: string | null): DraftResume => ({
-  templateId: templateId || 'modern',
+  templateId: templateId || 'executive',
   header: {
     name: 'Alex Morgan',
     title: 'Senior Product Strategy Lead',
@@ -202,7 +202,6 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ResumeBuilderScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const router = useRouter();
@@ -212,6 +211,7 @@ export default function ResumeBuilderScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const [isEditMode, setIsEditMode] = useState(true);
   const [isTemplateModalVisible, setIsTemplateModalVisible] = useState(false);
   const [isExportModalVisible, setIsExportModalVisible] = useState(false);
@@ -239,7 +239,7 @@ export default function ResumeBuilderScreen() {
   const deleteMutation = useDeleteResumeMutation();
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
-  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
   const handleGenerate = async () => {
     if (!selectedTemplateId) {
@@ -264,17 +264,18 @@ export default function ResumeBuilderScreen() {
       }
 
       const res = await createResumeMutation.mutateAsync({
-        title: jobDescription || finalJobUrl ? 'Tailored Resume' : 'Base Resume',
+        title: (jobDescription.trim().length > 10 || finalJobUrl.length > 5) ? 'Tailored Resume' : 'Base Resume',
         template_id: selectedTemplateId,
         job_analysis_id,
-        is_base: !jobDescription && jdFileText.trim().length === 0 && !finalJobUrl
+        is_base: jobDescription.trim().length === 0 && jdFileText.trim().length === 0 && finalJobUrl.length === 0
       });
 
       router.setParams({ id: res.resume_id });
       Toast.show({ type: 'success', text1: 'Resume generated!' });
 
       incrementInterstitialCount();
-      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+      const updatedCount = useUIStore.getState().interstitialActionCount;
+      if (!isPro && interstitialLoaded && updatedCount >= 2) {
         showInterstitialAd();
         resetInterstitialCount();
       }
@@ -301,7 +302,7 @@ export default function ResumeBuilderScreen() {
   // Sync from remote when loaded
   React.useEffect(() => {
     if (remoteResume && !draft) {
-       
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft({
         templateId: remoteResume.templateId || 'modern',
         header: remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
@@ -498,7 +499,7 @@ export default function ResumeBuilderScreen() {
   const handleAttachJdFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/png', 'image/jpeg', 'application/pdf'],
+        type: ['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
         copyToCacheDirectory: true,
       });
 
@@ -513,9 +514,9 @@ export default function ResumeBuilderScreen() {
         return;
       }
 
-      const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
-        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
+        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, PDF, and DOCX files are allowed.' });
         return;
       }
 
@@ -1756,7 +1757,7 @@ export default function ResumeBuilderScreen() {
             </View>
 
             <Text style={styles.exportNote}>
-              Your resume will be formatted using the <Text style={{ fontWeight: '700' }}>{TEMPLATES.find(t => t.id === draft?.templateId)?.name}</Text> template.
+              Your resume will be formatted using the <Text style={{ fontWeight: '700' }}>{TEMPLATES.find(t => t.id === draft?.templateId)?.name || 'default'}</Text> template.
             </Text>
           </View>
         </View>
