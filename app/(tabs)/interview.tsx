@@ -11,6 +11,8 @@ import Markdown from 'react-native-markdown-display';
 import * as DocumentPicker from 'expo-document-picker';
 import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUIStore } from '../../src/stores/ui-store';
+import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 
 const TypingIndicator = ({ colors }: { colors: any }) => {
   const [dot1] = useState(() => new Animated.Value(0));
@@ -77,7 +79,7 @@ type Message = {
 };
 
 export default function InterviewScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -97,6 +99,9 @@ export default function InterviewScreen() {
   const startMutation = useStartInterviewMutation();
   const messageMutation = useInterviewMessageMutation();
   const extractJd = useExtractJdMutation();
+
+  const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
+  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
   useEffect(() => {
     // Start interview session when screen mounts
@@ -221,6 +226,12 @@ export default function InterviewScreen() {
         role: 'ai',
         text: res.message?.content || res.content || "Thank you for your response."
       }]);
+
+      incrementInterstitialCount();
+      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+        showInterstitialAd();
+        resetInterstitialCount();
+      }
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Message Failed', text2: e.message });
     } finally {
@@ -328,7 +339,7 @@ export default function InterviewScreen() {
 
         {isTyping && <TypingIndicator colors={colors} />}
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
 
       {/* Bottom Input Area */}
       <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>

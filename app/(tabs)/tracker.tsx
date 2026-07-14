@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Pressable,  View, Text, StyleSheet, ScrollView, Dimensions, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
 import { Typography, Spacing, Radius, Shadow, useTheme } from "../../src/theme";
-import { ScoreRing, AdBanner } from "../../src/components/ui";
+import { ScoreRing } from "../../src/components/ui";
 import { useAuthStore } from "../../src/stores/auth-store";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation, useDeleteJobApplicationMutation } from "../../src/hooks/useApi";
@@ -10,7 +10,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function TrackerScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
@@ -339,7 +339,7 @@ export default function TrackerScreen() {
             })}
           </ScrollView>
         )}
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
       </View>
     </View>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Card, Button, AdBanner } from '../../src/components/ui';
+import { Card, Button } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
@@ -15,11 +15,13 @@ import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
 import { CoverLetter } from '../../src/types/schemas';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUIStore } from '../../src/stores/ui-store';
+import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 
 const TONES = ['Professional', 'Enthusiastic', 'Concise', 'Storytelling', 'Formal'];
 
 export default function CoverLetterGeneratorScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { colors } = useTheme();
   const { addNotification } = useNotificationStore();
@@ -44,6 +46,9 @@ export default function CoverLetterGeneratorScreen() {
   const deleteMutation = useDeleteCoverLetterMutation();
   const extractJd = useExtractJdMutation();
   const { data: pastCoverLetter } = useCoverLetterQuery(id as string);
+
+  const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
+  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
 
   React.useEffect(() => {
@@ -148,6 +153,12 @@ export default function CoverLetterGeneratorScreen() {
         description: `Successfully tailored a letter for the provided job description.`,
         type: 'success',
       });
+
+      incrementInterstitialCount();
+      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+        showInterstitialAd();
+        resetInterstitialCount();
+      }
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Generation Failed', text2: e.message });
     } finally {
@@ -404,7 +415,7 @@ export default function CoverLetterGeneratorScreen() {
 
         </ScrollView>
 
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

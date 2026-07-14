@@ -10,7 +10,7 @@ import {
  Pressable,  Modal } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
-import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
+import { Card, Button, ScoreRing } from '../../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useLinkedinAnalyzeMutation,
@@ -62,7 +62,7 @@ const KW_COLOR: Record<string, string> = {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function LinkedinOptimizerScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
@@ -348,7 +348,7 @@ export default function LinkedinOptimizerScreen() {
             <Text style={[s.skipText, { color: colors.textMuted }]}>Skip — I'll enter my content manually →</Text>
           </Pressable>
           </ScrollView>
-          {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+          <View style={{ height: bottomNavPadding }} />
       </View>
     );
   }
@@ -444,7 +444,7 @@ export default function LinkedinOptimizerScreen() {
 
         <Button title="Continue → Review & Add Content" onPress={() => setStep('content')} style={{ marginTop: Spacing.lg }} />
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     
 </View>);
   }
@@ -556,7 +556,7 @@ export default function LinkedinOptimizerScreen() {
           <Button title="Next → Custom Spike" onPress={() => setStep('spike')} style={{ flex: 1.5 }} />
         </View>
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     
 </View>);
   }
@@ -612,7 +612,7 @@ export default function LinkedinOptimizerScreen() {
           </View>
         )}
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     
 </View>);
   }
@@ -850,7 +850,7 @@ export default function LinkedinOptimizerScreen() {
 
         </ScrollView>
 
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

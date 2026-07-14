@@ -76,10 +76,6 @@ function AuthGuard() {
     // Non-grouped auth/callback route (app/auth/callback.tsx → /auth/callback)
     if (firstSegment === 'auth' && secondSegment === 'callback') return;
 
-    // Don't redirect if we're on the welcome screen - let it handle OAuth redirects
-    const onWelcomeScreen = firstSegment === '(auth)' && secondSegment === 'welcome';
-    if (onWelcomeScreen) return;
-
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (session && inAuthGroup) {
@@ -110,8 +106,6 @@ export default function RootLayout() {
   // Handle OAuth deep links (interviewready://auth/callback?code=...)
   // This fires when the app is opened via the OAuth redirect URI.
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
     async function handleDeepLink(url: string) {
       // Only handle auth callbacks
       if (!url.includes('auth/callback')) return;
@@ -134,75 +128,23 @@ export default function RootLayout() {
         }
 
         if (code) {
-          // Retry logic for code exchange (handles network delays)
-          let retries = 0;
-          const maxRetries = 3;
+          // Exchange code for session
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
-          while (retries < maxRetries) {
-            try {
-              const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-              
-              if (exchangeError) {
-                console.error(`[DeepLink] exchangeCodeForSession error (attempt ${retries + 1}):`, exchangeError.message);
-                if (retries === maxRetries - 1) {
-                  // Final attempt failed, try to pick up any existing session
-                  break;
-                }
-                retries++;
-                await new Promise(resolve => {
-                  timeoutId = setTimeout(resolve, 1000);
-                }); // Wait before retry
-                continue;
-              }
-              
-              // Explicitly push the session into the Zustand store so that any
-              // subscriber (welcome screen, AuthGuard) reacts immediately.
-              if (data?.session) {
-                useAuthStore.getState().setSession(data.session);
-                console.log('[DeepLink] Session established successfully');
-                return;
-              }
-            } catch (retryErr) {
-              console.error(`[DeepLink] Network error during exchange (attempt ${retries + 1}):`, retryErr);
-              if (retries === maxRetries - 1) {
-                break;
-              }
-              retries++;
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
+          if (exchangeError) {
+            console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);
+            return;
           }
+          
+          // Session will be set by onAuthStateChange in auth-store
+          // The auth/callback screen will handle navigation
+          console.log('[DeepLink] Code exchanged successfully, session will be set by onAuthStateChange');
+          return;
         }
 
-        // No code or exchange failed — check if the session already exists
-        // (can happen if onAuthStateChange fired first).
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          useAuthStore.getState().setSession(session);
-          console.log('[DeepLink] Session found via getSession fallback');
-        } else {
-          console.warn('[DeepLink] No session found after handling callback URL.');
-          // Additional fallback: wait and retry session check
-          setTimeout(async () => {
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            if (retrySession) {
-              useAuthStore.getState().setSession(retrySession);
-              console.log('[DeepLink] Session found on delayed retry');
-            }
-          }, 2000);
-        }
+        console.warn('[DeepLink] No code found in callback URL');
       } catch (err) {
         console.error('[DeepLink] Unexpected error:', err);
-        // Final fallback attempt
-        setTimeout(async () => {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              useAuthStore.getState().setSession(session);
-            }
-          } catch (fallbackErr) {
-            console.error('[DeepLink] Fallback session check failed:', fallbackErr);
-          }
-        }, 3000);
       }
     }
 
@@ -222,10 +164,7 @@ export default function RootLayout() {
       handleDeepLink(url);
     });
 
-    return () => {
-      subscription.remove();
-      clearTimeout(timeoutId);
-    };
+    return () => subscription.remove();
   }, []);
 
   // Wait for both session restore and font loading

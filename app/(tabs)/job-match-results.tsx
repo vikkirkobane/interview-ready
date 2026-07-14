@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing, AdBanner } from '../../src/components/ui';
+import { ScoreRing } from '../../src/components/ui';
 import { useBreakpoint } from '../../src/hooks/useBreakpoint';
 import { useJobApplicationQuery, useDeleteJobApplicationMutation, useGenerateRoadmapMutation } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth-store';
 
 export default function JobMatchResultsScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { id, fromList } = useLocalSearchParams();
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -355,7 +355,7 @@ export default function JobMatchResultsScreen() {
           </Pressable>
         )}
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

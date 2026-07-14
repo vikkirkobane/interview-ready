@@ -9,7 +9,7 @@ import { AdBanner } from '../../src/components/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AllActivitiesScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { colors } = useTheme();
   const { data: recentActivities, isLoading } = useRecentActivitiesQuery();
@@ -63,7 +63,7 @@ export default function AllActivitiesScreen() {
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent activities found.</Text>
         )}
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

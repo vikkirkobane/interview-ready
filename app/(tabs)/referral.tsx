@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator, Share } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Button, AdBanner } from '../../src/components/ui';
+import { Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
@@ -10,7 +10,7 @@ import { useReferral } from '../../src/hooks/useReferral';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReferralScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const { stats, loading } = useReferral();
   const { user } = useAuthStore();
@@ -133,7 +133,7 @@ export default function ReferralScreen() {
           </View>
         </View>
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

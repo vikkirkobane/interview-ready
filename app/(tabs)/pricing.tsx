@@ -17,6 +17,8 @@ import { Spacing, Typography, Radius } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { COUNTRIES, Country, getPaymentMethods } from '../../src/constants/countries';
+import { EarnCreditsButton } from '../../src/components/ui/EarnCreditsButton';
+import { useAuthStore } from '../../src/stores/auth-store';
 
 type PaymentMode = 'USD' | 'KES';
 
@@ -191,6 +193,9 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
 
 export default function PricingScreen() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]); // Default to Kenya
@@ -459,14 +464,17 @@ export default function PricingScreen() {
         </View>
       </Modal>
 
-      <View style={styles.freePlanCard}>
-        <Text style={styles.freePlanTitle}>Current Plan: Free</Text>
-        <Text style={styles.freePlanText}>
-          • 10 AI credits per month{'\n'}
-          • 2 basic resume templates{'\n'}
-          • Limited features
-        </Text>
-      </View>
+      {!isPro && (
+        <View style={styles.freePlanCard}>
+          <Text style={styles.freePlanTitle}>Current Plan: Free</Text>
+          <Text style={styles.freePlanText}>
+            • 10 AI credits per month{'\n'}
+            • 2 basic resume templates{'\n'}
+            • Limited features
+          </Text>
+          <EarnCreditsButton />
+        </View>
+      )}
 
       <View style={styles.plansContainer}>
         {currentPlans.map((plan) => {

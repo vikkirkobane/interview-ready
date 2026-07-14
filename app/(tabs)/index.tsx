@@ -16,13 +16,13 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
-import { ScoreRing, GoldenBox, ShimmerEffect, AdBanner } from '../../src/components/ui';
+import { ScoreRing, GoldenBox, ShimmerEffect } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCredits } from '../../src/hooks/useCredits';
 import { Image } from 'expo-image';
 
 export default function DashboardScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
@@ -276,7 +276,7 @@ export default function DashboardScreen() {
 
         </ScrollView>
 
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

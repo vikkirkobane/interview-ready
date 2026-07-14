@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { Session, User } from '@supabase/supabase-js';
-import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { queryClient } from '../lib/query-client';
 import { useProfileStore } from './profile-store';
@@ -163,41 +162,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const parsedUrl = new URL(res.url);
             const code = parsedUrl.searchParams.get('code');
             if (code) {
-              // Retry logic for code exchange (handles network delays)
-              let exchangeRetries = 0;
-              const maxExchangeRetries = 3;
-              
-              while (exchangeRetries < maxExchangeRetries) {
-                try {
-                  const { data: sessionData, error: sessionError } =
-                    await supabase.auth.exchangeCodeForSession(code);
-                  
-                  if (sessionError) {
-                    console.error(`[OAuth] exchangeCodeForSession error (attempt ${exchangeRetries + 1}):`, sessionError.message);
-                    if (exchangeRetries === maxExchangeRetries - 1) {
-                      break;
-                    }
-                    exchangeRetries++;
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    continue;
-                  }
-                  
-                  if (sessionData?.session) {
-                    set({ session: sessionData.session, user: sessionData.session.user });
-                    return { error: null };
-                  }
-                } catch (exchangeErr) {
-                  console.error(`[OAuth] Network error during exchange (attempt ${exchangeRetries + 1}):`, exchangeErr);
-                  if (exchangeRetries === maxExchangeRetries - 1) {
-                    break;
-                  }
-                  exchangeRetries++;
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-              }
-              
-              if (exchangeRetries === maxExchangeRetries) {
-                console.warn('[OAuth] Code exchange failed after retries, falling back to session polling');
+              const { data: sessionData, error: sessionError } =
+                await supabase.auth.exchangeCodeForSession(code);
+              if (sessionError) {
+                console.warn('[OAuth] exchangeCodeForSession error:', sessionError.message);
+              } else if (sessionData?.session) {
+                // onAuthStateChange will also fire, but we set it here for immediate response
+                set({ session: sessionData.session, user: sessionData.session.user });
+                return { error: null };
               }
             }
           } catch (parseErr) {
@@ -209,32 +181,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // On Android the deep-link Intent closes the Custom Tab and
         // openAuthSessionAsync returns 'dismiss' with no URL. The code was
         // delivered to the Linking listener in _layout.tsx which calls
-        // exchangeCodeForSession and then setSession(). We just need to wait
-        // for that to complete before returning.
-        //
-        // Poll getSession() — it will be populated once the Linking handler
-        // finishes. Platform-specific timing for network delays and deep linking.
-        const pollInterval = Platform.OS === 'android' ? 750 : 500;
-        const maxPollTime = Platform.OS === 'android' ? 20000 : 15000;
-        const maxAttempts = maxPollTime / pollInterval;
-
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          await new Promise((resolve) => setTimeout(resolve, pollInterval));
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-              set({ session, user: session.user });
-              return { error: null };
-            }
-          } catch (pollErr) {
-            console.error(`[OAuth] Session poll error (attempt ${attempt + 1}):`, pollErr);
-            // Continue polling even on error
-          }
-        }
-
-        // Still nothing after polling. onAuthStateChange will fire eventually
-        // and the welcome screen's session watcher will navigate away.
-        console.warn('[OAuth] Session not ready after polling. Relying on onAuthStateChange.');
+        // exchangeCodeForSession. onAuthStateChange will fire and set the session.
+        // The auth/callback screen will handle navigation once session is set.
+        console.log('[OAuth] OAuth initiated, waiting for callback via deep link');
         return { error: null };
       }
 

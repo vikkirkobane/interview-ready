@@ -24,7 +24,7 @@ const timeAgo = (dateStr: string) => {
 };
 
 export default function NotificationsScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
   const { user } = useAuthStore();
@@ -174,7 +174,7 @@ export default function NotificationsScreen() {
           })
         )}
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

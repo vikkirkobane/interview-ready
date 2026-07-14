@@ -6,7 +6,7 @@ import {
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Button, AdBanner } from '../../src/components/ui';
+import { Button } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
@@ -20,6 +20,8 @@ import { useNotificationStore } from '../../src/stores/notification-store';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
 import { supabase } from '../../src/lib/supabase';
+import { useUIStore } from '../../src/stores/ui-store';
+import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 
@@ -200,7 +202,7 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ResumeBuilderScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { colors } = useTheme();
   const styles = makeStyles(colors);
   const router = useRouter();
@@ -236,6 +238,9 @@ export default function ResumeBuilderScreen() {
   const extractJd = useExtractJdMutation();
   const deleteMutation = useDeleteResumeMutation();
 
+  const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
+  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+
   const handleGenerate = async () => {
     if (!selectedTemplateId) {
       Toast.show({ type: 'error', text1: 'Please select a template.' });
@@ -267,6 +272,12 @@ export default function ResumeBuilderScreen() {
 
       router.setParams({ id: res.resume_id });
       Toast.show({ type: 'success', text1: 'Resume generated!' });
+
+      incrementInterstitialCount();
+      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+        showInterstitialAd();
+        resetInterstitialCount();
+      }
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Generation failed', text2: e.message });
     }
@@ -1525,7 +1536,7 @@ export default function ResumeBuilderScreen() {
 
         </ScrollView>
 
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
 
       {renderTemplateModal()}
       {renderExportModal()}

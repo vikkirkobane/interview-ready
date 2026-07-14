@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
+import { Card, Button, ScoreRing } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePastInterviewsQuery, useDeleteMockInterviewMutation, useExtractJdMutation } from '../../src/hooks/useApi';
@@ -12,7 +12,7 @@ import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function InterviewsLobbyScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const params = useLocalSearchParams();
   const { colors } = useTheme();
@@ -300,7 +300,7 @@ export default function InterviewsLobbyScreen() {
 
         </ScrollView>
 
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

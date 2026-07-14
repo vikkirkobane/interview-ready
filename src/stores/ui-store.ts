@@ -26,6 +26,10 @@ interface UIState {
   setGeneratingCoverLetter: (v: boolean) => void;
   setUpgradeModal: (v: boolean) => void;
   setExportSheet: (v: boolean) => void;
+  // Interstitial Ad Frequency Capping
+  interstitialActionCount: number;
+  incrementInterstitialCount: () => void;
+  resetInterstitialCount: () => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -45,20 +49,29 @@ export const useUIStore = create<UIState>()(
       showUpgradeModal: false,
       showExportSheet: false,
 
+      // Ad Counters
+      interstitialActionCount: 0,
+
       setAnalyzing: (v) => set({ isAnalyzing: v }),
       setGeneratingResume: (v) => set({ isGeneratingResume: v }),
       setGeneratingCoverLetter: (v) => set({ isGeneratingCoverLetter: v }),
       setUpgradeModal: (v) => set({ showUpgradeModal: v }),
       setExportSheet: (v) => set({ showExportSheet: v }),
+
+      incrementInterstitialCount: () =>
+        set((s) => ({ interstitialActionCount: s.interstitialActionCount + 1 })),
+      resetInterstitialCount: () => set({ interstitialActionCount: 0 }),
     }),
     {
       name: 'ui-preferences',
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist the theme and notification preferences
+      // Only persist the theme, notification preferences, and ad count
       partialize: (state) => ({ 
         isDark: state.isDark,
-        notificationsEnabled: state.notificationsEnabled 
+        notificationsEnabled: state.notificationsEnabled,
+        interstitialActionCount: state.interstitialActionCount,
       }),
     }
   )
 );
+

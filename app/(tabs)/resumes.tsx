@@ -10,7 +10,7 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing, AdBanner } from '../../src/components/ui';
+import { ScoreRing } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useResumesListQuery } from '../../src/hooks/useApi';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,7 +25,7 @@ const TEMPLATES = [
 ];
 
 export default function ResumesScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
@@ -123,7 +123,7 @@ export default function ResumesScreen() {
           )}
         </View>
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

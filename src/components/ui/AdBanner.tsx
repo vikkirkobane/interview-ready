@@ -1,52 +1,35 @@
 import React, { useState } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { View, StyleSheet, Platform } from 'react-native';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
+import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSegments } from 'expo-router';
-
-// Use the production ID from environment variables, or fallback to the test ID if not set.
-// In development mode (__DEV__), always use the TestIds.ADAPTIVE_BANNER to prevent account bans.
-const adUnitId = __DEV__ 
-  ? TestIds.ADAPTIVE_BANNER 
-  : (process.env.EXPO_PUBLIC_ADMOB_ANDROID_AD_UNIT_ID || TestIds.ADAPTIVE_BANNER);
+import { AdUnits } from '../../lib/adUnits';
+import { Spacing } from '../../theme';
 
 export const AdBanner = () => {
   const [hasError, setHasError] = useState(false);
   const insets = useSafeAreaInsets();
-  const segments = useSegments();
 
-  // Check if we are inside the tabs layout
-  // Cast segments to string[] to avoid 'never' type errors with expo-router
-  const inTabs = (segments as string[]).includes('(tabs)');
-  
-  // Calculate the position above the floating tab bar:
-  // tab bar height is 72, plus its bottom offset
+  // The floating tab bar has a height of 72 and is positioned from the bottom
+  // by (insets.bottom > 0 ? insets.bottom + 8 : Spacing.md)
+  // We place the banner exactly above it.
   const tabBarHeight = 72;
-  const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : 16;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const bottomPosition = tabBarHeight + tabBarBottomOffset + 10; // +10 for visual padding above the nav
+  const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : Spacing.md;
+  const bottomPosition = tabBarHeight + tabBarBottomOffset + 8; // 8px visual gap
 
   if (hasError) {
-    // If ad fails to load, gracefully collapse the space instead of showing a blank area
     return null;
   }
 
   return (
-    <View style={[
-      styles.container,
-      inTabs && {
-        paddingBottom: tabBarHeight + tabBarBottomOffset,
-      }
-    ]}>
+    <View style={[styles.container, { bottom: bottomPosition }]}>
       <BannerAd
-        unitId={adUnitId}
+        unitId={AdUnits.banner}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         requestOptions={{
-          requestNonPersonalizedAdsOnly: true, // For GDPR compliance if applicable
+          requestNonPersonalizedAdsOnly: true,
         }}
         onAdFailedToLoad={(error) => {
-          console.warn('AdMob Banner Failed to Load:', error);
+          console.warn('[AdMob] Banner failed to load:', error);
           setHasError(true);
         }}
       />
@@ -56,10 +39,15 @@ export const AdBanner = () => {
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingVertical: 10,
+    paddingVertical: 4,
     backgroundColor: 'transparent',
+    zIndex: 50,
+    elevation: 50,
   },
 });

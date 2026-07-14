@@ -14,7 +14,7 @@ import React, { useEffect, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing, AdBanner } from '../../src/components/ui';
+import { ScoreRing } from '../../src/components/ui';
 import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 import Toast from 'react-native-toast-message';
@@ -23,7 +23,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 
 export default function FeedbackScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const router = useRouter();
   const { sessionId, id, fromList } = useLocalSearchParams();
   const actualSessionId = (sessionId || id) as string;
@@ -286,7 +286,7 @@ export default function FeedbackScreen() {
 
         </ScrollView>
 
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

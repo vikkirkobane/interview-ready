@@ -12,9 +12,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { AdBanner } from '../../src/components/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUIStore } from '../../src/stores/ui-store';
+import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 
 export default function JobFitScreen() {
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72;
+  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const { job_id } = useLocalSearchParams();
   const [jdText, setJdText] = useState('');
   const [jdUrl, setJdUrl] = useState('');
@@ -45,6 +47,9 @@ export default function JobFitScreen() {
   const analyzeJob = useAnalyzeJobMutation();
   const extractJd = useExtractJdMutation();
   const { data: pastMatches, isLoading: isLoadingPastMatches } = useJobApplicationsListQuery();
+
+  const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
+  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
 
 
@@ -119,6 +124,12 @@ export default function JobFitScreen() {
         jdUrl: finalJdUrl || undefined,
         profileData: profile
       });
+
+      incrementInterstitialCount();
+      if (!isPro && interstitialLoaded && interstitialActionCount >= 2) {
+        showInterstitialAd();
+        resetInterstitialCount();
+      }
 
       // Navigate to standalone results screen
       router.push(`/job-match-results?id=${result.job_id}` as any);
@@ -279,7 +290,7 @@ export default function JobFitScreen() {
           </View>
         </View>
         </ScrollView>
-        {!isPro ? <AdBanner /> : <View style={{ height: bottomNavPadding }} />}
+        <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

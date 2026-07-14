@@ -1,13 +1,12 @@
-import { Pressable ,
+import { Pressable } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
   View,
   Text,
   StyleSheet,
   Animated,
   ScrollView,
-  Platform,
 } from 'react-native';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
@@ -16,7 +15,6 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { Image } from 'expo-image';
-import { supabase } from '../../src/lib/supabase';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -25,26 +23,14 @@ export default function WelcomeScreen() {
   const { colors, isDark } = useTheme();
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'linkedin_oidc' | null>(null);
 
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const [fadeAnim] = useState(() => new Animated.Value(0));
   const [slideAnim] = useState(() => new Animated.Value(20));
-
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, []);
 
   // If the session lands while we're still on this screen (e.g. onAuthStateChange
   // fires after the browser closes), navigate to tabs immediately.
   useEffect(() => {
     if (session) {
-      // Small delay to ensure session is fully set
-      const timer = setTimeout(() => {
-        router.replace('/(tabs)');
-      }, 100);
-      return () => clearTimeout(timer);
+      router.replace('/(tabs)');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
@@ -69,93 +55,28 @@ export default function WelcomeScreen() {
     setLoadingProvider('google');
     const { error } = await signInWithOAuth('google');
     // Only clear the loading state on explicit cancellation or error.
-    // On success, the session useEffect above will navigate away while
-    // the loading indicator is still showing — that's intentional.
+    // On success, the auth/callback screen will handle navigation.
     if (error) {
       setLoadingProvider(null);
       if (error !== 'Authentication canceled.') {
         Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
       }
     }
-    // If no error, keep loading spinner visible until session arrives.
-    // Also poll for session to handle cases where onAuthStateChange is slow
-    if (!error) {
-      // Platform-specific timing: Android needs longer polling due to deep linking delays
-      const pollInterval = Platform.OS === 'android' ? 750 : 500;
-      const maxPollTime = Platform.OS === 'android' ? 20000 : 15000; // 20s for Android, 15s for iOS
-      
-      let attempts = 0;
-      const maxAttempts = maxPollTime / pollInterval;
-      
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = setInterval(async () => {
-        attempts++;
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            setLoadingProvider(null);
-          } else if (attempts >= maxAttempts) {
-            // Max attempts reached without session
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            setLoadingProvider(null);
-            Toast.show({ 
-              type: 'error', 
-              text1: 'Sign in timeout', 
-              text2: 'Please try again or check your connection' 
-            });
-          }
-        } catch (err) {
-          console.error('[OAuth] Session polling error:', err);
-          // Continue polling even on error
-        }
-      }, pollInterval);
-    }
+    // If no error, keep loading spinner visible - callback screen will handle the rest
   };
 
   const handleLinkedInAuth = async () => {
     setLoadingProvider('linkedin_oidc');
     const { error } = await signInWithOAuth('linkedin_oidc');
+    // Only clear the loading state on explicit cancellation or error.
+    // On success, the auth/callback screen will handle navigation.
     if (error) {
       setLoadingProvider(null);
       if (error !== 'Authentication canceled.') {
         Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
       }
     }
-    // If no error, keep loading spinner visible until session arrives.
-    // Also poll for session to handle cases where onAuthStateChange is slow
-    if (!error) {
-      // Platform-specific timing: Android needs longer polling due to deep linking delays
-      const pollInterval = Platform.OS === 'android' ? 750 : 500;
-      const maxPollTime = Platform.OS === 'android' ? 20000 : 15000; // 20s for Android, 15s for iOS
-      
-      let attempts = 0;
-      const maxAttempts = maxPollTime / pollInterval;
-      
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = setInterval(async () => {
-        attempts++;
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            setLoadingProvider(null);
-          } else if (attempts >= maxAttempts) {
-            // Max attempts reached without session
-            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-            setLoadingProvider(null);
-            Toast.show({ 
-              type: 'error', 
-              text1: 'Sign in timeout', 
-              text2: 'Please try again or check your connection' 
-            });
-          }
-        } catch (err) {
-          console.error('[OAuth] Session polling error:', err);
-          // Continue polling even on error
-        }
-      }, pollInterval);
-    }
+    // If no error, keep loading spinner visible - callback screen will handle the rest
   };
 
   return (
