@@ -10,11 +10,11 @@ interface AIMessage {
 }
 
 interface AIResponse {
-  choices: Array<{
+  choices: {
     message: {
       content: string;
     };
-  }>;
+  }[];
   usage: {
     prompt_tokens: number;
     completion_tokens: number;

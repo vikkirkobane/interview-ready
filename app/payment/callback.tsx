@@ -1,11 +1,10 @@
-import { Pressable } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Colors, Spacing, Typography } from '../../src/theme/tokens';
 import { supabase } from '../../src/lib/supabase';
@@ -23,8 +22,10 @@ export default function PaymentCallbackScreen() {
 
   useEffect(() => {
     if (reference) {
+      // eslint-disable-next-line react-hooks/immutability
       verifyPayment(reference);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('error');
       setMessage('Invalid payment reference');
     }

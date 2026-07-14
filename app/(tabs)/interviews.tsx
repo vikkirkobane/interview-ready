@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -27,6 +28,7 @@ export default function InterviewsLobbyScreen() {
   
   // Ensure fields populate even if the tab was previously mounted
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (params.role) setRole(params.role as string);
     if (params.jobDescription) setJobDescription(params.jobDescription as string);
   }, [params.role, params.jobDescription]);

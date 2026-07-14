@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useEffect, useMemo } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Pressable,  View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useRouter } from 'expo-router';

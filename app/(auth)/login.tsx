@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
@@ -8,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing } from '../../src/theme/tokens';
@@ -120,6 +119,7 @@ export default function LoginScreen() {
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable onPress={() => router.push('/(auth)/signup')}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
+              {/* eslint-disable-next-line react/no-unescaped-entities */}
               Don't have an account?{' '}
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign Up</Text>
             </Text>

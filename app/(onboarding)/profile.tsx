@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
@@ -9,6 +7,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';

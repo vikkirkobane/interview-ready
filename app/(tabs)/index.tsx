@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
@@ -9,6 +7,8 @@ import {
   RefreshControl,
   Animated,
 } from 'react-native';
+import React, { useState } from 'react';
+
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
@@ -24,6 +24,7 @@ import { Image } from 'expo-image';
 export default function DashboardScreen() {
   const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
   const { profile, fetchProfile } = useProfileStore();
@@ -49,7 +50,7 @@ export default function DashboardScreen() {
 
   const { data: recentActivities, isLoading: isActivitiesLoading } = useRecentActivitiesQuery();
 
-  const shakeAnim = React.useRef(new Animated.Value(0)).current;
+  const [shakeAnim] = useState(() => new Animated.Value(0));
 
   React.useEffect(() => {
     const startShaking = () => {

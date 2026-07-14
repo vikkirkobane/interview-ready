@@ -48,6 +48,7 @@ export default function CoverLetterGeneratorScreen() {
 
   React.useEffect(() => {
     if (pastCoverLetter) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (pastCoverLetter.title) setTargetRole(pastCoverLetter.title.split(' - ')[0] || ''); // Attempt to parse title
       if (pastCoverLetter.tone) {
         const toneStr = pastCoverLetter.tone.charAt(0) + pastCoverLetter.tone.slice(1).toLowerCase();

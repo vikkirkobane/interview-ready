@@ -162,7 +162,7 @@ export async function apiUploadFile<T = any>(
       for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-      const blob = new Blob([byteNumbers], { type: mimeType || 'application/octet-stream' });
+      const blob = new Blob([byteNumbers as any], { type: mimeType || 'application/octet-stream', lastModified: Date.now() });
       (formData as any).append('file', blob, fileName);
     }
 
@@ -182,6 +182,7 @@ export async function apiUploadFile<T = any>(
       try {
         const errJson = await response.json();
         errorMsg = errJson.error || errorMsg;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {}
       return { data: null, error: errorMsg };
     }

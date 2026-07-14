@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useState, useMemo } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   ScrollView,
@@ -11,6 +9,7 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { PricingCard, PricingPlan } from '../../src/components/features/payments/PricingCard';
 import { PaystackWebViewComponent, PaystackPaymentData } from '../../src/components/features/payments/PaystackWebView';
@@ -380,6 +379,7 @@ export default function PricingScreen() {
         <Text style={styles.countryItemCheck}>✓</Text>
       )}
     </Pressable>
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [selectedCountry.code, handleCountrySelect]);
 
   return (

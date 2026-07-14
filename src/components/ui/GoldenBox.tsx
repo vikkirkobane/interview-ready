@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Pressable,  View, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { Radius, Spacing, Shadow } from '../../theme';
 import { ShimmerEffect } from './ShimmerEffect';

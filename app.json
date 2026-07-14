@@ -5,14 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon_padded.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "scheme": "interviewready",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.interviewready.app",
@@ -37,7 +31,14 @@
       "expo-font",
       "expo-secure-store",
       "expo-asset",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
       "expo-status-bar",
       "expo-web-browser",
       "expo-sharing",
@@ -68,9 +69,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "c72af5f1-caef-40e0-b1f5-89808023140a"
+        "projectId": "1b842899-c2d3-4be8-b092-f6b51717a4ff"
       }
     },
-    "owner": "kirkobane"
+    "owner": "victor48s-team"
   }
 }

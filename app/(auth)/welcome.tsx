@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
@@ -8,6 +6,8 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
@@ -25,8 +25,16 @@ export default function WelcomeScreen() {
   const { colors, isDark } = useTheme();
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'linkedin_oidc' | null>(null);
 
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [fadeAnim] = useState(() => new Animated.Value(0));
+  const [slideAnim] = useState(() => new Animated.Value(20));
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   // If the session lands while we're still on this screen (e.g. onAuthStateChange
   // fires after the browser closes), navigate to tabs immediately.
@@ -38,6 +46,7 @@ export default function WelcomeScreen() {
       }, 100);
       return () => clearTimeout(timer);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   useEffect(() => {
@@ -53,6 +62,7 @@ export default function WelcomeScreen() {
         useNativeDriver: true,
       })
     ]).start();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleGoogleAuth = async () => {
@@ -77,16 +87,17 @@ export default function WelcomeScreen() {
       let attempts = 0;
       const maxAttempts = maxPollTime / pollInterval;
       
-      const pollIntervalId = setInterval(async () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = setInterval(async () => {
         attempts++;
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            clearInterval(pollIntervalId);
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setLoadingProvider(null);
           } else if (attempts >= maxAttempts) {
             // Max attempts reached without session
-            clearInterval(pollIntervalId);
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setLoadingProvider(null);
             Toast.show({ 
               type: 'error', 
@@ -121,16 +132,17 @@ export default function WelcomeScreen() {
       let attempts = 0;
       const maxAttempts = maxPollTime / pollInterval;
       
-      const pollIntervalId = setInterval(async () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = setInterval(async () => {
         attempts++;
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
-            clearInterval(pollIntervalId);
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setLoadingProvider(null);
           } else if (attempts >= maxAttempts) {
             // Max attempts reached without session
-            clearInterval(pollIntervalId);
+            if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
             setLoadingProvider(null);
             Toast.show({ 
               type: 'error', 

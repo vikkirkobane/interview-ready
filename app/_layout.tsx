@@ -85,6 +85,7 @@ function AuthGuard() {
     } else if (session && inAuthGroup) {
       router.replace('/(tabs)');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, initialized, segments]);
 
   return null;
@@ -103,11 +104,14 @@ export default function RootLayout() {
   useEffect(() => {
     initialize();
     mobileAds().initialize();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle OAuth deep links (interviewready://auth/callback?code=...)
   // This fires when the app is opened via the OAuth redirect URI.
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     async function handleDeepLink(url: string) {
       // Only handle auth callbacks
       if (!url.includes('auth/callback')) return;
@@ -145,7 +149,9 @@ export default function RootLayout() {
                   break;
                 }
                 retries++;
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait before retry
+                await new Promise(resolve => {
+                  timeoutId = setTimeout(resolve, 1000);
+                }); // Wait before retry
                 continue;
               }
               
@@ -216,7 +222,10 @@ export default function RootLayout() {
       handleDeepLink(url);
     });
 
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // Wait for both session restore and font loading

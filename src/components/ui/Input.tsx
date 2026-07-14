@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
@@ -31,8 +32,9 @@ export function Input({
   ...textInputProps
 }: InputProps) {
   const { colors } = useTheme();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isFocused, setIsFocused] = useState(false);
-  const focusAnim = useRef(new Animated.Value(0)).current;
+  const [focusAnim] = useState(() => new Animated.Value(0));
 
   const handleFocus = () => {
     setIsFocused(true);

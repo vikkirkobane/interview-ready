@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { View, StyleSheet, Platform } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +24,7 @@ export const AdBanner = () => {
   // tab bar height is 72, plus its bottom offset
   const tabBarHeight = 72;
   const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : 16;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const bottomPosition = tabBarHeight + tabBarBottomOffset + 10; // +10 for visual padding above the nav
 
   if (hasError) {

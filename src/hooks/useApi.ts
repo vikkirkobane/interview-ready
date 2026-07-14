@@ -743,7 +743,7 @@ export const useRecentActivitiesQuery = () => {
         supabase.from('mock_interviews').select('id, role, updated_at').order('updated_at', { ascending: false }).limit(5)
       ]);
 
-      const activities: Array<{ id: string; type: string; title: string; date: string; icon: string; color: string }> = [];
+      const activities: { id: string; type: string; title: string; date: string; icon: string; color: string }[] = [];
       
       if (resumes) {
         resumes.forEach(r => activities.push({ id: r.id, type: 'resume', title: r.title || 'Untitled Resume', date: r.updated_at, icon: 'document-text-outline', color: '#10b981' }));

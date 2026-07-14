@@ -26,6 +26,7 @@ export default function AskAIScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [jdFileText, setJdFileText] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [extractJdLoading, setExtractJdLoading] = useState(false);
   const { user } = useAuthStore();
@@ -152,6 +153,7 @@ export default function AskAIScreen() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRemoveAttachedJd = () => {
     setJdFileText('');
     setJdFileName(null);

@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
@@ -9,6 +7,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';

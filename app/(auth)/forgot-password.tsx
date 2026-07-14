@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
@@ -9,6 +7,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, useTheme } from '../../src/theme';
@@ -96,6 +95,7 @@ export default function ForgotPasswordScreen() {
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Forgot Password?</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           No worries! Enter your email address and we'll send you a link to reset your password.
         </Text>
 

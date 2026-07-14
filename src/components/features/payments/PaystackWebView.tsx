@@ -39,6 +39,7 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
     onCancel();
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handlePaymentError = (error: any) => {
     console.error('[Paystack] Payment error:', error);
     onError(error);

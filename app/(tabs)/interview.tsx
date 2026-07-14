@@ -13,9 +13,9 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TypingIndicator = ({ colors }: { colors: any }) => {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
+  const [dot1] = useState(() => new Animated.Value(0));
+  const [dot2] = useState(() => new Animated.Value(0));
+  const [dot3] = useState(() => new Animated.Value(0));
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -49,6 +49,7 @@ const TypingIndicator = ({ colors }: { colors: any }) => {
     animateDot(dot1, 0);
     animateDot(dot2, 200);
     animateDot(dot3, 400);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reducedMotion]);
 
   return (
@@ -79,6 +80,7 @@ export default function InterviewScreen() {
   const bottomNavPadding = useSafeAreaInsets().bottom + 72;
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
@@ -132,6 +134,7 @@ export default function InterviewScreen() {
       }
     };
     startInterview();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Timer Effect

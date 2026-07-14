@@ -1,14 +1,14 @@
-import { Pressable } from 'react-native';
-import React from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
   Platform,
   Linking,
 } from 'react-native';
+import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Image } from 'expo-image';
 
 interface ForceUpdateScreenProps {

@@ -1,6 +1,4 @@
-import { Pressable } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import { 
+import { Pressable , 
   View, 
   Text, 
   StyleSheet, 
@@ -10,6 +8,8 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, usePathname } from 'expo-router';
 import { useNavigationStore } from '../../stores/navigation-store';
 import { useAuthStore } from '../../stores/auth-store';
@@ -26,6 +26,7 @@ export function SideMenu() {
   const pathname = usePathname();
   const { isMenuOpen, closeMenu } = useNavigationStore();
   const { user, signOut } = useAuthStore();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   

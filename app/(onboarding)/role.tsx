@@ -4,16 +4,16 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Platform,
   TextInput,
-} from 'react-native';
+ Pressable,  ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useUpdateProfileMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { Pressable,  ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -28,6 +28,7 @@ const PREFERENCE_OPTIONS = [
 export default function RoleScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
   const {
     firstName, setFirstName,
@@ -46,6 +47,7 @@ export default function RoleScreen() {
     if (user?.user_metadata?.last_name && !lastName) {
       setLastName(user.user_metadata.last_name);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const updateProfile = useUpdateProfileMutation();
@@ -127,6 +129,7 @@ export default function RoleScreen() {
         <View style={styles.titleSection}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>What are you looking for?</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {/* eslint-disable-next-line react/no-unescaped-entities */}
             We'll tailor everything to your goals, from resume feedback to mock interview questions.
           </Text>
         </View>

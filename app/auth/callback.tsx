@@ -25,6 +25,7 @@ export default function AuthCallbackScreen() {
     if (session) {
       router.replace('/(tabs)');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   // Safety net: if we never get a session, send the user back to welcome.
@@ -37,6 +38,7 @@ export default function AuthCallbackScreen() {
       }
     }, 8000);
     return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

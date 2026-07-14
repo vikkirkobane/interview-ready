@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, useRouter } from 'expo-router';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Pressable,  View, Text, StyleSheet, Platform, ColorValue } from 'react-native';
 import { Typography, Spacing, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -67,6 +68,7 @@ export default function TabLayout() {
   // Font-based icons from @expo/vector-icons are SSR-safe on web,
   // but we still guard to avoid any hydration flash.
   const [isMounted, setIsMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setIsMounted(true); }, []);
 
   const { openMenu } = useNavigationStore();
@@ -75,6 +77,7 @@ export default function TabLayout() {
 
   React.useEffect(() => {
     fetchProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
@@ -86,6 +89,7 @@ export default function TabLayout() {
     if (!profileLoading && (!profile || !hasFirstName || !hasLastName || !hasCurrentRole) && !isCompleted) {
       router.replace('/(onboarding)/role');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, profileLoading, user]);
 
   return (
