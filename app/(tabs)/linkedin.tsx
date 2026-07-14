@@ -489,7 +489,7 @@ export default function LinkedinOptimizerScreen() {
           {/* LinkedIn Headline */}
           <FieldLabel label="LinkedIn Headline" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
-            {/* eslint-disable-next-line react-hooks/refs */}
+            { }
             {hasScrapedRef.current && wizard.headline
               ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
               : 'Copy this from your LinkedIn profile header. This is the most important field.'}
@@ -503,7 +503,7 @@ export default function LinkedinOptimizerScreen() {
           {/* About */}
           <FieldLabel label="About / Summary" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
-            {/* eslint-disable-next-line react-hooks/refs */}
+            { }
             {hasScrapedRef.current && wizard.about
               ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
               : wizard.about ? 'Loaded from profile. Review and edit as needed.' : 'Paste your LinkedIn About section.'}

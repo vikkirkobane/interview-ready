@@ -28,7 +28,7 @@ export default function InterviewsLobbyScreen() {
   
   // Ensure fields populate even if the tab was previously mounted
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+     
     if (params.role) setRole(params.role as string);
     if (params.jobDescription) setJobDescription(params.jobDescription as string);
   }, [params.role, params.jobDescription]);

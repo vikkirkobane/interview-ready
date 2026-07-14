@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
 export function EarnCreditsButton() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuthStore();
   const { colors } = useTheme();
 

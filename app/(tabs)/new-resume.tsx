@@ -301,7 +301,7 @@ export default function ResumeBuilderScreen() {
   // Sync from remote when loaded
   React.useEffect(() => {
     if (remoteResume && !draft) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setDraft({
         templateId: remoteResume.templateId || 'modern',
         header: remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },

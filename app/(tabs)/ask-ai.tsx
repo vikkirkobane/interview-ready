@@ -8,7 +8,7 @@ import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
 import { useAuthStore } from '../../src/stores/auth-store';
-import { AdBanner } from '../../src/components/ui';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
@@ -29,8 +29,9 @@ export default function AskAIScreen() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [extractJdLoading, setExtractJdLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuthStore();
-  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+
 
   const insets = useSafeAreaInsets();
   const tabBarHeight = 72;

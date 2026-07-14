@@ -1,12 +1,12 @@
-import { Pressable } from 'react-native';
-import React, { useEffect, useRef, useState } from 'react';
-import {
+import { Pressable ,
   View,
   Text,
   StyleSheet,
   Animated,
   ScrollView,
 } from 'react-native';
+import React, { useEffect, useState } from 'react';
+
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';

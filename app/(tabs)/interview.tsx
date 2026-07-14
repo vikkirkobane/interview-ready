@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
-import { AdBanner } from '../../src/components/ui';
+
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';

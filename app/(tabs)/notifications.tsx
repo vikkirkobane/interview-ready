@@ -8,7 +8,7 @@ import { useNotificationStore, AppNotification } from '../../src/stores/notifica
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
-import { AdBanner } from '../../src/components/ui';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const timeAgo = (dateStr: string) => {

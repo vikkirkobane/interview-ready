@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
-import { useTheme } from '../../src/theme';
-import { Typography, Spacing } from '../../src/theme';
+import { useTheme , Typography, Spacing } from '../../src/theme';
+
 
 /**
  * OAuth callback screen — shown while the deep-link code exchange is in progress.

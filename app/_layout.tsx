@@ -129,7 +129,7 @@ export default function RootLayout() {
 
         if (code) {
           // Exchange code for session
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           
           if (exchangeError) {
             console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);

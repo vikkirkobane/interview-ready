@@ -10,7 +10,7 @@ import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
-import { AdBanner } from '../../src/components/ui';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
@@ -31,7 +31,7 @@ export default function JobFitScreen() {
   
   React.useEffect(() => {
     if (jobApplication) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       if (jobApplication.raw_jd) setJdText(jobApplication.raw_jd);
       if (jobApplication.job_url) setJdUrl(jobApplication.job_url);
     }

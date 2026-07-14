@@ -5,7 +5,7 @@ import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth-store';
-import { AdBanner } from '../../src/components/ui';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AllActivitiesScreen() {

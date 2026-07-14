@@ -142,6 +142,20 @@ export async function apiUploadFile<T = any>(
       return { data: null, error: 'Not authenticated' };
     }
 
+    // Auto-refresh session token if it's expired or close to expiry (within 30 seconds)
+    const expiresAt = session.expires_at;
+    const now = Math.floor(Date.now() / 1000);
+    if (expiresAt && expiresAt - now < 30) {
+      try {
+        const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.refreshSession();
+        if (!refreshError && refreshedSession) {
+          session = refreshedSession;
+        }
+      } catch (e) {
+        console.warn('[Upload] Token auto-refresh failed:', e);
+      }
+    }
+
     const formData = new FormData();
     if (Platform.OS === 'web' && webFile) {
       // Web: use the Blob directly
@@ -150,20 +164,34 @@ export async function apiUploadFile<T = any>(
       // Native: read the file bytes and create a real Blob
       // This avoids the "Unsupported FormDataPart Implementation" error
       // that occurs when a plain object { uri, name, type } is passed to FormData
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      if (!fileInfo.exists) {
-        return { data: null, error: 'File not found' };
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (!fileInfo || fileInfo.size === 0) {
+          return { data: null, error: 'File not found or empty' };
+        }
+        
+        // Check file size (limit to 10MB to prevent memory issues)
+        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+        if (fileInfo.size > MAX_FILE_SIZE) {
+          return { data: null, error: 'File too large. Maximum size is 10MB.' };
+        }
+
+        const base64 = await FileSystem.readAsStringAsync(fileUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        
+        // Use a safer base64 decode method that works across platforms
+        const byteCharacters = decodeURIComponent(escape(atob(base64)));
+        const byteNumbers = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const blob = new Blob([byteNumbers as any], { type: mimeType || 'application/octet-stream' });
+        (formData as any).append('file', blob, fileName);
+      } catch (fileError: any) {
+        console.error('[Upload] File processing error:', fileError);
+        return { data: null, error: `Failed to process file: ${fileError.message}` };
       }
-      const base64 = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const byteCharacters = atob(base64);
-      const byteNumbers = new Uint8Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const blob = new Blob([byteNumbers as any], { type: mimeType || 'application/octet-stream', lastModified: Date.now() });
-      (formData as any).append('file', blob, fileName);
     }
 
     const response = await fetch(
@@ -190,6 +218,7 @@ export async function apiUploadFile<T = any>(
     const data = await response.json();
     return { data, error: null };
   } catch (err: any) {
+    console.error('[Upload] Upload error:', err);
     return { data: null, error: err.message || 'Upload failed' };
   }
 }
