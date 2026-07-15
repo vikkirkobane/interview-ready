@@ -6,6 +6,7 @@ export interface CreditBalance {
   totalEarned: number;
   totalUsed: number;
   expiresAt: string | null;
+  plan: string;
 }
 
 export interface CreditCheckResult {
@@ -51,7 +52,7 @@ export function useCredits() {
 
       const { data, error: fetchError } = await supabase
         .from('users')
-        .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at')
+        .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at, plan')
         .eq('id', user.id)
         .single();
 
@@ -62,6 +63,7 @@ export function useCredits() {
         totalEarned: data.total_credits_earned || 0,
         totalUsed: data.total_credits_used || 0,
         expiresAt: data.credits_expire_at,
+        plan: data.plan || 'FREE',
       });
       setError(null);
     } catch (err) {

@@ -37,7 +37,15 @@ export default function DashboardScreen() {
 
   const userName = user?.user_metadata?.first_name || 'Alex';
   const credits = balance?.balance ?? 0;
-  const maxCredits = (balance?.totalEarned ?? 0) > 0 ? balance!.totalEarned! : 10;
+  const plan = balance?.plan || 'FREE';
+  
+  let maxCredits = 10;
+  if (plan === 'PREMIUM') maxCredits = 150;
+  if (plan === 'PREMIUM_PLUS') maxCredits = 400;
+
+  if (plan === 'FREE' && credits > maxCredits) {
+    maxCredits = credits;
+  }
   const completeness = (profile as any)?.profile_completeness ?? 0;
 
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
@@ -144,9 +152,9 @@ export default function DashboardScreen() {
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{credits}</Text>
             <View style={[styles.progressBarBg, { backgroundColor: colors.bgMuted }]}>
-              <View style={[styles.progressBarFill, { width: `${(credits / maxCredits) * 100}%`, backgroundColor: colors.primary }]} />
+              <View style={[styles.progressBarFill, { width: `${Math.min(100, (credits / maxCredits) * 100)}%`, backgroundColor: colors.primary }]} />
             </View>
-            <Text style={[styles.statSubText, { color: colors.textMuted }]}>{credits} of {maxCredits} remaining</Text>
+
           </View>
 
           <View style={[styles.statCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
