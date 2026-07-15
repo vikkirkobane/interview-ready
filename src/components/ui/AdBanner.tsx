@@ -14,7 +14,7 @@ export const AdBanner = () => {
   // We place the banner exactly above it.
   const tabBarHeight = 72;
   const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : Spacing.md;
-  const bottomPosition = tabBarHeight + tabBarBottomOffset + 8; // 8px visual gap
+  const bottomPosition = tabBarHeight + tabBarBottomOffset; // Flush with tab bar
 
   if (hasError) {
     return null;
@@ -45,7 +45,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    paddingVertical: 4,
     backgroundColor: 'transparent',
     zIndex: 50,
     elevation: 50,

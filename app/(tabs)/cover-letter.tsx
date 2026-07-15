@@ -5,6 +5,7 @@ import { Card, Button } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useAuthStore } from '../../src/stores/auth-store';
 import * as Clipboard from 'expo-clipboard';
@@ -212,7 +213,7 @@ export default function CoverLetterGeneratorScreen() {
         resetInterstitialCount();
       }
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Generation Failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Generation Failed' });
     } finally {
       setGenerating(false);
     }
@@ -233,7 +234,7 @@ export default function CoverLetterGeneratorScreen() {
               await deleteMutation.mutateAsync(id as string);
               router.back();
             } catch (e: any) {
-              Alert.alert('Error', e.message);
+              Toast.show({ type: 'error', text1: 'Delete Failed', text2: e.message });
             }
           }
         }

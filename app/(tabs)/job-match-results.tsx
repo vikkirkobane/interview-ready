@@ -10,6 +10,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { exportRoadmapPDF } from '../../src/lib/roadmapExport';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth-store';
+import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 
 export default function JobMatchResultsScreen() {
   const { id, fromList } = useLocalSearchParams();
@@ -40,9 +42,8 @@ export default function JobMatchResultsScreen() {
             try {
               await deleteMutation.mutateAsync(id as string);
               router.replace('/(tabs)/job-analyzer');
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (err) {
-              Alert.alert('Error', 'Failed to delete analysis.');
+              Toast.show({ type: 'error', text1: 'Delete Failed', text2: 'Failed to delete analysis.' });
             }
           }
         }
@@ -70,9 +71,9 @@ export default function JobMatchResultsScreen() {
     try {
       const roadmapResult = await generateRoadmap.mutateAsync({ job_id: id as string });
       await exportRoadmapPDF(roadmapResult.data);
-      Alert.alert('Success', 'Your personalized skill roadmap has been downloaded.');
+      Toast.show({ type: 'success', text1: 'Roadmap Downloaded', text2: 'Your personalized skill roadmap has been downloaded.' });
     } catch (e: any) {
-      Alert.alert('Error', e.message || 'Failed to generate roadmap.');
+      handleApiError(e.message, { fallbackTitle: 'Failed to generate roadmap' });
     } finally {
       setIsDownloading(false);
     }

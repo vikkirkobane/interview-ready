@@ -6,8 +6,10 @@ import { Pressable ,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import Toast from 'react-native-toast-message';
 import { Colors, Spacing, Typography } from '../../src/theme/tokens';
 import { supabase } from '../../src/lib/supabase';
+import { useAuthStore } from '../../src/stores/auth-store';
 
 type PaymentStatus = 'verifying' | 'success' | 'failed' | 'error';
 
@@ -15,6 +17,7 @@ export default function PaymentCallbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const reference = params.reference as string;
+  const { setUser } = useAuthStore();
 
   const [status, setStatus] = useState<PaymentStatus>('verifying');
   const [message, setMessage] = useState('Verifying your payment...');
@@ -64,9 +67,21 @@ export default function PaymentCallbackScreen() {
       }
 
       if (data.success && data.data.status === 'success') {
+        // Force session refresh so isPro and credit balance update in the auth store
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        if (refreshData?.user) {
+          setUser(refreshData.user);
+        }
+
         setStatus('success');
         setMessage('Payment successful! Your subscription is now active.');
         setPaymentDetails(data.data);
+
+        Toast.show({
+          type: 'success',
+          text1: '🎉 Subscription Activated!',
+          text2: `Your credits have been updated. Welcome to Pro!`,
+        });
       } else {
         setStatus('failed');
         setMessage(

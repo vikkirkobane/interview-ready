@@ -1,8 +1,9 @@
 import { Hono } from 'npm:hono@4.0.0';
 import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient } from '../_shared/supabase-client.ts';
-import { UnauthorizedError, ValidationError } from '../_shared/errors.ts';
+import { UnauthorizedError, ValidationError, InsufficientCreditsError } from '../_shared/errors.ts';
 import { aiClient } from '../_shared/ai-client.ts';
+import { deductCredits } from '../_shared/credits.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -30,6 +31,9 @@ app.post('/*', async (c: any) => {
     if (authError || !user) {
       throw new UnauthorizedError('No active session');
     }
+
+    // Deduct 2 credits for Ask AI
+    await deductCredits(user.id, 'ASK_AI_QUESTION');
 
     const body = await c.req.json();
     let input: AnswerQuestionInputType;
@@ -133,8 +137,8 @@ Do not include conversational filler like "Here is the answer". Just provide the
     return c.json({ answer: response }, 200);
 
   } catch (error: any) {
-    if (error instanceof UnauthorizedError || error instanceof ValidationError) {
-      return c.json({ error: error.message, code: error.code }, error.status);
+    if (error instanceof UnauthorizedError || error instanceof ValidationError || error instanceof InsufficientCreditsError) {
+      return c.json({ error: error.message, code: error.code }, error.status || 400);
     }
 
     console.error('Error in answer-question:', error);

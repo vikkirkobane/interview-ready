@@ -152,11 +152,8 @@ serve(async (req) => {
             if (subError) {
               console.error('Failed to create subscription:', subError);
             } else {
-              // Sync credit_balance to match ai_credits (both credit systems)
-              await supabase
-                .from('users')
-                .update({ credit_balance: 999999, updated_at: new Date().toISOString() })
-                .eq('id', user.id);
+              // upsert_paystack_subscription already sets ai_credits + credit_balance
+              // per plan tier (PREMIUM=150, PREMIUM_PLUS=400) — no extra update needed.
 
               // Update transaction with subscription_id
               await supabase

@@ -24,6 +24,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 
 import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -191,7 +192,7 @@ export default function LinkedinOptimizerScreen() {
       setStep('results');
       setActiveTab('overview');
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Analysis Failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Analysis Failed' });
     }
   };
 
@@ -218,7 +219,7 @@ export default function LinkedinOptimizerScreen() {
       setSectionResults(prev => ({ ...prev, [section]: result.result }));
       Toast.show({ type: 'success', text1: `${section.replace(/_/g, ' ')} optimised!` });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Optimisation Failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Optimisation Failed' });
     } finally {
       setOptimizingSection(null);
     }
@@ -252,7 +253,7 @@ export default function LinkedinOptimizerScreen() {
       Toast.show({ type: 'success', text1: 'Profile Imported successfully!', text2: 'Please review your content.' });
       setStep('content');
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Import Failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Import Failed' });
     }
   };
 
@@ -267,7 +268,7 @@ export default function LinkedinOptimizerScreen() {
       setEngagementPlan(result.plan);
       setActiveTab('plan');
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Plan generation failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Plan generation failed' });
     }
   };
 

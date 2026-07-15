@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { handleApiError, isInsufficientCreditsError } from '../../src/lib/errorHandler';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,7 +37,7 @@ export default function AskAIScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 72;
   const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : 16;
-  const bottomNavPadding = tabBarHeight + tabBarBottomOffset + 10;
+  const bottomNavPadding = tabBarHeight + tabBarBottomOffset + 70; // +60 for AdBanner
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -100,10 +101,16 @@ export default function AskAIScreen() {
       };
       setMessages(prev => [...prev, aiMsg]);
     } catch (error: any) {
-      setMessages(prev => [
-        ...prev,
-        { id: (Date.now() + 1).toString(), role: 'ai', text: `Sorry, I failed to generate an answer. Error: ${error.message}` }
-      ]);
+      if (isInsufficientCreditsError(error.message)) {
+        // Remove the user message we just appended since the request failed
+        setMessages(prev => prev.slice(0, -1));
+        handleApiError(error.message);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { id: (Date.now() + 1).toString(), role: 'ai', text: `Sorry, I failed to generate an answer. Error: ${error.message}` }
+        ]);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -270,14 +277,16 @@ export default function AskAIScreen() {
                 </>
               )}
             </Pressable>
-            <TextInput
-               style={[styles.textInput, { backgroundColor: colors.bgCard, borderColor: colors.border, color: colors.textPrimary }]}
-               placeholder="Paste application question here..."
-               placeholderTextColor={colors.textMuted}
-               value={inputText}
-               onChangeText={setInputText}
-               multiline
-            />
+            <View style={[styles.textInputContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <TextInput
+                 style={[styles.textInput, { color: colors.textPrimary }]}
+                 placeholder="Paste application question here..."
+                 placeholderTextColor={colors.textMuted}
+                 value={inputText}
+                 onChangeText={setInputText}
+                 multiline
+              />
+            </View>
             <Pressable
               style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() && !jdFileText.trim() || isTyping) && { opacity: 0.5 }]}
               onPress={handleSend}
@@ -376,15 +385,22 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center'
   },
-  textInput: {
+  textInputContainer: {
     flex: 1,
     minHeight: 52,
     maxHeight: 120,
     borderRadius: 26,
     borderWidth: 1,
     paddingHorizontal: Spacing.lg,
+    overflow: 'hidden',
+  },
+  textInput: {
+    flex: 1,
+    minHeight: 52,
+    backgroundColor: 'transparent',
     paddingTop: 14,
     paddingBottom: 14,
+    textAlignVertical: 'center',
     ...Typography.bodyLg,
   },
   sendBtn: {

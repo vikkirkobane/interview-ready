@@ -90,6 +90,8 @@ serve(async (req) => {
           const currentPeriodStart = new Date();
           const currentPeriodEnd = new Date(data.next_payment_date);
 
+          // upsert_paystack_subscription now reads monthly_credits from paystack_plans
+          // and sets ai_credits + credit_balance to the correct tier amount.
           await supabase.rpc('upsert_paystack_subscription', {
             p_user_id: txData.user_id,
             p_subscription_code: data.subscription_code,
@@ -100,12 +102,6 @@ serve(async (req) => {
             p_current_period_start: currentPeriodStart.toISOString(),
             p_current_period_end: currentPeriodEnd.toISOString(),
           });
-
-          // Sync credit_balance to match ai_credits (both systems)
-          await supabase
-            .from('users')
-            .update({ credit_balance: 999999, updated_at: new Date().toISOString() })
-            .eq('id', txData.user_id);
 
           console.log(`Subscription created: ${data.subscription_code}`);
         }
@@ -118,6 +114,28 @@ serve(async (req) => {
         await supabase.rpc('cancel_paystack_subscription', {
           p_subscription_code: data.subscription_code,
         });
+
+        // Reset user back to free tier — look up user_id from subscriptions
+        const { data: subData } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('paystack_subscription_code', data.subscription_code)
+          .single();
+
+        if (subData?.user_id) {
+          await supabase
+            .from('users')
+            .update({
+              plan: 'FREE',
+              plan_expires_at: null,
+              ai_credits: 10,
+              credit_balance: 10,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', subData.user_id);
+
+          console.log(`Subscription cancelled — user ${subData.user_id} reverted to FREE tier`);
+        }
 
         console.log(`Subscription cancelled: ${data.subscription_code}`);
         break;
@@ -165,12 +183,18 @@ serve(async (req) => {
             .single();
 
           if (subData) {
-            const isPremium = subData.plan !== 'FREE';
+            const creditsByPlan: Record<string, number> = {
+              PREMIUM: 150,
+              PREMIUM_PLUS: 400,
+              FREE: 10,
+            };
+            const newCredits = creditsByPlan[subData.plan] ?? 10;
+
             await supabase
               .from('users')
               .update({
-                ai_credits: isPremium ? 999999 : 10,
-                credit_balance: isPremium ? 999999 : 10,
+                ai_credits: newCredits,
+                credit_balance: newCredits,
                 updated_at: new Date().toISOString(),
               })
               .eq('id', subData.user_id);

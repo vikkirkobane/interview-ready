@@ -4,13 +4,13 @@ import { Pressable ,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   Modal,
   TextInput,
   FlatList,
 } from 'react-native';
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'expo-router';
+import Toast from 'react-native-toast-message';
 import { PricingCard, PricingPlan } from '../../src/components/features/payments/PricingCard';
 import { PaystackWebViewComponent, PaystackPaymentData } from '../../src/components/features/payments/PaystackWebView';
 import { Spacing, Typography, Radius } from '../../src/theme/tokens';
@@ -240,91 +240,74 @@ export default function PricingScreen() {
 
   const handleSubscribe = async () => {
     if (!selectedPlan) {
-      Alert.alert('Error', 'Please select a plan');
+      Toast.show({ type: 'error', text1: 'Select a plan', text2: 'Please choose a subscription plan to continue.' });
       return;
     }
 
     setLoading(true);
 
     try {
-      // Get current user and session
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get current session
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
 
-      if (authError || !user || !session) {
-        Alert.alert('Error', 'Please sign in to continue');
+      if (authError || !session) {
+        Toast.show({ type: 'error', text1: 'Sign in required', text2: 'Please sign in to subscribe.' });
         router.push('/(auth)/login');
-        return;
-      }
-
-      // Get user profile for email
-      const { data: profile } = await supabase
-        .from('users')
-        .select('email, first_name, last_name')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile) {
-        Alert.alert('Error', 'User profile not found');
         return;
       }
 
       // Get Paystack public key
       const publicKey = process.env.EXPO_PUBLIC_PAYSTACK_PUBLIC_KEY;
       if (!publicKey) {
-        Alert.alert('Error', 'Payment system not configured. Please contact support.');
+        Toast.show({ type: 'error', text1: 'Configuration error', text2: 'Payment system not configured. Please contact support.' });
         return;
       }
 
-      // Generate unique reference
-      const reference = `IR_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-      
-      // Convert amount to smallest currency unit (cents for USD, kobo for NGN)
-      // KES is already in the smallest unit (shillings) — no multiplication needed
+      // Call payments-initialize Edge Function — this validates the plan, creates
+      // the payment_transactions row server-side, and returns Paystack params.
+      const initResponse = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/payments-initialize`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+          },
+          body: JSON.stringify({
+            planCode: selectedPlan.planCode,
+            callbackUrl: `${process.env.EXPO_PUBLIC_SUPABASE_URL}/payment-callback`,
+            countryCode: selectedCountry.isKenya ? selectedCountry.code : null,
+          }),
+        }
+      );
+
+      const initData = await initResponse.json();
+
+      if (!initResponse.ok || !initData.success) {
+        throw new Error(initData.error || 'Failed to initialize payment');
+      }
+
+      // Determine channels based on currency and country
+      const channels: string[] = selectedPlan.currency === 'KES' && selectedCountry.isKenya
+        ? ['mobile_money', 'card']
+        : ['card'];
+
+      // Convert amount to smallest currency unit
       const amount = selectedPlan.currency === 'KES'
         ? selectedPlan.price
         : Math.round(selectedPlan.price * 100);
 
-      // Determine channels based on currency and country
-      let channels: string[] = ['card'];
-      if (selectedPlan.currency === 'KES' && selectedCountry.isKenya) {
-        channels = ['mobile_money', 'card'];
-      }
-
-      // Store transaction in database first
-      const { error: txError } = await supabase.from('payment_transactions').insert({
-        user_id: user.id,
-        reference,
-        amount: selectedPlan.price,
-        currency: selectedPlan.currency,
-        country_code: selectedCountry.isKenya ? selectedCountry.code : null,
-        status: 'pending',
-        payment_provider: 'paystack',
-        payment_method: selectedPlan.currency === 'KES' ? 'mobile_money' : 'card',
-        metadata: {
-          plan_code: selectedPlan.planCode,
-          plan_name: selectedPlan.name,
-          plan_type: selectedPlan.name.includes('Plus') ? 'PREMIUM_PLUS' : 'PREMIUM',
-          interval: selectedPlan.interval,
-          channels,
-        },
-      });
-
-      if (txError) {
-        console.error('Transaction creation error:', txError);
-        throw new Error('Failed to initialize transaction');
-      }
-
-      // Prepare WebView payment data
+      // Open Paystack WebView with the reference created server-side
       const paymentData: PaystackPaymentData = {
-        email: profile.email,
+        email: session.user.email!,
         amount,
-        reference,
+        reference: initData.data.reference,
         publicKey,
         currency: selectedPlan.currency as 'USD' | 'KES' | 'NGN',
         channels,
         metadata: {
-          user_id: user.id,
+          user_id: session.user.id,
           plan_code: selectedPlan.planCode,
           plan_type: selectedPlan.name.includes('Plus') ? 'PREMIUM_PLUS' : 'PREMIUM',
           plan_interval: selectedPlan.interval,
@@ -335,10 +318,11 @@ export default function PricingScreen() {
       setShowPaystackWebView(true);
     } catch (error) {
       console.error('Payment initialization error:', error);
-      Alert.alert(
-        'Payment Error',
-        error instanceof Error ? error.message : 'Failed to initialize payment. Please try again.'
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Payment Error',
+        text2: error instanceof Error ? error.message : 'Failed to initialize payment. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
@@ -356,20 +340,19 @@ export default function PricingScreen() {
   };
 
   const handlePaystackCancel = async () => {
-    // Mark the pending transaction as cancelled before clearing state
+    // Mark the pending transaction as abandoned
     if (paystackPaymentData?.reference) {
       await supabase
         .from('payment_transactions')
-        .update({ status: 'cancelled' })
+        .update({ status: 'abandoned' })
         .eq('reference', paystackPaymentData.reference);
     }
     setShowPaystackWebView(false);
     setPaystackPaymentData(null);
-    Alert.alert('Payment Cancelled', 'You closed the payment page. No charge was made.');
+    Toast.show({ type: 'info', text1: 'Payment Cancelled', text2: 'No charge was made.' });
   };
 
   const handlePaystackError = async (error: any) => {
-    // Mark the pending transaction as failed before clearing state
     if (paystackPaymentData?.reference) {
       await supabase
         .from('payment_transactions')
@@ -378,7 +361,7 @@ export default function PricingScreen() {
     }
     setShowPaystackWebView(false);
     setPaystackPaymentData(null);
-    Alert.alert('Payment Error', 'Payment failed. Please try again.');
+    Toast.show({ type: 'error', text1: 'Payment Failed', text2: 'Please try again or use a different card.' });
   };
 
   const renderCountryItem = React.useCallback(({ item }: { item: any }) => (

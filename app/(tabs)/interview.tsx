@@ -6,6 +6,7 @@ import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMut
 import { useAuthStore } from '../../src/stores/auth-store';
 
 import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import * as DocumentPicker from 'expo-document-picker';
@@ -172,7 +173,7 @@ export default function InterviewScreen() {
           text: initialMsg
         }]);
       } catch (e: any) {
-        Toast.show({ type: 'error', text1: 'Failed to start', text2: e.message });
+        handleApiError(e.message, { fallbackTitle: 'Failed to start interview' });
       } finally {
         setIsTyping(false);
       }
@@ -278,7 +279,7 @@ export default function InterviewScreen() {
         resetInterstitialCount();
       }
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Message Failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Message Failed' });
     } finally {
       setIsTyping(false);
     }

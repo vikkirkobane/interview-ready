@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
 
 declare let window: any;
 
@@ -110,6 +109,22 @@ export async function apiCall<T = any>(
         };
       }
 
+      // Global interceptor for Insufficient Credits
+      if (
+        errorData.code === 'INSUFFICIENT_CREDITS' ||
+        response.status === 402
+      ) {
+        const required = errorData.details?.required ?? errorData.required ?? '';
+        const available = errorData.details?.available ?? errorData.available ?? '';
+        const hint = required && available
+          ? `You need ${required} credits but only have ${available}.`
+          : 'Top up your credits to continue.';
+        return {
+          data: null,
+          error: `INSUFFICIENT_CREDITS:${hint}`,
+        };
+      }
+
       return {
         data: null,
         error: errorData.error || `Request failed with status ${response.status}`,
@@ -159,41 +174,27 @@ export async function apiUploadFile<T = any>(
 
     const formData = new FormData();
     if (Platform.OS === 'web' && webFile) {
-      // Web: use the Blob directly
+      // Web: use the Blob directly (native {uri,name,type} parts are unsupported
+      // by the web fetch polyfill — that's what the dedicated webFile path avoids).
       (formData as any).append('file', webFile, fileName);
     } else {
-      // Native: read the file bytes and create a real Blob
-      // This avoids the "Unsupported FormDataPart Implementation" error
-      // that occurs when a plain object { uri, name, type } is passed to FormData
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(fileUri);
-        if (!fileInfo || !fileInfo.exists) {
-          return { data: null, error: 'File not found or empty' };
-        }
-
-        // Check file size (limit to 10MB to prevent memory issues)
-        const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-        const fileSize = (fileInfo as any).size ?? 0;
-        if (fileSize > MAX_FILE_SIZE) {
-          return { data: null, error: 'File too large. Maximum size is 10MB.' };
-        }
-
-        const base64 = await FileSystem.readAsStringAsync(fileUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-
-        // Use a safer base64 decode method that works across platforms
-        const byteCharacters = decodeURIComponent(escape(atob(base64)));
-        const byteNumbers = new Uint8Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const blob = new Blob([byteNumbers as any], { type: mimeType || 'application/octet-stream' } as any);
-        (formData as any).append('file', blob, fileName);
-      } catch (fileError: any) {
-        console.error('[Upload] File processing error:', fileError);
-        return { data: null, error: `Failed to process file: ${fileError.message}` };
+      // Native (iOS/Android): pass the local file URI straight to FormData.
+      // React Native's native fetch streams the bytes as multipart/form-data
+      // without ever loading the file into JS memory, so this:
+      //  - needs no expo-file-system call (avoids the SDK 56 / new-arch
+      //    "Method getInfoAsync imported from expo-file-system" error),
+      //  - avoids base64 + Uint8Array memory blowup on large files,
+      //  - works for any file:// URI (DocumentPicker uses copyToCacheDirectory,
+      //    so the URI is always a readable file:// path on native).
+      if (!fileUri) {
+        return { data: null, error: 'File not found or empty' };
       }
+
+      (formData as any).append('file', {
+        uri: fileUri,
+        name: fileName,
+        type: mimeType || 'application/octet-stream',
+      } as any);
     }
 
     const response = await fetch(

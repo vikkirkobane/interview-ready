@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -21,10 +21,7 @@ import mobileAds from 'react-native-google-mobile-ads';
 if (!(Toast as any)._isPatched) {
   const originalToastShow = Toast.show;
   Toast.show = (params) => {
-    // Show the actual UI toast
     originalToastShow(params);
-
-    // Filter and add to notification store
     const type = params.type || 'info';
     if (type === 'success' || type === 'info') {
       useNotificationStore.getState().addNotification({
@@ -37,12 +34,15 @@ if (!(Toast as any)._isPatched) {
   (Toast as any)._isPatched = true;
 }
 
-// QueryClient is imported from src/lib/query-client to ensure a single instance
-// (the auth store also uses it for cache clearing on sign-out)
+// ─── Deep Link State ─────────────────────────────────────────────────────────
+// Module-level flag to prevent AuthGuard from redirecting away while
+// an OAuth callback deep link is being processed. This fixes the race
+// condition where AuthGuard fires before getInitialURL() resolves.
+let pendingAuthCallback = false;
 
 /**
  * Auth guard: watches session state and redirects to the correct route.
- * - No session → /(auth)/welcome
+ * - No session → /(auth)/welcome (unless an OAuth callback is pending)
  * - Session + in auth flow → /(tabs) (auto-redirect after login)
  * - Session already in tabs → stay put
  */
@@ -54,8 +54,6 @@ function AuthGuard() {
   useEffect(() => {
     if (!initialized) return;
 
-    // Expo Router may return segments with or without parens around group names
-    // depending on SDK version. Normalise by checking both forms.
     const firstSegment = segments[0] as string;
     const secondSegment = segments[1] as string;
 
@@ -70,6 +68,13 @@ function AuthGuard() {
 
     // Non-grouped auth/callback route (app/auth/callback.tsx → /auth/callback)
     if (firstSegment === 'auth' && secondSegment === 'callback') return;
+
+    // CRITICAL: Don't redirect to welcome if an OAuth deep link is still
+    // being processed. The code exchange is async and may not have completed yet.
+    if (pendingAuthCallback) {
+      console.log('[AuthGuard] Pending auth callback — skipping redirect');
+      return;
+    }
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
@@ -105,7 +110,6 @@ export default function RootLayout() {
       // Handle password reset deep links (interviewready://reset-password#access_token=...&type=recovery)
       if (url.includes('reset-password')) {
         try {
-          // Supabase sends recovery tokens in the URL hash fragment
           const hashIndex = url.indexOf('#');
           if (hashIndex !== -1) {
             const hashParams = new URLSearchParams(url.substring(hashIndex + 1));
@@ -121,7 +125,6 @@ export default function RootLayout() {
               if (error) {
                 console.error('[DeepLink] Failed to set recovery session:', error.message);
               }
-              // The reset-password screen will detect the session and show the form
               console.log('[DeepLink] Recovery session set, reset-password screen will handle it');
               return;
             }
@@ -135,6 +138,10 @@ export default function RootLayout() {
       // Only handle auth callbacks
       if (!url.includes('auth/callback')) return;
 
+      // Mark that we're processing an auth callback — prevents AuthGuard
+      // from redirecting to welcome while we exchange the code
+      pendingAuthCallback = true;
+
       try {
         const parsedUrl = new URL(url);
         const code = parsedUrl.searchParams.get('code');
@@ -144,6 +151,7 @@ export default function RootLayout() {
         // Handle OAuth errors from provider
         if (error) {
           console.error('[DeepLink] OAuth error:', error, errorDescription);
+          pendingAuthCallback = false;
           Toast.show({
             type: 'error',
             text1: 'Authentication failed',
@@ -153,23 +161,32 @@ export default function RootLayout() {
         }
 
         if (code) {
-          // Exchange code for session
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          
+          console.log('[DeepLink] Exchanging code for session...');
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
           if (exchangeError) {
             console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);
+            pendingAuthCallback = false;
             return;
           }
-          
-          // Session will be set by onAuthStateChange in auth-store
-          // The auth/callback screen will handle navigation
-          console.log('[DeepLink] Code exchanged successfully, session will be set by onAuthStateChange');
+
+          // Explicitly set session in store for immediate response
+          // onAuthStateChange will also fire, but this ensures no gap
+          if (data?.session) {
+            console.log('[DeepLink] Session obtained, setting in auth store');
+            useAuthStore.getState().setSession(data.session);
+          }
+
+          console.log('[DeepLink] Code exchanged successfully');
+          pendingAuthCallback = false;
           return;
         }
 
         console.warn('[DeepLink] No code found in callback URL');
+        pendingAuthCallback = false;
       } catch (err) {
         console.error('[DeepLink] Unexpected error:', err);
+        pendingAuthCallback = false;
       }
     }
 
@@ -181,6 +198,7 @@ export default function RootLayout() {
       }
     }).catch((err) => {
       console.error('[DeepLink] getInitialURL error:', err);
+      pendingAuthCallback = false;
     });
 
     // Handle link while app is already open (foreground)

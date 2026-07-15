@@ -19,6 +19,7 @@ import {
   CompanyResearchResult,
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -119,7 +120,7 @@ export default function CompanyResearchScreen() {
       setActiveTab('overview');
       Toast.show({ type: 'success', text1: `${res.data.company_name} researched!` });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Research Failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Research Failed' });
     }
   };
 

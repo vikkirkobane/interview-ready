@@ -7,6 +7,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
@@ -137,7 +138,7 @@ export default function JobFitScreen() {
       if (error.message.includes('extract content from the provided URL') || error.message.includes('URL')) {
         setUrlError(error.message);
       } else {
-        Toast.show({ type: 'error', text1: 'Analysis Failed', text2: error.message });
+        handleApiError(error.message, { fallbackTitle: 'Analysis Failed' });
       }
     }
   };
@@ -214,12 +215,14 @@ export default function JobFitScreen() {
                   {/* Attached File Info */}
                   {jdFileName && (
                     <View style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      backgroundColor: colors.bgCard,
                       borderRadius: Radius.md,
                       paddingHorizontal: Spacing.sm,
                       paddingVertical: 4,
                       borderWidth: 1,
-                      borderColor: 'transparent'
+                      borderColor: colors.border,
+                      flexDirection: 'row',
+                      alignItems: 'center'
                     }}>
                       <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
                       <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
@@ -238,8 +241,8 @@ export default function JobFitScreen() {
                       <ActivityIndicator size="small" color={colors.textInverse} />
                     ) : (
                       <>
-                        <MaterialCommunityIcons name="star-four-points" size={20} color={colors.textInverse} />
-                        <Text style={[styles.analyzeBtnText, { color: colors.textInverse, fontWeight: '600' }]}>Analyze Job Match</Text>
+                        <MaterialCommunityIcons name="star-four-points" size={20} color="#FFFFFF" />
+                        <Text style={[styles.analyzeBtnText, { color: '#FFFFFF', fontWeight: '600' }]}>Analyze Job Match</Text>
                       </>
                     )}
                   </Pressable>

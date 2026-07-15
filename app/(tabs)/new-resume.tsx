@@ -16,6 +16,7 @@ import {
   useExtractJdMutation
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { handleApiError } from '../../src/lib/errorHandler';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
@@ -280,7 +281,7 @@ export default function ResumeBuilderScreen() {
         resetInterstitialCount();
       }
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Generation failed', text2: e.message });
+      handleApiError(e.message, { fallbackTitle: 'Generation Failed' });
     }
   };
 
@@ -425,7 +426,7 @@ export default function ResumeBuilderScreen() {
               await deleteMutation.mutateAsync(id as string);
               router.back();
             } catch (e: any) {
-              Alert.alert('Error', e.message);
+              Toast.show({ type: 'error', text1: 'Delete Failed', text2: e.message });
             }
           }
         }
@@ -1774,7 +1775,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgSecondary },
   container: {
     padding: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: 160,
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',
