@@ -14,6 +14,7 @@ import { ScoreRing } from '../../src/components/ui';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAnalyzeJobMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { isRateLimitedError } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 
@@ -32,6 +33,8 @@ export default function AnalyzeScreen() {
   const analyzeJob = useAnalyzeJobMutation();
   const extractJd = useExtractJdMutation();
 
+  const [isRetrying, setIsRetrying] = useState(false);
+
   const handleAnalyze = async () => {
     if (!hasInput) return;
 
@@ -45,11 +48,26 @@ export default function AnalyzeScreen() {
       setAnalysisResult(result.analysis);
       setShowResults(true);
     } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: 'Analysis Failed',
-        text2: error.message || 'Please check your connection and try again.',
-      });
+      if (isRateLimitedError(error.message) && !isRetrying) {
+        // Auto-retry once after 3 seconds for rate-limited requests
+        setIsRetrying(true);
+        Toast.show({
+          type: 'info',
+          text1: 'System busy',
+          text2: 'Retrying in 3 seconds...',
+          visibilityTime: 2000,
+        });
+        setTimeout(() => {
+          setIsRetrying(false);
+          handleAnalyze();
+        }, 3000);
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Analysis Failed',
+          text2: error.message || 'Please check your connection and try again.',
+        });
+      }
     }
   };
 

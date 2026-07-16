@@ -95,17 +95,32 @@ export async function apiCall<T = any>(
       // Global interceptor for API Rate Limits and Resource Limits
       const detailsMsg = errorData.details?.message || '';
       const errMsg = errorData.error || '';
-      const isRateLimited = 
-        errorData.code === 'RATE_LIMITED' || 
+      const isRateLimited =
+        errorData.code === 'RATE_LIMITED' ||
         errorData.code === 'WORKER_RESOURCE_LIMIT' ||
-        detailsMsg.includes('429') || 
+        detailsMsg.includes('429') ||
         detailsMsg.toLowerCase().includes('rate limit') ||
         errMsg.toLowerCase().includes('rate limit');
 
       if (isRateLimited) {
+        // Differentiate between our rate limiter and Supabase infra limits
+        if (errorData.code === 'WORKER_RESOURCE_LIMIT') {
+          return {
+            data: null,
+            error: "The system is currently busy processing requests. Please wait a moment and try again.",
+          };
+        }
+        // Check if there's a retryAfter hint from the server
+        const retryAfter = errorData.details?.retryAfter;
+        if (retryAfter) {
+          return {
+            data: null,
+            error: `RATE_LIMITED:Too many requests. Please wait ${retryAfter} seconds before trying again.`,
+          };
+        }
         return {
           data: null,
-          error: "Sorry, too many requests are being processed right now. Please try again in a few moments.",
+          error: "RATE_LIMITED:Too many requests are being processed right now. Please try again in a few moments.",
         };
       }
 

@@ -1687,13 +1687,13 @@ export default function ResumeBuilderScreen() {
                           featuredProject: content.featured_project || { include: false, name: '', tech_stack: '', bullet: '' }
                         });
                         Toast.show({ type: 'success', text1: 'Resume generated!' });
-                        channel.unsubscribe();
+                        supabase.removeChannel(channel);
                       })
                       .on('broadcast', { event: 'generation_failed' }, (payload) => {
                         Toast.show({ type: 'error', text1: 'AI Generation Failed', text2: payload.payload.error });
-                        channel.unsubscribe();
-                      })
-                      .subscribe();
+                        supabase.removeChannel(channel);
+                      });
+                    channel.subscribe();
                   } catch (e: any) {
                     Toast.show({ type: 'error', text1: 'Request Failed', text2: e.message });
                   }

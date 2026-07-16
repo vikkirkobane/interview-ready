@@ -48,6 +48,8 @@ export default function ResumeGenScreen() {
   useEffect(() => {
     let channel: any;
     let t1: any, t2: any, t3: any;
+    let isMounted = true;
+    let loopAnimation: any;
 
     const startGeneration = async () => {
       try {
@@ -56,6 +58,8 @@ export default function ResumeGenScreen() {
           job_analysis_id: analysisId || undefined,
         });
 
+        if (!isMounted) return;
+
         setResumeId(resume_id);
 
         channel = supabase
@@ -63,9 +67,9 @@ export default function ResumeGenScreen() {
           .on('broadcast', { event: 'generation_complete' }, async (payload) => {
             setStage(4);
             setIsDone(true);
-            
+
             // Navigates to discover step next, onboarding completes there
-            
+
             Animated.timing(fadeAnim, {
               toValue: 1,
               duration: 600,
@@ -78,8 +82,8 @@ export default function ResumeGenScreen() {
             clearTimeout(t3);
             setStage(0);
             Toast.show({ type: 'error', text1: 'Generation Failed', text2: (payload as any).error || 'Please try again.' });
-          })
-          .subscribe();
+          });
+        channel.subscribe();
 
         // Sequence simulated stages for visual feedback
         t1 = setTimeout(() => setStage(1), 1500);
@@ -92,7 +96,7 @@ export default function ResumeGenScreen() {
     };
 
     // Pulse animation for active step and icon
-    const loopAnimation = Animated.loop(
+    loopAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.1,
@@ -113,12 +117,15 @@ export default function ResumeGenScreen() {
     startGeneration();
 
     return () => {
+      isMounted = false;
       loopAnimation.stop();
       pulseAnim.setValue(1);
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      if (channel) supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -129,7 +136,7 @@ export default function ResumeGenScreen() {
     const isPending = stage < index;
 
     return (
-      <View style={[styles.stepRow, isPending && { opacity: 0.4 }]} key={index}>
+      <View style={[styles.stepRow, isPending && { opacity: 0.4 }]} key={`step-${index}`}>
         <View style={styles.stepIconContainer}>
           {isCompleted ? (
             <View style={[styles.stepCircle, styles.stepCompleted, { backgroundColor: colors.success }]}>
@@ -179,10 +186,12 @@ export default function ResumeGenScreen() {
             </Text>
 
             <View style={styles.checklist}>
-              {renderChecklistStep(0, 'Analyzing profile', 'Skills and experiences mapped.')}
-              {renderChecklistStep(1, 'Matching keywords', 'Optimizing for ATS algorithms.')}
-              {renderChecklistStep(2, 'Writing summary', 'Crafting a high-impact professional intro...')}
-              {renderChecklistStep(3, 'Final formatting', 'Applying Neo-SaaS layout engine.', true)}
+              {[
+                { id: 'step-0', title: 'Analyzing profile', desc: 'Skills and experiences mapped.' },
+                { id: 'step-1', title: 'Matching keywords', desc: 'Optimizing for ATS algorithms.' },
+                { id: 'step-2', title: 'Writing summary', desc: 'Crafting a high-impact professional intro...' },
+                { id: 'step-3', title: 'Final formatting', desc: 'Applying Neo-SaaS layout engine.' },
+              ].map((step, index) => renderChecklistStep(index, step.title, step.desc, index === 3))}
             </View>
           </View>
         ) : (
@@ -207,7 +216,9 @@ export default function ResumeGenScreen() {
                     // Use 'top center' origin so content is centered and fully visible
                     <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
                       <iframe
+                        title="Resume preview"
                         srcDoc={previewHtml}
+                        sandbox="allow-same-origin allow-scripts"
                         style={{
                           border: 'none',
                           width: 794,

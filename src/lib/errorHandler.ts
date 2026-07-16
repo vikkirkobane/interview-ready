@@ -17,8 +17,24 @@ export function getCreditErrorHint(message: string): string {
 }
 
 /**
+ * Detects if an error message is a rate-limited error
+ * (tagged with the RATE_LIMITED: prefix by api.ts interceptor).
+ */
+export function isRateLimitedError(message: string): boolean {
+  return message?.startsWith('RATE_LIMITED:');
+}
+
+/**
+ * Extracts the human-readable hint from a tagged rate-limit error string.
+ */
+export function getRateLimitHint(message: string): string {
+  return message?.replace('RATE_LIMITED:', '') || 'The system is currently busy. Please try again in a moment.';
+}
+
+/**
  * Universal API error handler.
  * - Shows an insufficient-credits toast with a "Get Credits" CTA if applicable.
+ * - Shows a rate-limited toast with a retry hint if applicable.
  * - Falls back to a standard error toast for all other errors.
  *
  * Usage:
@@ -43,6 +59,17 @@ export function handleApiError(
         Toast.hide();
         router.push('/(tabs)/pricing');
       },
+    });
+    return;
+  }
+
+  if (isRateLimitedError(message)) {
+    const hint = getRateLimitHint(message);
+    Toast.show({
+      type: 'error',
+      text1: 'Too many requests',
+      text2: hint,
+      visibilityTime: 4000,
     });
     return;
   }

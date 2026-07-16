@@ -8,6 +8,7 @@ import { StyleSheet, ActivityIndicator, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '../src/components/ui';
 import { useAuthStore } from '../src/stores/auth-store';
+import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useTheme } from '../src/theme';
 import * as Font from 'expo-font';
 import * as Linking from 'expo-linking';
@@ -107,6 +108,37 @@ export default function RootLayout() {
   // This fires when the app is opened via the OAuth redirect URI.
   useEffect(() => {
     async function handleDeepLink(url: string) {
+      // Handle referral deep links (interviewready://referral?code=XXXX)
+      if (url.includes('/referral') || url.includes('referral?')) {
+        try {
+          const parsedUrl = new URL(url);
+          const referralCode = parsedUrl.searchParams.get('code');
+
+          if (referralCode) {
+            console.log('[DeepLink] Referral code received:', referralCode);
+            useOnboardingStore.getState().setReferralCode(referralCode.toUpperCase());
+
+            const isCompleted = useAuthStore.getState().session?.user?.user_metadata?.onboarding_completed;
+            if (isCompleted) {
+              Toast.show({
+                type: 'info',
+                text1: 'Referral Code Received',
+                text2: `Apply "${referralCode.toUpperCase()}" from the Referral tab.`,
+              });
+            } else {
+              Toast.show({
+                type: 'info',
+                text1: 'Referral Code Received',
+                text2: `Code "${referralCode.toUpperCase()}" will be applied during onboarding.`,
+              });
+            }
+          }
+        } catch (err) {
+          console.error('[DeepLink] Referral link error:', err);
+        }
+        return;
+      }
+
       // Handle password reset deep links (interviewready://reset-password#access_token=...&type=recovery)
       if (url.includes('reset-password')) {
         try {

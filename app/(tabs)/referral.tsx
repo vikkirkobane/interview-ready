@@ -32,7 +32,7 @@ export default function ReferralScreen() {
     
     try {
       await Share.share({
-        message: `Join Interview Ready and get 10 free AI credits! Use my referral code: ${stats.referralCode}\n\nDownload now: https://interviewready.app`,
+        message: `Join Interview Ready and get 10 free AI credits! Use my code: ${stats.referralCode}\n\nOpen the app to apply: interviewready://referral?code=${stats.referralCode}\n\nDownload: https://interviewready.app`,
         title: 'Join Interview Ready',
       });
     } catch (error) {

@@ -1,57 +1,35 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { Hono } from 'npm:hono@4.0.0';
+import { cors } from 'npm:hono@4.0.0/cors';
+import { createAuthClient } from '../_shared/supabase-client.ts';
+import {
+  UnauthorizedError,
+  InternalError,
+  errorHandler,
+} from '../_shared/errors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const app = new Hono();
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+app.use('/*', cors());
 
+app.post('/', async (c) => {
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+    const client = createAuthClient(c.req.raw);
+    const { data: { user }, error: authError } = await client.auth.getUser();
 
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      const err = new UnauthorizedError();
+      return c.json(err.toJSON(), err.status);
     }
 
-    // Get referral stats using the database function
-    const { data, error } = await supabaseClient.rpc('get_referral_stats', {
+    // Get referral stats from the database function
+    const { data, error } = await client.rpc('get_referral_stats', {
       p_user_id: user.id,
     });
 
     if (error) {
-      console.error('Error fetching referral stats:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      console.error('[ReferralStats] DB error:', error);
+      const appError = new InternalError('Failed to fetch referral stats.');
+      return c.json(appError.toJSON(), appError.status);
     }
 
     let statsData = data || {
@@ -63,33 +41,23 @@ serve(async (req) => {
 
     // Auto-generate referral code for existing users who don't have one
     if (!statsData.referral_code) {
-      const { data: newCode, error: genError } = await supabaseClient.rpc('generate_referral_code', {
+      const { data: newCode, error: genError } = await client.rpc('generate_referral_code', {
         p_user_id: user.id,
       });
-      
+
       if (!genError && newCode) {
         statsData.referral_code = newCode;
       }
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: statsData,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  } catch (error) {
-    console.error('Unexpected error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return c.json({ success: true, data: statsData });
+  } catch (err) {
+    console.error('[ReferralStats] Unexpected error:', err);
+    const appError = new InternalError('Failed to fetch referral stats.');
+    return c.json(appError.toJSON(), appError.status);
   }
 });
+
+app.onError(errorHandler);
+
+Deno.serve(app.fetch);

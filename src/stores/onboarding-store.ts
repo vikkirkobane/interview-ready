@@ -20,6 +20,10 @@ interface OnboardingState {
   analysisId: string | null;
   resumeId: string | null;
 
+  // Referral
+  referralCode: string | null;        // Deep link referral code
+  referralCodeSkipped: boolean;       // User explicitly skipped referral step
+
   // Actions
   setStep: (step: number) => void;
   nextStep: () => void;
@@ -38,6 +42,9 @@ interface OnboardingState {
   setJdUrl: (url: string) => void;
   setAnalysisId: (id: string) => void;
   setResumeId: (id: string) => void;
+  setReferralCode: (code: string | null) => void;
+  clearReferralCode: () => void;
+  setReferralCodeSkipped: (skipped: boolean) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
 }
@@ -59,6 +66,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       jdUrl: '',
       analysisId: null,
       resumeId: null,
+      referralCode: null,
+      referralCodeSkipped: false,
 
       setStep: (step) => set({ currentStep: step }),
       nextStep: () => set((s) => ({ currentStep: Math.min(s.currentStep + 1, 5) })),
@@ -81,6 +90,9 @@ export const useOnboardingStore = create<OnboardingState>()(
       setJdUrl: (url) => set({ jdUrl: url }),
       setAnalysisId: (id) => set({ analysisId: id }),
       setResumeId: (id) => set({ resumeId: id }),
+      setReferralCode: (code) => set({ referralCode: code }),
+      clearReferralCode: () => set({ referralCode: null }),
+      setReferralCodeSkipped: (skipped) => set({ referralCodeSkipped: skipped }),
       completeOnboarding: () => set({ completed: true }),
       resetOnboarding: () => set({
         currentStep: 1,
@@ -97,6 +109,8 @@ export const useOnboardingStore = create<OnboardingState>()(
         jdUrl: '',
         analysisId: null,
         resumeId: null,
+        referralCode: null,
+        referralCodeSkipped: false,
       }),
     }),
     {

@@ -1,0 +1,3 @@
+- `react-doctor/effect-needs-cleanup` - `app/(tabs)/new-resume.tsx:1671` - `.subscribe()` call inside `handleGenerate` button click handler - Subscription handle is stored in a ref and cleaned up in a separate `useEffect` so it does not leak.
+- `react-doctor/effect-needs-cleanup` - `app/(onboarding)/resume.tsx:48` - False positive, cleanup happens in useEffect return via channel.unsubscribe().
+- `react-doctor/effect-needs-cleanup` - `src/hooks/useCredits.ts:208` - False positive, cleanup happens via channel.unsubscribe() checking isMounted.

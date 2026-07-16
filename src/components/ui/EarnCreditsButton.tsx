@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useRewardedAd } from '../../lib/useRewardedAd';
 import { useAuthStore } from '../../stores/auth-store';
@@ -12,7 +12,7 @@ export function EarnCreditsButton() {
   const { user } = useAuthStore();
   const { colors } = useTheme();
 
-  const handleReward = async (amount: number) => {
+  const handleReward = useCallback(async (amount: number) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -46,7 +46,7 @@ export function EarnCreditsButton() {
         text2: 'There was an issue giving you your credits. Please try again.',
       });
     }
-  };
+  }, []);
 
   const { showAd, loaded } = useRewardedAd({ onRewarded: handleReward });
 

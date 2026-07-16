@@ -1,113 +1,153 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { Hono } from 'npm:hono@4.0.0';
+import { cors } from 'npm:hono@4.0.0/cors';
+import { createAuthClient } from '../_shared/supabase-client.ts';
+import {
+  UnauthorizedError,
+  ValidationError,
+  RateLimitError,
+  InternalError,
+  errorHandler,
+} from '../_shared/errors.ts';
+import { z } from 'npm:zod@3.22.4';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const app = new Hono();
 
-interface ApplyReferralRequest {
-  referralCode: string;
+app.use('/*', cors());
+
+/**
+ * Rate limiting via Deno KV.
+ * Tracks referral apply attempts per user with a 1-hour sliding window.
+ * Max 5 attempts per hour per user.
+ */
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+async function checkRateLimit(userId: string): Promise<boolean> {
+  try {
+    const kv = await Deno.openKv();
+    const key = ['referral:attempts', userId];
+    const entry = await kv.get<number>(key);
+    const currentCount = entry.value ?? 0;
+
+    if (currentCount >= MAX_ATTEMPTS) {
+      return false;
+    }
+
+    // Increment the counter; set TTL on first attempt
+    if (currentCount === 0) {
+      await kv.set(key, 1, { expireIn: WINDOW_MS });
+    } else {
+      // Use atomic to avoid race conditions
+      const result = await kv.atomic()
+        .check(entry)
+        .set(key, currentCount + 1)
+        .commit();
+      if (!result.ok) {
+        // Another request beat us — re-read and check again
+        const freshEntry = await kv.get<number>(key);
+        if ((freshEntry.value ?? 0) >= MAX_ATTEMPTS) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  } catch (err) {
+    console.error('[RateLimit] Deno KV error, failing open:', err);
+    // Fail open: if KV is unavailable, allow the request
+    return true;
+  }
 }
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+/**
+ * Sanitize database errors — never leak raw SQL/schema details to the client.
+ */
+function sanitizeDbError(error: any): string {
+  if (!error) return 'An unexpected error occurred.';
 
+  const code = error.code;
+  const message = (error.message || '').toLowerCase();
+
+  // PostgreSQL constraint violations
+  if (code === '23505') return 'This referral has already been applied.';
+  if (code === '23503') return 'Invalid referral reference.';
+  if (code === '23514') return 'Referral validation failed.';
+
+  // Known business logic errors from apply_referral_code (returned as JSONB)
+  if (message.includes('invalid referral code')) return 'Invalid referral code. Please check and try again.';
+  if (message.includes('cannot use your own')) return 'You cannot use your own referral code.';
+  if (message.includes('already referred')) return 'You have already used a referral code.';
+
+  // Catch-all: generic message, real error logged server-side only
+  return 'Failed to apply referral code. Please try again later.';
+}
+
+const applySchema = z.object({
+  referralCode: z.string().min(1).max(20),
+});
+
+app.post('/', async (c) => {
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
+    const client = createAuthClient(c.req.raw);
+    const { data: { user }, error: authError } = await client.auth.getUser();
 
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      const err = new UnauthorizedError();
+      return c.json(err.toJSON(), err.status);
     }
 
-    // Parse request body
-    const { referralCode }: ApplyReferralRequest = await req.json();
-
-    if (!referralCode || referralCode.trim() === '') {
-      return new Response(
-        JSON.stringify({ error: 'Referral code is required' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+    // Rate limit check
+    const allowed = await checkRateLimit(user.id);
+    if (!allowed) {
+      const err = new RateLimitError(
+        `Too many referral code attempts. Max ${MAX_ATTEMPTS} per hour.`
       );
+      return c.json(err.toJSON(), err.status);
     }
 
-    // Apply referral code using the database function
-    const { data, error } = await supabaseClient.rpc('apply_referral_code', {
+    const body = await c.req.json();
+    const parsed = applySchema.safeParse(body);
+    if (!parsed.success) {
+      const err = new ValidationError('Invalid referral code format.');
+      return c.json(err.toJSON(), err.status);
+    }
+
+    const { referralCode } = parsed.data;
+    const normalizedCode = referralCode.trim().toUpperCase();
+
+    // Call the database function
+    const { data, error } = await client.rpc('apply_referral_code', {
       p_referred_user_id: user.id,
-      p_referral_code: referralCode.trim().toUpperCase(),
+      p_referral_code: normalizedCode,
     });
 
     if (error) {
-      console.error('Error applying referral code:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      console.error('[ReferralApply] DB error:', error);
+      const safeMessage = sanitizeDbError(error);
+      return c.json({ success: false, error: safeMessage }, 400);
     }
 
-    // Check if application was successful
-    if (!data.success) {
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: data.error 
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+    // The DB function returns { success, error, ... } as JSONB
+    if (!data?.success) {
+      return c.json({ success: false, error: data?.error || 'Invalid referral code.' }, 400);
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          referral_id: data.referral_id,
-          credits_granted: data.credits_granted,
-          message: `Success! You received ${data.credits_granted} credits!`,
-        },
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-  } catch (error) {
-    console.error('Unexpected error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return c.json({
+      success: true,
+      data: {
+        referral_id: data.referral_id,
+        credits_granted: data.credits_granted,
+        message: `Success! You received ${data.credits_granted} credits!`,
+      },
+    });
+  } catch (err) {
+    console.error('[ReferralApply] Unexpected error:', err);
+    const appError = new InternalError('Failed to apply referral code.');
+    return c.json(appError.toJSON(), appError.status);
   }
 });
+
+// Error handler for Hono
+app.onError(errorHandler);
+
+Deno.serve(app.fetch);

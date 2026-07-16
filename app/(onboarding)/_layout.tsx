@@ -45,6 +45,7 @@ export default function OnboardingLayout() {
         gestureEnabled: true,
       }}
     >
+      <Stack.Screen name="referral-code" />
       <Stack.Screen name="role" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="analyze" />

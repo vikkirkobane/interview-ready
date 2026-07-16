@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { createPaystackClient } from '../_shared/paystack-client.ts';
+import { sendEmail } from '../_shared/email-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -74,6 +75,33 @@ serve(async (req) => {
           .eq('reference', reference);
 
         console.log(`Payment successful: ${reference}`);
+
+        try {
+          const { data: txData } = await supabase
+            .from('payment_transactions')
+            .select('user_id, users(email, first_name)')
+            .eq('reference', reference)
+            .single();
+
+          if (txData?.users?.email) {
+            await sendEmail({
+              to: txData.users.email,
+              templateKey: 'payment_success',
+              templateVariables: {
+                user_name: txData.users.first_name || 'Customer',
+                transaction_id: reference,
+                amount: (data.amount / 100).toString(),
+                currency: data.currency,
+                plan_name: data.metadata?.plan_name || 'Interview Ready Subscription',
+              },
+              emailType: 'payment_success',
+              supabaseClient: supabase,
+            });
+            console.log(`Sent payment_success email to ${txData.users.email}`);
+          }
+        } catch (emailErr) {
+          console.error('Failed to send payment email:', emailErr);
+        }
         break;
       }
 
@@ -198,6 +226,32 @@ serve(async (req) => {
                 updated_at: new Date().toISOString(),
               })
               .eq('id', subData.user_id);
+              
+            // Send subscription renewed email
+            const { data: userData } = await supabase
+              .from('users')
+              .select('email, first_name')
+              .eq('id', subData.user_id)
+              .single();
+              
+            if (userData?.email) {
+              try {
+                await sendEmail({
+                  to: userData.email,
+                  templateKey: 'subscription_renewed',
+                  templateVariables: {
+                    user_name: userData.first_name || 'Customer',
+                    plan_name: subData.plan,
+                    next_billing_date: new Date(data.next_payment_date).toLocaleDateString(),
+                  },
+                  emailType: 'subscription_renewed',
+                  supabaseClient: supabase,
+                });
+                console.log(`Sent subscription_renewed email to ${userData.email}`);
+              } catch (emailErr) {
+                console.error('Failed to send subscription renewal email:', emailErr);
+              }
+            }
           }
 
           console.log(`Subscription renewed: ${data.subscription.subscription_code}`);

@@ -111,7 +111,7 @@ export function SideMenu() {
     >
       <View style={styles.overlayContainer}>
         {/* Backdrop */}
-        <Pressable onPress={closeMenu}>
+        <Pressable onPress={closeMenu} style={StyleSheet.absoluteFill}>
           <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]} />
         </Pressable>
 

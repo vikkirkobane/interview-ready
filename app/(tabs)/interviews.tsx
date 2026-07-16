@@ -167,19 +167,7 @@ export default function InterviewsLobbyScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Job Description (Optional if URL provided)</Text>
-              <Pressable style={[styles.attachBtn, { backgroundColor: `${colors.primary}1A` }]} onPress={handleAttachJdFile} disabled={extractJdLoading}>
-                {extractJdLoading ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : (
-                  <>
-                    <Ionicons name="attach" size={16} color={colors.primary} />
-                    <Text style={[styles.attachBtnText, { color: colors.primary }]}>Attach file</Text>
-                  </>
-                )}
-              </Pressable>
-            </View>
+            <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8 }]}>Job Description (Optional if URL provided)</Text>
             <TextInput 
               style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, minHeight: 80 }]}
               value={jobDescription}
@@ -189,23 +177,26 @@ export default function InterviewsLobbyScreen() {
               multiline={true}
               textAlignVertical="top"
             />
-            {/* Attached File Info */}
-            {jdFileName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
-                  <Ionicons name="close-circle" size={16} color={colors.error} />
-                </Pressable>
-              </View>
-            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: Spacing.sm }}>
+              {/* Attach JD File Button */}
+              <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+                {extractJdLoading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Ionicons name="attach" size={24} color={colors.textMuted} />
+                )}
+              </Pressable>
 
-            {/* Attach JD File Loading State */}
-            {extractJdLoading && (
-              <View style={{ marginTop: 4 }}>
-                <ActivityIndicator size="small" color={colors.primary} />
-                <Text style={{ marginLeft: 4, color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
-              </View>
-            )}
+              {/* Attached File Info */}
+              {jdFileName && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm }}>
+                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
+                  <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
+                    <Ionicons name="close-circle" size={16} color={colors.error} />
+                  </Pressable>
+                </View>
+              )}
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -371,15 +362,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   attachBtn: {
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Radius.md,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  attachBtnText: {
-    ...Typography.label,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   textInput: {
     borderWidth: 1,

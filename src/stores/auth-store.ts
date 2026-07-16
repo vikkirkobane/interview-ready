@@ -105,6 +105,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email, password, firstName = '', lastName = '') => {
     set({ loading: true });
+    const redirectTo = makeRedirectUri({
+      scheme: 'interviewready',
+      path: 'auth/callback',
+    });
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -113,6 +118,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           first_name: firstName,
           last_name: lastName,
         },
+        emailRedirectTo: redirectTo,
       },
     });
     set({ loading: false });

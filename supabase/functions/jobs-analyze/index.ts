@@ -1,10 +1,11 @@
 import { Hono } from 'npm:hono@4.0.0';
 import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient } from '../_shared/supabase-client.ts';
-import { UnauthorizedError, ValidationError, InsufficientCreditsError } from '../_shared/errors.ts';
+import { UnauthorizedError, ValidationError, InsufficientCreditsError, RateLimitError } from '../_shared/errors.ts';
 import { aiClient } from '../_shared/ai-client.ts';
 import { JD_ANALYSIS_SCHEMA, JD_SUMMARY_SCHEMA } from '../_shared/zod-schemas.ts';
 import { deductCredits, checkCredits } from '../_shared/credits.ts';
+import { withRateLimit } from '../_shared/rate-limiter.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -205,12 +206,14 @@ Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skill
       input.user_profile ? `Candidate Profile:\n${JSON.stringify(input.user_profile, null, 2)}` : ''
     }`;
 
-    const analysis = await aiClient.callWithJson(
-      systemPrompt,
-      userPrompt,
-      JD_ANALYSIS_SCHEMA,
-      { temperature: 0.3, max_tokens: 3000 }
-    );
+    const analysis = await withRateLimit(user.id, 'JD_ANALYSIS', async () => {
+      return await aiClient.callWithJson(
+        systemPrompt,
+        userPrompt,
+        JD_ANALYSIS_SCHEMA,
+        { temperature: 0.3, max_tokens: 3000 }
+      );
+    });
 
     // Deduct credit from user
     await deductCredits(user.id, 'JD_ANALYSIS', {
@@ -277,7 +280,8 @@ Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skill
     if (
       error instanceof UnauthorizedError ||
       error instanceof ValidationError ||
-      error instanceof InsufficientCreditsError
+      error instanceof InsufficientCreditsError ||
+      error instanceof RateLimitError
     ) {
       return c.json({ error: error.message, code: error.code }, error.status);
     }

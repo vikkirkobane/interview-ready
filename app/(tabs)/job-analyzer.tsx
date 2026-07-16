@@ -7,7 +7,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { handleApiError } from '../../src/lib/errorHandler';
+import { handleApiError, isRateLimitedError } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
@@ -104,6 +104,8 @@ export default function JobFitScreen() {
     setJdFileName(null);
   };
 
+  const [isRetrying, setIsRetrying] = useState(false);
+
   const handleAnalyze = async () => {
     setUrlError('');
 
@@ -137,6 +139,19 @@ export default function JobFitScreen() {
     } catch (error: any) {
       if (error.message.includes('extract content from the provided URL') || error.message.includes('URL')) {
         setUrlError(error.message);
+      } else if (isRateLimitedError(error.message) && !isRetrying) {
+        // Auto-retry once after 3 seconds for rate-limited requests
+        setIsRetrying(true);
+        Toast.show({
+          type: 'info',
+          text1: 'System busy',
+          text2: 'Retrying in 3 seconds...',
+          visibilityTime: 2000,
+        });
+        setTimeout(() => {
+          setIsRetrying(false);
+          handleAnalyze();
+        }, 3000);
       } else {
         handleApiError(error.message, { fallbackTitle: 'Analysis Failed' });
       }

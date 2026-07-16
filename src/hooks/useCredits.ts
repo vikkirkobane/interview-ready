@@ -209,7 +209,8 @@ export function useCredits() {
     let channel: any = null;
     let isMounted = true;
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!isMounted || !user) return;
 
       channel = supabase
@@ -226,13 +227,16 @@ export function useCredits() {
             // Refresh balance when transactions change
             fetchBalance();
           }
-        )
-        .subscribe();
-    });
+        );
+      channel.subscribe();
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (channel) {
-        if (channel) supabase.removeChannel(channel);
+        supabase.removeChannel(channel);
       }
     };
   }, [fetchBalance]);
