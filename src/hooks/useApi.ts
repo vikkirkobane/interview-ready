@@ -402,13 +402,38 @@ export interface CompanyResearchResult {
  * Returns structured insights including culture, red flags, talking points, and questions to ask.
  */
 export const useCompanyResearchMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { company_url: string; context?: string }) => {
       const response = await apiCall('company-research', 'POST', payload);
       if (response.error) throw new Error(response.error);
-      return response.data as { data: CompanyResearchResult; message: string };
+      const res = response.data as { data: CompanyResearchResult; message: string };
+
+      // Save to database for Recent Activities
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: inserted, error: dbError } = await supabase
+          .from('company_research')
+          .insert({
+            user_id: userData.user.id,
+            company_name: res.data.company_name,
+            company_url: payload.company_url,
+            result_data: res.data
+          })
+          .select('id')
+          .single();
+
+        if (!dbError && inserted) {
+          (res.data as any).id = inserted.id;
+        }
+      }
+
+      return res;
     },
-    onSuccess: () => { refreshCredits(); },
+    onSuccess: () => {
+      refreshCredits();
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
+    },
   });
 };
 
@@ -418,6 +443,7 @@ export const useCompanyResearchMutation = () => {
  * Implements Master Prompt Steps 2A (keyword intel) + 1C (SPIKE) + 3 (scoring).
  */
 export const useLinkedinAnalyzeMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
       // Profile content (manually pasted by user)
@@ -434,9 +460,33 @@ export const useLinkedinAnalyzeMutation = () => {
     }) => {
       const response = await apiCall('linkedin-analyze', 'POST', payload);
       if (response.error) throw new Error(response.error);
-      return response.data as { analysis: any; message: string };
+      const res = response.data as { analysis: any; message: string };
+
+      // Save to database for Recent Activities
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: inserted, error: dbError } = await supabase
+          .from('linkedin_tasks')
+          .insert({
+            user_id: userData.user.id,
+            task_type: 'analyze',
+            title: 'LinkedIn Profile Analysis',
+            result_data: res.analysis
+          })
+          .select('id')
+          .single();
+
+        if (!dbError && inserted) {
+          res.analysis.id = inserted.id;
+        }
+      }
+
+      return res;
     },
-    onSuccess: () => { refreshCredits(); },
+    onSuccess: () => {
+      refreshCredits();
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
+    },
   });
 };
 
@@ -445,6 +495,7 @@ export const useLinkedinAnalyzeMutation = () => {
  * Each section returns its own structured result.
  */
 export const useLinkedinOptimizeMutation = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
       section: LinkedInSection;
@@ -458,9 +509,38 @@ export const useLinkedinOptimizeMutation = () => {
     }) => {
       const response = await apiCall('linkedin-optimize', 'POST', payload);
       if (response.error) throw new Error(response.error);
-      return response.data as { result: any; section: string; message: string };
+      const res = response.data as { result: any; section: string; message: string };
+
+      // Save to database for Recent Activities
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const titleMap: Record<string, string> = {
+          headline: 'LinkedIn Headline Optimization',
+          about: 'LinkedIn About Optimization',
+          experience: 'LinkedIn Experience Optimization'
+        };
+        const { data: inserted, error: dbError } = await supabase
+          .from('linkedin_tasks')
+          .insert({
+            user_id: userData.user.id,
+            task_type: 'optimize_' + payload.section,
+            title: titleMap[payload.section] || 'LinkedIn Optimization',
+            result_data: res.result
+          })
+          .select('id')
+          .single();
+
+        if (!dbError && inserted) {
+          res.result.id = inserted.id;
+        }
+      }
+
+      return res;
     },
-    onSuccess: () => { refreshCredits(); },
+    onSuccess: () => {
+      refreshCredits();
+      queryClient.invalidateQueries({ queryKey: ['recentActivities'] });
+    },
   });
 };
 
@@ -766,12 +846,16 @@ export const useRecentActivitiesQuery = () => {
         { data: resumes },
         { data: covers },
         { data: jobs },
-        { data: interviews }
+        { data: interviews },
+        { data: research },
+        { data: linkedin }
       ] = await Promise.all([
         supabase.from('resumes').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
         supabase.from('cover_letters').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
         supabase.from('job_applications').select('id, job_title, company, updated_at').order('updated_at', { ascending: false }).limit(5),
-        supabase.from('mock_interviews').select('id, role, updated_at').order('updated_at', { ascending: false }).limit(5)
+        supabase.from('mock_interviews').select('id, role, updated_at').order('updated_at', { ascending: false }).limit(5),
+        supabase.from('company_research').select('id, company_name, updated_at').order('updated_at', { ascending: false }).limit(5),
+        supabase.from('linkedin_tasks').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5)
       ]);
 
       const activities: { id: string; type: string; title: string; date: string; icon: string; color: string }[] = [];
@@ -787,6 +871,12 @@ export const useRecentActivitiesQuery = () => {
       }
       if (interviews) {
         interviews.forEach(i => activities.push({ id: i.id, type: 'interview', title: `Mock Interview: ${i.role || 'General'}`, date: i.updated_at, icon: 'chatbubbles-outline', color: '#ec4899' }));
+      }
+      if (research) {
+        research.forEach(r => activities.push({ id: r.id, type: 'company_research', title: `Company Research: ${r.company_name}`, date: r.updated_at, icon: 'business-outline', color: '#0ea5e9' }));
+      }
+      if (linkedin) {
+        linkedin.forEach(l => activities.push({ id: l.id, type: 'linkedin', title: l.title || 'LinkedIn Task', date: l.updated_at, icon: 'logo-linkedin', color: '#0077b5' }));
       }
 
       // Sort combined array by date descending

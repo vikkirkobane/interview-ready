@@ -16,8 +16,7 @@ import { useAnalyzeJobMutation, useExtractJdMutation } from '../../src/hooks/use
 import Toast from 'react-native-toast-message';
 import { isRateLimitedError } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
-
+import { useFilePicker } from '../../src/hooks/useFilePicker';
 export default function AnalyzeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -71,38 +70,22 @@ export default function AnalyzeScreen() {
     }
   };
 
+  const { pickFile, isPicking: isJdFilePicking } = useFilePicker();
+  const extractJdLoading = isJdFilePicking || extractJd.isPending;
+
   const handleAttachJdFile = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const fileAsset = result.assets[0];
-
-      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
-        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
-        return;
-      }
-
-      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
-        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, PDF, and DOCX files are allowed.' });
-        return;
-      }
-
-      setExtractJdLoading(true);
-
-      const payload = {
-        fileUri: fileAsset.uri,
-        fileName: fileAsset.name,
-        mimeType: fileAsset.mimeType || 'application/octet-stream',
-        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
-      };
+    await pickFile({
+      type: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedTypes: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      maxSizeMb: 5,
+      onFilePicked: async (payload) => {
+        const { extracted_text } = await extractJd.mutateAsync(payload);
+        setJdFileText(extracted_text);
+        setJdFileName(payload.fileName);
+      },
+      successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
+    });
+  };
 
       const { extracted_text } = await extractJd.mutateAsync(payload);
 

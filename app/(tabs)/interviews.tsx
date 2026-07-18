@@ -7,7 +7,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePastInterviewsQuery, useDeleteMockInterviewMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
-import * as DocumentPicker from 'expo-document-picker';
+import { useFilePicker } from '../../src/hooks/useFilePicker';
 import Toast from 'react-native-toast-message';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -39,52 +39,21 @@ export default function InterviewsLobbyScreen() {
 
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [extractJdLoading, setExtractJdLoading] = useState(false);
+  const { pickFile, isPicking: isJdFilePicking } = useFilePicker();
+  const extractJdLoading = isJdFilePicking || extractJd.isPending;
 
   const handleAttachJdFile = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/png', 'image/jpeg', 'application/pdf'],
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const fileAsset = result.assets[0];
-
-      if (fileAsset.size && fileAsset.size > 1 * 1024 * 1024) {
-        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 1MB.' });
-        return;
-      }
-
-      const allowedTypes = ['image/png', 'image/jpeg', 'application/pdf'];
-      if (!fileAsset.mimeType || !allowedTypes.includes(fileAsset.mimeType)) {
-        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PNG, JPEG, and PDF files are allowed.' });
-        return;
-      }
-
-      setExtractJdLoading(true);
-
-      const payload = {
-        fileUri: fileAsset.uri,
-        fileName: fileAsset.name,
-        mimeType: fileAsset.mimeType || 'application/octet-stream',
-        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
-      };
-
-      const { extracted_text } = await extractJd.mutateAsync(payload);
-
-      setJdFileText(extracted_text);
-      setJdFileName(fileAsset.name);
-
-      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' });
-    } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
-    } finally {
-      setExtractJdLoading(false);
-    }
+    await pickFile({
+      type: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedTypes: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      maxSizeMb: 5,
+      onFilePicked: async (payload) => {
+        const { extracted_text } = await extractJd.mutateAsync(payload);
+        setJdFileText(extracted_text);
+        setJdFileName(payload.fileName);
+      },
+      successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
+    });
   };
 
   const handleRemoveAttachedJd = () => {

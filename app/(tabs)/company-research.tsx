@@ -6,7 +6,7 @@ import { Pressable ,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
@@ -14,6 +14,9 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, ScoreRing } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { useNotificationStore } from '../../src/stores/notification-store';
+import { supabase } from '../../src/lib/supabase';
+import { useLocalSearchParams } from 'expo-router';
 import {
   useCompanyResearchMutation,
   CompanyResearchResult,
@@ -98,6 +101,8 @@ export default function CompanyResearchScreen() {
   const { colors } = useTheme();
   const researchMutation = useCompanyResearchMutation();
   const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
+  const { id } = useLocalSearchParams<{ id?: string }>();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
@@ -105,6 +110,18 @@ export default function CompanyResearchScreen() {
   const [context, setContext] = useState('');
   const [result, setResult] = useState<CompanyResearchResult | null>(null);
   const [activeTab, setActiveTab] = useState<ResultTab>('overview');
+
+  useEffect(() => {
+    const loadFromId = async () => {
+      if (!id) return;
+      const { data, error } = await supabase.from('company_research').select('*').eq('id', id).single();
+      if (!error && data) {
+        setResult(data.result_data);
+        if (data.company_url) setCompanyUrl(data.company_url);
+      }
+    };
+    loadFromId();
+  }, [id]);
 
   const handleResearch = async () => {
     const trimmed = companyUrl.trim();
@@ -119,6 +136,11 @@ export default function CompanyResearchScreen() {
       setResult(res.data);
       setActiveTab('overview');
       Toast.show({ type: 'success', text1: `${res.data.company_name} researched!` });
+      addNotification({
+        title: 'Company Research Saved',
+        description: `Analysis for ${res.data.company_name} is ready.`,
+        type: 'success',
+      });
     } catch (e: any) {
       handleApiError(e.message, { fallbackTitle: 'Research Failed' });
     }

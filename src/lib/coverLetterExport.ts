@@ -26,12 +26,7 @@ try {
   // Ignore
 }
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  FileSystem = require('expo-file-system/next');
-} catch {
-  // Ignore
-}
+// expo-file-system is intentionally NOT used — see resumeExport.ts for rationale.
 
 export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
   const html = buildCoverLetterHTML(cl);
@@ -47,24 +42,11 @@ export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
       setTimeout(() => win.print(), 500);
     }
   } else {
-    if (!printToFileAsync || !shareAsync || !FileSystem) {
-      throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
+    if (!printToFileAsync || !shareAsync) {
+      throw new Error('PDF export requires expo-print and expo-sharing.');
     }
     const { uri } = await printToFileAsync({ html });
-    
-    let finalUri = uri;
-    try {
-      // Use standard expo-file-system to rename the file before sharing
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const LegacyFS = require('expo-file-system');
-      const newUri = `${LegacyFS.cacheDirectory}${filename}`;
-      await LegacyFS.moveAsync({ from: uri, to: newUri });
-      finalUri = newUri;
-    } catch (e) {
-      console.warn("Could not rename PDF file:", e);
-    }
-
-    await shareAsync(finalUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Cover Letter PDF' });
+    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
   }
 }
 
@@ -140,18 +122,16 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else {
-      if (!FileSystem || !shareAsync) {
-        throw new Error('DOCX export requires expo-file-system and expo-sharing.');
+      if (!shareAsync) {
+        throw new Error('DOCX export requires expo-sharing.');
       }
       const base64Data = await Packer.toBase64String(doc);
-      const file = new FileSystem.File(
-        new FileSystem.Directory(FileSystem.Paths.document),
-        filename
-      );
-      file.write(base64Data, { encoding: 'base64' });
-      await shareAsync(file.uri, {
+      const LegacyFS = await import('expo-file-system');
+      const fileUri = `${LegacyFS.cacheDirectory}${filename}`;
+      await LegacyFS.writeAsStringAsync(fileUri, base64Data, { encoding: LegacyFS.EncodingType.Base64 });
+      await shareAsync(fileUri, {
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        dialogTitle: 'Download Cover Letter DOCX',
+        dialogTitle: `Download ${filename}`,
         UTI: 'org.openxmlformats.wordprocessingml.document',
       });
     }

@@ -5,8 +5,7 @@ import { ScoreRing, Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useRouter } from 'expo-router';
 import { useDeleteAccountMutation, useUpdateProfileMutation, useParseResumeMutation } from '../../src/hooks/useApi';
-import * as DocumentPicker from 'expo-document-picker';
-import Toast from 'react-native-toast-message';
+import { useFilePicker } from '../../src/hooks/useFilePicker';import Toast from 'react-native-toast-message';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -254,38 +253,31 @@ export default function ProfileScreen() {
     }
   };
 
+  const { pickFile, isPicking: isParsingResume } = useFilePicker();
+  
   const handleUploadResume = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        copyToCacheDirectory: true,
-      });
+    await pickFile({
+      type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      maxSizeMb: 5,
+      onFilePicked: async (payload) => {
+        Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+        
+        const extractedData = await parseResume.mutateAsync(payload);
+        
+        await updateProfile({
+          current_role: extractedData.current_role || (profile as any)?.current_role || '',
+          summary: extractedData.summary || profile?.summary || '',
+          technical_skills: extractedData.technical_skills && extractedData.technical_skills.length > 0 ? extractedData.technical_skills : (profile as any)?.technical_skills,
+          soft_skills: extractedData.soft_skills && extractedData.soft_skills.length > 0 ? extractedData.soft_skills : (profile as any)?.soft_skills,
+          work_history: extractedData.work_history && extractedData.work_history.length > 0 ? extractedData.work_history : (profile as any)?.work_history,
+          education: extractedData.education && extractedData.education.length > 0 ? extractedData.education : (profile as any)?.education,
+        } as any);
 
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
+        Toast.show({ type: 'success', text1: 'Resume Parsed!', text2: 'Your profile has been updated.' });
       }
-
-      const fileAsset = result.assets[0];
-
-      if (fileAsset.size && fileAsset.size > 5 * 1024 * 1024) {
-        Toast.show({ type: 'error', text1: 'File too large', text2: 'Please upload a file smaller than 5MB.' });
-        return;
-      }
-
-      const isPdf = fileAsset.mimeType === 'application/pdf' || fileAsset.name.toLowerCase().endsWith('.pdf');
-      const isDocx = fileAsset.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileAsset.name.toLowerCase().endsWith('.docx');
-
-      if (!isPdf && !isDocx) {
-        Toast.show({ type: 'error', text1: 'Invalid file type', text2: 'Only PDF and DOCX files are supported.' });
-        return;
-      }
-
-      const payload = {
-        fileUri: fileAsset.uri,
-        fileName: fileAsset.name,
-        mimeType: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
-      };
+    });
+  };
 
       Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
       

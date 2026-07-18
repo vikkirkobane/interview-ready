@@ -22,6 +22,9 @@ import {
 } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
+import { useNotificationStore } from '../../src/stores/notification-store';
+import { supabase } from '../../src/lib/supabase';
+import { useLocalSearchParams } from 'expo-router';
 
 import Toast from 'react-native-toast-message';
 import { handleApiError } from '../../src/lib/errorHandler';
@@ -76,6 +79,29 @@ export default function LinkedinOptimizerScreen() {
   const [step, setStep]           = useState<WizardStep>('prefill');
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [showLinkedInPrompt, setShowLinkedInPrompt] = useState(!isLinkedInUser);
+  const { addNotification } = useNotificationStore();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+
+  // Load from database if ID is provided
+  useEffect(() => {
+    const loadFromId = async () => {
+      if (!id) return;
+      const { data, error } = await supabase.from('linkedin_tasks').select('*').eq('id', id).single();
+      if (!error && data) {
+        if (data.task_type === 'analyze') {
+          setAnalysis(data.result_data);
+          setStep('results');
+          setActiveTab('overview');
+        } else if (data.task_type.startsWith('optimize_')) {
+          const section = data.task_type.split('_')[1];
+          setSectionResults(prev => ({ ...prev, [section]: data.result_data }));
+          // We can't jump directly to optimize view cleanly without full analysis context, but we can set the result
+          Toast.show({ type: 'success', text1: 'Optimization result loaded' });
+        }
+      }
+    };
+    loadFromId();
+  }, [id]);
 
   // Sync showLinkedInPrompt when user connects LinkedIn via OAuth
   useEffect(() => {
@@ -191,6 +217,11 @@ export default function LinkedinOptimizerScreen() {
       setAnalysis(result.analysis);
       setStep('results');
       setActiveTab('overview');
+      addNotification({
+        title: 'LinkedIn Analysis Saved',
+        description: 'Your profile analysis is ready.',
+        type: 'success',
+      });
     } catch (e: any) {
       handleApiError(e.message, { fallbackTitle: 'Analysis Failed' });
     }
@@ -218,6 +249,11 @@ export default function LinkedinOptimizerScreen() {
       const result = await optimizeMutation.mutateAsync(payload);
       setSectionResults(prev => ({ ...prev, [section]: result.result }));
       Toast.show({ type: 'success', text1: `${section.replace(/_/g, ' ')} optimised!` });
+      addNotification({
+        title: 'LinkedIn Optimization Saved',
+        description: `${section.replace(/_/g, ' ')} has been optimized.`,
+        type: 'success',
+      });
     } catch (e: any) {
       handleApiError(e.message, { fallbackTitle: 'Optimisation Failed' });
     } finally {

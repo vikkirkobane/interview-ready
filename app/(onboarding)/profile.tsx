@@ -14,7 +14,7 @@ import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useUpdateProfileMutation, useParseResumeMutation } from '../../src/hooks/useApi';
 import { supabase } from '../../src/lib/supabase';
-import * as DocumentPicker from 'expo-document-picker';
+import { useFilePicker } from '../../src/hooks/useFilePicker';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -54,80 +54,32 @@ export default function ProfileScreen() {
   const updateProfile = useUpdateProfileMutation();
   const parseResume = useParseResumeMutation();
 
+  const { pickFile, isPicking: isParsingResume } = useFilePicker();
+
   const handleUploadResume = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        return;
-      }
-
-      const fileAsset = result.assets[0];
-
-      if (fileAsset.size && fileAsset.size > 5 * 1024 * 1024) {
-        Toast.show({
-          type: 'error',
-          text1: 'File too large',
-          text2: 'Please upload a file smaller than 5MB.',
-        });
-        return;
-      }
-
-      const isPdf = fileAsset.mimeType === 'application/pdf' || fileAsset.name.toLowerCase().endsWith('.pdf');
-      const isDocx = fileAsset.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileAsset.name.toLowerCase().endsWith('.docx');
-
-      if (!isPdf && !isDocx) {
-        Toast.show({
-          type: 'error',
-          text1: 'Invalid file type',
-          text2: 'Only PDF and DOCX files are supported.',
-        });
-        return;
-      }
-
-      const payload = {
-        fileUri: fileAsset.uri,
-        fileName: fileAsset.name,
-        mimeType: fileAsset.mimeType || (isPdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
-        webFile: Platform.OS === 'web' && fileAsset.file ? (fileAsset.file as unknown as Blob) : null,
-      };
-
-      const extractedData = await parseResume.mutateAsync(payload);
+    await pickFile({
+      type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      maxSizeMb: 5,
+      onFilePicked: async (payload) => {
+        Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+        const extractedData = await parseResume.mutateAsync(payload);
       
-      if (extractedData.current_role) setCurrentRole(extractedData.current_role);
-      if (extractedData.company) setCompany(extractedData.company);
-      const skillsList = (extractedData as any).top_skills || (extractedData as any).technical_skills;
-      if (skillsList && Array.isArray(skillsList)) {
-        const uniqueSkills = Array.from(new Set([...skills, ...skillsList]));
-        setSkills(uniqueSkills);
-      }
+        if (extractedData.current_role) setCurrentRole(extractedData.current_role);
+        if (extractedData.company) setCompany(extractedData.company);
+        const skillsList = (extractedData as any).top_skills || (extractedData as any).technical_skills;
+        if (skillsList && Array.isArray(skillsList)) {
+          const uniqueSkills = Array.from(new Set([...skills, ...skillsList]));
+          setSkills(uniqueSkills);
+        }
 
-      Toast.show({
-        type: 'success',
-        text1: 'Resume parsed successfully',
-        text2: 'Form fields have been auto-filled.',
-      });
-    } catch (error: any) {
-      if (error.message?.includes('PROMPT_INJECTION')) {
         Toast.show({
-          type: 'error',
-          text1: 'Security Violation',
-          text2: 'Prompt injection detected. You have been logged out.',
+          type: 'success',
+          text1: 'Resume parsed successfully',
+          text2: 'Form fields have been auto-filled.',
         });
-        await useAuthStore.getState().signOut();
-        router.replace('/(auth)/login');
-        return;
       }
-
-      Toast.show({
-        type: 'error',
-        text1: 'Failed to parse resume',
-        text2: error.message || 'Please check your file and try again.',
-      });
-    }
+    });
   };
 
   const handleContinue = async () => {

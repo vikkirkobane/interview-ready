@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
 
 declare let window: any;
 
@@ -223,32 +222,33 @@ export async function apiUploadFile<T = any>(
       }
 
       const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`;
-      const uploadResponse = await FileSystem.uploadAsync(url, fileUri, {
-        httpMethod: 'POST',
-        uploadType: FileSystem.UploadType.MULTIPART,
-        fieldName: 'file',
-        mimeType: mimeType || 'application/octet-stream',
+      
+      const formData = new FormData();
+      formData.append('file', {
+        uri: fileUri,
+        type: mimeType || 'application/octet-stream',
+        name: fileName || 'file.pdf',
+      } as any);
+
+      const response = await fetch(url, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
+        body: formData,
       });
 
-      if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+      if (!response.ok) {
         let errorMsg = 'Upload failed';
         try {
-          const errJson = JSON.parse(uploadResponse.body);
+          const errJson = await response.json();
           errorMsg = errJson.error || errorMsg;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {}
         return { data: null, error: errorMsg };
       }
 
-      let data;
-      try {
-        data = JSON.parse(uploadResponse.body);
-      } catch {
-        return { data: null, error: 'Invalid response from server' };
-      }
+      const data = await response.json();
       return { data, error: null };
     }
   } catch (err: any) {

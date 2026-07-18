@@ -4,7 +4,6 @@ declare let window: any;
 
 let printToFileAsync: any;
 let shareAsync: any;
-let FileSystem: any;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -22,12 +21,8 @@ try {
   // Ignore
 }
 
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  FileSystem = require('expo-file-system');
-} catch {
-  // Ignore
-}
+// expo-file-system is intentionally NOT used — PDF goes directly from
+// expo-print URI into expo-sharing without any filesystem move.
 
 export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
   const html = buildRoadmapHTML(analysisResult);
@@ -41,9 +36,8 @@ export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
       setTimeout(() => win.print(), 500);
     }
   } else {
-    // Native PDF generation
-    if (!printToFileAsync || !shareAsync || !FileSystem) {
-      throw new Error('PDF export requires expo-print, expo-sharing, and expo-file-system.');
+    if (!printToFileAsync || !shareAsync) {
+      throw new Error('PDF export requires expo-print and expo-sharing.');
     }
     const { uri } = await printToFileAsync({ html });
     await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Roadmap PDF' });

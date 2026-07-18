@@ -31,7 +31,8 @@ export async function signInWithGoogle(): Promise<{ error: string | null }> {
     const userInfo = await GoogleSignin.signIn();
     
     // Get the ID token from the user info
-    const idToken = (userInfo as any).idToken;
+    // v16+ returns { type: 'success', data: { idToken, ... } }, older versions return { idToken, ... }
+    const idToken = (userInfo as any)?.data?.idToken || (userInfo as any)?.idToken;
     
     if (!idToken) {
       return { error: 'Failed to get Google ID token' };

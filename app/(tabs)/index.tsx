@@ -255,6 +255,8 @@ export default function DashboardScreen() {
                 else if (activity.type === 'cover_letter') router.push(`/(tabs)/cover-letter?id=${activity.id}&fromList=true` as any);
                 else if (activity.type === 'job_match') router.push(`/job-match-results?id=${activity.id}&fromList=true` as any);
                 else if (activity.type === 'interview') router.push(`/feedback?id=${activity.id}&fromList=true` as any);
+                else if (activity.type === 'company_research') router.push(`/(tabs)/company-research?id=${activity.id}` as any);
+                else if (activity.type === 'linkedin') router.push(`/(tabs)/linkedin?id=${activity.id}` as any);
               };
 
               return (

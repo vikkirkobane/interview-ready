@@ -88,24 +88,9 @@ serve(async (req) => {
       throw new Error('Invalid currency/country combination');
     }
 
-    // Initialize Paystack client
-    const paystack = createPaystackClient();
-
-    // Initialize transaction (one-time payment, subscription created after success)
-    const initResponse = await paystack.initializePayment({
-      email: profile.email,
-      // KES amounts are already in shillings (Paystack's smallest unit for KES)
-      // USD/NGN amounts must be converted to cents/kobo (* 100)
-      amount: plan.currency === 'KES' ? plan.amount : Math.round(plan.amount * 100),
-      reference,
-      callback_url: callbackUrl,
-      channels,
-      metadata,
-    });
-
-    if (!initResponse.status || !initResponse.data) {
-      throw new Error('Failed to initialize payment with Paystack');
-    }
+    // We DO NOT call paystack.initializePayment() here because the 
+    // react-native-paystack-webview component initializes the transaction 
+    // directly from the client. Calling it here causes a "Duplicate Transaction Reference" error.
 
     // Store transaction in database
     const { error: txError } = await supabaseClient.from('payment_transactions').insert({
@@ -131,14 +116,12 @@ serve(async (req) => {
       throw new Error('Failed to store transaction record');
     }
 
-    // Return success response
+    // Return success response with just the reference
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          authorization_url: initResponse.data.authorization_url,
-          access_code: initResponse.data.access_code,
-          reference: initResponse.data.reference,
+          reference: reference,
           amount: plan.amount,
           currency: plan.currency,
           country: countryCode || 'INTERNATIONAL',
