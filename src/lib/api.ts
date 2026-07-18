@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
 
 declare let window: any;
 
@@ -187,54 +188,69 @@ export async function apiUploadFile<T = any>(
       }
     }
 
-    const formData = new FormData();
-    if (Platform.OS === 'web' && webFile) {
-      // Web: use the Blob directly (native {uri,name,type} parts are unsupported
-      // by the web fetch polyfill — that's what the dedicated webFile path avoids).
-      (formData as any).append('file', webFile, fileName);
+    if (Platform.OS === 'web') {
+      const formData = new FormData();
+      if (webFile) {
+        (formData as any).append('file', webFile, fileName);
+      }
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        let errorMsg = 'Upload failed';
+        try {
+          const errJson = await response.json();
+          errorMsg = errJson.error || errorMsg;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {}
+        return { data: null, error: errorMsg };
+      }
+
+      const data = await response.json();
+      return { data, error: null };
     } else {
-      // Native (iOS/Android): pass the local file URI straight to FormData.
-      // React Native's native fetch streams the bytes as multipart/form-data
-      // without ever loading the file into JS memory, so this:
-      //  - needs no expo-file-system call (avoids the SDK 56 / new-arch
-      //    "Method getInfoAsync imported from expo-file-system" error),
-      //  - avoids base64 + Uint8Array memory blowup on large files,
-      //  - works for any file:// URI (DocumentPicker uses copyToCacheDirectory,
-      //    so the URI is always a readable file:// path on native).
       if (!fileUri) {
         return { data: null, error: 'File not found or empty' };
       }
 
-      (formData as any).append('file', {
-        uri: fileUri,
-        name: fileName,
-        type: mimeType || 'application/octet-stream',
-      } as any);
-    }
-
-    const response = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
-      {
-        method: 'POST',
+      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`;
+      const uploadResponse = await FileSystem.uploadAsync(url, fileUri, {
+        httpMethod: 'POST',
+        uploadType: FileSystem.UploadType.MULTIPART,
+        fieldName: 'file',
+        mimeType: mimeType || 'application/octet-stream',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: formData,
+      });
+
+      if (uploadResponse.status < 200 || uploadResponse.status >= 300) {
+        let errorMsg = 'Upload failed';
+        try {
+          const errJson = JSON.parse(uploadResponse.body);
+          errorMsg = errJson.error || errorMsg;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (e) {}
+        return { data: null, error: errorMsg };
       }
-    );
 
-    if (!response.ok) {
-      let errorMsg = 'Upload failed';
+      let data;
       try {
-        const errJson = await response.json();
-        errorMsg = errJson.error || errorMsg;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (e) {}
-      return { data: null, error: errorMsg };
+        data = JSON.parse(uploadResponse.body);
+      } catch {
+        return { data: null, error: 'Invalid response from server' };
+      }
+      return { data, error: null };
     }
-
-    const data = await response.json();
-    return { data, error: null };
   } catch (err: any) {
     console.error('[Upload] Upload error:', err);
     return { data: null, error: err.message || 'Upload failed' };

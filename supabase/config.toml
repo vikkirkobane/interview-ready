@@ -37,3 +37,5 @@ client_id = "env(LINKEDIN_CLIENT_ID)"
 secret = "env(LINKEDIN_SECRET)"
 redirect_uri = "interviewready://auth/callback"
 
+[functions.payments-webhook]
+verify_jwt = false

@@ -82,7 +82,25 @@ Each task needs:
 
 monthly_cadence: 3-4 recurring monthly habits for ongoing visibility.
 
-Return ONLY valid JSON. No prose outside JSON.`;
+Return ONLY valid JSON matching this exact structure:
+{
+  "weeks": [
+    {
+      "week_label": "Week 1-2: ...",
+      "theme": "...",
+      "tasks": [
+        {
+          "day": "Day 1",
+          "action": "...",
+          "time_needed": "10 min",
+          "type": "POST"
+        }
+      ]
+    }
+  ],
+  "monthly_cadence": ["habit 1", "habit 2"]
+}
+No prose outside JSON.`;
 
     const userPrompt = `Target Role(s): ${input.target_roles.join(', ')}
 Target Companies/Industries: ${input.target_companies?.join(', ') || input.industry || 'Not specified'}

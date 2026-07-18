@@ -19,9 +19,9 @@ import { Image } from 'expo-image';
 export default function WelcomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signInWithOAuth, session } = useAuthStore();
+  const { signInWithGoogleIdToken, signInWithLinkedInIdToken, session } = useAuthStore();
   const { colors, isDark } = useTheme();
-  const [loadingProvider, setLoadingProvider] = useState<'google' | 'linkedin_oidc' | null>(null);
+  const [loadingProvider, setLoadingProvider] = useState<'google' | 'linkedin' | null>(null);
 
   const [fadeAnim] = useState(() => new Animated.Value(0));
   const [slideAnim] = useState(() => new Animated.Value(20));
@@ -53,30 +53,26 @@ export default function WelcomeScreen() {
 
   const handleGoogleAuth = async () => {
     setLoadingProvider('google');
-    const { error } = await signInWithOAuth('google');
-    // Only clear the loading state on explicit cancellation or error.
-    // On success, the auth/callback screen will handle navigation.
+    const { error } = await signInWithGoogleIdToken();
     if (error) {
       setLoadingProvider(null);
-      if (error !== 'Authentication canceled.') {
+      if (error !== 'Sign in was cancelled') {
         Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
       }
     }
-    // If no error, keep loading spinner visible - callback screen will handle the rest
+    // On success, the useEffect watching session will handle navigation to /(tabs)
   };
 
   const handleLinkedInAuth = async () => {
-    setLoadingProvider('linkedin_oidc');
-    const { error } = await signInWithOAuth('linkedin_oidc');
-    // Only clear the loading state on explicit cancellation or error.
-    // On success, the auth/callback screen will handle navigation.
+    setLoadingProvider('linkedin');
+    const { error } = await signInWithLinkedInIdToken();
     if (error) {
       setLoadingProvider(null);
-      if (error !== 'Authentication canceled.') {
+      if (error !== 'Authentication cancelled') {
         Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
       }
     }
-    // If no error, keep loading spinner visible - callback screen will handle the rest
+    // On success, the useEffect watching session will handle navigation to /(tabs)
   };
 
   return (
@@ -140,7 +136,7 @@ export default function WelcomeScreen() {
           >
             <Ionicons name="logo-linkedin" size={24} color={colors.textInverse} />
             <Text style={[styles.socialButtonText, styles.linkedInText, { color: colors.textInverse }]}>
-              {loadingProvider === 'linkedin_oidc' ? 'Signing in...' : 'Continue with LinkedIn'}
+              {loadingProvider === 'linkedin' ? 'Signing in...' : 'Continue with LinkedIn'}
             </Text>
           </Pressable>
 

@@ -32,10 +32,15 @@ interface AICallOptions {
 }
 
 const QWEN_BASE_URL = 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1';
-const QWEN_MODEL = 'qwen-omni-turbo';
+// Text model — qwen-omni-turbo is multimodal and unreliable for strict JSON extraction.
+const QWEN_MODEL = 'qwen-flash-character';
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
-const OPENROUTER_MODEL = 'nvidia/nemotron-3-super-120b-a12b:free';
+const OPENROUTER_MODELS = [
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'google/gemini-2.0-flash-lite-preview-02-05:free',
+];
 
 export class AIClient {
   private openrouterApiKey: string;
@@ -57,7 +62,7 @@ export class AIClient {
     schema: z.Schema<T>,
     options: AICallOptions = {}
   ): Promise<T> {
-    const { model = 'qwen', temperature = 0.7, max_tokens = 2048 } = options;
+    const { model = 'qwen', temperature = 0.7, max_tokens = 4096 } = options;
 
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -76,7 +81,7 @@ export class AIClient {
         try {
           return await this.callQwen(messages, schema, temperature, max_tokens);
         } catch (qwenError: any) {
-          console.warn('Qwen API failed, falling back to OpenRouter:', qwenError.message);
+          console.warn('Qwen API failed, falling back to OpenRouter:', qwenError);
           return await this.callOpenRouter(messages, schema, temperature, max_tokens);
         }
       }
@@ -162,60 +167,81 @@ export class AIClient {
     temperature: number,
     maxTokens: number
   ): Promise<T> {
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.openrouterApiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://interviewready.app',
-        'X-Title': 'Interview Ready',
-      },
-      body: JSON.stringify({
-        model: OPENROUTER_MODEL,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-      }),
-    });
+    const models = [...OPENROUTER_MODELS].sort(() => Math.random() - 0.5).slice(0, 3);
+    let lastError: Error | null = null;
 
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
-    }
+    for (const model of models) {
+      try {
+        const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${this.openrouterApiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://interviewready.app',
+            'X-Title': 'Interview Ready',
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            temperature,
+            max_tokens: maxTokens,
+            response_format: { type: 'json_object' },
+          }),
+        });
 
-    const data = (await response.json()) as AIResponse;
-    const content = data.choices[0]?.message?.content;
-
-    if (!content) {
-      throw new Error('Empty response from OpenRouter API');
-    }
-
-    let parsed: unknown;
-    try {
-      // Extract JSON object robustly
-      const startIndex = content.indexOf('{');
-      const endIndex = content.lastIndexOf('}');
-      if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-        parsed = JSON.parse(content.substring(startIndex, endIndex + 1));
-      } else {
-        parsed = JSON.parse(content);
-      }
-    } catch {
-      throw new Error(`Invalid JSON from OpenRouter: ${content.substring(0, 200)}`);
-    }
-
-    try {
-      return schema.parse(parsed);
-    } catch (err: any) {
-      if (err.name === 'ZodError' && typeof parsed === 'object' && parsed !== null) {
-        const keys = Object.keys(parsed as object);
-        if (keys.length === 1) {
-          return schema.parse((parsed as any)[keys[0]]);
+        if (!response.ok) {
+          const errorData = await response.text();
+          lastError = new Error(`OpenRouter API error (${model}): ${response.status} - ${errorData}`);
+          if (response.status === 429) {
+            console.warn(`Rate limited on ${model}, trying next model...`);
+          }
+          continue;
         }
+
+        const data = (await response.json()) as AIResponse;
+        const content = data.choices[0]?.message?.content;
+
+        if (!content) {
+          lastError = new Error(`Empty response from OpenRouter model ${model}`);
+          continue;
+        }
+
+        let parsed: unknown;
+        try {
+          const startIndex = content.indexOf('{');
+          const endIndex = content.lastIndexOf('}');
+          if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+            parsed = JSON.parse(content.substring(startIndex, endIndex + 1));
+          } else {
+            parsed = JSON.parse(content);
+          }
+        } catch {
+          lastError = new Error(`Invalid JSON from OpenRouter (${model}): ${content.substring(0, 200)}`);
+          continue;
+        }
+
+        try {
+          return schema.parse(parsed);
+        } catch (err: unknown) {
+          if (
+            err instanceof z.ZodError &&
+            typeof parsed === 'object' &&
+            parsed !== null
+          ) {
+            const keys = Object.keys(parsed as object);
+            if (keys.length === 1) {
+              return schema.parse((parsed as Record<string, unknown>)[keys[0]]);
+            }
+          }
+          lastError = err instanceof Error ? err : new Error(String(err));
+          continue;
+        }
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err : new Error(String(err));
       }
-      throw err;
     }
+
+    throw lastError || new Error('All OpenRouter models failed');
   }
 
   /**
@@ -227,7 +253,7 @@ export class AIClient {
     userPrompt: string,
     options: AICallOptions = {}
   ): Promise<string> {
-    const { model = 'qwen', temperature = 0.7, max_tokens = 2048 } = options;
+    const { model = 'qwen', temperature = 0.7, max_tokens = 4096 } = options;
 
     const messages: AIMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -298,7 +324,7 @@ export class AIClient {
         'X-Title': 'Interview Ready',
       },
       body: JSON.stringify({
-        model: OPENROUTER_MODEL,
+        model: OPENROUTER_MODELS[0],
         messages,
         temperature,
         max_tokens: maxTokens,

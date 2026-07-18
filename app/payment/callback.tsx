@@ -17,7 +17,7 @@ export default function PaymentCallbackScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const reference = params.reference as string;
-  const { setUser } = useAuthStore();
+  const { setSession } = useAuthStore();
 
   const [status, setStatus] = useState<PaymentStatus>('verifying');
   const [message, setMessage] = useState('Verifying your payment...');
@@ -32,6 +32,7 @@ export default function PaymentCallbackScreen() {
       setStatus('error');
       setMessage('Invalid payment reference');
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reference]);
 
   const verifyPayment = async (ref: string) => {
@@ -69,8 +70,8 @@ export default function PaymentCallbackScreen() {
       if (data.success && data.data.status === 'success') {
         // Force session refresh so isPro and credit balance update in the auth store
         const { data: refreshData } = await supabase.auth.refreshSession();
-        if (refreshData?.user) {
-          setUser(refreshData.user);
+        if (refreshData?.session) {
+          setSession(refreshData.session);
         }
 
         setStatus('success');

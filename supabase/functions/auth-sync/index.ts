@@ -2,19 +2,20 @@ import { Hono } from 'npm:hono@4.0.0';
 import { cors } from 'npm:hono@4.0.0/cors';
 import { createServiceClient } from '../_shared/supabase-client.ts';
 import { AppError } from '../_shared/errors.ts';
+import { sendEmail } from '../_shared/email-service.ts';
 
 const app = new Hono();
 
 app.use('/*', cors());
 
 /**
- * Webhook handler for auth.users → public.users sync
+ * Webhook handler for auth events
  * Called automatically by Supabase when user signs up, updates, or deletes account
  * 
  * Event types:
- * - user.signed_up: New user registered
- * - user.updated: User profile changed
- * - user.deleted: User deleted (GDPR)
+ * - user.signed_up: New user registered - sends welcome email
+ * - user.updated: User profile changed - syncs metadata
+ * - user.deleted: User deleted (GDPR) - cleanup
  */
 app.post('/*', async (c: any) => {
   const payload = await c.req.json();
@@ -55,54 +56,44 @@ async function handleUserSignup(
 ) {
   const { id, email, user_metadata } = authUser as any;
 
-  // Check if user already exists (shouldn't happen, but safety first)
-  const { data: existing } = await client
+  // User creation is handled by database trigger handle_new_user()
+  // This function only sends welcome email
+  console.log(`User ${id} signed up, sending welcome email`);
+
+  // Get user data for email
+  const { data: userData } = await client
     .from('users')
-    .select('id')
+    .select('first_name, ai_credits')
     .eq('id', id)
     .single();
 
-  if (existing) {
-    console.log(`User ${id} already exists, skipping signup`);
-    return c.json({ message: 'User already exists' }, 200);
+  const userName = userData?.first_name || user_metadata?.first_name || email?.split('@')[0] || 'there';
+  const credits = userData?.ai_credits || 10;
+
+  try {
+    // Send welcome email using template
+    await sendEmail({
+      to: email,
+      templateKey: 'welcome',
+      templateVariables: {
+        user_name: userName,
+        credits: credits.toString(),
+      },
+      emailType: 'welcome',
+      metadata: {
+        user_id: id,
+        event: 'user.signed_up',
+      },
+      supabaseClient: client,
+    });
+
+    console.log(`Welcome email sent to ${email}`);
+  } catch (emailError) {
+    console.error('Failed to send welcome email:', emailError);
+    // Don't fail the webhook if email fails - user is still created
   }
 
-  // Create user in public.users with metadata from auth
-  const { error: insertError } = await client.from('users').insert({
-    id,
-    email,
-    first_name: user_metadata?.first_name || null,
-    last_name: user_metadata?.last_name || null,
-    avatar_url: user_metadata?.avatar_url || null,
-    plan: 'FREE',
-    ai_credits: 10,
-  });
-
-  if (insertError) {
-    throw new AppError(
-      'INSERT_FAILED',
-      500,
-      `Failed to create user: ${insertError.message}`
-    );
-  }
-
-  // Create empty user_profile - CRITICAL for app to work
-  const { error: profileError } = await client.from('user_profiles').insert({
-    user_id: id,
-    profile_completeness: 0,
-  });
-
-  if (profileError) {
-    console.error('CRITICAL: Failed to create user profile:', profileError);
-    throw new AppError(
-      'PROFILE_CREATE_FAILED',
-      500,
-      `Failed to create user profile: ${profileError.message}`
-    );
-  }
-
-  console.log(`User ${id} signed up successfully`);
-  return c.json({ message: 'User created' }, 201);
+  return c.json({ message: 'Welcome email sent' }, 200);
 }
 
 async function handleUserUpdate(
@@ -112,7 +103,7 @@ async function handleUserUpdate(
 ) {
   const { id, email, user_metadata } = authUser as any;
 
-  // Update user with new metadata
+  // Update user with new metadata (if different from current values)
   const { error } = await client
     .from('users')
     .update({
@@ -125,15 +116,12 @@ async function handleUserUpdate(
     .eq('id', id);
 
   if (error) {
-    throw new AppError(
-      'UPDATE_FAILED',
-      500,
-      `Failed to update user: ${error.message}`
-    );
+    console.error(`Failed to update user ${id}:`, error.message);
+    // Don't fail the webhook if update fails - non-critical
   }
 
-  console.log(`User ${id} updated`);
-  return c.json({ message: 'User updated' }, 200);
+  console.log(`User ${id} update processed`);
+  return c.json({ message: 'User update processed' }, 200);
 }
 
 async function handleUserDelete(

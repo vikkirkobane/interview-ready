@@ -105,17 +105,19 @@ app.post('/*', async (c: any) => {
       templateId = defaultTemplate?.id;
     }
 
+    const insertPayload: any = {
+      user_id: user.id,
+      title: input.title,
+      is_base: input.is_base,
+      status: 'DRAFT',
+    };
+    if (templateId) insertPayload.template_id = templateId;
+    if (input.job_analysis_id) insertPayload.job_application_id = input.job_analysis_id;
+
     // Create resume record
     const { data: resume, error: createError } = await serviceClient
       .from('resumes')
-      .insert({
-        user_id: user.id,
-        title: input.title,
-        template_id: templateId,
-        job_application_id: input.job_analysis_id || null,
-        is_base: input.is_base,
-        status: 'DRAFT',
-      })
+      .insert(insertPayload)
       .select('id')
       .single();
 
@@ -147,7 +149,7 @@ app.post('/*', async (c: any) => {
 
     console.error('Error in /resumes/create:', error);
     return c.json(
-      { error: 'Failed to create resume', code: 'INTERNAL_ERROR' },
+      { error: error instanceof Error ? error.message : String(error), code: 'INTERNAL_ERROR' },
       500
     );
   }

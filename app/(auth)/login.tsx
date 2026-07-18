@@ -14,12 +14,13 @@ import { useTheme } from '../../src/theme/useTheme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signIn, loading } = useAuthStore();
+  const { signIn, loading, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,6 +43,26 @@ export default function LoginScreen() {
     }
 
     const { error: authError } = await signIn(trimmedEmail, password);
+    if (authError) {
+      setError(authError);
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    const { error: authError } = await signInWithGoogleIdToken();
+    if (authError) {
+      setError(authError);
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
+  const handleLinkedInSignIn = async () => {
+    setError('');
+    const { error: authError } = await signInWithLinkedInIdToken();
     if (authError) {
       setError(authError);
     } else {
@@ -113,6 +134,33 @@ export default function LoginScreen() {
           >
             <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
           </Pressable>
+
+          {/* Social Sign-In Divider */}
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.textMuted }]}>Or continue with</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          </View>
+
+          {/* Social Sign-In Buttons */}
+          <View style={styles.socialButtons}>
+            <GoogleSigninButton
+              style={styles.googleButton}
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Light}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
+            />
+            
+            <Pressable
+              style={[styles.linkedinButton, { borderColor: colors.border }]}
+              onPress={handleLinkedInSignIn}
+              disabled={loading}
+            >
+              <Ionicons name="logo-linkedin" size={20} color="#0077B5" />
+              <Text style={[styles.linkedinButtonText, { color: colors.textPrimary }]}>Continue with LinkedIn</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Footer */}
@@ -166,6 +214,40 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   forgotText: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    ...Typography.bodySm,
+    marginHorizontal: Spacing.md,
+  },
+  socialButtons: {
+    gap: Spacing.md,
+  },
+  googleButton: {
+    width: '100%',
+    height: 48,
+  },
+  linkedinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    gap: 8,
+  },
+  linkedinButtonText: {
     ...Typography.bodySm,
     fontWeight: '600',
   },

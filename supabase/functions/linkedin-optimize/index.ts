@@ -88,7 +88,17 @@ RULES:
   • DIFFERENTIATION: lead with the SPIKE differentiator and unique angle
   • IMPACT_METRIC: lead with the strongest quantified achievement
 - Provide a brief rationale explaining the strategy for each variant.
-- Return ONLY valid JSON. No prose outside JSON.`;
+- Return ONLY valid JSON matching this exact structure:
+{
+  "variants": [
+    {
+      "text": "The actual headline string",
+      "rationale": "Why this works",
+      "focus": "SEARCH_RANK | DIFFERENTIATION | IMPACT_METRIC"
+    }
+  ]
+}
+No prose outside JSON.`;
 
       const user = `Target Role(s): ${rolesStr}
 Tone: ${toneStr}

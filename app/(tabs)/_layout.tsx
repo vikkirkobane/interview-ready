@@ -6,7 +6,6 @@ import { Typography, Spacing, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNavigationStore } from '../../src/stores/navigation-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { SideMenu } from '../../src/components/ui/SideMenu';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
@@ -74,31 +73,13 @@ export default function TabLayout() {
   useEffect(() => { setIsMounted(true); }, []);
 
   const { openMenu } = useNavigationStore();
-  const { profile, loading: profileLoading, fetchProfile } = useProfileStore();
+  const { fetchProfile } = useProfileStore();
   const insets = useSafeAreaInsets();
 
   React.useEffect(() => {
     fetchProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  React.useEffect(() => {
-    const isCompleted = user?.user_metadata?.onboarding_completed;
-    const hasFirstName = !!(user?.user_metadata?.first_name || (profile as any)?.first_name);
-    const hasLastName = !!(user?.user_metadata?.last_name || (profile as any)?.last_name);
-    const hasCurrentRole = !!(profile as any)?.current_role;
-
-    if (!profileLoading && (!profile || !hasFirstName || !hasLastName || !hasCurrentRole) && !isCompleted) {
-      const { currentStep, referralCodeSkipped } = useOnboardingStore.getState();
-      // If user is past step 0 or has explicitly skipped referral, send to role
-      if (currentStep >= 1 || referralCodeSkipped) {
-        router.replace('/(onboarding)/role');
-      } else {
-        router.replace('/(onboarding)/referral-code');
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile, profileLoading, user]);
 
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 

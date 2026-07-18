@@ -7,75 +7,64 @@ const app = new Hono();
 
 app.use('/*', cors());
 
-app.get('/list', async (c: any) => {
+app.get('/*', async (c: any) => {
   try {
+    const url = new URL(c.req.url);
     const client = createAuthClient(c.req.raw);
     const { data: { user }, error: authError } = await client.auth.getUser();
 
     if (authError || !user) throw new UnauthorizedError('No active session');
 
-    // Handle optional filters and sorting from query params
-    const status = c.req.query('status');
-    const sortBy = c.req.query('sortBy') || 'updated_at';
-    const sortOrder = c.req.query('sortOrder') === 'asc' ? true : false;
+    if (url.pathname.endsWith('/stats')) {
+      const { data: applications, error: fetchError } = await client
+        .from('job_applications')
+        .select('status, id')
+        .eq('user_id', user.id);
 
-    let query = client
-      .from('job_applications')
-      .select('*')
-      .eq('user_id', user.id);
+      if (fetchError) throw new Error(fetchError.message);
 
-    if (status) {
-      query = query.eq('status', status);
-    }
+      const stats = applications.reduce((acc: Record<string, number>, app) => {
+        acc[app.status] = (acc[app.status] || 0) + 1;
+        return acc;
+      }, {});
 
-    const { data: applications, error: fetchError } = await query.order(sortBy, { ascending: sortOrder });
+      const total = applications.length;
 
-    if (fetchError) throw new Error(fetchError.message);
+      return c.json({ 
+        stats, 
+        total,
+        funnel: {
+          saved: stats['SAVED'] || 0,
+          applied: stats['APPLIED'] || 0,
+          interviews: stats['INTERVIEW'] || 0,
+          offers: stats['OFFER'] || 0,
+          rejected: stats['REJECTED'] || 0
+        }
+      }, 200);
+    } else {
+      const status = c.req.query('status');
+      const sortBy = c.req.query('sortBy') || 'updated_at';
+      const sortOrder = c.req.query('sortOrder') === 'asc' ? true : false;
 
-    return c.json({ applications }, 200);
-  } catch (error: any) {
-    if (error instanceof UnauthorizedError) return c.json({ error: error.message, code: error.code }, error.status);
-    console.error('Error in GET /applications/list:', error);
-    return c.json({ error: 'Failed to fetch applications', code: 'INTERNAL_ERROR' }, 500);
-  }
-});
+      let query = client
+        .from('job_applications')
+        .select('*')
+        .eq('user_id', user.id);
 
-app.get('/stats', async (c: any) => {
-  try {
-    const client = createAuthClient(c.req.raw);
-    const { data: { user }, error: authError } = await client.auth.getUser();
-
-    if (authError || !user) throw new UnauthorizedError('No active session');
-
-    const { data: applications, error: fetchError } = await client
-      .from('job_applications')
-      .select('status, id')
-      .eq('user_id', user.id);
-
-    if (fetchError) throw new Error(fetchError.message);
-
-    const stats = applications.reduce((acc: Record<string, number>, app) => {
-      acc[app.status] = (acc[app.status] || 0) + 1;
-      return acc;
-    }, {});
-
-    const total = applications.length;
-
-    return c.json({ 
-      stats, 
-      total,
-      funnel: {
-        saved: stats['SAVED'] || 0,
-        applied: stats['APPLIED'] || 0,
-        interviews: stats['INTERVIEW'] || 0,
-        offers: stats['OFFER'] || 0,
-        rejected: stats['REJECTED'] || 0
+      if (status) {
+        query = query.eq('status', status);
       }
-    }, 200);
+
+      const { data: applications, error: fetchError } = await query.order(sortBy, { ascending: sortOrder });
+
+      if (fetchError) throw new Error(fetchError.message);
+
+      return c.json({ applications }, 200);
+    }
   } catch (error: any) {
     if (error instanceof UnauthorizedError) return c.json({ error: error.message, code: error.code }, error.status);
-    console.error('Error in GET /applications/stats:', error);
-    return c.json({ error: 'Failed to fetch application stats', code: 'INTERNAL_ERROR' }, 500);
+    console.error('Error in GET /applications:', error);
+    return c.json({ error: 'Failed to fetch applications', code: 'INTERNAL_ERROR' }, 500);
   }
 });
 

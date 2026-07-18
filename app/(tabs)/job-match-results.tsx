@@ -42,7 +42,7 @@ export default function JobMatchResultsScreen() {
             try {
               await deleteMutation.mutateAsync(id as string);
               router.replace('/(tabs)/job-analyzer');
-            } catch (err) {
+            } catch {
               Toast.show({ type: 'error', text1: 'Delete Failed', text2: 'Failed to delete analysis.' });
             }
           }

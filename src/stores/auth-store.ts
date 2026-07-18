@@ -11,6 +11,7 @@ import { usePreviewStore } from '../store/previewStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
+import { signInWithGoogle, initializeGoogleSignIn, signOutFromGoogle } from '../lib/social-auth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -57,6 +58,8 @@ interface AuthState {
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithOAuth: (provider: 'google' | 'linkedin_oidc') => Promise<{ error: string | null }>;
+  signInWithGoogleIdToken: () => Promise<{ error: string | null }>;
+  signInWithLinkedInIdToken: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   setSession: (session: Session | null) => void;
 }
@@ -68,6 +71,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialized: false,
 
   initialize: async () => {
+    // Initialize Google Sign-In on app startup
+    initializeGoogleSignIn();
+
     // Tear down any previous listener (guards against hot-reload double-subscription)
     if (authSubscription) {
       authSubscription();
@@ -105,10 +111,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email, password, firstName = '', lastName = '') => {
     set({ loading: true });
-    const redirectTo = makeRedirectUri({
-      scheme: 'interviewready',
-      path: 'auth/callback',
-    });
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -118,7 +120,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           first_name: firstName,
           last_name: lastName,
         },
-        emailRedirectTo: redirectTo,
       },
     });
     set({ loading: false });
@@ -202,12 +203,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signOut: async () => {
     set({ loading: true });
     
+    // Sign out from Google if signed in
+    await signOutFromGoogle();
+    
     // Eagerly clear all user state before the Supabase network call
     // so the UI transitions immediately and data is never visible again
     await clearAllUserState();
     
     await supabase.auth.signOut();
     set({ session: null, user: null, loading: false });
+  },
+
+  signInWithGoogleIdToken: async () => {
+    set({ loading: true });
+    const { error } = await signInWithGoogle();
+    set({ loading: false });
+    return { error };
+  },
+
+  signInWithLinkedInIdToken: async () => {
+    set({ loading: true });
+    // We use the built-in Supabase OAuth flow instead of manual ID token fetch.
+    // This allows the _layout.tsx deep link handler to properly intercept
+    // the Supabase PKCE code on Android.
+    const { error } = await get().signInWithOAuth('linkedin_oidc');
+    set({ loading: false });
+    return { error };
   },
 
   setSession: (session) => {

@@ -45,7 +45,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-9822168149949485~6162462516"
+          "androidAppId": "ca-app-pub-9822168149949485~6162462516",
+          "iosAppId": "ca-app-pub-9822168149949485~6162462516"
         }
       ],
       [
@@ -59,7 +60,13 @@
         }
       ],
       "./withAndroidAllowBackup.js",
-      "expo-image"
+      "expo-image",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.49693766561-n1jemm7amnfkb49rosof5qg7ffgbb5go"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

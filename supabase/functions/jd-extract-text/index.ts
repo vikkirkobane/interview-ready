@@ -96,34 +96,42 @@ app.post('/*', async (c: any) => {
       throw new UnauthorizedError('No active session');
     }
 
-    // Read the uploaded file
-    const formData = await c.req.formData();
-    const file = formData.get('file') as File | null;
+    // Read the uploaded file using raw request parsing
+    const contentType = c.req.header('content-type') || '';
+    const boundaryMatch = contentType.match(/boundary=(.*)/);
+    if (!boundaryMatch) {
+      throw new Error('Invalid request: missing multipart boundary');
+    }
+    const boundary = boundaryMatch[1];
 
-    if (!file) {
+    // Read the raw body
+    const rawBody = new Uint8Array(await c.req.arrayBuffer());
+    const formParts = parseMultipart(rawBody, boundary);
+    const filePart = formParts.find(p => p.name === 'file');
+    if (!filePart) {
       throw new Error('No file uploaded. Please select a PDF or image file.');
     }
 
     // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    const isImage = file.type.startsWith('image/') ||
-      file.name.toLowerCase().endsWith('.png') ||
-      file.name.toLowerCase().endsWith('.jpg') ||
-      file.name.toLowerCase().endsWith('.jpeg');
+    const filename = filePart.filename || 'file';
+    const fileType = filePart.contentType || 'application/octet-stream';
+    const isPdf = fileType === 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
+    const isImage = fileType.startsWith('image/') ||
+      filename.toLowerCase().endsWith('.png') ||
+      filename.toLowerCase().endsWith('.jpg') ||
+      filename.toLowerCase().endsWith('.jpeg');
 
     if (!isPdf && !isImage) {
       throw new Error('Unsupported file type. Please upload a PDF, PNG, or JPEG image.');
     }
 
     // Validate file size (1MB limit)
-    if (file.size > 1 * 1024 * 1024) {
+    if (filePart.data.length > 1 * 1024 * 1024) {
       throw new Error('File exceeds the 1MB size limit. Please compress your file and try again.');
     }
 
     // Extract text based on file type
-    const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
+    const bytes = filePart.data;
     let extractedText = '';
 
     if (isPdf) {
@@ -142,7 +150,7 @@ app.post('/*', async (c: any) => {
       }
 
       // Normalize MIME type — some devices report 'image/jpg' which is non-standard
-      const normalizedMime = file.type === 'image/jpg' ? 'image/jpeg' : file.type;
+      const normalizedMime = fileType === 'image/jpg' ? 'image/jpeg' : fileType;
 
       extractedText = await extractTextWithOcrSpace(bytes, normalizedMime, ocrSpaceApiKey);
     }
@@ -163,5 +171,86 @@ app.post('/*', async (c: any) => {
     return c.json({ error: error.message || 'An unexpected error occurred. Please try again.' }, 400);
   }
 });
+
+// Helper to parse multipart form data manually
+function parseMultipart(body: Uint8Array, boundary: string): { name: string; filename?: string; contentType?: string; data: Uint8Array }[] {
+  const result: any[] = [];
+  const boundaryBytes = new TextEncoder().encode(`--${boundary}`);
+  const bodyLen = body.length;
+
+  let pos = 0;
+  while (pos < bodyLen) {
+    pos = findSubarray(body, boundaryBytes, pos);
+    if (pos === -1) break;
+    pos += boundaryBytes.length;
+
+    // Check for end of multipart
+    if (pos + 2 < bodyLen && body[pos] === 0x2d && body[pos + 1] === 0x2d) break;
+
+    // Skip \r\n
+    if (pos + 1 < bodyLen && body[pos] === 0x0d && body[pos + 1] === 0x0a) pos += 2;
+
+    // Read headers
+    const headersEnd = findSubarray(body, new Uint8Array([0x0d, 0x0a, 0x0d, 0x0a]), pos);
+    if (headersEnd === -1) break;
+    const headersBytes = body.subarray(pos, headersEnd);
+    const headersText = new TextDecoder().decode(headersBytes);
+    pos = headersEnd + 4;
+
+    // Parse headers
+    let name = '';
+    let filename: string | undefined;
+    let contentType: string | undefined;
+    const headerLines = headersText.split(/\r?\n/);
+    for (const line of headerLines) {
+      const [key, value] = line.split(':').map(s => s.trim());
+      if (!key || !value) continue;
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === 'content-disposition') {
+        const nameMatch = value.match(/name="([^"]+)"/);
+        if (nameMatch) name = nameMatch[1];
+        const filenameMatch = value.match(/filename="([^"]+)"/);
+        if (filenameMatch) filename = filenameMatch[1];
+      } else if (lowerKey === 'content-type') {
+        contentType = value;
+      }
+    }
+
+    // Find next boundary for data end
+    const nextBoundary = findSubarray(body, boundaryBytes, pos);
+    if (nextBoundary === -1) break;
+
+    // Subtract \r\n before boundary
+    let dataEnd = nextBoundary;
+    if (dataEnd - 2 >= pos && body[dataEnd - 2] === 0x0d && body[dataEnd - 1] === 0x0a) {
+      dataEnd -= 2;
+    }
+
+    const data = body.subarray(pos, dataEnd);
+    if (name) {
+      result.push({ name, filename, contentType, data });
+    }
+
+    pos = nextBoundary;
+  }
+  return result;
+}
+
+function findSubarray(haystack: Uint8Array, needle: Uint8Array, start: number): number {
+  const haystackLen = haystack.length;
+  const needleLen = needle.length;
+  if (needleLen === 0 || start + needleLen > haystackLen) return -1;
+  for (let i = start; i <= haystackLen - needleLen; i++) {
+    let match = true;
+    for (let j = 0; j < needleLen; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return i;
+  }
+  return -1;
+}
 
 Deno.serve(app.fetch);

@@ -13,12 +13,13 @@ import { Typography, Spacing, useTheme } from '../../src/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 export default function SignupScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signUp, loading } = useAuthStore();
+  const { signUp, loading, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +57,28 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
-      router.replace('/(onboarding)/role');
+      router.replace('/(tabs)');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    const { error: authError } = await signInWithGoogleIdToken();
+    if (authError) {
+      setError(authError);
+    } else {
+      // For social auth, the onboarding status check handles routing, but we can default to tabs
+      router.replace('/(tabs)');
+    }
+  };
+
+  const handleLinkedInSignIn = async () => {
+    setError('');
+    const { error: authError } = await signInWithLinkedInIdToken();
+    if (authError) {
+      setError(authError);
+    } else {
+      router.replace('/(tabs)');
     }
   };
 
@@ -133,6 +155,33 @@ export default function SignupScreen() {
             loading={loading}
             fullWidth
           />
+
+          {/* Social Sign-In Divider */}
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            <Text style={[styles.dividerText, { color: colors.textMuted }]}>Or continue with</Text>
+            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          </View>
+
+          {/* Social Sign-In Buttons */}
+          <View style={styles.socialButtons}>
+            <GoogleSigninButton
+              style={styles.googleButton}
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Light}
+              onPress={handleGoogleSignIn}
+              disabled={loading}
+            />
+            
+            <Pressable
+              style={[styles.linkedinButton, { borderColor: colors.border }]}
+              onPress={handleLinkedInSignIn}
+              disabled={loading}
+            >
+              <Ionicons name="logo-linkedin" size={20} color="#0077B5" />
+              <Text style={[styles.linkedinButtonText, { color: colors.textPrimary }]}>Continue with LinkedIn</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
@@ -188,6 +237,40 @@ const styles = StyleSheet.create({
   error: {
     ...Typography.bodySm,
     marginBottom: Spacing.sm,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    ...Typography.bodySm,
+    marginHorizontal: Spacing.md,
+  },
+  socialButtons: {
+    gap: Spacing.md,
+  },
+  googleButton: {
+    width: '100%',
+    height: 48,
+  },
+  linkedinButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 8,
+    gap: 8,
+  },
+  linkedinButtonText: {
+    ...Typography.bodySm,
+    fontWeight: '600',
   },
   footer: {
     marginTop: 'auto',

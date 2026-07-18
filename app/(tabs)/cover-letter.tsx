@@ -49,7 +49,7 @@ export default function CoverLetterGeneratorScreen() {
   const { data: pastCoverLetter } = useCoverLetterQuery(id as string);
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
-  const { interstitialActionCount, incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
 
   React.useEffect(() => {
@@ -59,7 +59,6 @@ export default function CoverLetterGeneratorScreen() {
         const titleParts = pastCoverLetter.title.split(' - ');
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (titleParts[0]) setTargetCompany(titleParts[0]);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (titleParts[1]) setTargetRole(titleParts[1].replace(/\s*Cover Letter\s*$/i, ''));
       }
 

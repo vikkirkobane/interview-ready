@@ -125,8 +125,8 @@ If spike data is provided, identify the candidate's unique differentiator and cr
 ### OUTPUT RULES
 - overall_score: weighted average (headline 25%, about 30%, experience 30%, skills 15%)
 - estimated_score_after_optimization: realistic projection if all suggestions are implemented
-- issues: concrete, specific problems (not generic advice)
-- suggestions: 1 actionable one-liner per section for the "quick wins" panel
+- issues: an object with keys 'headline', 'about', 'experience', and 'skills', each containing an array of specific problems
+- suggestions: an object with keys 'headline', 'about', and 'experience_bullets', containing 1 actionable one-liner for the "quick wins" panel
 - Return ONLY valid JSON matching the schema. No prose outside JSON.`;
 
     // ── User Prompt — inject all profile content ────────────────────────────

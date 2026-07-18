@@ -59,13 +59,16 @@ app.post('/*', async (c: any) => {
   }
 });
 
-app.put('/:id', async (c: any) => {
+app.put('/*', async (c: any) => {
   try {
     const client = createAuthClient(c.req.raw);
     const { data: { user }, error: authError } = await client.auth.getUser();
     if (authError || !user) throw new UnauthorizedError('No active session');
 
-    const appId = c.req.param('id');
+    const url = new URL(c.req.url);
+    const parts = url.pathname.split('/');
+    const appId = parts[parts.length - 1];
+
     const body = await c.req.json();
     const input = ApplicationSchema.partial().parse(body);
 
@@ -98,13 +101,15 @@ app.put('/:id', async (c: any) => {
   }
 });
 
-app.delete('/:id', async (c: any) => {
+app.delete('/*', async (c: any) => {
   try {
     const client = createAuthClient(c.req.raw);
     const { data: { user }, error: authError } = await client.auth.getUser();
     if (authError || !user) throw new UnauthorizedError('No active session');
 
-    const appId = c.req.param('id');
+    const url = new URL(c.req.url);
+    const parts = url.pathname.split('/');
+    const appId = parts[parts.length - 1];
 
     const { error: deleteError } = await client
       .from('job_applications')

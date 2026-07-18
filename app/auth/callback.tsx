@@ -63,7 +63,6 @@ export default function AuthCallbackScreen() {
     }, 3000);
 
     return () => clearTimeout(safetyTimer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Final fallback: if we never get a session after 20s, send back to welcome.
