@@ -86,7 +86,7 @@ const applySchema = z.object({
   referralCode: z.string().min(1).max(20),
 });
 
-app.post('/', async (c) => {
+app.post('/*', async (c) => {
   try {
     const client = createAuthClient(c.req.raw);
     const { data: { user }, error: authError } = await client.auth.getUser();

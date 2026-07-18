@@ -11,7 +11,7 @@ const app = new Hono();
 
 app.use('/*', cors());
 
-app.post('/', async (c) => {
+app.post('/*', async (c) => {
   try {
     const client = createAuthClient(c.req.raw);
     const { data: { user }, error: authError } = await client.auth.getUser();
