@@ -298,7 +298,7 @@ export const useStartInterviewMutation = () => {
 export const useInterviewMessageMutation = () => {
   return useMutation({
     mutationFn: async (payload: { session_id: string; content: string }) => {
-      const response = await apiCall(`interviews-message/${payload.session_id}/message`, 'POST', { content: payload.content });
+      const response = await apiCall(`interviews-message`, 'POST', { interview_id: payload.session_id, content: payload.content });
       if (response.error) throw new Error(response.error);
       return response.data; // { message, question_count, status }
     },
@@ -308,7 +308,7 @@ export const useInterviewMessageMutation = () => {
 export const useInterviewFeedbackMutation = () => {
   return useMutation({
     mutationFn: async (payload: { session_id: string }) => {
-      const response = await apiCall(`interviews-feedback/${payload.session_id}/feedback`, 'POST', {});
+      const response = await apiCall(`interviews-feedback?interview_id=${payload.session_id}`, 'POST', {});
       if (response.error) throw new Error(response.error);
       return response.data; // { feedback, message }
     },

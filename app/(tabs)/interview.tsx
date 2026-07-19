@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator, Alert } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator, Alert, Keyboard } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
@@ -134,7 +134,24 @@ export default function InterviewScreen() {
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
   const [extractJdLoading, setExtractJdLoading] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    return () => {
+      keyboardDidHideListener.remove();
+      keyboardDidShowListener.remove();
+    };
+  }, []);
 
   const startMutation = useStartInterviewMutation();
   const messageMutation = useInterviewMessageMutation();
@@ -274,10 +291,13 @@ export default function InterviewScreen() {
     }
   };
 
-
-
   return (
-    <KeyboardAvoidingView style={[styles.flex, { backgroundColor: colors.bgPrimary }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={90}>
+    <View style={[styles.flex, { backgroundColor: colors.bgPrimary }]}>
+      <KeyboardAvoidingView 
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
       {/* Background Auras */}
       <View style={[styles.auraTopLeft, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
       <View style={[styles.auraBottomRight, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
@@ -366,10 +386,16 @@ export default function InterviewScreen() {
 
         {isTyping && <TypingIndicator colors={colors} />}
         </ScrollView>
-        <View style={{ height: bottomNavPadding }} />
 
       {/* Bottom Input Area */}
-      <View style={[styles.inputArea, { backgroundColor: colors.bgPrimary, borderTopColor: colors.border }]}>
+      <View style={[
+        styles.inputArea, 
+        { 
+          backgroundColor: colors.bgPrimary, 
+          borderTopColor: colors.border,
+          paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
+        }
+      ]}>
         <View style={[styles.inputContainer, { flexDirection: 'column', alignItems: 'stretch', gap: Spacing.xs }]}>
           <View style={styles.inputWrapper}>
             <TextInput
@@ -416,7 +442,12 @@ export default function InterviewScreen() {
         <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>
       </View>
 
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+
+      {!keyboardVisible && (
+        <View style={{ height: bottomNavPadding }} />
+      )}
+    </View>
   );
 }
 
@@ -588,7 +619,6 @@ const styles = StyleSheet.create({
   inputArea: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: Platform.OS === 'ios' ? 120 : 100,
     borderTopWidth: 1,
   },
   inputContainer: {

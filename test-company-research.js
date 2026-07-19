@@ -1,58 +1,95 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-const email = 'victorchoogo37@gmail.com';
+const envFile = fs.readFileSync('.env', 'utf8');
+const env = {};
+envFile.split('\n').forEach(line => {
+  const [key, ...values] = line.split('=');
+  if (key && values.length > 0) {
+    env[key.trim()] = values.join('=').trim();
+  }
+});
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing env variables');
-  process.exit(1);
-}
+const supabaseUrl = env['EXPO_PUBLIC_SUPABASE_URL'];
+const supabaseAnonKey = env['EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+const supabaseServiceKey = env['SUPABASE_SERVICE_ROLE_KEY'];
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-async function runTests() {
-  console.log(`Authenticating as ${email}...`);
-  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password: 'password123'
+async function runCompanyResearchTest() {
+  console.log('--- Setting up Test User ---');
+  const testEmail = `companytest_${Date.now()}@example.com`;
+  
+  const { data: adminData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    email: testEmail,
+    password: 'TestPassword123!',
+    email_confirm: true
+  });
+  
+  if (createError) {
+    console.error('Failed to create test user:', createError);
+    return;
+  }
+  
+  const userId = adminData.user.id;
+
+  // Sign in
+  const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+    email: testEmail,
+    password: 'TestPassword123!',
   });
 
   if (signInError) {
-    console.error('Auth error:', signInError.message);
-    process.exit(1);
+    console.error('Failed to sign in:', signInError);
+    await supabaseAdmin.auth.admin.deleteUser(userId);
+    return;
   }
-
-  const token = signInData.session.access_token;
-  const client = createClient(supabaseUrl, supabaseKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } }
-  });
-
-  const { data: profile } = await client.from('user_profiles').select('ai_credits, credit_balance').single();
-  console.log('Initial Credits:', profile);
-
-  console.log('\n--- Testing company-research ---');
-  const crRes = await fetch(`${supabaseUrl}/functions/v1/company-research`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      company_url: 'https://openai.com'
-    })
-  });
   
-  console.log('company-research Status:', crRes.status);
-  const crData = await crRes.json();
-  if (!crRes.ok) {
-    console.error('Error:', crData);
-  } else {
-    console.log('Company Name:', crData.data.company_name);
-    console.log('Verdict:', crData.data.summary_verdict);
-    const { data: profileAfter } = await client.from('user_profiles').select('ai_credits').single();
-    console.log(`Credits after company-research (-2 expected): ${profileAfter.ai_credits} (Was ${profile.ai_credits})`);
+  const token = authData.session.access_token;
+  console.log('✅ Authorized as Test User!');
+
+  // Give credits to the user
+  await supabaseAdmin.from('users').update({ ai_credits: 50 }).eq('id', userId);
+
+  try {
+    console.log('\n--- 1. Testing Company Research ---');
+    const payload = {
+      company_url: 'https://vercel.com',
+      context: 'Frontend Developer role'
+    };
+
+    const res = await fetch(`${supabaseUrl}/functions/v1/company-research`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      console.error('❌ company-research Failed!');
+      const errorText = await res.text();
+      throw new Error(`company-research failed: ${errorText}`);
+    }
+
+    const responseData = await res.json();
+    console.log('✅ company-research Successful!');
+    console.log('\n--- RAW RESEARCH DATA ---');
+    console.log(JSON.stringify(responseData, null, 2));
+
+  } catch (error) {
+    console.error('\nTest Failed with Error:', error);
+  } finally {
+    console.log('\n--- Cleaning up Test User ---');
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (deleteError) {
+      console.error('Failed to delete test user:', deleteError);
+    } else {
+      console.log('✅ Test user deleted successfully!');
+    }
   }
 }
 
-runTests().catch(console.error);
+runCompanyResearchTest();

@@ -1,48 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-dotenv.config();
+const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Missing Supabase URL or Anon Key');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('Missing Supabase URL or Service Role Key');
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 async function testRecentActivities() {
-  console.log("Fetching recent activities for the test user...");
+  console.log("Fetching recent activities globally using service role key...");
   
-  const testEmail = 'testuser_' + Date.now() + '@example.com';
-  const testPassword = 'testpassword123';
-
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: testEmail,
-    password: testPassword,
-  });
-
-  if (authError) {
-    console.error('Auth error:', authError);
-    return;
-  }
-
-  const userId = authData.user.id;
-  console.log('Test user created:', userId);
-
-  // Seed some data
-  console.log("Seeding test data...");
-  await Promise.all([
-    supabase.from('resumes').insert({ user_id: userId, title: 'Test Resume' }),
-    supabase.from('job_applications').insert({ user_id: userId, job_title: 'Software Engineer', company: 'Google' }),
-    supabase.from('mock_interviews').insert({ user_id: userId, role: 'Frontend Developer' }),
-    supabase.from('company_research').insert({ user_id: userId, company_name: 'Apple' }),
-    supabase.from('linkedin_tasks').insert({ user_id: userId, task_type: 'analyze', status: 'completed' })
-  ]);
-
   // Fetch exactly like the hook
   const [
     { data: resumes },
@@ -69,17 +39,10 @@ async function testRecentActivities() {
   if (research) research.forEach(r => activities.push({ type: 'company_research', title: `Company Research: ${r.company_name}`, date: r.updated_at }));
   if (linkedin) linkedin.forEach(l => activities.push({ type: 'linkedin', title: l.title || 'LinkedIn Task', date: l.updated_at }));
 
-  const sorted = activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
+  const sorted = activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
   
-  console.log("Recent Activities Result:");
+  console.log("Recent Activities Global Database Check:");
   console.log(JSON.stringify(sorted, null, 2));
-
-  // Cleanup
-  console.log("Cleaning up test user...");
-  try {
-    await adminClient.auth.admin.deleteUser(userId);
-  } catch(e) {}
-  console.log("Test finished.");
 }
 
 testRecentActivities();

@@ -279,35 +279,7 @@ export default function ProfileScreen() {
     });
   };
 
-      Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
-      
-      const extractedData = await parseResume.mutateAsync(payload);
-      
-      // Update the user profile completely
-      await updateProfile({
-        current_role: extractedData.current_role || (profile as any)?.current_role || '',
-        summary: extractedData.summary || profile?.summary || '',
-        technical_skills: extractedData.technical_skills && extractedData.technical_skills.length > 0 ? extractedData.technical_skills : (profile as any)?.technical_skills,
-        soft_skills: extractedData.soft_skills && extractedData.soft_skills.length > 0 ? extractedData.soft_skills : (profile as any)?.soft_skills,
-        work_history: extractedData.work_history && extractedData.work_history.length > 0 ? extractedData.work_history : (profile as any)?.work_history,
-        education: extractedData.education && extractedData.education.length > 0 ? extractedData.education : (profile as any)?.education,
-      } as any);
 
-      Toast.show({ type: 'success', text1: 'Resume Uploaded', text2: 'Your profile has been fully populated from the resume.' });
-    } catch (error: any) {
-      if (error.message?.includes('PROMPT_INJECTION')) {
-        Toast.show({
-          type: 'error',
-          text1: 'Security Violation',
-          text2: 'Injection attempt detected. You have been logged out.',
-        });
-        useAuthStore.getState().signOut();
-        router.replace('/(auth)/login');
-      } else {
-        Toast.show({ type: 'error', text1: 'Upload Failed', text2: error.message || 'Please check your file and try again.' });
-      }
-    }
-  };
 
   const openEduModal = (index: number | null) => {
     if (index !== null && index >= 0) {

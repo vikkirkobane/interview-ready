@@ -1,93 +1,142 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const envFile = fs.readFileSync('.env', 'utf8');
+const env = {};
+envFile.split('\n').forEach(line => {
+  const [key, ...values] = line.split('=');
+  if (key && values.length > 0) {
+    env[key.trim()] = values.join('=').trim();
+  }
+});
 
-const user1Email = 'victorchoogo37@gmail.com';
-const user2Email = 'testdirect1@example.com';
-const password = 'password123';
+const supabaseUrl = env['EXPO_PUBLIC_SUPABASE_URL'];
+const supabaseAnonKey = env['EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+const supabaseServiceKey = env['SUPABASE_SERVICE_ROLE_KEY'];
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing env variables');
-  process.exit(1);
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-async function runTests() {
-  console.log(`Authenticating as User 1 (${user1Email})...`);
-  const { data: u1Data, error: u1Error } = await supabase.auth.signInWithPassword({
-    email: user1Email,
-    password
-  });
-  if (u1Error) throw u1Error;
-  const u1Token = u1Data.session.access_token;
-
-  console.log('\n--- 1. Testing referral-stats (User 1) ---');
-  const statsRes1 = await fetch(`${supabaseUrl}/functions/v1/referral-stats`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${u1Token}`
-    }
-  });
-
-  const statsText1 = await statsRes1.text();
-  if (!statsRes1.ok) {
-    console.error('Error fetching stats:', statsRes1.status, statsText1);
-    process.exit(1);
-  }
-  const statsData1 = JSON.parse(statsText1);
+async function runReferralTests() {
+  console.log('--- Setting up Referrer (User A) ---');
+  const userAEmail = `referrer_${Date.now()}@example.com`;
   
-  const referralCode = statsData1.data?.referral_code;
-  console.log('User 1 Stats:', statsData1);
-  console.log(`User 1 Referral Code: ${referralCode}`);
+  const { data: adminDataA, error: createErrorA } = await supabaseAdmin.auth.admin.createUser({
+    email: userAEmail,
+    password: 'TestPassword123!',
+    email_confirm: true
+  });
+  
+  if (createErrorA) {
+    console.error('Failed to create User A:', createErrorA);
+    return;
+  }
+  const userAId = adminDataA.user.id;
+  
+  // Wait a moment for trigger to run and generate referral code
+  await sleep(1000);
 
-  if (!referralCode) {
-    console.error('No referral code generated for User 1!');
-    process.exit(1);
+  // Fetch User A's referral code from the DB
+  const { data: userADbData, error: dbErrorA } = await supabaseAdmin
+    .from('users')
+    .select('referral_code, ai_credits')
+    .eq('id', userAId)
+    .single();
+
+  if (dbErrorA || !userADbData?.referral_code) {
+    console.error('Failed to fetch User A referral code:', dbErrorA || 'No code generated');
+    await supabaseAdmin.auth.admin.deleteUser(userAId);
+    return;
   }
 
-  console.log(`\nAuthenticating as User 2 (${user2Email})...`);
-  const { data: u2Data, error: u2Error } = await supabase.auth.signInWithPassword({
-    email: user2Email,
-    password
-  });
-  if (u2Error) throw u2Error;
-  const u2Token = u2Data.session.access_token;
+  const referralCode = userADbData.referral_code;
+  const initialCreditsA = userADbData.ai_credits || 0;
+  console.log(`✅ User A Created. Referral Code: ${referralCode}`);
+  console.log(`✅ User A Initial Credits: ${initialCreditsA}`);
 
-  console.log(`\n--- 2. Testing referral-apply (User 2 applies User 1's code) ---`);
-  const applyRes = await fetch(`${supabaseUrl}/functions/v1/referral-apply`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${u2Token}`
-    },
-    body: JSON.stringify({
-      referralCode: referralCode
-    })
+  console.log('\n--- Setting up Referred User (User B) ---');
+  const userBEmail = `referred_${Date.now()}@example.com`;
+  
+  const { data: adminDataB, error: createErrorB } = await supabaseAdmin.auth.admin.createUser({
+    email: userBEmail,
+    password: 'TestPassword123!',
+    email_confirm: true
   });
-
-  const applyText = await applyRes.text();
-  console.log(`referral-apply Status: ${applyRes.status}`);
-  if (!applyRes.ok) {
-    console.log('Apply Error:', applyText);
-  } else {
-    const applyData = JSON.parse(applyText);
-    console.log('Apply Result:', applyData);
+  
+  if (createErrorB) {
+    console.error('Failed to create User B:', createErrorB);
+    await supabaseAdmin.auth.admin.deleteUser(userAId);
+    return;
   }
+  const userBId = adminDataB.user.id;
 
-  console.log('\n--- 3. Testing referral-stats (User 1 after referral) ---');
-  const statsRes2 = await fetch(`${supabaseUrl}/functions/v1/referral-stats`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${u1Token}`
+  // Wait for trigger
+  await sleep(1000);
+
+  // Fetch User B initial credits
+  const { data: userBDbData } = await supabaseAdmin
+    .from('users')
+    .select('ai_credits')
+    .eq('id', userBId)
+    .single();
+  const initialCreditsB = userBDbData?.ai_credits || 0;
+  console.log(`✅ User B Created. Initial Credits: ${initialCreditsB}`);
+
+  // Sign in as User B
+  const { data: authDataB, error: signInErrorB } = await supabase.auth.signInWithPassword({
+    email: userBEmail,
+    password: 'TestPassword123!',
+  });
+
+  const tokenB = authDataB.session.access_token;
+  console.log('✅ Authorized as User B!');
+
+  console.log(`\n--- User B is Applying Referral Code: ${referralCode} ---`);
+  
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/referral-apply`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${tokenB}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ referralCode }),
+    });
+
+    if (!response.ok) {
+      console.error('❌ referral-apply Failed with status:', response.status);
+      console.error('Error Details:', await response.text());
+    } else {
+      console.log('✅ referral-apply Successful!');
+      const data = await response.json();
+      console.log('Output:', data);
+
+      // Verify User A and User B received credits!
+      console.log('\n--- Verifying Payouts ---');
+      const { data: finalUserA } = await supabaseAdmin.from('users').select('ai_credits').eq('id', userAId).single();
+      const { data: finalUserB } = await supabaseAdmin.from('users').select('ai_credits').eq('id', userBId).single();
+
+      console.log(`User A (Referrer) Final Credits: ${finalUserA.ai_credits} (Expected: ${initialCreditsA + 10})`);
+      console.log(`User B (Referred) Final Credits: ${finalUserB.ai_credits} (Expected: ${initialCreditsB + 10})`);
+
+      if (finalUserA.ai_credits === initialCreditsA + 10 && finalUserB.ai_credits === initialCreditsB + 10) {
+        console.log('🏆 END-TO-END REFERRAL SYSTEM PASSED PERFECTLY!');
+      } else {
+        console.error('❌ CREDIT MISMATCH DETECTED!');
+      }
     }
-  });
-
-  const statsData2 = await statsRes2.json();
-  console.log('User 1 Stats (After):', statsData2);
+  } catch (err) {
+    console.error('❌ Network Error:', err);
+  } finally {
+    console.log('\n--- Cleaning up Test Users ---');
+    await supabaseAdmin.auth.admin.deleteUser(userAId);
+    await supabaseAdmin.auth.admin.deleteUser(userBId);
+    console.log('✅ Test users deleted successfully!');
+  }
 }
 
-runTests().catch(console.error);
+runReferralTests();

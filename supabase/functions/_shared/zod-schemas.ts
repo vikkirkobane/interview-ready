@@ -255,37 +255,31 @@ export type CoverLetter = z.infer<typeof COVER_LETTER_SCHEMA>;
 // ─── INTERVIEW FEEDBACK ──────────────────────────────────────────────────
 
 export const INTERVIEW_SCORE_SCHEMA = z.object({
-  interview_id: z.string().optional().default(''),
-  overall_score: z.number().min(0).max(100).optional().default(50),
+  interview_id: z.string(),
+  overall_score: z.number().min(0).max(100),
   
   dimension_scores: z.object({
-    communication: z.number().min(0).max(100).optional().default(50),
-    technical_knowledge: z.number().min(0).max(100).optional().default(50),
-    problem_solving: z.number().min(0).max(100).optional().default(50),
-    confidence: z.number().min(0).max(100).optional().default(50),
-    cultural_fit: z.number().min(0).max(100).optional().default(50),
-  }).optional().default({
-    communication: 50,
-    technical_knowledge: 50,
-    problem_solving: 50,
-    confidence: 50,
-    cultural_fit: 50,
+    communication: z.number().min(0).max(100),
+    technical_knowledge: z.number().min(0).max(100),
+    problem_solving: z.number().min(0).max(100),
+    confidence: z.number().min(0).max(100),
+    cultural_fit: z.number().min(0).max(100),
   }),
   
-  recommendation: z.enum(['STRONG_HIRE', 'HIRE', 'MAYBE', 'NO_HIRE', 'STRONG_NO_HIRE']).optional().default('MAYBE'),
+  recommendation: z.enum(['STRONG_HIRE', 'HIRE', 'MAYBE', 'NO_HIRE', 'STRONG_NO_HIRE']),
   
-  strengths: z.array(z.string().min(0)).min(0).max(10).optional().default([]),
-  areas_for_improvement: z.array(z.string().min(0)).min(0).max(10).optional().default([]),
+  strengths: z.array(z.string()),
+  areas_for_improvement: z.array(z.string()),
   
   question_feedback: z.array(z.object({
-    question: z.string().optional().default(''),
-    answer: z.string().optional().default(''),
-    score: z.number().min(0).max(100).optional().default(50),
-    feedback: z.string().optional().default(''),
-  })).optional().default([]),
+    question: z.string(),
+    answer: z.string(),
+    score: z.number().min(0).max(100),
+    feedback: z.string(),
+  })),
   
-  interview_summary: z.string().min(0).optional().default(''),
-  suggested_follow_up: z.array(z.string()).optional().default([]),
+  interview_summary: z.string(),
+  suggested_follow_up: z.array(z.string()),
 });
 
 export type InterviewScore = z.infer<typeof INTERVIEW_SCORE_SCHEMA>;
@@ -540,17 +534,17 @@ export type JDSummary = z.infer<typeof JD_SUMMARY_SCHEMA>;
 // ─── ROADMAP GENERATION ──────────────────────────────────────────────────
 
 export const ROADMAP_SCHEMA = z.object({
-  duration_days: z.number().min(1).max(30).optional().default(7),
-  title: z.string().min(0).optional().default(''),
-  overview: z.string().min(0).optional().default(''),
+  duration_days: z.number().min(1).max(30),
+  title: z.string().min(0),
+  overview: z.string().min(0),
   modules: z.array(z.object({
-    module_title: z.string().optional().default(''),
-    days_allocated: z.string().optional().default(''), // e.g., "Days 1-3"
-    focus_skill: z.string().optional().default(''),
-    action_items: z.array(z.string()).min(0).optional().default([]),
-    estimated_hours: z.number().min(0).optional().default(1),
-    resources_to_use: z.array(z.string()).optional().default([]),
-  })).min(0).max(20).optional().default([]),
+    module_title: z.string(),
+    days_allocated: z.string(),
+    focus_skill: z.string(),
+    action_items: z.array(z.string()).min(0),
+    estimated_hours: z.number().min(0),
+    resources_to_use: z.array(z.string()),
+  })).min(0).max(20),
 });
 
 export type Roadmap = z.infer<typeof ROADMAP_SCHEMA>;

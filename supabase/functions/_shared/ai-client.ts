@@ -39,7 +39,7 @@ const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
 const OPENROUTER_MODELS = [
   'meta-llama/llama-3.3-70b-instruct:free',
   'nvidia/nemotron-3-super-120b-a12b:free',
-  'google/gemini-2.0-flash-lite-preview-02-05:free',
+  'google/gemini-2.0-pro-exp-02-05:free',
 ];
 
 export class AIClient {
@@ -71,22 +71,12 @@ export class AIClient {
 
     try {
       if (model === 'openrouter') {
-        try {
-          return await this.callOpenRouter(messages, schema, temperature, max_tokens);
-        } catch (orError: any) {
-          console.warn('OpenRouter API failed, falling back to Qwen:', orError.message);
-          return await this.callQwen(messages, schema, temperature, max_tokens);
-        }
+        return await this.callOpenRouter(messages, schema, temperature, max_tokens);
       } else {
-        try {
-          return await this.callQwen(messages, schema, temperature, max_tokens);
-        } catch (qwenError: any) {
-          console.warn('Qwen API failed, falling back to OpenRouter:', qwenError);
-          return await this.callOpenRouter(messages, schema, temperature, max_tokens);
-        }
+        return await this.callQwen(messages, schema, temperature, max_tokens);
       }
     } catch (error: any) {
-      console.error(`All AI providers failed:`, error);
+      console.error(`AI provider failed:`, error);
       throw error;
     }
   }
@@ -143,6 +133,7 @@ export class AIClient {
       }
 
       try {
+        console.log("QWEN RAW PARSED:", JSON.stringify(parsed, null, 2));
         return schema.parse(parsed);
       } catch (err: any) {
         // If Zod fails and parsed has a single root key, try unwrapping it

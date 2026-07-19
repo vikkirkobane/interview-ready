@@ -123,11 +123,22 @@ Score each provided section strictly against:
 If spike data is provided, identify the candidate's unique differentiator and craft a 1-sentence unique value proposition that could anchor their headline and About section.
 
 ### OUTPUT RULES
-- overall_score: weighted average (headline 25%, about 30%, experience 30%, skills 15%)
-- estimated_score_after_optimization: realistic projection if all suggestions are implemented
-- issues: an object with keys 'headline', 'about', 'experience', and 'skills', each containing an array of specific problems
-- suggestions: an object with keys 'headline', 'about', and 'experience_bullets', containing 1 actionable one-liner for the "quick wins" panel
-- Return ONLY valid JSON matching the schema. No prose outside JSON.`;
+Your response MUST be a single, valid JSON object with EXACTLY this structure (do not return an array):
+{
+  "section_scores": { "headline": 0, "about": 0, "experience": 0, "skills": 0 },
+  "overall_score": 0,
+  "estimated_score_after_optimization": 0,
+  "issues": { "headline": [], "about": [], "experience": [], "skills": [] },
+  "keyword_intelligence": { 
+    "top_keywords": [
+      { "keyword": "string", "category": "SKILL", "present_in_profile": true }
+    ], 
+    "missing_high_priority": [] 
+  },
+  "spike": { "identified_differentiator": "", "unique_value_proposition": "" },
+  "suggestions": { "headline": "", "about": "", "experience_bullets": [] }
+}
+Return ONLY valid JSON matching this schema. No prose outside JSON. Start immediately with "{".`;
 
     // ── User Prompt — inject all profile content ────────────────────────────
     const spikeBlock = input.spike

@@ -87,19 +87,7 @@ export default function AnalyzeScreen() {
     });
   };
 
-      const { extracted_text } = await extractJd.mutateAsync(payload);
 
-      setJdFileText(extracted_text);
-      setJdFileName(fileAsset.name);
-      setInputType(2); // Switch to file input type
-
-      Toast.show({ type: 'success', text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for analysis.' });
-    } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Failed to extract text', text2: error.message || 'Please check your file and try again.' });
-    } finally {
-      setExtractJdLoading(false);
-    }
-  };
 
   const handleRemoveAttachedJd = () => {
     setJdFileText('');

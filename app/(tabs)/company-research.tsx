@@ -24,6 +24,7 @@ import {
 import Toast from 'react-native-toast-message';
 import { handleApiError } from '../../src/lib/errorHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { exportCompanyResearchPDF } from '../../src/lib/companyResearchExport';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,19 @@ export default function CompanyResearchScreen() {
   const [context, setContext] = useState('');
   const [result, setResult] = useState<CompanyResearchResult | null>(null);
   const [activeTab, setActiveTab] = useState<ResultTab>('overview');
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!result) return;
+    try {
+      setIsDownloading(true);
+      await exportCompanyResearchPDF(result);
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: e.message });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   useEffect(() => {
     const loadFromId = async () => {
@@ -275,6 +289,18 @@ export default function CompanyResearchScreen() {
             </Text>
           ) : null}
         </View>
+        <Pressable 
+          style={({ pressed }) => [{ padding: Spacing.xs }, pressed && { opacity: 0.7 }]}
+          onPress={handleDownload}
+          disabled={isDownloading}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {isDownloading ? (
+            <ActivityIndicator size="small" color="#0ea5e9" />
+          ) : (
+            <Ionicons name="download-outline" size={22} color="#0ea5e9" />
+          )}
+        </Pressable>
       </View>
 
       {/* Tab bar */}

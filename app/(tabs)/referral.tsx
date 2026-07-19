@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator, Share } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator, Share, TextInput } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -11,7 +11,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ReferralScreen() {
   const { colors } = useTheme();
-  const { stats, loading } = useReferral();
+  const { stats, loading, applyReferralCode } = useReferral();
+  const [inputCode, setInputCode] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
@@ -37,6 +39,27 @@ export default function ReferralScreen() {
       });
     } catch (error) {
       console.error('Error sharing:', error);
+    }
+  };
+
+  const handleSubmitCode = async () => {
+    if (!inputCode.trim()) return;
+    setSubmitting(true);
+    const result = await applyReferralCode(inputCode.trim());
+    setSubmitting(false);
+    if (result.success) {
+      Toast.show({
+        type: 'success',
+        text1: 'Success!',
+        text2: result.message || 'Referral code applied successfully!',
+      });
+      setInputCode('');
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: result.error || 'Failed to apply referral code.',
+      });
     }
   };
 
@@ -94,6 +117,49 @@ export default function ReferralScreen() {
             </View>
           </View>
         )}
+
+        {stats && stats.referrals && stats.referrals.length > 0 && (
+          <View style={[styles.listCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
+            <Text style={[styles.listTitle, { color: colors.textPrimary }]}>People You Referred</Text>
+            {stats.referrals.map((ref) => (
+              <View key={ref.id} style={[styles.listItem, { borderBottomColor: colors.border }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.listName, { color: colors.textPrimary }]}>
+                    {ref.referred_user?.first_name || 'Anonymous'} {ref.referred_user?.last_name || ''}
+                  </Text>
+                  <Text style={[styles.listEmail, { color: colors.textMuted }]}>
+                    {ref.referred_user?.email}
+                  </Text>
+                </View>
+                <View style={[styles.creditBadge, { backgroundColor: `${colors.primary}1A` }]}>
+                  <Text style={[styles.creditBadgeText, { color: colors.primary }]}>+{ref.credits_granted}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={[styles.submitCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
+          <Text style={[styles.submitTitle, { color: colors.textPrimary }]}>Have a referral code?</Text>
+          <View style={styles.submitRow}>
+            <TextInput
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
+              placeholder="Enter code here"
+              placeholderTextColor={colors.textMuted}
+              value={inputCode}
+              onChangeText={setInputCode}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            <Button 
+              title="Apply" 
+              onPress={handleSubmitCode} 
+              loading={submitting}
+              disabled={!inputCode.trim() || submitting}
+              style={styles.submitBtn}
+            />
+          </View>
+        </View>
 
         <View style={[styles.howItWorksCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
           <Text style={[styles.howTitle, { color: colors.textPrimary }]}>How it works</Text>
@@ -261,5 +327,63 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     ...Typography.bodyMd,
+  },
+  submitCard: {
+    padding: Spacing.xl,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    ...Shadow.sm,
+  },
+  submitTitle: {
+    ...Typography.headingLg,
+    marginBottom: Spacing.md,
+  },
+  submitRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    ...Typography.bodyMd,
+  },
+  submitBtn: {
+    minWidth: 100,
+  },
+  listCard: {
+    padding: Spacing.xl,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+    marginBottom: Spacing.xl,
+    ...Shadow.sm,
+  },
+  listTitle: {
+    ...Typography.headingLg,
+    marginBottom: Spacing.md,
+  },
+  listItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  listName: {
+    ...Typography.headingMd,
+    marginBottom: 2,
+  },
+  listEmail: {
+    ...Typography.bodySm,
+  },
+  creditBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+  },
+  creditBadgeText: {
+    ...Typography.label,
   },
 });

@@ -88,7 +88,23 @@ app.post('/*', async (c: any) => {
 Your task is to generate a dynamic, highly actionable learning roadmap for a candidate preparing for an interview.
 The candidate needs to master specific missing skills required for the role.
 
-You MUST return a valid JSON object matching EXACTLY the schema structure.
+You MUST return a valid JSON object matching EXACTLY this structure:
+{
+  "duration_days": number, // between 7 and 30
+  "title": "string",
+  "overview": "string",
+  "modules": [
+    {
+      "module_title": "string",
+      "days_allocated": "string", // e.g., "Days 1-3"
+      "focus_skill": "string",
+      "action_items": ["string"],
+      "estimated_hours": number,
+      "resources_to_use": ["string"]
+    }
+  ]
+}
+
 CRITICAL:
 - ONLY output the JSON object. Do not wrap in markdown tags like \`\`\`json.
 - The 'duration_days' should be dynamically adjusted between 7 and 30 days depending on the complexity of the missing skills.
@@ -109,6 +125,8 @@ Generate a comprehensive roadmap to bridge these gaps.`;
       ROADMAP_SCHEMA,
       { temperature: 0.4, max_tokens: 3000 }
     );
+    
+    console.log("Raw Roadmap Output from AI:", JSON.stringify(roadmap, null, 2));
 
     // Deduct 5 credits from user
     await deductCredits(user.id, 'ROADMAP_GENERATION', {

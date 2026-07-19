@@ -144,21 +144,22 @@ export default function LoginScreen() {
 
           {/* Social Sign-In Buttons */}
           <View style={styles.socialButtons}>
-            <GoogleSigninButton
-              style={styles.googleButton}
-              size={GoogleSigninButton.Size.Wide}
-              color={GoogleSigninButton.Color.Light}
+            <Pressable
+              style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}
               onPress={handleGoogleSignIn}
               disabled={loading}
-            />
+            >
+              <Ionicons name="logo-google" size={20} color={colors.textPrimary} />
+              <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Sign in with Google</Text>
+            </Pressable>
             
             <Pressable
-              style={[styles.linkedinButton, { borderColor: colors.border }]}
+              style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}
               onPress={handleLinkedInSignIn}
               disabled={loading}
             >
               <Ionicons name="logo-linkedin" size={20} color="#0077B5" />
-              <Text style={[styles.linkedinButtonText, { color: colors.textPrimary }]}>Continue with LinkedIn</Text>
+              <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Sign in with LinkedIn</Text>
             </Pressable>
           </View>
         </View>
@@ -233,11 +234,7 @@ const styles = StyleSheet.create({
   socialButtons: {
     gap: Spacing.md,
   },
-  googleButton: {
-    width: '100%',
-    height: 48,
-  },
-  linkedinButton: {
+  socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -245,9 +242,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderWidth: 1,
     borderRadius: 8,
-    gap: 8,
+    gap: 12,
   },
-  linkedinButtonText: {
+  socialButtonText: {
     ...Typography.bodySm,
     fontWeight: '600',
   },

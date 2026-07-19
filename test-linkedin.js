@@ -1,109 +1,118 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-const email = 'victorchoogo37@gmail.com';
+const envFile = fs.readFileSync('.env', 'utf8');
+const env = {};
+envFile.split('\n').forEach(line => {
+  const [key, ...values] = line.split('=');
+  if (key && values.length > 0) {
+    env[key.trim()] = values.join('=').trim();
+  }
+});
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing env variables');
+const supabaseUrl = env['EXPO_PUBLIC_SUPABASE_URL'];
+const supabaseAnonKey = env['EXPO_PUBLIC_SUPABASE_ANON_KEY'];
+const supabaseServiceKey = env['SUPABASE_SERVICE_ROLE_KEY'];
+
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+  console.error("❌ Missing Supabase env variables. Check your .env file.");
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
-async function runTests() {
-  console.log(`Authenticating as ${email}...`);
-  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password: 'password123'
+async function runLinkedinTest() {
+  console.log("\n--- Setting up Test User ---");
+  const testEmail = `test-linkedin-${Date.now()}@example.com`;
+  const testPassword = 'TestPassword123!';
+
+  const { data: adminUser, error: createError } = await adminSupabase.auth.admin.createUser({
+    email: testEmail,
+    password: testPassword,
+    email_confirm: true
   });
 
-  if (signInError) {
-    console.error('Auth error:', signInError.message);
+  if (createError) {
+    console.error("❌ Failed to create user via admin:", createError);
     process.exit(1);
   }
 
-  const token = signInData.session.access_token;
-  const client = createClient(supabaseUrl, supabaseKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } }
+  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    email: testEmail,
+    password: testPassword,
   });
 
-  const { data: profile } = await client.from('user_profiles').select('ai_credits, credit_balance').single();
-  console.log('Initial Credits:', profile);
-
-  console.log('\n--- 1. Testing linkedin-analyze ---');
-  const analyzeRes = await fetch(`${supabaseUrl}/functions/v1/linkedin-analyze`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      target_roles: ['Software Engineer', 'Fullstack Developer'],
-      headline: 'Software Engineer',
-      about: 'I am a software engineer looking for new opportunities.',
-      experience: [{
-        title: 'Software Engineer',
-        company: 'Tech Corp',
-        description: 'I wrote code and fixed bugs.'
-      }],
-      skills: ['JavaScript', 'React', 'Node.js']
-    })
-  });
-  
-  console.log('linkedin-analyze Status:', analyzeRes.status);
-  const analyzeData = await analyzeRes.json();
-  if (!analyzeRes.ok) {
-    console.error('Error:', analyzeData);
-  } else {
-    console.log('Analysis Overall Score:', analyzeData.analysis?.overall_score);
+  if (authError) {
+    console.error("❌ Failed to sign in:", authError);
+    process.exit(1);
   }
 
-  console.log('\n--- 2. Testing linkedin-optimize (HEADLINE) ---');
-  const optimizeRes = await fetch(`${supabaseUrl}/functions/v1/linkedin-optimize`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      section: 'HEADLINE',
-      current_content: 'Software Engineer',
-      target_roles: ['Software Engineer', 'Fullstack Developer']
-    })
-  });
+  const userId = authData.user.id;
+  const sessionToken = authData.session.access_token;
 
-  console.log('linkedin-optimize Status:', optimizeRes.status);
-  const optimizeData = await optimizeRes.json();
-  if (!optimizeRes.ok) {
-    console.error('Error:', optimizeData);
-  } else {
-    console.log('Optimized Headlines Data:', JSON.stringify(optimizeData.result, null, 2));
+  console.log("✅ Authorized as Test User!");
+
+  try {
+    // 2. Grant credits
+    await adminSupabase.from('user_credits').upsert({
+      user_id: userId,
+      linkedin_analysis_credits: 5,
+    });
+
+    console.log("\n--- 1. Testing LinkedIn Analyze ---");
+
+    const payload = {
+      headline: "Frontend Developer | React Enthusiast",
+      about: "I build responsive web apps.",
+      experience: [
+        {
+          title: "Frontend Developer",
+          company: "Tech Corp",
+          description: "Built UI components."
+        }
+      ],
+      skills: ["React", "JavaScript", "CSS"],
+      target_roles: ["Senior Frontend Developer"],
+      years_experience: 3,
+      tone: "PROFESSIONAL",
+      spike: {
+        differentiator: "Performance optimization",
+        praised_for: "Writing clean code",
+        problems_solved: "Reducing bundle size by 50%"
+      }
+    };
+
+    const analyzeResponse = await fetch(`${supabaseUrl}/functions/v1/linkedin-analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const analyzeResult = await analyzeResponse.json();
+
+    if (!analyzeResponse.ok) {
+      console.error("❌ linkedin-analyze failed:", analyzeResult);
+    } else {
+      console.log("✅ linkedin-analyze Successful!\n");
+      console.log("--- RAW ANALYSIS DATA ---");
+      console.log(JSON.stringify(analyzeResult, null, 2));
+    }
+
+  } catch (error) {
+    console.error("❌ Test crashed:", error);
+  } finally {
+    console.log("\n--- Cleaning up Test User ---");
+    const { error: deleteError } = await adminSupabase.auth.admin.deleteUser(userId);
+    if (deleteError) {
+      console.error("Failed to delete test user:", deleteError);
+    } else {
+      console.log("✅ Test user deleted successfully.");
+    }
   }
-
-  console.log('\n--- 3. Testing linkedin-engagement-plan ---');
-  const planRes = await fetch(`${supabaseUrl}/functions/v1/linkedin-engagement-plan`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      target_roles: ['Software Engineer'],
-      industry: 'Technology'
-    })
-  });
-
-  console.log('linkedin-engagement-plan Status:', planRes.status);
-  const planData = await planRes.json();
-  if (!planRes.ok) {
-    console.error('Error:', planData);
-  } else {
-    console.log('Engagement Plan Data:', JSON.stringify(planData.plan, null, 2));
-  }
-
-  const { data: profileAfter } = await client.from('user_profiles').select('ai_credits').single();
-  console.log(`\nCredits after linkedin operations (-5 expected): ${profileAfter.ai_credits} (Was ${profile.ai_credits})`);
 }
 
-runTests().catch(console.error);
+runLinkedinTest();
