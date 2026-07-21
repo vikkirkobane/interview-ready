@@ -82,32 +82,6 @@ export default function LinkedinOptimizerScreen() {
   const { addNotification } = useNotificationStore();
   const { id } = useLocalSearchParams<{ id?: string }>();
 
-  // Load from database if ID is provided
-  useEffect(() => {
-    const loadFromId = async () => {
-      if (!id) return;
-      const { data, error } = await supabase.from('linkedin_tasks').select('*').eq('id', id).single();
-      if (!error && data) {
-        if (data.task_type === 'analyze') {
-          setAnalysis(data.result_data);
-          setStep('results');
-          setActiveTab('overview');
-        } else if (data.task_type.startsWith('optimize_')) {
-          const section = data.task_type.split('_')[1];
-          setSectionResults(prev => ({ ...prev, [section]: data.result_data }));
-          // We can't jump directly to optimize view cleanly without full analysis context, but we can set the result
-          Toast.show({ type: 'success', text1: 'Optimization result loaded' });
-        }
-      }
-    };
-    loadFromId();
-  }, [id]);
-
-  // Sync showLinkedInPrompt when user connects LinkedIn via OAuth
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isLinkedInUser) setShowLinkedInPrompt(false);
-  }, [isLinkedInUser]);
   const [liConnecting, setLiConnecting] = useState(false);
 
   // ── Build initial wizard from existing profile data ────────────────────────
@@ -156,6 +130,33 @@ export default function LinkedinOptimizerScreen() {
 
   // Track if the user has imported data via scraping — prevents profile refetch from overwriting it
   const [hasScraped, setHasScraped] = React.useState(false);
+
+  // Load from database if ID is provided
+  useEffect(() => {
+    const loadFromId = async () => {
+      if (!id) return;
+      const { data, error } = await supabase.from('linkedin_tasks').select('*').eq('id', id).single();
+      if (!error && data) {
+        if (data.task_type === 'analyze') {
+          setAnalysis(data.result_data);
+          setStep('results');
+          setActiveTab('overview');
+        } else if (data.task_type.startsWith('optimize_')) {
+          const section = data.task_type.split('_')[1];
+          setSectionResults(prev => ({ ...prev, [section]: data.result_data }));
+          // We can't jump directly to optimize view cleanly without full analysis context, but we can set the result
+          Toast.show({ type: 'success', text1: 'Optimization result loaded' });
+        }
+      }
+    };
+    loadFromId();
+  }, [id]);
+
+  // Sync showLinkedInPrompt when user connects LinkedIn via OAuth
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isLinkedInUser) setShowLinkedInPrompt(false);
+  }, [isLinkedInUser]);
 
   // Refresh profile data when screen mounts so pre-fill is up-to-date
   useEffect(() => {

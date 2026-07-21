@@ -151,13 +151,13 @@ export default function SettingsScreen() {
       {/* Support & Legal */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support & Legal</Text>
       <Card style={[styles.settingsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-        <SettingRow title="Help Center & FAQ" onPress={() => Linking.openURL('https://interviewready.app/faq')} />
+        <SettingRow title="Help Center & FAQ" onPress={() => Linking.openURL('https://appinterviewready.top/')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Contact Support" onPress={() => Linking.openURL('mailto:support@interviewready.app')} />
+        <SettingRow title="Contact Support" onPress={() => Linking.openURL('mailto:info@appinterviewready.top')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Privacy Policy" onPress={() => Linking.openURL('https://interviewready.app/privacy')} />
+        <SettingRow title="Privacy Policy" onPress={() => Linking.openURL('https://interview-ready.ai.studio/privacy')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Terms of Service" onPress={() => Linking.openURL('https://interviewready.app/terms')} />
+        <SettingRow title="Terms of Service" onPress={() => Linking.openURL('https://interview-ready.ai.studio/terms')} />
       </Card>
 
       {/* Danger Zone */}

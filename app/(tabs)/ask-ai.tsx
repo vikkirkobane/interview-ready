@@ -250,7 +250,7 @@ export default function AskAIScreen() {
             <View style={[styles.textInputContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <TextInput
                  style={[styles.textInput, { color: colors.textPrimary }]}
-                 placeholder="Paste application question here..."
+                 placeholder="Ask a question"
                  placeholderTextColor={colors.textMuted}
                  value={inputText}
                  onChangeText={setInputText}

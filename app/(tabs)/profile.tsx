@@ -557,7 +557,7 @@ export default function ProfileScreen() {
 
           <Pressable 
             style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
-            onPress={() => Linking.openURL('mailto:support@interviewready.app')}
+            onPress={() => Linking.openURL('mailto:info@appinterviewready.top')}
           >
             <View style={[styles.settingsIconBox, { backgroundColor: colors.bgPrimary }]}>
                <Ionicons name="help-circle-outline" size={20} color={colors.textMuted} />

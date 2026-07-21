@@ -45,4 +45,4 @@ async function testRecentActivities() {
   console.log(JSON.stringify(sorted, null, 2));
 }
 
-testRecentActivities();
+testRecentActivities().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
