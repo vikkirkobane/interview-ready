@@ -8,7 +8,7 @@ declare let document: any;
 // Helper for dynamic imports on native vs web
 let printToFileAsync: any;
 let shareAsync: any;
-let FileSystem: any;
+
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -127,7 +127,7 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
       }
       const base64Data = await Packer.toBase64String(doc);
       const LegacyFS = await import('expo-file-system');
-      const fileUri = `${LegacyFS.cacheDirectory}${filename}`;
+      const fileUri = `${(LegacyFS as any).cacheDirectory}${filename}`;
       await LegacyFS.writeAsStringAsync(fileUri, base64Data, { encoding: LegacyFS.EncodingType.Base64 });
       await shareAsync(fileUri, {
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

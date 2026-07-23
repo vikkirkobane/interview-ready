@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -38,7 +38,7 @@ export default function CoverLetterGeneratorScreen() {
   const [targetRole, setTargetRole] = useState('');
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [extractJdLoading, setExtractJdLoading] = useState(false);
+
 
   const { id, fromList } = useLocalSearchParams();
 
@@ -140,6 +140,12 @@ export default function CoverLetterGeneratorScreen() {
     setUrlError('');
 
     try {
+      if (!targetCompany.trim() || !targetRole.trim()) {
+        Toast.show({ type: 'error', text1: 'Input Required', text2: 'Please provide both Company Name and Role / Job Title.' });
+        setGenerating(false);
+        return;
+      }
+
       // Use file text if available, otherwise use text input
       const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
       const finalJobUrl = jobUrl.trim();
@@ -267,7 +273,7 @@ export default function CoverLetterGeneratorScreen() {
           <Card style={[styles.setupCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
             <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Target Job</Text>
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Company Name</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Company Name *</Text>
               <TextInput 
                 style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]} 
                 value={targetCompany}
@@ -277,7 +283,7 @@ export default function CoverLetterGeneratorScreen() {
               />
             </View>
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Role / Job Title</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Role / Job Title *</Text>
               <TextInput 
                 style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]} 
                 value={targetRole}

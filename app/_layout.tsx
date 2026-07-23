@@ -79,8 +79,15 @@ function AuthGuard() {
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
-    } else if (session && inAuthGroup) {
-      router.replace('/(tabs)');
+    } else if (session) {
+      const isCompleted = session.user?.user_metadata?.onboarding_completed;
+      const inOnboarding = firstSegment === '(onboarding)';
+      
+      if (!isCompleted && !inOnboarding) {
+        router.replace('/(onboarding)/referral-code' as any);
+      } else if (isCompleted && inAuthGroup) {
+        router.replace('/(tabs)');
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, initialized, segments]);

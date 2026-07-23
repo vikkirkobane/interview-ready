@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+import Toast from 'react-native-toast-message';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Card, Button, ScoreRing } from '../../src/components/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,7 +9,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePastInterviewsQuery, useDeleteMockInterviewMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
-import Toast from 'react-native-toast-message';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function InterviewsLobbyScreen() {
@@ -19,7 +20,7 @@ export default function InterviewsLobbyScreen() {
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   
-  const [role, setRole] = useState((params.role as string) || 'Product Manager');
+  const [role, setRole] = useState((params.role as string) || '');
   const [jobDescription, setJobDescription] = useState((params.jobDescription as string) || '');
   const [jobUrl, setJobUrl] = useState('');
   const [urlError, setUrlError] = useState('');
@@ -62,6 +63,11 @@ export default function InterviewsLobbyScreen() {
   };
 
   const handleStart = () => {
+    if (!role.trim()) {
+      Toast.show({ type: 'error', text1: 'Input Required', text2: 'Please provide a Target Role.' });
+      return;
+    }
+
     const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
     const finalJobUrl = jobUrl.trim();
 
@@ -103,12 +109,12 @@ export default function InterviewsLobbyScreen() {
           <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>Practice with an AI interviewer tailored to your specific role and difficulty level.</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Target Role</Text>
+            <Text style={[styles.inputLabel, { color: colors.textPrimary }]}>Target Role *</Text>
             <TextInput 
               style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
               value={role}
               onChangeText={setRole}
-              placeholder="e.g. Senior Frontend Engineer"
+              placeholder="Enter Job Role"
               placeholderTextColor={colors.textMuted}
             />
           </View>

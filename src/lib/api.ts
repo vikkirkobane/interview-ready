@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
 
 declare let window: any;
 
@@ -223,33 +224,31 @@ export async function apiUploadFile<T = any>(
 
       const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`;
       
-      const formData = new FormData();
-      formData.append('file', {
-        uri: fileUri,
-        type: mimeType || 'application/octet-stream',
-        name: fileName || 'file.pdf',
-      } as any);
+      try {
+        const uploadResult = await FileSystem.uploadAsync(url, fileUri, {
+          httpMethod: 'POST',
+          uploadType: (FileSystem as any).FileSystemUploadType.MULTIPART,
+          fieldName: 'file',
+          mimeType: mimeType || 'application/octet-stream',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: formData,
-      });
+        if (uploadResult.status < 200 || uploadResult.status >= 300) {
+          let errorMsg = 'Upload failed';
+          try {
+            const errJson = JSON.parse(uploadResult.body);
+            errorMsg = errJson.error || errorMsg;
+          } catch {}
+          return { data: null, error: errorMsg };
+        }
 
-      if (!response.ok) {
-        let errorMsg = 'Upload failed';
-        try {
-          const errJson = await response.json();
-          errorMsg = errJson.error || errorMsg;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {}
-        return { data: null, error: errorMsg };
+        const data = JSON.parse(uploadResult.body);
+        return { data, error: null };
+      } catch (err: any) {
+        return { data: null, error: err.message || 'Upload failed' };
       }
-
-      const data = await response.json();
-      return { data, error: null };
     }
   } catch (err: any) {
     console.error('[Upload] Upload error:', err);

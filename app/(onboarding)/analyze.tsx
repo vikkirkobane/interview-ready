@@ -3,7 +3,6 @@ import { Pressable ,
   Text,
   StyleSheet,
   ScrollView,
-  Platform,
   TextInput,
   ActivityIndicator,
 } from 'react-native';
@@ -27,7 +26,7 @@ export default function AnalyzeScreen() {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [extractJdLoading, setExtractJdLoading] = useState(false);
+
 
   const analyzeJob = useAnalyzeJobMutation();
   const extractJd = useExtractJdMutation();

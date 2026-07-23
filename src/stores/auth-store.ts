@@ -62,6 +62,9 @@ interface AuthState {
   signInWithLinkedInIdToken: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   setSession: (session: Session | null) => void;
+  linkIdentity: (provider: string) => Promise<{ error: string | null }>;
+  unlinkIdentity: (identityId: string) => Promise<{ error: string | null }>;
+  getUserIdentities: () => Promise<any>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -233,5 +236,66 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setSession: (session) => {
     set({ session, user: session?.user ?? null });
+  },
+
+  linkIdentity: async (provider) => {
+    try {
+      const redirectTo = makeRedirectUri({
+        scheme: 'interviewready',
+        path: 'auth/callback',
+      });
+
+      const { error } = await supabase.auth.linkIdentity({
+        provider: provider as any,
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) {
+        console.error('Error linking identity:', error);
+        return { error: error.message };
+      }
+
+      // For manual linking, the user needs to complete the OAuth flow
+      // We'll handle the completion in the auth callback screen
+      return { error: null };
+    } catch (err: any) {
+      console.error('Error linking identity:', err);
+      return { error: err.message };
+    }
+  },
+
+  unlinkIdentity: async (identityId) => {
+    try {
+      const { error } = await (supabase.auth.unlinkIdentity as any)(identityId);
+
+      if (error) {
+        console.error('Error unlinking identity:', error);
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      console.error('Error unlinking identity:', err);
+      return { error: err.message };
+    }
+  },
+
+  getUserIdentities: async () => {
+    try {
+      const { data, error } = await supabase.auth.getUserIdentities();
+
+      if (error) {
+        console.error('Error getting user identities:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (err: any) {
+      console.error('Error getting user identities:', err);
+      throw err;
+    }
   },
 }));

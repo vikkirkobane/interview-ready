@@ -14,7 +14,7 @@ import { useTheme } from '../../src/theme/useTheme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
-import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -46,7 +46,12 @@ export default function LoginScreen() {
     if (authError) {
       setError(authError);
     } else {
-      router.replace('/(tabs)');
+      const isCompleted = useAuthStore.getState().user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
     }
   };
 
@@ -56,7 +61,12 @@ export default function LoginScreen() {
     if (authError) {
       setError(authError);
     } else {
-      router.replace('/(tabs)');
+      const isCompleted = useAuthStore.getState().user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
     }
   };
 
@@ -65,9 +75,9 @@ export default function LoginScreen() {
     const { error: authError } = await signInWithLinkedInIdToken();
     if (authError) {
       setError(authError);
-    } else {
-      router.replace('/(tabs)');
     }
+    // Note: Do not synchronously navigate here.
+    // The OAuth deep link callback (auth/callback.tsx) will handle the redirect.
   };
 
   return (

@@ -5,7 +5,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 
-import Toast from 'react-native-toast-message';
+
 import { handleApiError } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
@@ -133,7 +133,7 @@ export default function InterviewScreen() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [extractJdLoading, setExtractJdLoading] = useState(false);
+
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 

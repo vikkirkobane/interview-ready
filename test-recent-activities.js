@@ -1,85 +1,83 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-dotenv.config();
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Missing Supabase URL or Anon Key');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(
+  process.env.EXPO_PUBLIC_SUPABASE_URL,
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+);
 
 async function testRecentActivities() {
-  console.log("Fetching recent activities for the test user...");
+  console.log('Logging in as a test user...');
   
-  const testEmail = 'testuser_' + Date.now() + '@example.com';
-  const testPassword = 'testpassword123';
-
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email: testEmail,
-    password: testPassword,
-  });
-
-  if (authError) {
-    console.error('Auth error:', authError);
-    return;
+  // Create a test user or just simulate the query
+  const testEmail = 'test_google_existing@example.com';
+  const testPassword = 'password123';
+  
+  // We'll sign up a test user, insert a mock resume, then fetch activities
+  let authRes = await supabase.auth.signInWithPassword({ email: testEmail, password: testPassword });
+  
+  if (authRes.error && authRes.error.message.includes('Invalid login credentials')) {
+    authRes = await supabase.auth.signUp({ email: testEmail, password: testPassword });
   }
 
-  const userId = authData.user.id;
-  console.log('Test user created:', userId);
-
-  // Seed some data
-  console.log("Seeding test data...");
-  await Promise.all([
-    supabase.from('resumes').insert({ user_id: userId, title: 'Test Resume' }),
-    supabase.from('job_applications').insert({ user_id: userId, job_title: 'Software Engineer', company: 'Google' }),
-    supabase.from('mock_interviews').insert({ user_id: userId, role: 'Frontend Developer' }),
-    supabase.from('company_research').insert({ user_id: userId, company_name: 'Apple' }),
-    supabase.from('linkedin_tasks').insert({ user_id: userId, task_type: 'analyze', status: 'completed' })
-  ]);
-
-  // Fetch exactly like the hook
-  const [
-    { data: resumes },
-    { data: covers },
-    { data: jobs },
-    { data: interviews },
-    { data: research },
-    { data: linkedin }
-  ] = await Promise.all([
-    supabase.from('resumes').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
-    supabase.from('cover_letters').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
-    supabase.from('job_applications').select('id, job_title, company, updated_at').order('updated_at', { ascending: false }).limit(5),
-    supabase.from('mock_interviews').select('id, role, updated_at').order('updated_at', { ascending: false }).limit(5),
-    supabase.from('company_research').select('id, company_name, updated_at').order('updated_at', { ascending: false }).limit(5),
-    supabase.from('linkedin_tasks').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5)
-  ]);
-
-  const activities = [];
+  if (authRes.error) {
+    console.error('Failed to auth:', authRes.error);
+    return;
+  }
   
-  if (resumes) resumes.forEach(r => activities.push({ type: 'resume', title: r.title || 'Untitled Resume', date: r.updated_at }));
-  if (covers) covers.forEach(c => activities.push({ type: 'cover_letter', title: c.title || 'Untitled Cover Letter', date: c.updated_at }));
-  if (jobs) jobs.forEach(j => activities.push({ type: 'job_match', title: `${j.job_title || 'Unknown Role'} at ${j.company || 'Unknown Company'}`, date: j.updated_at }));
-  if (interviews) interviews.forEach(i => activities.push({ type: 'interview', title: `Mock Interview: ${i.role || 'General'}`, date: i.updated_at }));
-  if (research) research.forEach(r => activities.push({ type: 'company_research', title: `Company Research: ${r.company_name}`, date: r.updated_at }));
-  if (linkedin) linkedin.forEach(l => activities.push({ type: 'linkedin', title: l.title || 'LinkedIn Task', date: l.updated_at }));
+  const user = authRes.data.user;
+  console.log('Logged in as:', user.id);
 
-  const sorted = activities.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-  
-  console.log("Recent Activities Result:");
-  console.log(JSON.stringify(sorted, null, 2));
+  // Insert a mock resume to simulate "generated tasks"
+  const { error: insertError } = await supabase.from('resumes').insert({
+    user_id: user.id,
+    title: 'Test Resume ' + Date.now(),
+    content: { summary: 'test' },
+    target_role: 'tester'
+  });
 
-  // Cleanup
-  console.log("Cleaning up test user...");
+  if (insertError) {
+    console.error('Failed to insert resume:', insertError);
+  } else {
+    console.log('Inserted test resume');
+  }
+
+  // Fetch recent activities EXACTLY as useRecentActivitiesQuery does
+  console.log('\nFetching activities via Promise.all...');
   try {
-    await adminClient.auth.admin.deleteUser(userId);
-  } catch(e) {}
-  console.log("Test finished.");
+    const [
+      { data: resumes, error: resumesErr },
+      { data: covers, error: coversErr },
+      { data: jobs, error: jobsErr },
+      { data: interviews, error: interviewsErr },
+      { data: research, error: researchErr },
+      { data: linkedin, error: linkedinErr }
+    ] = await Promise.all([
+      supabase.from('resumes').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
+      supabase.from('cover_letters').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5),
+      supabase.from('job_applications').select('id, job_title, company, updated_at').order('updated_at', { ascending: false }).limit(5),
+      supabase.from('mock_interviews').select('id, role, updated_at').order('updated_at', { ascending: false }).limit(5),
+      supabase.from('company_research').select('id, company_name, updated_at').order('updated_at', { ascending: false }).limit(5),
+      supabase.from('linkedin_tasks').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(5)
+    ]);
+
+    if (resumesErr) console.error('Resumes error:', resumesErr);
+    if (coversErr) console.error('Covers error:', coversErr);
+    if (jobsErr) console.error('Jobs error:', jobsErr);
+    if (interviewsErr) console.error('Interviews error:', interviewsErr);
+    if (researchErr) console.error('Research error:', researchErr);
+    if (linkedinErr) console.error('Linkedin error:', linkedinErr);
+
+    console.log('Resumes:', resumes);
+    
+    const activities = [];
+    if (resumes) resumes.forEach(r => activities.push({ type: 'resume', title: r.title }));
+    
+    console.log(`Total activities found: ${activities.length}`);
+
+  } catch (err) {
+    console.error('Crash during fetch:', err);
+  }
 }
 
 testRecentActivities();

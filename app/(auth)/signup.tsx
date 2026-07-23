@@ -13,7 +13,7 @@ import { Typography, Spacing, useTheme } from '../../src/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
-import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -77,9 +77,9 @@ export default function SignupScreen() {
     const { error: authError } = await signInWithLinkedInIdToken();
     if (authError) {
       setError(authError);
-    } else {
-      router.replace('/(tabs)');
     }
+    // Note: Do not synchronously navigate here.
+    // The OAuth deep link callback (auth/callback.tsx) will handle the redirect.
   };
 
   return (

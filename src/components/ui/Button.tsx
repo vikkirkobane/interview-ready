@@ -24,6 +24,7 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
 }
@@ -36,6 +37,7 @@ export function Button({
   loading = false,
   disabled = false,
   fullWidth = false,
+  icon,
   style,
   textStyle,
 }: ButtonProps) {
@@ -142,9 +144,12 @@ export function Button({
           color={variant === 'primary' ? colors.textInverse : colors.primary}
         />
       ) : (
-        <Text numberOfLines={1} style={labelStyles}>
-          {title}
-        </Text>
+        <>
+          {icon}
+          <Text numberOfLines={1} style={labelStyles}>
+            {title}
+          </Text>
+        </>
       )}
     </MotiPressable>
   );

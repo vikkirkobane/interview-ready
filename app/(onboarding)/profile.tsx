@@ -54,7 +54,7 @@ export default function ProfileScreen() {
   const updateProfile = useUpdateProfileMutation();
   const parseResume = useParseResumeMutation();
 
-  const { pickFile, isPicking: isParsingResume } = useFilePicker();
+  const { pickFile } = useFilePicker();
 
   const handleUploadResume = async () => {
     await pickFile({

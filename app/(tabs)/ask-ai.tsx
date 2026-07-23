@@ -28,7 +28,7 @@ export default function AskAIScreen() {
   const [jdFileText, setJdFileText] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [extractJdLoading, setExtractJdLoading] = useState(false);
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuthStore();
 
@@ -363,13 +363,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: Spacing.lg,
     overflow: 'hidden',
+    justifyContent: 'center',
   },
   textInput: {
     flex: 1,
     minHeight: 52,
     backgroundColor: 'transparent',
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingTop: Platform.OS === 'ios' ? 14 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
     textAlignVertical: 'center',
     ...Typography.bodyLg,
   },

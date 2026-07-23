@@ -11,6 +11,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
 import { useUIStore } from '../../src/stores/ui-store';
 import { Image } from 'expo-image';
+import { IdentityManager } from '../../src/components/IdentityManager';
 declare const window: any;
 
 interface WorkHistoryItem {
@@ -253,7 +254,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const { pickFile, isPicking: isParsingResume } = useFilePicker();
+  const { pickFile } = useFilePicker();
   
   const handleUploadResume = async () => {
     await pickFile({
@@ -545,7 +546,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.settingsGrid}>
-          <Pressable 
+          <Pressable
             style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
             onPress={handleAccountSettingsPress}
           >
@@ -555,7 +556,7 @@ export default function ProfileScreen() {
             <Text style={[styles.settingsText, { color: colors.textPrimary }]}>Account Settings</Text>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             style={[styles.settingsCard, { backgroundColor: colors.bgSecondary }]}
             onPress={() => Linking.openURL('mailto:info@appinterviewready.top')}
           >
@@ -566,11 +567,14 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
+        {/* Identity Manager */}
+        <IdentityManager />
+
         <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.xl }}>
-          <Button 
-            title="Sign Out" 
-            variant="outline" 
-            onPress={handleSignOut} 
+          <Button
+            title="Sign Out"
+            variant="outline"
+            onPress={handleSignOut}
             fullWidth
           />
         </View>

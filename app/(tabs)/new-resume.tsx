@@ -222,7 +222,7 @@ export default function ResumeBuilderScreen() {
   const [urlError, setUrlError] = useState('');
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [extractJdLoading, setExtractJdLoading] = useState(false);
+
   const [aiGeneratedContent, setAiGeneratedContent] = useState<any>(null);
   const [expandedExp, setExpandedExp] = useState<string | null>(null);
   const [expandedSkill, setExpandedSkill] = useState<string | null>(null);

@@ -30,9 +30,15 @@ app.post('/*', async (c: any) => {
     const client = createAuthClient(c.req.raw);
     const serviceClient = createServiceClient();
 
-    // MOCK USER
-    const user = { id: 'mock-user-123' };
+    // Get current user
+    const {
+      data: { user },
+      error: authError,
+    } = await client.auth.getUser();
 
+    if (authError || !user) {
+      throw new UnauthorizedError('No active session');
+    }
     // Parse and validate input
     const body = await c.req.json();
     let input: CreateResumeInputType;
