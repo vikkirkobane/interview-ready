@@ -1,9 +1,4 @@
 { 
-  "compilerOptions": {
-    "allowJs": true,
-    "lib": ["deno.window"],
-    "strict": true
-  },
   "imports": {
     "npm:hono@4.0.0": "https://esm.sh/hono@4.0.0",
     "npm:hono@4.0.0/cors": "https://esm.sh/hono@4.0.0/cors",

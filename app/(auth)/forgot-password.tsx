@@ -1,12 +1,4 @@
-import { Pressable ,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-} from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,7 +28,7 @@ export default function ForgotPasswordScreen() {
     }
 
     // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;
@@ -78,19 +70,19 @@ export default function ForgotPasswordScreen() {
     >
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       >
         {/* Header */}
         <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
-          accessibilityLabel="Go back"
+          accessibilityLabel='Go back'
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name='arrow-back' size={24} color={colors.textPrimary} />
         </Pressable>
 
-        <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}1A` }]}>
-          <Ionicons name="lock-closed" size={32} color={colors.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: colors.primary + '1A' }]}>
+          <Ionicons name='lock-closed' size={32} color={colors.primary} />
         </View>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Forgot Password?</Text>
@@ -102,14 +94,14 @@ export default function ForgotPasswordScreen() {
         {/* Form */}
         <View style={styles.form}>
           <Input
-            label="Email"
-            placeholder="you@example.com"
+            label='Email'
+            placeholder='you@example.com'
             value={email}
             onChangeText={setEmail}
-            autoCapitalize="none"
+            autoCapitalize='none'
             autoCorrect={false}
-            keyboardType="email-address"
-            autoComplete="email"
+            keyboardType='email-address'
+            autoComplete='email'
             editable={!success}
           />
 

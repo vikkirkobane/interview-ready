@@ -1,11 +1,4 @@
-import { Pressable ,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,7 +29,7 @@ export default function LoginScreen() {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;
@@ -87,15 +80,15 @@ export default function LoginScreen() {
     >
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       >
         {/* Header */}
         <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
-          accessibilityLabel="Go back"
+          accessibilityLabel='Go back'
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name='arrow-back' size={24} color={colors.textPrimary} />
         </Pressable>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome back</Text>
@@ -104,23 +97,23 @@ export default function LoginScreen() {
         {/* Form */}
         <View style={styles.form}>
           <Input
-            label="Email"
-            placeholder="you@example.com"
+            label='Email'
+            placeholder='you@example.com'
             value={email}
             onChangeText={setEmail}
-            autoCapitalize="none"
+            autoCapitalize='none'
             autoCorrect={false}
-            keyboardType="email-address"
-            autoComplete="email"
+            keyboardType='email-address'
+            autoComplete='email'
           />
           <Input
-            label="Password"
-            placeholder="Enter your password"
+            label='Password'
+            placeholder='Enter your password'
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
-            autoComplete="password"
-            autoCapitalize="none"
+            autoComplete='password'
+            autoCapitalize='none'
             autoCorrect={false}
             rightIcon={
               <Pressable onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
@@ -129,10 +122,10 @@ export default function LoginScreen() {
             }
           />
 
-          {error ? <Text style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
+          {error ? <Text style={[{ color: colors.error }]}>{error}</Text> : null}
 
           <Button
-            title="Sign In"
+            title='Sign In'
             onPress={handleLogin}
             loading={loading}
             fullWidth
@@ -144,45 +137,49 @@ export default function LoginScreen() {
           >
             <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot password?</Text>
           </Pressable>
+        </View>
 
-          {/* Social Sign-In Divider */}
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.textMuted }]}>Or continue with</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          </View>
+        {/* Divider */}
+        <View style={styles.divider}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[styles.dividerText, { color: colors.textMuted }]}>Or continue with</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        </View>
 
-          {/* Social Sign-In Buttons */}
-          <View style={styles.socialButtons}>
-            <Pressable
-              style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}
-              onPress={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <Ionicons name="logo-google" size={20} color={colors.textPrimary} />
-              <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Sign in with Google</Text>
-            </Pressable>
-            
-            <Pressable
-              style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}
-              onPress={handleLinkedInSignIn}
-              disabled={loading}
-            >
-              <Ionicons name="logo-linkedin" size={20} color="#0077B5" />
-              <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Sign in with LinkedIn</Text>
-            </Pressable>
-          </View>
+        {/* Social Login Buttons */}
+        <View style={styles.socialButtons}>
+          <Button
+            title='Continue with Google'
+            onPress={handleGoogleSignIn}
+            loading={loading}
+            fullWidth
+            icon={
+              <Ionicons name='logo-google' size={24} color={colors.textPrimary} />
+            }
+          />
+
+          <Button
+            title='Continue with LinkedIn'
+            onPress={handleLinkedInSignIn}
+            loading={loading}
+            fullWidth
+            icon={
+              <Ionicons name='logo-linkedin' size={24} color={colors.textPrimary} />
+            }
+          />
         </View>
 
         {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable onPress={() => router.push('/(auth)/signup')}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign Up</Text>
             </Text>
           </Pressable>
+          <Text style={[styles.termsText, { color: colors.textMuted }]}>
+            By signing in, you agree to our Terms of Service and Privacy Policy.
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -212,13 +209,10 @@ const styles = StyleSheet.create({
   subtitle: {
     ...Typography.bodyLg,
     marginBottom: Spacing.xl,
+    textAlign: 'center',
   },
   form: {
-    gap: 4,
-  },
-  error: {
-    ...Typography.bodySm,
-    marginBottom: Spacing.sm,
+    gap: 16,
   },
   forgotButton: {
     alignItems: 'center',
@@ -238,25 +232,11 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    ...Typography.bodySm,
-    marginHorizontal: Spacing.md,
+    ...Typography.label,
+    paddingHorizontal: Spacing.md,
   },
   socialButtons: {
-    gap: Spacing.md,
-  },
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderRadius: 8,
     gap: 12,
-  },
-  socialButtonText: {
-    ...Typography.bodySm,
-    fontWeight: '600',
   },
   footer: {
     marginTop: 'auto',
@@ -268,5 +248,9 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontWeight: '600',
+  },
+  termsText: {
+    ...Typography.caption,
+    textAlign: 'center',
   },
 });

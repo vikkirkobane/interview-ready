@@ -6,6 +6,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useRouter } from 'expo-router';
 import { useDeleteAccountMutation, useUpdateProfileMutation, useParseResumeMutation } from '../../src/hooks/useApi';
 import { useFilePicker } from '../../src/hooks/useFilePicker';import Toast from 'react-native-toast-message';
+import { supabase } from '../../src/lib/supabase';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -262,20 +263,57 @@ export default function ProfileScreen() {
       allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       maxSizeMb: 5,
       onFilePicked: async (payload) => {
-        Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+        Toast.show({ type: 'info', text1: 'Uploading Resume...', text2: 'Saving your file to secure storage.' });
         
-        const extractedData = await parseResume.mutateAsync(payload);
+        // Upload to Supabase Storage
+        try {
+          const fileName = payload.fileName;
+          const userId = user?.id;
+          if (!userId) {
+            throw new Error('User not authenticated');
+          }
+          
+          const storagePath = 'resume-uploads/' + userId + '/' + Date.now() + '-' + fileName;
+          
+          // Get blob from payload
+          let blob;
+          if (payload.webFile) {
+            // Web: we have a File object (which is a Blob)
+            blob = payload.webFile;
+          } else {
+            // Mobile: fetch the file URI to get a blob
+            const response = await fetch(payload.fileUri);
+            blob = await response.blob();
+          }
+          
+          const { data, error: uploadError } = await supabase
+            .storage
+            .from('interview-ready-files')
+            .upload(storagePath, blob, {
+              contentType: payload.mimeType,
+              upsert: false
+            });
+          
+          if (uploadError) throw uploadError;
+          
+          Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+          
+          // Now parse the resume
+          const extractedData = await parseResume.mutateAsync(payload);
         
-        await updateProfile({
-          current_role: extractedData.current_role || (profile as any)?.current_role || '',
-          summary: extractedData.summary || profile?.summary || '',
-          technical_skills: extractedData.technical_skills && extractedData.technical_skills.length > 0 ? extractedData.technical_skills : (profile as any)?.technical_skills,
-          soft_skills: extractedData.soft_skills && extractedData.soft_skills.length > 0 ? extractedData.soft_skills : (profile as any)?.soft_skills,
-          work_history: extractedData.work_history && extractedData.work_history.length > 0 ? extractedData.work_history : (profile as any)?.work_history,
-          education: extractedData.education && extractedData.education.length > 0 ? extractedData.education : (profile as any)?.education,
-        } as any);
+          await updateProfile({
+            current_role: extractedData.current_role || (profile as any)?.current_role || '',
+            summary: extractedData.summary || profile?.summary || '',
+            technical_skills: extractedData.technical_skills && extractedData.technical_skills.length > 0 ? extractedData.technical_skills : (profile as any)?.technical_skills,
+            soft_skills: extractedData.soft_skills && extractedData.soft_skills.length > 0 ? extractedData.soft_skills : (profile as any)?.soft_skills,
+            work_history: extractedData.work_history && extractedData.work_history.length > 0 ? extractedData.work_history : (profile as any)?.work_history,
+            education: extractedData.education && extractedData.education.length > 0 ? extractedData.education : (profile as any)?.education,
+          } as any);
 
-        Toast.show({ type: 'success', text1: 'Resume Parsed!', text2: 'Your profile has been updated.' });
+          Toast.show({ type: 'success', text1: 'Resume Parsed!', text2: 'Your profile has been updated.' });
+        } catch (error: any) {
+          Toast.show({ type: 'error', text1: 'Upload or parsing failed', text2: error.message || 'Please try again.' });
+        }
       }
     });
   };

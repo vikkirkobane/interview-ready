@@ -62,22 +62,73 @@ export default function ProfileScreen() {
       allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       maxSizeMb: 5,
       onFilePicked: async (payload) => {
-        Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
-        const extractedData = await parseResume.mutateAsync(payload);
-      
-        if (extractedData.current_role) setCurrentRole(extractedData.current_role);
-        if (extractedData.company) setCompany(extractedData.company);
-        const skillsList = (extractedData as any).top_skills || (extractedData as any).technical_skills;
-        if (skillsList && Array.isArray(skillsList)) {
-          const uniqueSkills = Array.from(new Set([...skills, ...skillsList]));
-          setSkills(uniqueSkills);
+        Toast.show({ type: 'info', text1: 'Uploading Resume...', text2: 'Saving your file to secure storage.' });
+        
+        // Upload to Supabase Storage
+        try {
+          const fileName = payload.fileName;
+          const userId = user?.id;
+          if (!userId) {
+            throw new Error('User not authenticated');
+          }
+          
+          const storagePath = `resume-uploads/${userId}/${Date.now()}-${fileName}`;
+          
+          // Get blob from payload
+          let blob: Blob;
+          if (payload.webFile) {
+            // Web: we have a File object (which is a Blob)
+            blob = payload.webFile;
+          } else {
+            // Mobile: fetch the file URI to get a blob
+            const response = await fetch(payload.fileUri);
+            blob = await response.blob();
+          }
+          
+          const { data, error: uploadError } = await supabase
+            .storage
+            .from('interview-ready-files')
+            .upload(storagePath, blob, {
+              contentType: payload.mimeType,
+              upsert: false
+            });
+          
+          if (uploadError) throw uploadError;
+          
+          // Optionally, we can get the public URL (if bucket is public)
+          // For now, we don't need to store the URL, but we could if we wanted to.
+          // const { data: publicUrlData } = supabase
+          //   .storage
+          //   .from('interview-ready-files')
+          //   .getPublicUrl(storagePath);
+          // console.log('Uploaded file public URL:', publicUrlData.publicUrl);
+          
+          Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
+        } catch (uploadError: any) {
+          Toast.show({ type: 'error', text1: 'Upload failed', text2: uploadError.message || 'Please try again.' });
+          return; // Exit if upload fails
         }
+        
+        // Now parse the resume
+        try {
+          const extractedData = await parseResume.mutateAsync(payload);
+        
+          if (extractedData.current_role) setCurrentRole(extractedData.current_role);
+          if (extractedData.company) setCompany(extractedData.company);
+          const skillsList = (extractedData as any).top_skills || (extractedData as any).technical_skills;
+          if (skillsList && Array.isArray(skillsList)) {
+            const uniqueSkills = Array.from(new Set([...skills, ...skillsList]));
+            setSkills(uniqueSkills);
+          }
 
-        Toast.show({
-          type: 'success',
-          text1: 'Resume parsed successfully',
-          text2: 'Form fields have been auto-filled.',
-        });
+          Toast.show({
+            type: 'success',
+            text1: 'Resume parsed successfully',
+            text2: 'Form fields have been auto-filled.',
+          });
+        } catch (parseError: any) {
+          Toast.show({ type: 'error', text1: 'Parsing failed', text2: parseError.message || 'Please try again.' });
+        }
       }
     });
   };
@@ -111,19 +162,19 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
+    <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>      
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
-        {/* Progress Indicator */}
+        {/* Progress Indicator */}  
         <View style={styles.progressContainer}>
           <View style={styles.progressTextRow}>
             <Text style={[styles.stepLabel, { color: colors.primary }]}>STEP 2 OF 5</Text>
             <Text style={[styles.percentLabel, { color: colors.textMuted }]}>40% Complete</Text>
           </View>
-          <View style={[styles.progressBarTrack, { backgroundColor: colors.bgMuted }]}>
-            <View style={[styles.progressBarFill, { backgroundColor: colors.primary, width: '40%' }]} />
+          <View style={[styles.progressBarTrack, { backgroundColor: colors.bgMuted }]}>  
+            <View style={[styles.progressBarFill, { backgroundColor: colors.primary, width: '40%' }]} />  
           </View>
-        </View>
+        </View>  
 
         {/* Header Text */}
         <View style={styles.titleSection}>
@@ -133,13 +184,13 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        {hasResume && (
+        {hasResume && ( 
           <View style={styles.warningContainer}>
             <Text style={styles.warningText}>
               You already have a resume saved. Uploading a new one will replace your existing resume.
             </Text>
           </View>
-        )}
+        )}  
 
         {/* UploadSimple Resume Button */}
         <Pressable 
@@ -151,7 +202,7 @@ export default function ProfileScreen() {
             <ActivityIndicator color={colors.primary} />
           ) : (
             <>
-              <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />
+              <Ionicons name="cloud-upload-outline" size={20} color={colors.primary} />  
               <Text style={[styles.uploadBtnText, { color: colors.primary }]}>Upload Resume (PDF) to auto-fill</Text>
             </>
           )}

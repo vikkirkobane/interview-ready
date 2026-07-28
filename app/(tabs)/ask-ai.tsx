@@ -10,6 +10,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { handleApiError, isInsufficientCreditsError } from '../../src/lib/errorHandler';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { supabase } from '../../src/lib/supabase';
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -124,10 +125,39 @@ export default function AskAIScreen() {
       type: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       allowedTypes: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       maxSizeMb: 5,
-      onFilePicked: async (payload) => {
-        const { extracted_text } = await extractJd.mutateAsync(payload);
-        setJdFileText(extracted_text);
-        setJdFileName(payload.fileName);
+      
+onFilePicked: async (payload) => {
+        Toast.show({ type: 'info', text1: 'Uploading File...', text2: 'Saving your file to secure storage.' });
+        try {
+          const fileName = payload.fileName;
+          const { user } = useAuthStore.getState();
+          const userId = user?.id;
+          if (!userId) {
+            throw new Error('User not authenticated');
+          }
+          const storagePath = `jd-uploads/${userId}/${Date.now()}-${fileName}`;
+          let blob: Blob;
+          if (payload.webFile) {
+            blob = payload.webFile;
+          } else {
+            const response = await fetch(payload.fileUri);
+              blob = await response.blob();
+          }
+          const { data, error: uploadError } = await supabase
+            .storage
+            .from('interview-ready-files')
+            .upload(storagePath, blob, {
+                  contentType: payload.mimeType,
+                  upsert: false
+            });
+          if (uploadError) throw uploadError;
+          // Proceed with original extraction
+          const { extracted_text } = await extractJd.mutateAsync(payload);
+          setJdFileText(extracted_text);
+          setJdFileName(payload.fileName);
+        } catch (error: any) {
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+        }
       },
       successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
     });
@@ -395,3 +425,4 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 });
+

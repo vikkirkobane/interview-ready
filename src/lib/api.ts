@@ -227,7 +227,7 @@ export async function apiUploadFile<T = any>(
       try {
         const uploadResult = await FileSystem.uploadAsync(url, fileUri, {
           httpMethod: 'POST',
-          uploadType: (FileSystem as any).FileSystemUploadType.MULTIPART,
+          uploadType: 1, // FileSystem.FileSystemUploadType.MULTIPART
           fieldName: 'file',
           mimeType: mimeType || 'application/octet-stream',
           headers: {

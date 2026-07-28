@@ -1,11 +1,4 @@
-import { Pressable ,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +6,6 @@ import { Typography, Spacing, useTheme } from '../../src/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
-
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -36,7 +28,7 @@ export default function SignupScreen() {
       setError('Please fill in all required fields.');
       return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;
@@ -57,7 +49,7 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
-      router.replace('/(tabs)');
+      router.replace('/(onboarding)/role');
     }
   };
 
@@ -67,8 +59,12 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
-      // For social auth, the onboarding status check handles routing, but we can default to tabs
-      router.replace('/(tabs)');
+      const isCompleted = useAuthStore.getState().user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
     }
   };
 
@@ -89,42 +85,40 @@ export default function SignupScreen() {
     >
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps='handled'
       >
         <Pressable
           onPress={() => router.back()}
           style={styles.backButton}
-          accessibilityLabel="Go back"
+          accessibilityLabel='Go back'
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name='arrow-back' size={24} color={colors.textPrimary} />
         </Pressable>
 
         <Text style={[styles.title, { color: colors.textPrimary }]}>Create your account</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Start landing interviews in minutes
-        </Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Start landing interviews in minutes</Text>
 
         <View style={styles.form}>
           <Input
-            label="Email"
-            placeholder="you@example.com"
+            label='Email'
+            placeholder='you@example.com'
             value={email}
             onChangeText={setEmail}
-            autoCapitalize="none"
+            autoCapitalize='none'
             autoCorrect={false}
-            keyboardType="email-address"
-            autoComplete="email"
+            keyboardType='email-address'
+            autoComplete='email'
           />
           <Input
-            label="Password"
-            placeholder="At least 8 characters"
+            label='Password'
+            placeholder='At least 8 characters'
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
-            autoComplete="new-password"
-            autoCapitalize="none"
+            autoComplete='new-password'
+            autoCapitalize='none'
             autoCorrect={false}
-            hint="Must be at least 8 characters, with letters and numbers"
+            hint='Must be at least 8 characters, with letters and numbers'
             rightIcon={
               <Pressable onPress={() => setShowPassword(!showPassword)} style={{ padding: 4 }}>
                 <Text style={{ color: colors.textMuted, ...Typography.label }}>{showPassword ? 'Hide' : 'Show'}</Text>
@@ -132,13 +126,13 @@ export default function SignupScreen() {
             }
           />
           <Input
-            label="Confirm Password"
-            placeholder="Re-enter password"
+            label='Confirm Password'
+            placeholder='Re-enter password'
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
-            autoComplete="new-password"
-            autoCapitalize="none"
+            autoComplete='new-password'
+            autoCapitalize='none'
             autoCorrect={false}
             rightIcon={
               <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ padding: 4 }}>
@@ -150,51 +144,51 @@ export default function SignupScreen() {
           {error ? <Text style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
 
           <Button
-            title="Create Account"
+            title='Create Account'
             onPress={handleSignup}
             loading={loading}
             fullWidth
           />
-
-          {/* Social Sign-In Divider */}
-          <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.textMuted }]}>Or continue with</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          </View>
-
-          {/* Social Sign-In Buttons */}
-          <View style={styles.socialButtons}>
-            <Pressable
-              style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}
-              onPress={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <Ionicons name="logo-google" size={20} color={colors.textPrimary} />
-              <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Sign up with Google</Text>
-            </Pressable>
-            
-            <Pressable
-              style={[styles.socialButton, { borderColor: colors.border, backgroundColor: colors.bgPrimary }]}
-              onPress={handleLinkedInSignIn}
-              disabled={loading}
-            >
-              <Ionicons name="logo-linkedin" size={20} color="#0077B5" />
-              <Text style={[styles.socialButtonText, { color: colors.textPrimary }]}>Sign up with LinkedIn</Text>
-            </Pressable>
-          </View>
         </View>
 
+        {/* Divider */}
+        <View style={styles.divider}>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+          <Text style={[styles.dividerText, { color: colors.textMuted }]}>Or continue with</Text>
+          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+        </View>
+
+        {/* Social Login Buttons */}
+        <View style={styles.socialButtons}>
+          <Button
+            title='Continue with Google'
+            onPress={handleGoogleSignIn}
+            loading={loading}
+            fullWidth
+            icon={
+              <Ionicons name='logo-google' size={24} color={colors.textPrimary} />
+            }
+          />
+
+          <Button
+            title='Continue with LinkedIn'
+            onPress={handleLinkedInSignIn}
+            loading={loading}
+            fullWidth
+            icon={
+              <Ionicons name='logo-linkedin' size={24} color={colors.textPrimary} />
+            }
+          />
+        </View>
+
+        {/* Footer */}
         <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
           <Pressable onPress={() => router.push('/(auth)/login')}>
-            <Text style={[styles.footerText, { color: colors.textMuted }]}>
-              Already have an account?{' '}
+            <Text style={[styles.footerText, { color: colors.textMuted }]}>Already have an account?{' '}
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </Text>
           </Pressable>
-          <Text style={[styles.termsText, { color: colors.textMuted }]}>
-            By creating an account, you agree to our Terms of Service and Privacy Policy.
-          </Text>
+          <Text style={[styles.termsText, { color: colors.textMuted }]}>By creating an account, you agree to our Terms of Service and Privacy Policy.</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -228,13 +222,6 @@ const styles = StyleSheet.create({
   form: {
     gap: 4,
   },
-  nameRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  nameField: {
-    flex: 1,
-  },
   error: {
     ...Typography.bodySm,
     marginBottom: Spacing.sm,
@@ -249,25 +236,11 @@ const styles = StyleSheet.create({
     height: 1,
   },
   dividerText: {
-    ...Typography.bodySm,
-    marginHorizontal: Spacing.md,
+    ...Typography.label,
+    paddingHorizontal: Spacing.md,
   },
   socialButtons: {
-    gap: Spacing.md,
-  },
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderRadius: 8,
     gap: 12,
-  },
-  socialButtonText: {
-    ...Typography.bodySm,
-    fontWeight: '600',
   },
   footer: {
     marginTop: 'auto',

@@ -124,6 +124,7 @@ export default function ResumeGenScreen() {
       clearTimeout(t2);
       clearTimeout(t3);
       if (channel) {
+        channel.unsubscribe();
         supabase.removeChannel(channel);
       }
     };

@@ -1,9 +1,9 @@
-import { Hono } from 'npm:hono@4.0.0';
-import { cors } from 'npm:hono@4.0.0/cors';
+import { Hono } from 'npm:hono@4.0.0'; // eslint-disable-line import/no-unresolved
+import { cors } from 'npm:hono@4.0.0/cors'; // eslint-disable-line import/no-unresolved
 import { createAuthClient, createServiceClient } from '../_shared/supabase-client.ts';
 import { UnauthorizedError, NotFoundError, ValidationError } from '../_shared/errors.ts';
 import { RESUME_CONTENT_SCHEMA } from '../_shared/zod-schemas.ts';
-import { z } from 'npm:zod@3.22.4';
+import { z } from 'npm:zod@3.22.4'; // eslint-disable-line import/no-unresolved
 
 const app = new Hono();
 
