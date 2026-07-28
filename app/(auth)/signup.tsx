@@ -1,4 +1,4 @@
-import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

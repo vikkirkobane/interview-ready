@@ -97,7 +97,7 @@ onFilePicked: async (payload) => {
             const response = await fetch(payload.fileUri);
             blob = await response.blob();
           }
-          const { data, error: uploadError } = await supabase
+          const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')
             .upload(storagePath, blob, {
