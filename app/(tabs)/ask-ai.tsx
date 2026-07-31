@@ -365,9 +365,11 @@ const styles = StyleSheet.create({
   messageBubbleAi: {
     borderBottomLeftRadius: 4,
     borderWidth: 1,
+    alignSelf: 'flex-start',
   },
   messageBubbleUser: {
-    borderBottomRightRadius: 4
+    borderBottomRightRadius: 4,
+    alignSelf: 'flex-end',
   },
   messageText: {
     ...Typography.bodyLg,

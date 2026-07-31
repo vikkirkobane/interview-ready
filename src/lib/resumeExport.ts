@@ -247,21 +247,18 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else {
-      // Native DOCX export — write to a temporary path using expo-print's cache dir
-      // then share with expo-sharing. No expo-file-system APIs used.
+      // Native DOCX export — write to a temporary path using expo-file-system
+      // then share with expo-sharing.
       if (!shareAsync) {
         throw new Error('DOCX export requires expo-sharing.');
       }
-      // Use react-native's built-in fetch + blob to write the DOCX to a temp URI
+      
+      const FileSystem = require('expo-file-system');
+      
       const base64Data = await Packer.toBase64String(doc);
-      // Write via data URI trick: expo-sharing accepts file:// URIs from expo-print cache
-      // We leverage expo-print's cache directory by writing through a small native shim.
-      const fsMod = await import('expo-file-system').catch(() => null);
-      const cacheDirectory = fsMod ? (fsMod as any).cacheDirectory : null;
-      if (cacheDirectory) {
-        const LegacyFS = await import('expo-file-system');
-        const fileUri = `${(LegacyFS as any).cacheDirectory}${filename}`;
-        await LegacyFS.writeAsStringAsync(fileUri, base64Data, { encoding: LegacyFS.EncodingType.Base64 });
+      if (FileSystem.cacheDirectory) {
+        const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
         await shareAsync(fileUri, {
           mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           dialogTitle: `Download ${filename}`,

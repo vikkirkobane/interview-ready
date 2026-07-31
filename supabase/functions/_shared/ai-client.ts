@@ -73,7 +73,16 @@ export class AIClient {
       if (model === 'openrouter') {
         return await this.callOpenRouter(messages, schema, temperature, max_tokens);
       } else {
-        return await this.callQwen(messages, schema, temperature, max_tokens);
+        try {
+          return await this.callQwen(messages, schema, temperature, max_tokens);
+        } catch (qwenError: any) {
+          // Fallback chain: Qwen → OpenRouter (per project conventions).
+          // Transient LLM failures (invalid/truncated JSON, timeouts, provider
+          // errors) should not fail the user's request when an alternative
+          // provider is available.
+          console.warn('Qwen JSON API failed, falling back to OpenRouter:', qwenError?.message);
+          return await this.callOpenRouter(messages, schema, temperature, max_tokens);
+        }
       }
     } catch (error: any) {
       console.error(`AI provider failed:`, error);

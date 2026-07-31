@@ -59,6 +59,7 @@ Be highly objective, critical, and specific. Do not flatter the candidate. Point
 
 Respond ONLY with a raw, valid JSON object matching this schema exactly (no markdown formatting, no comments, just the JSON):
 {
+  "interview_id": "<the interview id provided in the user prompt>",
   "overall_score": <number 0-100>,
   "dimension_scores": {
     "communication": <number 0-100>,
@@ -67,10 +68,14 @@ Respond ONLY with a raw, valid JSON object matching this schema exactly (no mark
     "confidence": <number 0-100>,
     "cultural_fit": <number 0-100>
   },
+  "recommendation": "<STRONG_HIRE | HIRE | MAYBE | NO_HIRE | STRONG_NO_HIRE>",
   "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
   "areas_for_improvement": ["<area 1>", "<area 2>", "<area 3>"],
-  "hiring_recommendation": "<Clear hire/no-hire/leaning recommendation with 1-2 sentence justification>",
-  "feedback": "<Overall constructive summary of the performance>"
+  "question_feedback": [
+    { "question": "<question text>", "answer": "<candidate's answer>", "score": <number 0-100>, "feedback": "<specific feedback for this question>" }
+  ],
+  "interview_summary": "<Overall constructive summary of the candidate's performance>",
+  "suggested_follow_up": ["<follow-up question or topic 1>", "<follow-up question or topic 2>"]
 }`;
 
     const conversationHistory = messages.map(m => `${m.role === 'user' ? 'Candidate' : 'Interviewer'}: ${m.content}`).join('\n\n');
@@ -79,7 +84,8 @@ Respond ONLY with a raw, valid JSON object matching this schema exactly (no mark
       ? `\nJob Description:\n${interview.job_description}` 
       : '';
 
-    const userPrompt = `Role: ${interview.role}${interview.company ? ` at ${interview.company}` : ''}
+    const userPrompt = `Interview ID: ${interviewId}
+Role: ${interview.role}${interview.company ? ` at ${interview.company}` : ''}
 Interview Type: ${interview.interview_type}${jdContext}
     
 Interview Transcript:

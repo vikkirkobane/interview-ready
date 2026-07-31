@@ -125,15 +125,21 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
       if (!shareAsync) {
         throw new Error('DOCX export requires expo-sharing.');
       }
+      
+      const FileSystem = require('expo-file-system');
+      
       const base64Data = await Packer.toBase64String(doc);
-      const LegacyFS = await import('expo-file-system');
-      const fileUri = `${(LegacyFS as any).cacheDirectory}${filename}`;
-      await LegacyFS.writeAsStringAsync(fileUri, base64Data, { encoding: LegacyFS.EncodingType.Base64 });
-      await shareAsync(fileUri, {
-        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        dialogTitle: `Download ${filename}`,
-        UTI: 'org.openxmlformats.wordprocessingml.document',
-      });
+      if (FileSystem.cacheDirectory) {
+        const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+        await FileSystem.writeAsStringAsync(fileUri, base64Data, { encoding: FileSystem.EncodingType.Base64 });
+        await shareAsync(fileUri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          dialogTitle: `Download ${filename}`,
+          UTI: 'org.openxmlformats.wordprocessingml.document',
+        });
+      } else {
+        throw new Error('Could not access cache directory for DOCX export.');
+      }
     }
   } catch (e: any) {
     throw new Error('DOCX export failed: ' + e.message);

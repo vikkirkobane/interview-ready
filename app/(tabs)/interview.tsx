@@ -573,10 +573,12 @@ const styles = StyleSheet.create({
   messageRowLeft: {
     alignSelf: 'flex-start',
     maxWidth: '85%',
+    alignItems: 'flex-start',
   },
   messageRowRight: {
     alignSelf: 'flex-end',
     maxWidth: '85%',
+    alignItems: 'flex-end',
   },
   messageMetaLeft: {
     flexDirection: 'row',

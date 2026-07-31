@@ -3,22 +3,18 @@ import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useTheme, Typography, Spacing } from '../../src/theme';
-import { supabase } from '../../src/lib/supabase';
-import * as Linking from 'expo-linking';
 
 /**
  * OAuth callback screen — shown while the deep-link code exchange is in progress.
  *
  * Flow:
  *  1. Supabase redirects to interviewready://auth/callback?code=...
- *  2. The Linking listener in _layout.tsx calls exchangeCodeForSession(code)
- *  3. Supabase's onAuthStateChange fires and sets session in auth-store
- *  4. This screen watches the store's session field and navigates to /(tabs)
- *     as soon as it's populated.
- *  5. SAFETY NET: If session is still null after 3s, this screen tries to
- *     exchange the code itself (handles the race where _layout.tsx handler
- *     hasn't run yet).
- *  6. Final fallback: 20s timeout → back to welcome.
+ *  2. The Linking listener in _layout.tsx is the SOLE handler that calls
+ *     exchangeCodeForSession(code). This is critical — PKCE state is single-use
+ *     and calling exchangeCodeForSession twice causes "OAuth state not found".
+ *  3. Supabase's onAuthStateChange fires and sets session in auth-store.
+ *  4. This screen watches the session field and navigates once it's populated.
+ *  5. Final fallback: 15s timeout → back to welcome (covers genuine failures).
  */
 export default function AuthCallbackScreen() {
   const router = useRouter();
@@ -28,52 +24,29 @@ export default function AuthCallbackScreen() {
   // Navigate as soon as the session lands in the store.
   useEffect(() => {
     if (session) {
-      console.log('[AuthCallback] Session detected, navigating to tabs');
-      router.replace('/(tabs)');
+      console.log('[AuthCallback] Session detected, checking onboarding status...');
+      const isCompleted = session.user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        console.log('[AuthCallback] Onboarding complete — navigating to tabs');
+        router.replace('/(tabs)');
+      } else {
+        console.log('[AuthCallback] Onboarding incomplete — navigating to onboarding');
+        router.replace('/(onboarding)/referral-code' as any);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
-  // Safety net: if no session after 3 seconds, try to exchange the code ourselves.
-  // This handles the race where _layout.tsx deep link handler hasn't finished yet.
-  useEffect(() => {
-    const safetyTimer = setTimeout(async () => {
-      const { session: currentSession } = useAuthStore.getState();
-      if (currentSession) return; // Already have a session
-
-      console.log('[AuthCallback] No session after 3s — attempting code exchange...');
-      try {
-        const url = await Linking.getInitialURL();
-        if (url && url.includes('auth/callback')) {
-          const parsedUrl = new URL(url);
-          const code = parsedUrl.searchParams.get('code');
-          if (code) {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (error) {
-              console.warn('[AuthCallback] Safety exchange failed:', error.message);
-            } else if (data?.session) {
-              console.log('[AuthCallback] Safety exchange succeeded, setting session');
-              useAuthStore.getState().setSession(data.session);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('[AuthCallback] Safety net exchange error:', err);
-      }
-    }, 3000);
-
-    return () => clearTimeout(safetyTimer);
-  }, []);
-
-  // Final fallback: if we never get a session after 20s, send back to welcome.
+  // Final fallback: if _layout.tsx never delivers a session after 15s,
+  // send the user back to welcome so they are not stuck on the spinner.
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
       const { session: currentSession } = useAuthStore.getState();
       if (!currentSession) {
-        console.warn('[AuthCallback] Timed out after 20s — redirecting to welcome.');
+        console.warn('[AuthCallback] Timed out after 15s — redirecting to welcome.');
         router.replace('/(auth)/welcome');
       }
-    }, 20000);
+    }, 15000);
     return () => clearTimeout(fallbackTimer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -98,3 +71,4 @@ const styles = StyleSheet.create({
     ...Typography.bodyMd,
   },
 });
+

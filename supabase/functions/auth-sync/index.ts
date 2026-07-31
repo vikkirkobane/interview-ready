@@ -103,14 +103,44 @@ async function handleUserUpdate(
 ) {
   const { id, email, user_metadata } = authUser as any;
 
+  // Resolve first_name — LinkedIn sends 'given_name', email/Google send 'first_name'
+  const rawFirstName =
+    user_metadata?.first_name ||
+    user_metadata?.given_name ||
+    null;
+
+  // Resolve last_name — LinkedIn sends 'family_name', email/Google send 'last_name'
+  const rawLastName =
+    user_metadata?.last_name ||
+    user_metadata?.family_name ||
+    null;
+
+  // Fallback: split full_name / name if both first & last are still missing
+  let firstName = rawFirstName;
+  let lastName = rawLastName;
+  if (!firstName) {
+    const fullName = user_metadata?.full_name || user_metadata?.name || '';
+    if (fullName) {
+      const parts = fullName.trim().split(/\s+/);
+      firstName = parts[0] || null;
+      lastName = parts.length > 1 ? parts.slice(1).join(' ') : null;
+    }
+  }
+
+  // Resolve avatar — LinkedIn sends 'picture', email/Google send 'avatar_url'
+  const avatarUrl =
+    user_metadata?.avatar_url ||
+    user_metadata?.picture ||
+    null;
+
   // Update user with new metadata (if different from current values)
   const { error } = await client
     .from('users')
     .update({
       email,
-      first_name: user_metadata?.first_name || null,
-      last_name: user_metadata?.last_name || null,
-      avatar_url: user_metadata?.avatar_url || null,
+      first_name: firstName,
+      last_name: lastName,
+      avatar_url: avatarUrl,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);

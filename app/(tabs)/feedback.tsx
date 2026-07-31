@@ -159,7 +159,7 @@ export default function FeedbackScreen() {
           <View style={styles.heroTextContent}>
             <Text style={[styles.heroTitle, { color: colors.textPrimary }]}>Interview Complete!</Text>
             <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
-              {feedbackData?.hiring_recommendation || "Here is your detailed feedback."}
+              {feedbackData?.recommendation || feedbackData?.hiring_recommendation || "Here is your detailed feedback."}
             </Text>
           </View>
         </Animated.View>

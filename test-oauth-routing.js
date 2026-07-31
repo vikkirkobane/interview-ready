@@ -17,7 +17,7 @@ function runAuthVerification() {
 
   // Verify login.tsx handleGoogleSignIn logic
   if (loginContent.includes('const isCompleted = useAuthStore.getState().user?.user_metadata?.onboarding_completed;') && 
-      loginContent.includes("router.replace('/(onboarding)/referral-code');")) {
+      /router\.replace\('\/\(onboarding\)\/referral-code'( as any)?\)/.test(loginContent)) {
     console.log('✅ login.tsx properly checks onboarding status and routes un-onboarded users correctly.');
   } else {
     console.error('❌ login.tsx is missing onboarding routing logic.');
@@ -27,7 +27,7 @@ function runAuthVerification() {
   // Verify _layout.tsx AuthGuard logic
   if (layoutContent.includes('const inOnboarding = firstSegment === \'(onboarding)\';') &&
       layoutContent.includes('if (!isCompleted && !inOnboarding) {') &&
-      layoutContent.includes("router.replace('/(onboarding)/referral-code');")) {
+      /router\.replace\('\/\(onboarding\)\/referral-code'( as any)?\)/.test(layoutContent)) {
     console.log('✅ _layout.tsx (AuthGuard) properly intercepts un-onboarded users across the app.');
   } else {
     console.error('❌ _layout.tsx is missing the global onboarding intercept logic.');

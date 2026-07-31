@@ -13,46 +13,46 @@ function testUploadImplementation() {
 
   const content = fs.readFileSync(apiFilePath, 'utf-8');
 
-  // 1. Check if FileSystem is imported
-  if (content.includes("import * as FileSystem from 'expo-file-system'")) {
-    console.log('✅ PASSED: expo-file-system is properly imported.');
+  // 1. Check if the upload helper is exported and documented
+  if (content.includes('export async function apiUploadFile')) {
+    console.log('✅ PASSED: apiUploadFile is exported.');
   } else {
-    console.error('❌ FAILED: expo-file-system import is missing.');
+    console.error('❌ FAILED: apiUploadFile export is missing.');
     process.exit(1);
   }
 
-  // 2. Check if uploadAsync is used instead of fetch for non-web environments
-  if (content.includes('await FileSystem.uploadAsync')) {
-    console.log('✅ PASSED: FileSystem.uploadAsync is being used for native file uploads.');
+  // 2. Check the upload path branches on platform (web vs native)
+  if (content.includes("if (Platform.OS === 'web')")) {
+    console.log('✅ PASSED: Platform-specific upload branches are present.');
   } else {
-    console.error('❌ FAILED: FileSystem.uploadAsync is not found in the code.');
+    console.error('❌ FAILED: Platform branch for web uploads is missing.');
     process.exit(1);
   }
 
-  // 3. Verify MULTIPART form data type is specified
-  if (content.includes('uploadType: FileSystem.FileSystemUploadType.MULTIPART')) {
-    console.log('✅ PASSED: Upload type is correctly set to MULTIPART.');
+  // 3. Verify the native path uses fetch + FormData with a file part
+  //    (This is the correct approach for Expo SDK 56+ on both web and native.
+  //    FileSystem.uploadAsync is deprecated in the new expo-file-system API.)
+  const nativeBranch = content.match(/} else \{[\s\S]*?formData\.append\('file'/);
+  if (nativeBranch) {
+    console.log('✅ PASSED: Native platform branch uses FormData with a "file" part.');
   } else {
-    console.error('❌ FAILED: MULTIPART upload type is missing.');
+    console.error('❌ FAILED: Native platform branch does not build a FormData file part.');
     process.exit(1);
   }
 
   // 4. Verify dynamic mimeType assignment supports different file uploads
-  if (content.includes("mimeType: mimeType || 'application/octet-stream'")) {
+  if (content.includes('mimeType || \'application/octet-stream\'')) {
     console.log('✅ PASSED: Dynamic mimeType assignment is present (supports PDF, DOCX, images).');
   } else {
     console.error('❌ FAILED: Dynamic mimeType assignment is missing.');
     process.exit(1);
   }
 
-  // 5. Verify FormData is no longer used for native
-  // It shouldn't contain "const formData = new FormData()" immediately preceding a native fetch.
-  // We can just check that inside the `else` block (native branch) we use uploadAsync.
-  const nativeUploadBlockMatch = content.match(/} else {[\s\S]*?uploadAsync/);
-  if (nativeUploadBlockMatch) {
-    console.log('✅ PASSED: Native platform branch properly utilizes the new upload process.');
+  // 5. Verify the web branch supports Blob uploads (webFile)
+  if (content.includes('webFile')) {
+    console.log('✅ PASSED: Web platform branch supports Blob file uploads.');
   } else {
-    console.error('❌ FAILED: Native platform branch logic appears incorrect.');
+    console.error('❌ FAILED: Web platform Blob support is missing.');
     process.exit(1);
   }
 

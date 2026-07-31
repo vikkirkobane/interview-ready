@@ -13,7 +13,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import {
   useResumeQuery, useUpdateResumeMutation,
   useRewriteSectionMutation, useCreateResumeMutation, useAnalyzeJobMutation, useDeleteResumeMutation,
-  useExtractJdMutation
+  useExtractJdMutation, useParseResumeMutation
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
 import { handleApiError } from '../../src/lib/errorHandler';
@@ -236,7 +236,9 @@ export default function ResumeBuilderScreen() {
   const createResumeMutation = useCreateResumeMutation();
   const analyzeJobMutation = useAnalyzeJobMutation();
   const extractJd = useExtractJdMutation();
+  const parseResume = useParseResumeMutation();
   const deleteMutation = useDeleteResumeMutation();
+  const [isImportingResume, setIsImportingResume] = useState(false);
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
   const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
@@ -499,6 +501,111 @@ export default function ResumeBuilderScreen() {
   const { pickFile, isPicking: isJdFilePicking } = useFilePicker();
   const extractJdLoading = isJdFilePicking || extractJd.isPending;
 
+  /**
+   * Import resume file → parse with AI → auto-populate form fields.
+   * Called from the template-selection modal.
+   */
+  const handleImportResumeFile = async () => {
+    setIsImportingResume(true);
+    await pickFile({
+      type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      maxSizeMb: 5,
+      onFilePicked: async (payload) => {
+        Toast.show({ type: 'info', text1: 'Reading resume...', text2: 'AI is extracting your details.' });
+        try {
+          // 1. Upload file to storage
+          const { user } = useAuthStore.getState();
+          const userId = user?.id;
+          if (!userId) throw new Error('User not authenticated');
+          const storagePath = `resume-uploads/${userId}/${Date.now()}-${payload.fileName}`;
+          let blob: Blob;
+          if (payload.webFile) {
+            blob = payload.webFile;
+          } else {
+            const resp = await fetch(payload.fileUri);
+            blob = await resp.blob();
+          }
+          const { error: uploadError } = await supabase
+            .storage
+            .from('interview-ready-files')
+            .upload(storagePath, blob, { contentType: payload.mimeType, upsert: false });
+          if (uploadError) throw uploadError;
+
+          // 2. Parse with AI
+          const parsed = await parseResume.mutateAsync(payload);
+
+          // 3. Map parsed data → DraftResume fields
+          const importedDraft: DraftResume = {
+            templateId: selectedTemplateId || 'executive',
+            header: {
+              name: '',
+              title: parsed.current_role || '',
+              subtitle: parsed.company || '',
+              email: '',
+              phone: '',
+              linkedin: '',
+              portfolio: '',
+              location: '',
+            },
+            summary: parsed.summary || '',
+            experience: (parsed.work_history || []).map((w: any) => ({
+              id: uid(),
+              title: w.title || '',
+              company: w.company || '',
+              date_range: [w.start_date, w.current ? 'Present' : w.end_date].filter(Boolean).join(' – '),
+              location: '',
+              bullets: w.description
+                ? w.description.split('\n').map((s: string) => s.trim()).filter(Boolean)
+                : [],
+            })),
+            skills: [
+              ...(parsed.technical_skills?.length
+                ? [{ id: uid(), category: 'Technical Skills', items: parsed.technical_skills }]
+                : []),
+              ...(parsed.soft_skills?.length
+                ? [{ id: uid(), category: 'Soft Skills', items: parsed.soft_skills }]
+                : []),
+            ],
+            education: (parsed.education || []).map((e: any) => ({
+              id: uid(),
+              degree: [e.degree, e.field].filter(Boolean).join(' in '),
+              institution: e.school || '',
+              year: e.end_date || e.start_date || '',
+              note: e.gpa ? `GPA: ${e.gpa}` : undefined,
+            })),
+            certifications: [],
+            awards: [],
+            featuredProject: { include: false, name: '', tech_stack: '', bullet: '' },
+            sections_to_include: {
+              summary: !!parsed.summary,
+              skills: (parsed.technical_skills?.length > 0 || parsed.soft_skills?.length > 0),
+              experience: (parsed.work_history?.length > 0),
+              featured_project: false,
+              education: (parsed.education?.length > 0),
+              certifications: false,
+              recognition: false,
+            },
+          };
+
+          setDraft(importedDraft);
+          setIsTemplateModalVisible(false);
+          Toast.show({
+            type: 'success',
+            text1: 'Resume imported!',
+            text2: 'Review and fill in any remaining details.',
+          });
+        } catch (err: any) {
+          Toast.show({ type: 'error', text1: 'Import failed', text2: err.message || 'Please try again.' });
+        } finally {
+          setIsImportingResume(false);
+        }
+      },
+      successMessage: { text1: 'Resume parsed', text2: 'Fields have been populated from your file.' },
+    });
+    setIsImportingResume(false);
+  };
+
   const handleAttachJdFile = async () => {
     await pickFile({
       type: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
@@ -737,16 +844,27 @@ export default function ResumeBuilderScreen() {
                   )}
                 </TouchableOpacity>
 
-                {/* Attached File Info */}
+                {/* Attached File Info Badge */}
                 {jdFileName && (
                   <View style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    marginLeft: Spacing.sm
+                    marginLeft: Spacing.sm,
+                    backgroundColor: `${colors.primary}1A`, // 10% opacity primary color
+                    paddingVertical: 4,
+                    paddingHorizontal: 8,
+                    borderRadius: 12,
+                    maxWidth: '75%', // Ensure it doesn't push out of bounds
                   }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                    <TouchableOpacity onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
-                      <Ionicons name="close-circle" size={16} color={colors.error} />
+                    <Text 
+                      style={{ color: colors.primary, fontSize: 12, fontWeight: '500', marginRight: 4, flexShrink: 1 }}
+                      numberOfLines={1}
+                      ellipsizeMode="middle"
+                    >
+                      {jdFileName}
+                    </Text>
+                    <TouchableOpacity onPress={handleRemoveAttachedJd} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Ionicons name="close-circle" size={16} color={colors.primary} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -1624,6 +1742,20 @@ export default function ResumeBuilderScreen() {
             </ScrollView>
 
             <View style={styles.modalActions}>
+              {/* Import from existing resume file */}
+              <TouchableOpacity
+                style={[styles.outlineBtn, { flex: 1 }, (!selectedTemplateId || isImportingResume) && styles.btnDisabled]}
+                disabled={!selectedTemplateId || isImportingResume}
+                onPress={handleImportResumeFile}
+              >
+                {isImportingResume
+                  ? <ActivityIndicator size="small" color={colors.primary} />
+                  : <Ionicons name="cloud-upload-outline" size={18} color={colors.primary} />
+                }
+                <Text style={styles.outlineBtnText}>
+                  {isImportingResume ? 'Reading file...' : 'Import from Resume File'}
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.primaryBtn, !selectedTemplateId && styles.btnDisabled]}
                 disabled={!selectedTemplateId}

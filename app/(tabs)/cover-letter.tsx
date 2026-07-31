@@ -177,7 +177,20 @@ export default function CoverLetterGeneratorScreen() {
 
       // Use file text if available, otherwise use text input
       const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
-      const finalJobUrl = jobUrl.trim();
+      let finalJobUrl = jobUrl.trim();
+      
+      if (finalJobUrl) {
+        if (!/^https?:\/\//i.test(finalJobUrl)) {
+          finalJobUrl = `https://${finalJobUrl}`;
+        }
+        try {
+          new URL(finalJobUrl);
+        } catch {
+          setUrlError('Please enter a valid URL');
+          setGenerating(false);
+          return;
+        }
+      }
 
       // Require either text/file OR URL
       if (finalJobDescription.length === 0 && !finalJobUrl) {
