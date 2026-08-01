@@ -107,8 +107,15 @@ You MUST return a valid JSON object matching EXACTLY this structure:
 
 CRITICAL:
 - ONLY output the JSON object. Do not wrap in markdown tags like \`\`\`json.
-- The 'duration_days' should be dynamically adjusted between 7 and 30 days depending on the complexity of the missing skills.
-- Be highly specific in the 'action_items' and 'resources_to_use' rather than generic advice.`;
+- The 'duration_days' should be dynamically adjusted between 7 and 30 days depending on the complexity of the missing skills. Harder skills (e.g. distributed systems, machine learning) warrant longer roadmaps; lighter skills (e.g. a single framework) warrant shorter ones.
+- 'title' should be specific to the target role, e.g. "Senior Backend Engineer Interview Roadmap" — not generic.
+- 'overview' should summarize the plan in 2-3 sentences and reference the candidate's specific gaps.
+- Cover EACH missing skill with at least one module; do not leave any listed missing skill unaddressed.
+- 'modules' should be 3-6 modules. Allocate 4-8 hours per module on average, spread evenly across the duration.
+- 'days_allocated' ranges must be contiguous and cover the full duration (e.g. Days 1-3, Days 4-7, ...), with no gaps or overlaps.
+- 'action_items': 3-5 concrete, step-by-step actions (build a project, implement X, complete a tutorial series, practice Y). Be highly specific rather than generic advice.
+- 'resources_to_use': 2-4 real, well-known resources (official docs, specific tutorials, books, courses, practice platforms) named precisely.
+- Order modules by priority: foundational skills first, advanced/complex skills later.`;
 
     const userPrompt = `Role: ${jobApplication.job_title} at ${jobApplication.company}
 Missing Skills to Bridge:
@@ -117,7 +124,7 @@ ${missingSkills.map((s: string) => `- ${s}`).join('\n')}
 Job Description Context:
 ${jobApplication.raw_jd ? jobApplication.raw_jd.substring(0, 3000) : 'No JD provided.'}
 
-Generate a comprehensive roadmap to bridge these gaps.`;
+Generate a comprehensive roadmap to bridge these gaps. Ensure every missing skill listed above is covered by at least one module.`;
 
     const roadmap = await aiClient.callWithJson(
       systemPrompt,

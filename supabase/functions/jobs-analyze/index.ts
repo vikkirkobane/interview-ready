@@ -151,7 +151,7 @@ app.post('/*', async (c: any) => {
     // This is a valid use-case (base resume, generic cover letter, etc.).
 
     // Call AI to analyze job
-    const systemPrompt = `You are an expert career coach and ATS (Applicant Tracking System) specialist. 
+    const systemPrompt = `You are an expert career coach and ATS (Applicant Tracking System) specialist.
 Analyze the provided job description and return a comprehensive JSON response.
 
 You MUST return a valid JSON object matching EXACTLY this structure:
@@ -191,13 +191,21 @@ You MUST return a valid JSON object matching EXACTLY this structure:
 CRITICAL:
 - ONLY output the JSON object. Do not wrap in markdown tags like \`\`\`json.
 - Strictly adhere to the enums provided above.
+- 'salary_min'/'salary_max'/'salary_currency': use null when the salary is not mentioned in the listing. When the listing gives a range, use the lower and upper bounds in numbers (e.g. 60000, 80000). Normalize the currency to ISO code (USD, KES, EUR, GBP, etc.).
+- 'remote_option': infer from the listing. Use null when it is not specified.
+- 'key_responsibilities', 'required_skills', 'preferred_skills', 'nice_to_haves', 'culture_signals', 'red_flags': extract directly and faithfully from the listing. Do not invent requirements that are not present.
+- 'required_skills' proficiency should be inferred from the wording (e.g. "fluent in", "expert", "5+ years" → ADVANCED/EXPERT; "basic knowledge" → BEGINNER).
+- 'recommendation_level' and 'fit_score' should be realistic and calibrated against the candidate's actual profile — avoid inflated scores.
+- 'top_3_strengths' and 'top_3_gaps' must be specific and evidence-based, drawn from the candidate profile and the job requirements.
 ${input.user_profile ? `
 Additionally, you have been provided with the candidate's profile. You MUST cross-reference the candidate's profile against the job description to generate:
-- 'fit_score': A realistic score from 0-100 indicating how well the candidate fits the role.
-- 'missing_bonus_skills': Skills mentioned in the JD that the candidate lacks. Format as an array of objects with a 'skill' property.
+- 'fit_score': A realistic score from 0-100 indicating how well the candidate fits the role. Score honestly: missing core requirements should lower the score significantly; only a candidate who meets the majority of hard requirements should exceed 80.
+- 'missing_bonus_skills': Skills mentioned in the JD that the candidate lacks. Format as an array of objects with a 'skill' property. If no gaps exist, return an empty array.
 - 'match_analysis': A granular breakdown of how their background matches the requirements. Provide 3-4 items. Each item MUST include 'title', 'description', 'score_percentage' (0-100), and a 'type' of 'SUCCESS' (100% Match), 'WARNING' (Partial Match), 'PRIMARY' (Bonus Multiplier), or 'INFO' (Neutral).
+- 'top_3_strengths': the strongest, most verifiable matches between the candidate and the role.
+- 'top_3_gaps': the most important missing skills or experience relative to the role.
 ` : `
-Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skills', and 'match_analysis' blank or null.
+Since no candidate profile was provided, leave 'fit_score', 'missing_bonus_skills', 'match_analysis', 'top_3_strengths', and 'top_3_gaps' blank or null.
 `}`;
 
     const userPrompt = `Analyze this job description:\n\n${actualJobDescription}\n\n${

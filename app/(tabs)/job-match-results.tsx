@@ -70,7 +70,14 @@ export default function JobMatchResultsScreen() {
     setIsDownloading(true);
     try {
       const roadmapResult = await generateRoadmap.mutateAsync({ job_id: id as string });
-      await exportRoadmapPDF(roadmapResult.data);
+      const candidateName = user?.user_metadata?.full_name
+        || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim()
+        || '';
+      await exportRoadmapPDF(roadmapResult.data, {
+        candidateName,
+        jobTitle: jobApplication?.job_title || '',
+        company: jobApplication?.company || '',
+      });
       Toast.show({ type: 'success', text1: 'Roadmap Downloaded', text2: 'Your personalized skill roadmap has been downloaded.' });
     } catch (e: any) {
       handleApiError(e.message, { fallbackTitle: 'Failed to generate roadmap' });

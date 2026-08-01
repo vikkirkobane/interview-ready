@@ -15,8 +15,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';
-import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation } from '../../src/hooks/useApi';
+import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation, useInterviewQuery } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { exportInterviewReportPDF } from '../../src/lib/interviewExport';
 import Toast from 'react-native-toast-message';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -24,7 +25,7 @@ import { Image } from 'expo-image';
 
 export default function FeedbackScreen() {
   const router = useRouter();
-  const { sessionId, id, fromList } = useLocalSearchParams();
+  const { sessionId, id, fromList, duration } = useLocalSearchParams();
   const actualSessionId = (sessionId || id) as string;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
@@ -36,8 +37,10 @@ export default function FeedbackScreen() {
   
   const [feedbackData, setFeedbackData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [downloading, setDownloading] = React.useState(false);
   const feedbackMutation = useInterviewFeedbackMutation();
   const deleteMutation = useDeleteMockInterviewMutation();
+  const { data: interviewRecord } = useInterviewQuery(actualSessionId);
 
   // Animation values
   const [slideAnim1] = useState(() => new Animated.Value(20));
@@ -54,7 +57,8 @@ export default function FeedbackScreen() {
       }
       try {
         const res = await feedbackMutation.mutateAsync({
-          session_id: actualSessionId
+          session_id: actualSessionId,
+          duration: duration ? Number(duration) : undefined,
         });
         setFeedbackData(res.feedback);
       } catch (e: any) {
@@ -131,6 +135,26 @@ export default function FeedbackScreen() {
         }
       ]
     );
+  };
+
+  const handleDownloadReport = async () => {
+    if (!feedbackData) return;
+    setDownloading(true);
+    try {
+      const candidateName = user?.user_metadata?.full_name
+        || `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim()
+        || '';
+      await exportInterviewReportPDF(interviewRecord || {}, feedbackData, {
+        candidateName,
+        role: interviewRecord?.role || '',
+        company: interviewRecord?.company || '',
+      });
+      Toast.show({ type: 'success', text1: 'Report Downloaded', text2: 'Your interview report PDF has been generated.' });
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Download Failed', text2: e.message });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const overallScore = feedbackData?.overall_score || 0;
@@ -245,6 +269,68 @@ export default function FeedbackScreen() {
 
         </Animated.View>
 
+        {/* Interview Summary */}
+        {feedbackData?.interview_summary ? (
+          <Animated.View style={[styles.summaryCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border, opacity: fadeAnim, transform: [{ translateY: slideAnim3 }] }]}>
+            <View style={styles.feedbackHeader}>
+              <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+              <Text style={[styles.feedbackHeaderTitle, { color: colors.textPrimary }]}>Interview Summary</Text>
+            </View>
+            <Text style={[styles.summaryBody, { color: colors.textBody }]}>{feedbackData.interview_summary}</Text>
+          </Animated.View>
+        ) : null}
+
+        {/* Question-by-Question Feedback */}
+        {Array.isArray(feedbackData?.question_feedback) && feedbackData.question_feedback.length > 0 ? (
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim3 }] }}>
+            <View style={styles.feedbackHeader}>
+              <Ionicons name="chatbox-ellipses-outline" size={18} color={colors.primary} />
+              <Text style={[styles.feedbackHeaderTitle, { color: colors.textPrimary }]}>Question-by-Question Feedback</Text>
+            </View>
+            <View style={styles.questionList}>
+              {feedbackData.question_feedback.map((q: any, index: number) => (
+                <View key={index} style={[styles.questionCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
+                  <View style={styles.questionCardHeader}>
+                    <Text style={[styles.questionCardLabel, { color: colors.primary }]}>Question {index + 1}</Text>
+                    <View style={[styles.questionScoreBadge, { backgroundColor: `${q.score >= 80 ? colors.success : q.score >= 60 ? colors.warning : colors.error}1A` }]}>
+                      <Text style={[styles.questionScoreText, { color: q.score >= 80 ? colors.success : q.score >= 60 ? colors.warning : colors.error }]}>
+                        {q.score}/100
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.questionText, { color: colors.textPrimary }]}>{q.question}</Text>
+                  <Text style={[styles.questionAnswer, { color: colors.textBody }]}>
+                    <Text style={{ fontWeight: '700', color: colors.textPrimary }}>Your answer: </Text>
+                    {q.answer}
+                  </Text>
+                  <Text style={[styles.questionFeedback, { color: colors.primary }]}>
+                    <Text style={{ fontWeight: '700' }}>Feedback: </Text>
+                    {q.feedback}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        ) : null}
+
+        {/* Suggested Follow-Up Topics */}
+        {Array.isArray(feedbackData?.suggested_follow_up) && feedbackData.suggested_follow_up.length > 0 ? (
+          <Animated.View style={[styles.followUpCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border, opacity: fadeAnim, transform: [{ translateY: slideAnim4 }] }]}>
+            <View style={styles.feedbackHeader}>
+              <Ionicons name="trending-up" size={18} color={colors.success} />
+              <Text style={[styles.feedbackHeaderTitle, { color: colors.textPrimary }]}>Suggested Follow-Up Topics</Text>
+            </View>
+            <View style={styles.listContent}>
+              {feedbackData.suggested_follow_up.map((topic: string, index: number) => (
+                <View key={index} style={styles.listItem}>
+                  <Ionicons name="ellipse" size={8} color={colors.success} style={{ marginTop: 6, marginRight: Spacing.sm }} />
+                  <Text style={[styles.listItemText, { color: colors.textBody }]}>{topic}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        ) : null}
+
         {/* CTA Section */}
         <Animated.View style={[styles.ctaSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim4 }] }]}>
           <Pressable 
@@ -258,10 +344,14 @@ export default function FeedbackScreen() {
 
           <Pressable 
             style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
-            
-            onPress={() => Toast.show({ type: 'info', text1: 'Downloading Report', text2: 'Your PDF report is being generated.' })}
+            onPress={handleDownloadReport}
+            disabled={downloading}
           >
-            <Ionicons name="download-outline" size={20} color={colors.textPrimary} />
+            {downloading ? (
+              <ActivityIndicator size="small" color={colors.textPrimary} />
+            ) : (
+              <Ionicons name="download-outline" size={20} color={colors.textPrimary} />
+            )}
             <Text style={[styles.secondaryBtnText, { color: colors.textPrimary }]}>Download Report</Text>
           </Pressable>
 
@@ -463,6 +553,75 @@ const styles = StyleSheet.create({
   },
   feedbackItemBody: {
     ...Typography.bodySm,
+  },
+  summaryCard: {
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+  },
+  summaryBody: {
+    ...Typography.bodyMd,
+    lineHeight: 22,
+    marginTop: Spacing.sm,
+  },
+  questionList: {
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  questionCard: {
+    padding: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    ...Shadow.sm,
+  },
+  questionCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  questionCardLabel: {
+    ...Typography.headingMd,
+    fontWeight: '700',
+  },
+  questionScoreBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+  },
+  questionScoreText: {
+    ...Typography.label,
+    fontWeight: '700',
+  },
+  questionText: {
+    ...Typography.bodyMd,
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  questionAnswer: {
+    ...Typography.bodyMd,
+    marginBottom: Spacing.xs,
+  },
+  questionFeedback: {
+    ...Typography.bodyMd,
+  },
+  followUpCard: {
+    padding: Spacing.lg,
+    borderRadius: Radius.xl,
+    borderWidth: 1,
+  },
+  listContent: {
+    gap: Spacing.sm,
+    marginTop: Spacing.sm,
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  listItemText: {
+    ...Typography.bodyMd,
+    flex: 1,
+    lineHeight: 22,
   },
   ctaSection: {
     flexDirection: Platform.OS === 'web' ? 'row' : 'column',

@@ -29,6 +29,17 @@ app.post('/*', async (c: any) => {
       throw new ValidationError('Missing interview_id query parameter');
     }
 
+    // Read optional duration sent by the client
+    let durationSeconds: number | null = null;
+    try {
+      const body = await c.req.json().catch(() => ({}));
+      if (typeof body?.duration_seconds === 'number') {
+        durationSeconds = Math.max(0, Math.round(body.duration_seconds));
+      }
+    } catch {
+      // body parsing is optional — ignore
+    }
+
     // Fetch existing interview
     const { data: interview, error: fetchError } = await client
       .from('mock_interviews')
@@ -52,10 +63,19 @@ app.post('/*', async (c: any) => {
       throw new ValidationError('Interview is too short to generate meaningful feedback');
     }
 
+    const difficulty = (interview.difficulty || 'INTERMEDIATE').toUpperCase();
+
     const systemPrompt = `You are an expert technical recruiter and interviewer evaluator.
 Review the provided mock interview transcript. Provide comprehensive, structured feedback using the provided JSON schema.
-Evaluate the candidate strictly against the provided Role, Interview Type, and Job Description.
+Evaluate the candidate strictly against the provided Role, Interview Type, Difficulty, and Job Description.
 Be highly objective, critical, and specific. Do not flatter the candidate. Point out exactly where they lacked depth, clarity, or technical accuracy.
+
+Calibration guidance:
+- A ${difficulty}-level interview demands ${difficulty === 'SENIOR' ? 'advanced, nuanced answers with trade-off reasoning, architectural judgment, and leadership signals. Only excellent, specific answers should score 80+.'
+: difficulty === 'BEGINNER' ? 'solid foundational answers with basic examples. Correct, clear answers can score 80+; advanced depth is a bonus.'
+: 'solid mid-level answers with concrete examples and sound reasoning. Strong, specific answers score 80+.'}
+- Score each answer 0-100 against what a strong candidate at ${difficulty} difficulty would say, not against a perfect answer.
+- 'overall_score' should be a weighted, honest summary of the per-question scores — not inflated. Reserve 80+ for a genuinely strong interview.
 
 Respond ONLY with a raw, valid JSON object matching this schema exactly (no markdown formatting, no comments, just the JSON):
 {
@@ -72,11 +92,17 @@ Respond ONLY with a raw, valid JSON object matching this schema exactly (no mark
   "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
   "areas_for_improvement": ["<area 1>", "<area 2>", "<area 3>"],
   "question_feedback": [
-    { "question": "<question text>", "answer": "<candidate's answer>", "score": <number 0-100>, "feedback": "<specific feedback for this question>" }
+    { "question": "<the interviewer's question>", "answer": "<the candidate's answer>", "score": <number 0-100>, "feedback": "<specific, constructive feedback for this question>" }
   ],
-  "interview_summary": "<Overall constructive summary of the candidate's performance>",
+  "interview_summary": "<Overall constructive summary of the candidate's performance, referencing specific moments from the transcript>",
   "suggested_follow_up": ["<follow-up question or topic 1>", "<follow-up question or topic 2>"]
-}`;
+}
+
+Question-feedback pairing rules:
+- Walk through the transcript turn by turn. Pair each Interviewer question with the Candidate answer that follows it.
+- If the interviewer asks a follow-up, treat that exchange as part of the same question block.
+- Only include pairs where there is both a question and a candidate answer. Provide as many pairs as the transcript supports.
+- 'question' must be the exact/near-exact interviewer question text, and 'answer' the candidate's response.`;
 
     const conversationHistory = messages.map(m => `${m.role === 'user' ? 'Candidate' : 'Interviewer'}: ${m.content}`).join('\n\n');
     
@@ -86,7 +112,8 @@ Respond ONLY with a raw, valid JSON object matching this schema exactly (no mark
 
     const userPrompt = `Interview ID: ${interviewId}
 Role: ${interview.role}${interview.company ? ` at ${interview.company}` : ''}
-Interview Type: ${interview.interview_type}${jdContext}
+Interview Type: ${interview.interview_type}
+Difficulty: ${difficulty}${jdContext}
     
 Interview Transcript:
 ${conversationHistory}
@@ -112,6 +139,7 @@ Generate structured feedback.`;
         strengths: feedbackData.strengths || [],
         improvements: feedbackData.areas_for_improvement || [],
         detailed_feedback: feedbackData,
+        ...(durationSeconds !== null ? { duration_seconds: durationSeconds } : {}),
         completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

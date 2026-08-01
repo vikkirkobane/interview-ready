@@ -27,7 +27,6 @@ export default function AskAIScreen() {
   const [isTyping, setIsTyping] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [jdFileText, setJdFileText] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jdFileName, setJdFileName] = useState<string | null>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -67,31 +66,36 @@ export default function AskAIScreen() {
   };
 
   const handleSend = async () => {
-    // Determine final question: use file text if available, otherwise input text
-    const finalQuestion = jdFileText.trim().length > 0 ? jdFileText : inputText.trim();
+    const question = inputText.trim();
+    const fileContext = jdFileText.trim();
 
-    if (!finalQuestion) {
+    if (!question && !fileContext) {
       Toast.show({ type: 'error', text1: 'Question Required', text2: 'Please provide a question via text or file attachment.' });
       return;
     }
 
-    // Extract URL from question if present
+    // If only a file is attached, ask the AI to analyze it thoroughly.
+    const effectiveQuestion = question || 'Please analyze the attached document thoroughly and provide a clear, detailed summary of the key points, requirements, and anything notable.';
+
+    // Extract URL from question or file text if present
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = finalQuestion.match(urlRegex);
+    const urls = (question || fileContext).match(urlRegex);
     const extractedUrl = urls ? urls[0] : undefined;
 
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: finalQuestion };
+    const userMsgText = question || `[Analyze attached file: ${jdFileName || 'document'}]`;
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: userMsgText };
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
-    setJdFileText(''); // Clear file text after send to prevent stale data on next message
-    setJdFileName(null);
+    // Keep the attached file so the user can ask follow-up questions about it.
     setIsTyping(true);
 
     try {
       const response = await answerQuestionMutation.mutateAsync({
-        question: userMsg.text,
+        question: effectiveQuestion,
         context_source: 'profile',
         job_url: extractedUrl,
+        file_context: fileContext || undefined,
       });
 
       const aiMsg: Message = {
@@ -163,7 +167,6 @@ onFilePicked: async (payload) => {
     });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleRemoveAttachedJd = () => {
     setJdFileText('');
     setJdFileName(null);
@@ -263,6 +266,17 @@ onFilePicked: async (payload) => {
             paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
           }
         ]}>
+          {jdFileText.trim().length > 0 && (
+            <View style={[styles.attachedChip, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <Ionicons name="document-attach-outline" size={16} color={colors.primary} />
+              <Text style={[styles.attachedChipText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {jdFileName || 'Attached document'}
+              </Text>
+              <Pressable onPress={handleRemoveAttachedJd} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+              </Pressable>
+            </View>
+          )}
           <View style={styles.inputRow}>
             <Pressable
               style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}
@@ -378,6 +392,23 @@ const styles = StyleSheet.create({
   inputArea: {
     padding: Spacing.md,
     borderTopWidth: 1,
+  },
+  attachedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    maxWidth: 768,
+    width: '100%',
+    alignSelf: 'center',
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  attachedChipText: {
+    ...Typography.bodyMd,
+    flex: 1,
   },
   inputRow: {
     flexDirection: 'row',

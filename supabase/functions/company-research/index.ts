@@ -127,11 +127,44 @@ Be thorough and extract as much factual data as possible.`,
     }
 
     // Step 2: AI deep analysis
-    const systemPrompt = `You are a senior career strategist and business analyst helping a job seeker research a company before an interview or job application.
-Your job is to provide a comprehensive, insightful company research report based on the scraped data provided.
-Focus on what matters most to a job seeker: culture fit, growth trajectory, interview preparation, and smart questions to ask.
-Always be honest — flag potential red flags if you see them.
-Return ONLY valid JSON matching the exact schema provided. No markdown, no code fences.`;
+    const systemPrompt = `You are a senior career strategist and business intelligence analyst helping a job seeker research a company before an interview or job application.
+
+Your job is to produce a comprehensive, insightful company research report from the scraped website data provided. Focus on what matters most to a job seeker: culture fit, growth trajectory, interview preparation, and smart questions to ask.
+
+STRICT OUTPUT RULES:
+1. Return ONLY valid JSON. No markdown, no code fences, no commentary outside the JSON object.
+2. Every required field must be present and non-empty. If a piece of data is unknown, use a concise, professional placeholder such as "Not publicly disclosed" — never invent facts, and never omit a required field.
+3. Use proper capitalization everywhere: company name in Title Case (e.g. "Vercel", "Stripe"), people/place names capitalized, and every sentence capitalized. Do not return lowercase names or text.
+4. Be honest and balanced. Flag genuine red flags if you see them; if you see none, return an empty array [].
+5. Keep list items concise, specific, and free of promotional fluff. Use full sentences for overview, culture, mission, and verdict fields.
+6. Scores must be integers between 0 and 100. Base them on concrete signals from the data.
+7. Base everything on the scraped data first, then reasonable domain knowledge. Never state speculation as fact.
+
+EXAMPLE OF THE REQUIRED OUTPUT SHAPE:
+{
+  "company_name": "Stripe",
+  "tagline": "Online payment processing for internet businesses",
+  "overview": "Stripe is a technology company that builds economic infrastructure for the internet. Its payments platform serves businesses of every size...",
+  "industry": "Fintech / Payments",
+  "company_size": "5,000+ employees",
+  "headquarters": "Dublin, Ireland",
+  "founded": "2010",
+  "business_model": "Payments SaaS — revenue from transaction fees",
+  "key_products_services": ["Payments", "Billing", "Connect"],
+  "mission_values": "To increase the GDP of the internet...",
+  "recent_news": [{ "headline": "Stripe launches new tool", "summary": "..." }],
+  "financials": "Privately held, valued at $65B",
+  "culture_insights": "Fast-paced, engineering-led...",
+  "tech_stack": ["Ruby", "Go", "React"],
+  "competitors": ["Adyen", "PayPal", "Square"],
+  "growth_signals": ["Rapid revenue growth", "Global expansion"],
+  "red_flags": [],
+  "interview_talking_points": ["...", "..."],
+  "smart_questions_to_ask": ["...", "..."],
+  "cultural_fit_score": 78,
+  "opportunity_score": 85,
+  "summary_verdict": "A strong opportunity for candidates who value high-growth engineering culture..."
+}`;
 
     const userPrompt = `Company URL: ${company_url}
 ${context ? `User Context: ${context}` : ''}
@@ -141,12 +174,12 @@ ${JSON.stringify(scrapedData, null, 2)}
 
 Perform a thorough company research analysis and return a JSON object with these exact fields:
 {
-  "company_name": "string — the company name",
+  "company_name": "string — the company name in Title Case",
   "tagline": "string — their main tagline or value proposition",
   "overview": "string — 2-3 sentence company overview",
-  "industry": "string",
+  "industry": "string — their sector",
   "company_size": "string — e.g. '51-200 employees' or 'Enterprise'",
-  "headquarters": "string",
+  "headquarters": "string — HQ city and country",
   "founded": "string — year if known",
   "business_model": "string — how they make money (SaaS, marketplace, services, etc.)",
   "key_products_services": ["array of their main offerings"],
@@ -157,7 +190,7 @@ Perform a thorough company research analysis and return a JSON object with these
   "tech_stack": ["array of technologies they use"],
   "competitors": ["array of main competitors"],
   "growth_signals": ["array of positive growth indicators"],
-  "red_flags": ["array of potential concerns — be honest, can be empty array []"],
+  "red_flags": ["array of potential concerns — be honest, can be an empty array []"],
   "interview_talking_points": ["array of 5-7 things the user should bring up or demonstrate knowledge of in an interview"],
   "smart_questions_to_ask": ["array of 5 insightful questions the user should ask the interviewer"],
   "cultural_fit_score": number 0-100 based on signals,
@@ -169,7 +202,7 @@ Perform a thorough company research analysis and return a JSON object with these
       systemPrompt,
       userPrompt,
       CompanyResearchOutputSchema,
-      { max_tokens: 3000, temperature: 0.4 }
+      { max_tokens: 4000, temperature: 0.4 }
     );
 
     await deductCredits(user.id, 'COMPANY_RESEARCH');

@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
 import { CoverLetter } from '../types/schemas';
 import { buildCoverLetterHTML } from './coverLetterHTML';
+import { buildFileName, renameToCache, downloadBlob } from './exportUtils';
 
 declare let window: any;
-declare let document: any;
 
 // Helper for dynamic imports on native vs web
 let printToFileAsync: any;
@@ -30,7 +30,7 @@ try {
 
 export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
   const html = buildCoverLetterHTML(cl);
-  const filename = `${cl.header.candidate_name.replace(/\s+/g, '_')}_Cover_Letter.pdf`;
+  const filename = buildFileName(cl.header?.candidate_name, 'Cover_Letter', 'pdf');
 
   if (Platform.OS === 'web') {
     const win = window.open('', '_blank');
@@ -46,7 +46,8 @@ export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
       throw new Error('PDF export requires expo-print and expo-sharing.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
+    const namedUri = await renameToCache(uri, filename);
+    await shareAsync(namedUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
   }
 }
 
@@ -109,18 +110,11 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
     children.push(new Paragraph({ children: [new TextRun({ text: cl.sign_off.name, bold: true, size: 22 })] }));
 
     const doc = new Document({ sections: [{ properties: {}, children }] });
-    const filename = `${h.candidate_name.replace(/\s+/g, '_')}_Cover_Letter.docx`;
+    const filename = buildFileName(h.candidate_name, 'Cover_Letter', 'docx');
 
     if (Platform.OS === 'web') {
       const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
     } else {
       if (!shareAsync) {
         throw new Error('DOCX export requires expo-sharing.');

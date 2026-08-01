@@ -38,22 +38,22 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
 <body>
 
   <!-- HEADER -->
-  <div class="name">${h.candidate_name}</div>
-  <div class="contact">${contactParts.join(' &nbsp;·&nbsp; ')}</div>
+  <div class="name">${h.candidate_name || ''}</div>
+  ${contactParts.length > 0 ? `<div class="contact">${contactParts.join(' &nbsp;·&nbsp; ')}</div>` : ''}
   <hr>
 
   <!-- DATE & RECIPIENT -->
-  <div class="date">${h.date}</div>
+  ${h.date ? `<div class="date">${h.date}</div>` : ''}
   <div class="recip" style="margin-top:12pt;">
     ${h.hiring_manager
       ? `<div class="recip-name">${h.hiring_manager}</div>` : ''}
-    <div><strong>${h.company_name}</strong></div>
+    <div><strong>${h.company_name || ''}</strong></div>
     ${h.company_address
       ? `<div>${h.company_address}</div>` : ''}
   </div>
 
   <!-- SALUTATION -->
-  <div class="salutation">${cl.salutation}</div>
+  ${cl.salutation ? `<div class="salutation">${cl.salutation}</div>` : ''}
 
   <!-- BODY PARAGRAPHS -->
   <div class="para">${p.opening?.text || ''}</div>
@@ -62,11 +62,13 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
   <div class="para">${p.closing?.text || ''}</div>
 
   <!-- SIGN-OFF -->
-  <div class="signoff">${cl.sign_off?.closing_phrase || ''}</div>
-  <div class="signname">${cl.sign_off?.name || ''}</div>
+  ${cl.sign_off?.closing_phrase ? `<div class="signoff">${cl.sign_off.closing_phrase}</div>` : ''}
+  ${cl.sign_off?.name ? `<div class="signname">${cl.sign_off.name}</div>` : ''}
 
+  ${contactParts.length > 0 ? `
   <!-- OPTIONAL FOOTER -->
   <div class="footer">${contactParts.join(' &nbsp;·&nbsp; ')}</div>
+  ` : ''}
 
 </body>
 </html>`;

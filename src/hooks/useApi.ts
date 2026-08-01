@@ -297,8 +297,8 @@ export const useStartInterviewMutation = () => {
 
 export const useInterviewMessageMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { session_id: string; content: string }) => {
-      const response = await apiCall(`interviews-message`, 'POST', { interview_id: payload.session_id, content: payload.content });
+    mutationFn: async (payload: { session_id: string; content: string; file_context?: string }) => {
+      const response = await apiCall(`interviews-message`, 'POST', { interview_id: payload.session_id, content: payload.content, file_context: payload.file_context });
       if (response.error) throw new Error(response.error);
       return response.data; // { message, question_count, status }
     },
@@ -307,8 +307,10 @@ export const useInterviewMessageMutation = () => {
 
 export const useInterviewFeedbackMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { session_id: string }) => {
-      const response = await apiCall(`interviews-feedback?interview_id=${payload.session_id}`, 'POST', {});
+    mutationFn: async (payload: { session_id: string; duration?: number }) => {
+      const response = await apiCall(`interviews-feedback?interview_id=${payload.session_id}`, 'POST', {
+        duration_seconds: payload.duration || null,
+      });
       if (response.error) throw new Error(response.error);
       return response.data; // { feedback, message }
     },
@@ -597,7 +599,7 @@ export const useAutofillMutation = () => {
 
 export const useAnswerQuestionMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { question: string; context_source: 'profile' | 'resume'; resume_id?: string; job_url?: string }) => {
+    mutationFn: async (payload: { question: string; context_source: 'profile' | 'resume'; resume_id?: string; job_url?: string; file_context?: string }) => {
       const response = await apiCall('answer-question', 'POST', payload);
       if (response.error) throw new Error(response.error);
       return response.data; // { answer: string }

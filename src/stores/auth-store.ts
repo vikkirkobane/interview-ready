@@ -115,7 +115,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email, password, firstName = '', lastName = '') => {
     set({ loading: true });
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -126,16 +126,30 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       },
     });
     set({ loading: false });
+
+    // If a session is returned immediately (email confirmation disabled),
+    // store it so callers can route without waiting for onAuthStateChange.
+    if (data?.session) {
+      set({ session: data.session, user: data.session.user });
+    }
+
     return { error: error?.message ?? null };
   },
 
   signIn: async (email, password) => {
     set({ loading: true });
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     set({ loading: false });
+
+    // Set the session synchronously so the screen can route immediately
+    // instead of depending on async onAuthStateChange timing.
+    if (data?.session) {
+      set({ session: data.session, user: data.session.user });
+    }
+
     return { error: error?.message ?? null };
   },
 
@@ -221,6 +235,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true });
     const { error } = await signInWithGoogle();
     set({ loading: false });
+
+    // Sync the resulting session into the store immediately so callers can
+    // route right away (onAuthStateChange is async and may lag behind).
+    if (!error) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        set({ session, user: session.user });
+      }
+    }
+
     return { error };
   },
 

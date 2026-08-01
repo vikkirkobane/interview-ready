@@ -1,5 +1,5 @@
 import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing } from '../../src/theme/tokens';
@@ -13,12 +13,26 @@ export default function LoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signIn, loading, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
+  const { signIn, loading, session, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  // Route as soon as a session lands — covers OAuth flows (LinkedIn/Google)
+  // where the session is delivered asynchronously via deep-link callback.
+  useEffect(() => {
+    if (session) {
+      const isCompleted = session.user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   const handleLogin = async () => {
     setError('');
@@ -69,8 +83,8 @@ export default function LoginScreen() {
     if (authError) {
       setError(authError);
     }
-    // Note: Do not synchronously navigate here.
-    // The OAuth deep link callback (auth/callback.tsx) will handle the redirect.
+    // Routing is handled by the session-watcher effect above (OAuth delivers
+    // the session asynchronously, either inline on iOS or via deep link on Android).
   };
 
   return (

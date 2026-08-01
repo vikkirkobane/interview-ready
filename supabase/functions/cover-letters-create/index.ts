@@ -179,7 +179,103 @@ DOCX and PDF cover letter files.
 
 Every field in the JSON must be complete and accurate. If data is unavailable, use
 an empty string "" — never omit a key. The word count in meta.word_count must
-reflect the actual body word count (header and salutation excluded).
+reflect the actual body word count (header and salutation excluded), and each
+paragraph's word_count must reflect that paragraph's own word count.
+
+──────────────────────────────────────────────────────────
+PROFESSION DETECTION & TONE CALIBRATION
+──────────────────────────────────────────────────────────
+Detect the candidate's profession from the target role, resume, and job description,
+and calibrate the tone accordingly:
+- Engineering / Tech: confident, precise — technical depth, delivery, ownership
+- Medicine / Healthcare: warm, patient-centred — outcomes, empathy, compliance
+- Law / Legal: formal, measured — analytical rigour, outcomes
+- Finance / Accounting: precise, authoritative — numbers, risk, returns
+- Education / Academia: passionate, nurturing — outcomes, research impact
+- Creative / Design: energetic, expressive — portfolio, brand impact
+- Business / Management: strategic, results-oriented — leadership, P&L, influence
+- Science / Research: methodical, curious — methodology, publications
+- NGO / Non-Profit: mission-driven, collaborative — social impact, community
+- Sales / Marketing: energetic, persuasive — revenue, growth, pipeline
+- Trades / Technical: practical, reliable — certification, safety, project scale
+Follow the requested "Target tone" first (Professional / Enthusiastic / Concise /
+Storytelling / Formal). When the target tone is generic, let the profession's natural
+tone guide the writing.
+
+──────────────────────────────────────────────────────────
+PARAGRAPH-LEVEL RULES (follow strictly)
+──────────────────────────────────────────────────────────
+Opening (2–3 sentences, 40–60 words):
+- Hook the reader in sentence 1: name the specific role + company + ONE concrete
+  reason this is the right fit. Do NOT open with "I am writing to apply for...",
+  "I am excited to apply for the position of...", or "I came across this opportunity
+  and...". Instead open with a confident, specific statement of fit.
+
+Body 1 — Relevant Experience (3–5 sentences, 90–120 words):
+- Lead with the most relevant experience (not necessarily the most recent).
+- Name the specific tools, methods, environments, or scales the job description asks for.
+- Include at least one metric or scope signal (team size, budget, %, users, revenue).
+- Mirror the job description's exact phrasing where possible ("end-to-end delivery",
+  not "handling things from start to finish").
+- Do not summarise the resume — tell the story the resume cannot tell.
+
+Body 2 — Achievements & Value (3–5 sentences, 90–120 words):
+- Feature one or two specific, verifiable achievements: [What you did] + [How you did it]
+  + [What it produced].
+- If no hard metrics exist, use scope signals ("across 12 enterprise clients",
+  "for an audience of 50,000 users").
+- Show personality — this is where the human behind the CV becomes visible.
+- Tie the achievement back to the company's context and the role's challenges.
+
+Closing (2–3 sentences, 40–60 words):
+- Reaffirm enthusiasm for THIS role at THIS company, not generic excitement.
+- State availability for interview ("I would welcome the opportunity to discuss...").
+- End with a confident, warm call to action — not a plea.
+
+Word count targets: Opening 40–60 · Body 1 90–120 · Body 2 90–120 · Closing 40–60.
+Total body (opening + body_1 + body_2 + closing) must be 280–380 words.
+
+──────────────────────────────────────────────────────────
+KEYWORD EXTRACTION & INJECTION (ATS)
+──────────────────────────────────────────────────────────
+1. Extract the most relevant keywords from the job description: hard requirements
+   (tools, licences, methods, systems), soft/culture signals ("collaborative",
+   "fast-paced"), and action language the employer uses ("drive", "lead", "build",
+   "deliver", "grow").
+2. Inject them naturally into full sentences — never list them. Distribute them
+   across paragraphs (opening 2–3, body 1 4–6, body 2 2–4, closing 1–2).
+3. Populate meta.ats_keywords_used with every keyword actually injected.
+4. Never repeat the same keyword more than twice across the whole letter.
+5. Mirror the employer's exact phrasing where possible.
+
+──────────────────────────────────────────────────────────
+VOICE & QUALITY RULES
+──────────────────────────────────────────────────────────
+- Match the candidate's natural vocabulary level. A junior applicant should not
+  sound like a seasoned executive; a tradesperson should not sound like a lawyer.
+- Enthusiasm must be earned by specifics, not performed by adjectives:
+  "I'm excited because [specific reason]" is stronger than "I am deeply passionate
+  about this opportunity".
+- If a company description is provided, reference something specific about their
+  mission, product, or culture. If not, reference the role requirements instead.
+- Delete any sentence that could apply to any other company or role unchanged.
+- NEVER use these clichés: "passion for excellence", "results-driven",
+  "proven track record", "team player", "goes above and beyond",
+  "think outside the box", "dynamic professional", "leverage synergies",
+  "value-add", "hard-working individual", "I am confident I would be a great fit",
+  "please find my CV attached", "do not hesitate to contact me".
+
+──────────────────────────────────────────────────────────
+SALUTATION & SIGN-OFF
+──────────────────────────────────────────────────────────
+- Salutation: if a hiring manager name is provided, use "Dear [Name],"
+  (e.g. "Dear Ms. Johnson,"). Otherwise always use "Dear Hiring Manager," —
+  never leave the salutation empty.
+- Sign-off closing_phrase: a natural professional close such as "Sincerely,",
+  "Best regards,", or "Warm regards,".
+- sign_off.name must be the candidate's full name.
+- header.date must be the exact "Today's Date" provided in the request.
+- header.linkedin and header.portfolio: display URL only, without "https://".
 
 You MUST output exactly this JSON structure and nothing else:
 {
@@ -219,6 +315,10 @@ You MUST output exactly this JSON structure and nothing else:
     const fullName = `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || 'Candidate';
     const email = user.email || '';
 
+    const today = new Date().toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    });
+
     const userPrompt = `CANDIDATE INFORMATION:
 
 Full Name: ${fullName}
@@ -228,6 +328,7 @@ LinkedIn: ${profile?.linkedin_url || ''}
 Portfolio / Website: ${profile?.portfolio_url || ''}
 Location: ${profile?.location || ''}
 Current Title: ${profile?.current_role || ''}
+Today's Date (use this EXACT date in header.date): ${today}
 
 RESUME SUMMARY OR KEY EXPERIENCE:
 ${resumeText || profile?.resume_raw_text || profile?.summary || ''}
@@ -243,9 +344,11 @@ Company Description (optional):
 Hiring Manager Name (optional): 
 Job Description: ${jobDescriptionText}
 
+Target Tone: ${input.tone}
+
 ADDITIONAL CONTEXT (optional):
 Why does this candidate want THIS company specifically? 
-Any industry, cultural, or geographic context? Target tone: ${input.tone}`;
+Any industry, cultural, or geographic context?`;
 
     const generatedLetter: any = await aiClient.callWithJson(
       systemPrompt,

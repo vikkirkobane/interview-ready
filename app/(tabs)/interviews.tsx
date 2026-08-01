@@ -27,6 +27,15 @@ export default function InterviewsLobbyScreen() {
   const [urlError, setUrlError] = useState('');
   const [type, setType] = useState('Behavioral');
   const [difficulty, setDifficulty] = useState('Intermediate');
+
+  // Map UI labels to the DB enum values accepted by interviews-start.
+  // "Manager" interviews are mapped to MIXED since the DB enum only accepts
+  // TECHNICAL | BEHAVIORAL | SYSTEM_DESIGN | MIXED | CASE_STUDY.
+  const INTERVIEW_TYPE_MAP: Record<string, string> = {
+    Behavioral: 'BEHAVIORAL',
+    Technical: 'TECHNICAL',
+    Manager: 'MIXED',
+  };
   
   // Ensure fields populate even if the tab was previously mounted
   useEffect(() => {
@@ -112,7 +121,7 @@ export default function InterviewsLobbyScreen() {
       pathname: '/interview',
       params: {
         role,
-        type,
+        type: INTERVIEW_TYPE_MAP[type] || 'BEHAVIORAL',
         difficulty,
         jobDescription: finalJobDescription,
         jobUrl: finalJobUrl

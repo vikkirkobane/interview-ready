@@ -9,7 +9,7 @@ import {
  // eslint-disable-next-line @typescript-eslint/no-unused-vars
  Pressable,  Modal } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
+import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, ScoreRing } from '../../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -30,6 +30,7 @@ import Toast from 'react-native-toast-message';
 import { handleApiError } from '../../src/lib/errorHandler';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { exportLinkedInAnalysisPDF } from '../../src/lib/linkedinExport';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -122,6 +123,7 @@ export default function LinkedinOptimizerScreen() {
   const [companyInput, setCompanyInput] = useState('');
   const [skillInput,   setSkillInput]   = useState('');
   const [linkedinUrl,  setLinkedinUrl]  = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const analyzeMutation    = useLinkedinAnalyzeMutation();
   const optimizeMutation   = useLinkedinOptimizeMutation();
@@ -312,6 +314,22 @@ export default function LinkedinOptimizerScreen() {
   const copy = async (text: string) => {
     await Clipboard.setStringAsync(text);
     Toast.show({ type: 'success', text1: 'Copied to clipboard!' });
+  };
+
+  const handleDownload = async () => {
+    if (!analysis) return;
+    try {
+      setIsDownloading(true);
+      await exportLinkedInAnalysisPDF(analysis, {
+        candidateName: oauthName || user?.email || '',
+        targetRoles: wizard.targetRoles,
+        targetCompanies: wizard.targetCompanies,
+      });
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: e.message });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handleConnectLinkedIn = async () => {
@@ -677,7 +695,18 @@ export default function LinkedinOptimizerScreen() {
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={[s.resultsTitle, { color: colors.textPrimary }]}>Optimisation Results</Text>
-        <View style={{ width: 32 }} />
+        <Pressable
+          onPress={handleDownload}
+          disabled={isDownloading}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={{ padding: Spacing.xs }}
+        >
+          {isDownloading ? (
+            <ActivityIndicator size="small" color="#0A66C2" />
+          ) : (
+            <Ionicons name="download-outline" size={22} color="#0A66C2" />
+          )}
+        </Pressable>
       </View>
 
       {/* Tab bar */}
@@ -895,6 +924,22 @@ export default function LinkedinOptimizerScreen() {
           </View>
         )}
 
+        {/* Download CTA */}
+        <Pressable
+          style={[s.downloadBtn, { backgroundColor: '#0A66C2' }, isDownloading && { opacity: 0.6 }]}
+          onPress={handleDownload}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="download-outline" size={20} color="#fff" />
+              <Text style={s.downloadBtnText}>Download PDF Report</Text>
+            </>
+          )}
+        </Pressable>
+
         </ScrollView>
 
         <View style={{ height: bottomNavPadding }} />
@@ -1072,6 +1117,12 @@ const s = StyleSheet.create({
   taskTime:        { ...Typography.bodySm },
   habitItem:       { ...Typography.bodyMd, marginBottom: Spacing.xs },
   planCta:         { padding: Spacing.xl, borderRadius: Radius.lg, borderWidth: 1, alignItems: 'center' },
+  downloadBtn:     {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 14, paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full, gap: 8, marginTop: Spacing.sm, ...Shadow.card,
+  },
+  downloadBtnText: { ...Typography.headingMd, color: '#fff' },
   // ── LinkedIn Connect Prompt styles ────────────────────────────────────────
   connectCard:     { padding: Spacing.xl, borderRadius: Radius.xl, alignItems: 'center', marginBottom: Spacing.lg },
   connectTitle:    { ...Typography.headingLg, color: '#fff', textAlign: 'center', marginBottom: Spacing.sm },

@@ -170,6 +170,16 @@ async function generateResumeContentAsync(
 ) {
   const serviceClient = createServiceClient();
 
+  // Fetch the user's auth email so the generated resume header includes it.
+  // user_profiles has no email column, so we pull it from auth.users.
+  let userEmail = '';
+  try {
+    const { data: authUser } = await serviceClient.auth.admin.getUserById(userId);
+    userEmail = authUser?.user?.email || '';
+  } catch (emailErr: unknown) {
+    console.warn(`[resumes-create] Could not fetch email for ${userId}:`, emailErr);
+  }
+
   try {
     const systemPrompt = `You are an elite, ATS-first resume engineer. Your sole mission is to produce a resume that:
 1. Passes every ATS filter with a score of 90%+
@@ -287,7 +297,9 @@ You MUST output exactly this JSON structure and nothing else:
       ? `\n\nTARGET JOB DESCRIPTION:\n${jobAnalysis.raw_jd || JSON.stringify(jobAnalysis.analysis_data)}`
       : '';
 
-    const userPrompt = `CANDIDATE INFORMATION:\n\nProfile Data:\n${JSON.stringify(profile, null, 2)}${jobContext}`;
+    const promptProfile = { ...profile, email: userEmail };
+
+    const userPrompt = `CANDIDATE INFORMATION:\n\nProfile Data:\n${JSON.stringify(promptProfile, null, 2)}${jobContext}`;
 
     // Call AI to generate resume content
     const resumeContent: any = await aiClient.callWithJson(

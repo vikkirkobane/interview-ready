@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
 import { ResumeContent } from '../types/schemas';
 import { buildResumeHTML } from './resumeHTML';
+import { buildFileName, renameToCache } from './exportUtils';
 
 declare let window: any;
-declare let document: any;
 
 // Helper for dynamic imports on native vs web
 let printToFileAsync: any;
@@ -80,7 +80,7 @@ function getTemplateStyles(templateId?: string) {
 
 export async function exportResumePDF(resume: ResumeContent, templateId?: string): Promise<void> {
   const html = buildResumeHTML(resume, templateId);
-  const filename = `${resume.header.name.replace(/\s+/g, '_')}_Resume.pdf`;
+  const filename = buildFileName(resume.header?.name, 'Resume', 'pdf');
 
   if (Platform.OS === 'web') {
     const win = window.open('', '_blank');
@@ -93,13 +93,14 @@ export async function exportResumePDF(resume: ResumeContent, templateId?: string
     }
   } else {
     // Native PDF generation — expo-print generates the PDF, expo-sharing delivers it.
-    // No expo-file-system needed: the share sheet shows the correct filename from
-    // the dialogTitle and the OS picks up the .pdf MIME type automatically.
+    // The printed temp file has a generic name, so we copy it to the cache directory
+    // under the proper filename before sharing so the OS delivers a correctly-named file.
     if (!printToFileAsync || !shareAsync) {
       throw new Error('PDF export requires expo-print and expo-sharing.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
+    const namedUri = await renameToCache(uri, filename);
+    await shareAsync(namedUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
   }
 }
 
@@ -184,7 +185,7 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
             new TextRun({ text: ` · ${exp.company}`, bold: true, size: 24, color: templateStyles.primaryColor }),
           ]
         }));
-        children.push(new Paragraph({ children: [new TextRun({ text: `${exp.date_range} | ${exp.location || ''}`, size: 20, color: '666666' })] }));
+        children.push(new Paragraph({ children: [new TextRun({ text: [exp.date_range, exp.location].filter(Boolean).join(' | '), size: 20, color: '666666' })] }));
         for (const bullet of exp.bullets) {
           children.push(new Paragraph({ children: [new TextRun({ text: `• ${bullet}`, size: 20 })], indent: { left: 360 } }));
         }
@@ -234,18 +235,12 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
     }
 
     const doc = new Document({ sections: [{ properties: {}, children }] });
-    const filename = `${h.name.replace(/\s+/g, '_')}_Resume.docx`;
+    const filename = buildFileName(h.name, 'Resume', 'docx');
 
     if (Platform.OS === 'web') {
       const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const { downloadBlob } = await import('./exportUtils');
+      downloadBlob(blob, filename);
     } else {
       // Native DOCX export — write to a temporary path using expo-file-system
       // then share with expo-sharing.

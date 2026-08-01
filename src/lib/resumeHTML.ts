@@ -96,16 +96,14 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   `;
 
   const h = r.header || ({} as any);
+  const contactParts = [h.email, h.phone, h.linkedin, h.portfolio, h.location].filter(Boolean);
   const header = `
     <div class="name">${h.name || ''}</div>
     <div class="title">${h.title || ''}</div>
     <div class="subtitle">${h.subtitle || ''}</div>
-    <div class="contact">
-      ${h.email || ''} &nbsp;·&nbsp; ${h.phone || ''}
-      ${h.linkedin ? ` &nbsp;·&nbsp; ${h.linkedin}` : ''}
-      ${h.portfolio ? ` &nbsp;·&nbsp; ${h.portfolio}` : ''}
-      &nbsp;·&nbsp; ${h.location || ''}
-    </div>
+    ${contactParts.length > 0 ? `
+      <div class="contact">${contactParts.join(' &nbsp;·&nbsp; ')}</div>
+    ` : ''}
   `;
 
   const summary = r.sections_to_include.summary && r.summary ? `

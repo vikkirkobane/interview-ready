@@ -100,7 +100,12 @@ Return ONLY valid JSON matching this exact structure:
   ],
   "monthly_cadence": ["habit 1", "habit 2"]
 }
-No prose outside JSON.`;
+
+OUTPUT RULES:
+- Return ONLY valid JSON. No prose outside JSON. No markdown, no code fences.
+- Use proper capitalization (Title Case for week labels and headings, full proper sentences).
+- Never leave a task action empty — every task must be specific and actionable.
+- month and week groupings must cover the full 30 days as described.`;
 
     const userPrompt = `Target Role(s): ${input.target_roles.join(', ')}
 Target Companies/Industries: ${input.target_companies?.join(', ') || input.industry || 'Not specified'}

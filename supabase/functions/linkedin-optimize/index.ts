@@ -98,7 +98,9 @@ RULES:
     }
   ]
 }
-No prose outside JSON.`;
+- Use proper capitalization (Title Case for job titles and headings, full proper sentences).
+- Never leave a field empty — always produce complete, actionable content.
+- Return ONLY valid JSON. No prose outside JSON.`;
 
       const user = `Target Role(s): ${rolesStr}
 Tone: ${toneStr}
@@ -128,6 +130,8 @@ RULES:
 - Embed 5-8 recruiter-searched keywords naturally
 - No clichés or generic statements
 - keyword_map: list each keyword used and WHERE it appears in the text
+- Use proper capitalization (Title Case for job titles and headings, full proper sentences).
+- Never leave a field empty — always produce complete, actionable content.
 - Return ONLY valid JSON. No prose outside JSON.`;
 
       const user = `Target Role(s): ${rolesStr}
@@ -157,6 +161,8 @@ RULES:
 - Focus on outcomes over responsibilities: "What changed because of this person's work?"
 - If a metric is missing or unclear from the provided text, suggest a realistic, defensible estimate and flag it with [NEEDS VALIDATION]
 - Generate 3-5 bullets per role
+- Use proper capitalization (Title Case for job titles and headings, full proper sentences).
+- Never leave a field empty — always produce complete, actionable content.
 - Return ONLY valid JSON. No prose outside JSON.`;
 
       const user = `Target Role(s): ${rolesStr}
@@ -195,6 +201,8 @@ RULES:
 - Skills in pinned_top_5 MUST also appear in the categorised list
 - Ensure skills appear naturally in About and Experience sections for algorithmic reinforcement
 - Prioritise skills with highest recruiter search volume for the target role
+- Use proper capitalization (Title Case for job titles and headings, full proper sentences).
+- Never leave a field empty — always produce complete, actionable content.
 - Return ONLY valid JSON. No prose outside JSON.`;
 
       const user = `Target Role(s): ${rolesStr}
@@ -231,6 +239,8 @@ RULES:
 - Order recommendations by expected recruiter impact (highest first)
 - Tailor to the target role — a software engineer needs different artifacts than a nurse
 - Remind user in the description to redact confidential information
+- Use proper capitalization (Title Case for job titles and headings, full proper sentences).
+- Never leave a field empty — always produce complete, actionable content.
 - Return ONLY valid JSON. No prose outside JSON.`;
 
       const user = `Target Role(s): ${rolesStr}

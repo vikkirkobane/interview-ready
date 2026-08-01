@@ -1,5 +1,5 @@
 import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, useTheme } from '../../src/theme';
@@ -11,7 +11,7 @@ export default function SignupScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { signUp, loading, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
+  const { signUp, loading, session, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,6 +19,20 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+
+  // Route as soon as a session lands — covers OAuth flows (LinkedIn/Google)
+  // where the session is delivered asynchronously via deep-link callback.
+  useEffect(() => {
+    if (session) {
+      const isCompleted = session.user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   const handleSignup = async () => {
     setError('');
@@ -49,7 +63,14 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
-      router.replace('/(onboarding)/role');
+      // If email confirmation is required, no session is returned yet — the
+      // user must verify their email before signing in.
+      const hasSession = !!useAuthStore.getState().session;
+      if (hasSession) {
+        router.replace('/(onboarding)/referral-code' as any);
+      } else {
+        setError('Account created. Check your email to confirm your account, then sign in.');
+      }
     }
   };
 
@@ -74,8 +95,8 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     }
-    // Note: Do not synchronously navigate here.
-    // The OAuth deep link callback (auth/callback.tsx) will handle the redirect.
+    // Routing is handled by the session-watcher effect above (OAuth delivers
+    // the session asynchronously, either inline on iOS or via deep link on Android).
   };
 
   return (

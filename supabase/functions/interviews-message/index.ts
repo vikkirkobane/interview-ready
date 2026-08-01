@@ -12,6 +12,8 @@ app.use('/*', cors());
 const MessageInput = z.object({
   interview_id: z.string().uuid(),
   content: z.string().min(1).max(2000),
+  /** Extracted text from a file the candidate attached mid-interview (JD, spec, notes). */
+  file_context: z.string().optional(),
 });
 
 type MessageInputType = z.infer<typeof MessageInput>;
@@ -75,14 +77,44 @@ app.post('/*', async (c: any) => {
       ? `\n\nJOB DESCRIPTION:\n${interview.job_description}\n\nCRITICAL INSTRUCTION: You must heavily base your questions and evaluation on the specific responsibilities, skills, and requirements mentioned in the job description above. Tailor the mock interview to feel exactly like a real-life interview for this specific role.` 
       : '';
 
-    const systemPrompt = `You are an expert interviewer conducting a ${interview.interview_type} interview for the role of ${interview.role}${interview.company ? ` at ${interview.company}` : ''}.${jdContext}
-Maintain a professional, encouraging, yet critical tone. Ask clear, targeted follow-up questions or proceed to the next topic. Do not break character. Do not provide the score yet, just continue the conversation naturally. Keep your responses concise (1-2 paragraphs max).`;
+    // Optional context from a file the candidate attached mid-interview.
+    const fileContext = (input.file_context || '').trim();
+    const fileContextBlock = fileContext
+      ? `\n\nREFERENCE DOCUMENT (attached by the candidate):\n${fileContext}\n\nINSTRUCTION: Carefully read this reference document. It may contain a job description, specification, or notes the candidate wants the interview grounded in. Use it to shape your questions and feedback — for example, ask about specific responsibilities, skills, or requirements it mentions, or evaluate the candidate against it. Do not tell the candidate you were given a file; simply incorporate it naturally.`
+      : '';
+
+    const difficulty = (interview.difficulty || 'INTERMEDIATE').toUpperCase();
+    const difficultyGuide = {
+      BEGINNER: 'Ask approachable, foundational questions. Offer gentle hints when the candidate struggles and explain concepts clearly after their answer.',
+      INTERMEDIATE: 'Ask solid mid-level questions with light probing follow-ups. Push for concrete examples and trade-off reasoning.',
+      SENIOR: 'Ask advanced, ambiguous questions. Probe deeply, challenge assumptions, require trade-off analysis, scale/design reasoning, and leadership judgment. Keep the bar high.',
+    }[difficulty] || 'Ask solid mid-level questions with light probing follow-ups.';
+
+    const interviewTypeGuide = {
+      TECHNICAL: 'Focus on technical skills, coding/architecture reasoning, debugging, and engineering judgment.',
+      BEHAVIORAL: 'Use STAR-style behavioral questions about past experiences, teamwork, conflict, and leadership.',
+      SYSTEM_DESIGN: 'Run a system design interview: gather requirements, propose architecture, discuss trade-offs, scaling, and failure modes.',
+      MIXED: 'Blend behavioral and technical questions naturally, as a hiring manager would.',
+      CASE_STUDY: 'Give business/product case prompts and evaluate structured, data-driven reasoning.',
+    }[interview.interview_type] || 'Blend behavioral and technical questions naturally.';
+
+    const systemPrompt = `You are an expert interviewer conducting a ${interview.interview_type} interview for the role of ${interview.role}${interview.company ? ` at ${interview.company}` : ''} at ${difficulty} difficulty.${jdContext}${fileContextBlock}
+
+Interviewer persona rules:
+- Stay in character as a professional, friendly, but rigorous interviewer. Never break character.
+- ${interviewTypeGuide}
+- Difficulty calibration (${difficulty}): ${difficultyGuide}
+- Ask ONE clear question at a time. Do not list multiple questions in a single turn.
+- After the candidate answers, give brief feedback or a light follow-up probing for depth, then move to the next question. If the answer is vague, push once for specifics or an example.
+- Track the arc: opening/screening questions first, then deeper topic questions, then a closing question. Target roughly 6-8 questions per session, then signal you are wrapping up.
+- Do NOT reveal scores, ratings, or a verdict during the session. Keep the conversation natural and interview-like.
+- Keep each response concise: 1-2 short paragraphs max. Use "Great, let's move on."-style transitions when appropriate.`;
 
     // Map message history to format expected by Groq/LLM
     // We stringify the conversation history for the text prompt
     const conversationHistory = messages.map(m => `${m.role === 'user' ? 'Candidate' : 'Interviewer'}: ${m.content}`).join('\n\n');
     
-    const userPrompt = `Conversation History:\n${conversationHistory}\n\nProvide the next response as the Interviewer.`;
+    const userPrompt = `Conversation History:\n${conversationHistory}\n\nProvide the next response as the Interviewer. Ask a single focused question or a brief follow-up.`;
 
     // Call Groq (Text mode)
     const aiResponseContent = await aiClient.callText(

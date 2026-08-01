@@ -27,10 +27,16 @@ export default function WelcomeScreen() {
   const [slideAnim] = useState(() => new Animated.Value(20));
 
   // If the session lands while we're still on this screen (e.g. onAuthStateChange
-  // fires after the browser closes), navigate to tabs immediately.
+  // fires after the browser closes), route to the correct destination:
+  // new users → onboarding, existing users → home (tabs).
   useEffect(() => {
     if (session) {
-      router.replace('/(tabs)');
+      const isCompleted = session.user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);

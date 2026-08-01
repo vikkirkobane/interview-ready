@@ -280,7 +280,8 @@ export default function InterviewScreen() {
     try {
       const res = await messageMutation.mutateAsync({
         session_id: sessionId,
-        content: newMsg.text
+        content: newMsg.text,
+        file_context: jdFileText.trim() ? jdFileText : undefined,
       });
       messageCounter.current += 1;
       setMessages(prev => [...prev, {
@@ -312,7 +313,7 @@ export default function InterviewScreen() {
           {
             text: 'End Session',
             style: 'destructive',
-            onPress: () => router.push({ pathname: '/feedback', params: { sessionId } }),
+            onPress: () => router.push({ pathname: '/feedback', params: { sessionId, duration: String(seconds) } }),
           },
         ]
       );

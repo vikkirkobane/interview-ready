@@ -459,7 +459,7 @@ export default function CompanyResearchScreen() {
               </Card>
             )}
 
-            {result.red_flags.length === 0 && (
+            {(result.red_flags?.length ?? 0) === 0 && (
               <Card style={[s.card, { backgroundColor: '#10b98110', borderColor: '#10b981' }]}>
                 <View style={s.sectionHeaderRow}>
                   <Ionicons name="checkmark-circle" size={18} color="#10b981" />
@@ -563,6 +563,22 @@ export default function CompanyResearchScreen() {
             </Pressable>
           </View>
         )}
+
+        {/* Download CTA */}
+        <Pressable
+          style={[s.downloadBtn, { backgroundColor: '#0ea5e9' }, isDownloading && { opacity: 0.6 }]}
+          onPress={handleDownload}
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="download-outline" size={20} color="#fff" />
+              <Text style={s.downloadBtnText}>Download PDF Report</Text>
+            </>
+          )}
+        </Pressable>
 
         </ScrollView>
 
@@ -669,6 +685,12 @@ const s = StyleSheet.create({
   // New research CTA
   newResearchBtn:  { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: Spacing.sm, borderWidth: 1, borderRadius: Radius.full, paddingVertical: Spacing.md },
   newResearchText: { ...Typography.bodyMd },
+  downloadBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 14, paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.full, gap: 8, marginTop: Spacing.sm, ...Shadow.card,
+  },
+  downloadBtnText: { ...Typography.headingMd, color: '#fff' },
   primaryBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingVertical: 14, paddingHorizontal: Spacing.lg,

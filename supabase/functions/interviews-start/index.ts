@@ -133,6 +133,7 @@ app.post('/*', async (c: any) => {
         company: input.company || null,
         job_description: actualJobDescription || null,
         interview_type: input.interview_type,
+        difficulty: input.difficulty || 'INTERMEDIATE',
         status: 'IN_PROGRESS',
         messages: [initialMessage],
         question_count: 0,

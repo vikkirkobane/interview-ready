@@ -1,4 +1,6 @@
 import { Platform } from 'react-native';
+import { APP_LOGO_DATA_URI } from './brandAssets';
+import { buildFileName, renameToCache } from './exportUtils';
 
 declare let window: any;
 
@@ -21,17 +23,28 @@ try {
   // Ignore
 }
 
-// expo-file-system is intentionally NOT used — PDF goes directly from
-// expo-print URI into expo-sharing without any filesystem move.
+// Native flow: expo-print generates the PDF, renameToCache gives it the proper
+// filename in the cache directory, then expo-sharing delivers it.
 
-export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
-  const html = buildRoadmapHTML(analysisResult);
+export interface RoadmapExportContext {
+  candidateName?: string;
+  jobTitle?: string;
+  company?: string;
+}
+
+export async function exportRoadmapPDF(
+  analysisResult: any,
+  context: RoadmapExportContext = {}
+): Promise<void> {
+  const html = buildRoadmapHTML(analysisResult, context);
+  const filename = buildFileName(context.candidateName, 'Roadmap', 'pdf');
 
   if (Platform.OS === 'web') {
     const win = window.open('', '_blank');
     if (win) {
       win.document.write(html);
       win.document.close();
+      win.document.title = filename;
       win.focus();
       setTimeout(() => win.print(), 500);
     }
@@ -40,11 +53,12 @@ export async function exportRoadmapPDF(analysisResult: any): Promise<void> {
       throw new Error('PDF export requires expo-print and expo-sharing.');
     }
     const { uri } = await printToFileAsync({ html });
-    await shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Download Roadmap PDF' });
+    const namedUri = await renameToCache(uri, filename);
+    await shareAsync(namedUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
   }
 }
 
-function buildRoadmapHTML(roadmapData: any): string {
+function buildRoadmapHTML(roadmapData: any, context: RoadmapExportContext = {}): string {
   if (!roadmapData || !roadmapData.modules) {
     return `
       <!DOCTYPE html>
@@ -68,20 +82,28 @@ function buildRoadmapHTML(roadmapData: any): string {
     <div class="step">
       <div class="step-number">${i + 1}</div>
       <div class="step-content">
-        <h3>${m.module_title} (${m.days_allocated})</h3>
-        <p style="margin-bottom: 15px; color: #5221E6; font-weight: 600; font-size: 14px;">Focus: ${m.focus_skill} • Estimated Time: ${m.estimated_hours}h</p>
-        <ul style="margin-top: 0; padding-left: 20px; color: #555;">
-          ${m.action_items.map((item: string) => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+        <h3>${m.module_title} <span class="days">(${m.days_allocated})</span></h3>
+        <p class="focus">Focus: ${m.focus_skill} • Estimated Time: ${m.estimated_hours}h</p>
+        <ul class="actions">
+          ${m.action_items.map((item: string) => `<li>${item}</li>`).join('')}
         </ul>
         ${m.resources_to_use && m.resources_to_use.length > 0 ? `
-          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ddd;">
-            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #333;">Recommended Resources:</p>
-            <p style="margin: 4px 0 0 0; font-size: 13px; color: #666;">${m.resources_to_use.join(', ')}</p>
+          <div class="resources">
+            <p class="resources-label">Recommended Resources</p>
+            <p class="resources-list">${m.resources_to_use.join(', ')}</p>
           </div>
         ` : ''}
       </div>
     </div>
   `).join('');
+
+  const candidateName = context.candidateName || '';
+  const jobTitle = context.jobTitle || roadmapData.title || '';
+  const company = context.company || '';
+  const today = new Date().toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+  const subjectLine = [jobTitle, company].filter(Boolean).join(' @ ');
 
   return `
     <!DOCTYPE html>
@@ -91,7 +113,7 @@ function buildRoadmapHTML(roadmapData: any): string {
       <title>Interview Ready - ${roadmapData.duration_days} Day Roadmap</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        
+
         body {
           font-family: 'Inter', sans-serif;
           color: #1a1a1a;
@@ -129,17 +151,10 @@ function buildRoadmapHTML(roadmapData: any): string {
         }
 
         .logo {
-          width: 40px;
-          height: 40px;
-          background: #5221E6;
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: bold;
-          font-size: 20px;
+          width: 44px;
+          height: 46px;
           margin-right: 15px;
+          object-fit: contain;
         }
 
         .header-title {
@@ -167,11 +182,18 @@ function buildRoadmapHTML(roadmapData: any): string {
           margin-bottom: 15px;
         }
 
+        .meta-line {
+          font-size: 15px;
+          color: #333;
+          margin: 4px 0;
+          font-weight: 600;
+        }
+
         .sub-title {
           font-size: 16px;
           color: #555;
           max-width: 600px;
-          margin: 0 auto;
+          margin: 12px auto 0;
         }
 
         .roadmap-container {
@@ -214,10 +236,46 @@ function buildRoadmapHTML(roadmapData: any): string {
           font-size: 20px;
         }
 
-        .step-content p {
+        .step-content .days {
+          color: #5221E6;
+          font-weight: 600;
+          font-size: 16px;
+        }
+
+        .step-content .focus {
+          margin: 0 0 12px 0;
+          color: #5221E6;
+          font-weight: 600;
+          font-size: 14px;
+        }
+
+        .step-content ul.actions {
           margin: 0;
-          color: #555;
-          font-size: 15px;
+          padding-left: 20px;
+          color: #444;
+        }
+
+        .step-content ul.actions li {
+          margin-bottom: 8px;
+        }
+
+        .resources {
+          margin-top: 15px;
+          padding-top: 10px;
+          border-top: 1px dashed #ddd;
+        }
+
+        .resources-label {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .resources-list {
+          margin: 4px 0 0 0;
+          font-size: 13px;
+          color: #666;
         }
 
         .footer {
@@ -232,10 +290,10 @@ function buildRoadmapHTML(roadmapData: any): string {
     </head>
     <body>
       <div class="watermark">INTERVIEW READY</div>
-      
+
       <div class="container">
         <div class="header">
-          <div class="logo">IR</div>
+          <img class="logo" src="${APP_LOGO_DATA_URI}" alt="Interview Ready Logo" />
           <div>
             <h1 class="header-title">Interview Ready</h1>
             <p class="header-subtitle">Your Personal AI Career Coach</p>
@@ -243,8 +301,10 @@ function buildRoadmapHTML(roadmapData: any): string {
         </div>
 
         <div class="title-section">
-          <h2 class="main-title">${roadmapData.title}</h2>
-          <p class="sub-title">${roadmapData.overview}</p>
+          <h2 class="main-title">${roadmapData.title || 'Interview Preparation Roadmap'}</h2>
+          ${subjectLine ? `<p class="meta-line">${subjectLine}</p>` : ''}
+          ${candidateName ? `<p class="meta-line">Prepared for ${candidateName} • ${today}</p>` : `<p class="meta-line">${today}</p>`}
+          <p class="sub-title">${roadmapData.overview || ''}</p>
         </div>
 
         <div class="roadmap-container">

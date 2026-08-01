@@ -268,17 +268,44 @@ export default function CoverLetterGeneratorScreen() {
 
   const getExportData = (): CoverLetter | null => {
     if (!coverLetterObj || !generatedLetter) return null;
-    return {
-      ...coverLetterObj,
-      salutation: '',
-      paragraphs: {
-        opening: { text: generatedLetter },
-        body_1: { text: '' },
-        body_2: { text: '' },
-        closing: { text: '' },
-      },
-      sign_off: { closing_phrase: '', name: '' }
-    };
+
+    // Rebuild the formatted letter from the structured object so we can detect
+    // whether the user has edited the text in the editor.
+    const p = coverLetterObj.paragraphs || ({} as any);
+    const originalFormatted = `${coverLetterObj.salutation || ''}\n\n${p.opening?.text || ''}\n\n${p.body_1?.text || ''}\n\n${p.body_2?.text || ''}\n\n${p.closing?.text || ''}\n\n${coverLetterObj.sign_off?.closing_phrase || ''}\n${coverLetterObj.sign_off?.name || ''}`.trim();
+
+    // If the user has NOT edited the letter, export the structured object as-is
+    // so preview / PDF / DOCX preserve the salutation, paragraph breaks, and
+    // signature instead of collapsing everything into one giant paragraph.
+    if (generatedLetter.trim() === originalFormatted) {
+      return coverLetterObj;
+    }
+
+    // User edited the text — rebuild paragraphs from the flat text while
+    // keeping the header and re-detecting salutation + sign-off.
+    const blocks = generatedLetter.split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    const copy: CoverLetter = JSON.parse(JSON.stringify(coverLetterObj)) as CoverLetter;
+
+    // Salutation detection (short line ending in a comma)
+    if (blocks.length && blocks[0].length < 100 && /,$/.test(blocks[0])) {
+      copy.salutation = blocks[0];
+      blocks.shift();
+    }
+
+    // Sign-off detection (last block starting with a closing phrase)
+    const signoffRe = /^(Sincerely|Best|Regards|Yours|Thanks|Thank you|Warmly|Respectfully|Kind regards)/i;
+    if (blocks.length && signoffRe.test(blocks[blocks.length - 1])) {
+      const signoffBlock = blocks.pop()!;
+      const lines = signoffBlock.split('\n');
+      copy.sign_off = { closing_phrase: lines[0] || '', name: lines.slice(1).join(' ').trim() };
+    }
+
+    const paraKeys = ['opening', 'body_1', 'body_2', 'closing'] as const;
+    paraKeys.forEach((key, i) => {
+      copy.paragraphs[key] = { text: blocks[i] || '' };
+    });
+
+    return copy;
   };
 
   const handlePreview = () => {
@@ -356,7 +383,7 @@ export default function CoverLetterGeneratorScreen() {
               ) : null}
             </View>
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8 }]}>Job Description (Optional if URL provided)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8 }]}>Job Description (Optional if URL Provided)</Text>
               <TextInput
                 style={[styles.textInput, styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
                 value={jobDescription}

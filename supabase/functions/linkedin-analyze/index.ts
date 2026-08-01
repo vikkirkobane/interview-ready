@@ -122,23 +122,57 @@ Score each provided section strictly against:
 ### STEP 1C — SPIKE DIFFERENTIATOR
 If spike data is provided, identify the candidate's unique differentiator and craft a 1-sentence unique value proposition that could anchor their headline and About section.
 
-### OUTPUT RULES
-Your response MUST be a single, valid JSON object with EXACTLY this structure (do not return an array):
+### STRICT OUTPUT RULES
+1. Return ONLY a single, valid JSON object matching the exact structure below. No markdown, no code fences, no prose outside the JSON. Start immediately with "{".
+2. Every provided section must have a score (integer 0-100) and non-empty issues/suggestions lists. If a section has no issues, return an empty array [].
+3. Use proper capitalization everywhere: job titles and keywords in Title Case (e.g. "Product Manager", not "product manager"), full proper sentences, and every proper noun capitalised. Never return lowercase headings.
+4. List every concrete, actionable issue and suggestion — do not omit sections. Base everything on the provided profile content.
+5. top_keywords must contain exactly up to 15 real recruiter-searched keywords for the role. present_in_profile must be accurate.
+
+### OUTPUT STRUCTURE
 {
   "section_scores": { "headline": 0, "about": 0, "experience": 0, "skills": 0 },
   "overall_score": 0,
   "estimated_score_after_optimization": 0,
   "issues": { "headline": [], "about": [], "experience": [], "skills": [] },
-  "keyword_intelligence": { 
+  "keyword_intelligence": {
     "top_keywords": [
       { "keyword": "string", "category": "SKILL", "present_in_profile": true }
-    ], 
-    "missing_high_priority": [] 
+    ],
+    "missing_high_priority": []
   },
   "spike": { "identified_differentiator": "", "unique_value_proposition": "" },
   "suggestions": { "headline": "", "about": "", "experience_bullets": [] }
 }
-Return ONLY valid JSON matching this schema. No prose outside JSON. Start immediately with "{".`;
+
+EXAMPLE OUTPUT:
+{
+  "section_scores": { "headline": 62, "about": 48, "experience": 70, "skills": 55 },
+  "overall_score": 58,
+  "estimated_score_after_optimization": 86,
+  "issues": {
+    "headline": ["Role keyword missing from first 40 characters", "Contains banned fluff word: 'passionate'"],
+    "about": ["First 3 lines lack primary keywords", "Paragraphs too long for mobile"],
+    "experience": ["Bullets describe responsibilities instead of quantified outcomes"],
+    "skills": ["Only 8 skills listed; target is 30-50+", "Top-5 skills do not match recruiter-searched terms"]
+  },
+  "keyword_intelligence": {
+    "top_keywords": [
+      { "keyword": "Product Manager", "category": "ROLE_TITLE", "present_in_profile": true },
+      { "keyword": "Roadmap Strategy", "category": "SKILL", "present_in_profile": false }
+    ],
+    "missing_high_priority": ["Roadmap Strategy", "Stakeholder Management"]
+  },
+  "spike": {
+    "identified_differentiator": "Only PM with an engineering degree and 5 years in emerging-markets fintech",
+    "unique_value_proposition": "I turn underperforming products into category leaders by pairing deep technical fluency with emerging-market insight."
+  },
+  "suggestions": {
+    "headline": "Lead the role keyword with your target title in the first 40 characters.",
+    "about": "Open with a hook that embeds 'Product Manager' and a quantified result in the first 3 lines.",
+    "experience_bullets": ["Start every bullet with a bolded quantified outcome", "Add scale indicators such as team size and revenue impact"]
+  }
+}`;
 
     // ── User Prompt — inject all profile content ────────────────────────────
     const spikeBlock = input.spike
@@ -174,7 +208,7 @@ Analyse the profile and return the JSON.`;
       systemPrompt,
       userPrompt,
       LINKEDIN_ANALYSIS_SCHEMA,
-      { temperature: 0.3, max_tokens: 3000 }
+      { temperature: 0.3, max_tokens: 4000 }
     );
 
     // Deduct credits
