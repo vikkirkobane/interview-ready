@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen() {
     }
 
     // Basic email validation
-    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;

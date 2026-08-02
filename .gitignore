@@ -33,3 +33,9 @@ Thumbs.db
 
 # Logs
 npx_out.txt
+
+# Archived dev artifacts (untracked)
+_archive/
+
+# EAS signing keystore (secret — never commit)
+@victor48s-team__interview-ready.jks

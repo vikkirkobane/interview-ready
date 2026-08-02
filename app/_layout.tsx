@@ -36,10 +36,11 @@ if (!(Toast as any)._isPatched) {
 }
 
 // ─── Deep Link State ─────────────────────────────────────────────────────────
-// Module-level flag to prevent AuthGuard from redirecting away while
-// an OAuth callback deep link is being processed. This fixes the race
-// condition where AuthGuard fires before getInitialURL() resolves.
-let pendingAuthCallback = false;
+// NOTE: pendingAuthCallback has been moved into useAuthStore as
+// `pendingOAuthCallback` so signInWithOAuth can set it synchronously
+// BEFORE opening the browser — eliminating the race condition where
+// AuthGuard fires between the browser closing and the deep-link handler
+// running exchangeCodeForSession.
 
 /**
  * Auth guard: watches session state and redirects to the correct route.
@@ -48,7 +49,7 @@ let pendingAuthCallback = false;
  * - Session already in tabs → stay put
  */
 function AuthGuard() {
-  const { session, initialized } = useAuthStore();
+  const { session, initialized, pendingOAuthCallback } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
 
@@ -72,7 +73,7 @@ function AuthGuard() {
 
     // CRITICAL: Don't redirect to welcome if an OAuth deep link is still
     // being processed. The code exchange is async and may not have completed yet.
-    if (pendingAuthCallback) {
+    if (pendingOAuthCallback) {
       console.log('[AuthGuard] Pending auth callback — skipping redirect');
       return;
     }
@@ -90,7 +91,7 @@ function AuthGuard() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, initialized, segments]);
+  }, [session, initialized, segments, pendingOAuthCallback]);
 
   return null;
 }
@@ -178,8 +179,10 @@ export default function RootLayout() {
       if (!url.includes('auth/callback')) return;
 
       // Mark that we're processing an auth callback — prevents AuthGuard
-      // from redirecting to welcome while we exchange the code
-      pendingAuthCallback = true;
+      // from redirecting to welcome while we exchange the code.
+      // (Flag was already set in signInWithOAuth before the browser opened,
+      // but getInitialURL cold-start path needs to set it here.)
+      useAuthStore.getState().setPendingOAuthCallback(true);
 
       try {
         const parsedUrl = new URL(url);
@@ -190,7 +193,7 @@ export default function RootLayout() {
         // Handle OAuth errors from provider
         if (error) {
           console.error('[DeepLink] OAuth error:', error, errorDescription);
-          pendingAuthCallback = false;
+          useAuthStore.getState().setPendingOAuthCallback(false);
           Toast.show({
             type: 'error',
             text1: 'Authentication failed',
@@ -205,7 +208,7 @@ export default function RootLayout() {
 
           if (exchangeError) {
             console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);
-            pendingAuthCallback = false;
+            useAuthStore.getState().setPendingOAuthCallback(false);
             return;
           }
 
@@ -217,15 +220,15 @@ export default function RootLayout() {
           }
 
           console.log('[DeepLink] Code exchanged successfully');
-          pendingAuthCallback = false;
+          useAuthStore.getState().setPendingOAuthCallback(false);
           return;
         }
 
         console.warn('[DeepLink] No code found in callback URL');
-        pendingAuthCallback = false;
+        useAuthStore.getState().setPendingOAuthCallback(false);
       } catch (err) {
         console.error('[DeepLink] Unexpected error:', err);
-        pendingAuthCallback = false;
+        useAuthStore.getState().setPendingOAuthCallback(false);
       }
     }
 

@@ -1,7 +1,0 @@
-npx create-expo-app@latest interview-ready
-
-npx eas-cli@latest init --id 1b842899-c2d3-4be8-b092-f6b51717a4ff
-
-npx eas-cli@latest build --profile development
-
-npx expo start

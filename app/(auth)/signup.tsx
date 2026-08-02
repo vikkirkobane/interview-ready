@@ -42,7 +42,7 @@ export default function SignupScreen() {
       setError('Please fill in all required fields.');
       return;
     }
-    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;

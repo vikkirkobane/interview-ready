@@ -52,6 +52,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   initialized: boolean;
+  pendingOAuthCallback: boolean; // true while a code exchange is in flight
 
   // Actions
   initialize: () => Promise<void>;
@@ -62,6 +63,7 @@ interface AuthState {
   signInWithLinkedInIdToken: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   setSession: (session: Session | null) => void;
+  setPendingOAuthCallback: (pending: boolean) => void;
   linkIdentity: (provider: string) => Promise<{ error: string | null }>;
   unlinkIdentity: (identityId: string) => Promise<{ error: string | null }>;
   getUserIdentities: () => Promise<any>;
@@ -72,6 +74,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   loading: true,
   initialized: false,
+  pendingOAuthCallback: false,
 
   initialize: async () => {
     // Initialize Google Sign-In on app startup
@@ -171,10 +174,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) return { error: error.message };
 
       if (data?.url) {
+        // Set BEFORE opening the browser so AuthGuard is blocked for the
+        // entire duration of the OAuth flow, including the async deep-link
+        // code exchange that follows on Android.
+        set({ pendingOAuthCallback: true });
+
         const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
         // User explicitly tapped the back/cancel button — nothing to do.
         if (res.type === 'cancel') {
+          set({ pendingOAuthCallback: false });
           return { error: 'Authentication canceled.' };
         }
 
@@ -190,14 +199,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 await supabase.auth.exchangeCodeForSession(code);
               if (sessionError) {
                 console.warn('[OAuth] exchangeCodeForSession error:', sessionError.message);
+                set({ pendingOAuthCallback: false });
               } else if (sessionData?.session) {
                 // onAuthStateChange will also fire, but we set it here for immediate response
-                set({ session: sessionData.session, user: sessionData.session.user });
+                set({ session: sessionData.session, user: sessionData.session.user, pendingOAuthCallback: false });
                 return { error: null };
               }
             }
           } catch (parseErr) {
             console.warn('[OAuth] Could not parse redirect URL:', parseErr);
+            set({ pendingOAuthCallback: false });
           }
         }
 
@@ -206,13 +217,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // openAuthSessionAsync returns 'dismiss' with no URL. The code was
         // delivered to the Linking listener in _layout.tsx which calls
         // exchangeCodeForSession. onAuthStateChange will fire and set the session.
-        // The auth/callback screen will handle navigation once session is set.
+        // pendingOAuthCallback stays true here — _layout.tsx clears it after
+        // the code exchange completes (success or failure).
         console.log('[OAuth] OAuth initiated, waiting for callback via deep link');
         return { error: null };
       }
 
+      set({ pendingOAuthCallback: false });
       return { error: 'No URL returned from Supabase.' };
     } catch (err: any) {
+      set({ pendingOAuthCallback: false });
       return { error: err.message };
     }
   },
@@ -260,6 +274,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setSession: (session) => {
     set({ session, user: session?.user ?? null });
+  },
+
+  setPendingOAuthCallback: (pending) => {
+    set({ pendingOAuthCallback: pending });
   },
 
   linkIdentity: async (provider) => {
