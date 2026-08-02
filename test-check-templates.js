@@ -11,7 +11,7 @@ envFile.split('\n').forEach(line => {
 });
 
 const supabaseUrl = env['EXPO_PUBLIC_SUPABASE_URL'];
-const supabaseServiceKey = 'SUPABASE_SERVICE_ROLE_KEY_REDACTED';
+const supabaseServiceKey = env['SUPABASE_SERVICE_ROLE_KEY'];
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
