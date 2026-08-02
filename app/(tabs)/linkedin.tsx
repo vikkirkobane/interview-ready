@@ -69,7 +69,7 @@ const KW_COLOR: Record<string, string> = {
 export default function LinkedinOptimizerScreen() {
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
-  const { profile, fetchProfile } = useProfileStore();
+  const { profile, fetchProfile, updateProfile } = useProfileStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   // Detect LinkedIn OAuth user — must be computed BEFORE state that depends on it
@@ -79,9 +79,11 @@ export default function LinkedinOptimizerScreen() {
 
   const [step, setStep]           = useState<WizardStep>('prefill');
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
-  const [showLinkedInPrompt, setShowLinkedInPrompt] = useState(!isLinkedInUser);
   const { addNotification } = useNotificationStore();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, mode } = useLocalSearchParams<{ id?: string; mode?: string }>();
+  // When arriving via the "Import Profile from LinkedIn" button we go straight
+  // to the URL importer instead of the full-screen connect prompt.
+  const [showLinkedInPrompt, setShowLinkedInPrompt] = useState(mode === 'import' ? false : !isLinkedInUser);
 
   const [liConnecting, setLiConnecting] = useState(false);
 
@@ -289,7 +291,37 @@ export default function LinkedinOptimizerScreen() {
         skills:     (data.skills    && data.skills.length    > 0) ? data.skills    : w.skills,
       }));
 
-      Toast.show({ type: 'success', text1: 'Profile Imported successfully!', text2: 'Please review your content.' });
+      // Persist the imported data to the user's app profile so the Profile tab
+      // reflects the LinkedIn import too (about → summary, experience → work
+      // history, skills → technical skills).
+      if (data.about || (data.experience && data.experience.length > 0) || (data.skills && data.skills.length > 0)) {
+        try {
+          if (!profile) await fetchProfile();
+          const { error: profileError } = await updateProfile({
+            summary: data.about || undefined,
+            work_history: data.experience && data.experience.length > 0
+              ? data.experience.map((e: any) => ({
+                  company: e.company || '',
+                  title: e.title || '',
+                  description: e.description || '',
+                  start_date: '',
+                  end_date: null,
+                  current: false,
+                }))
+              : undefined,
+            technical_skills: data.skills && data.skills.length > 0
+              ? Array.from(new Set([...(profile?.technical_skills || []), ...data.skills]))
+              : undefined,
+          });
+          if (profileError) {
+            console.warn('[LinkedIn] Failed to save imported profile:', profileError);
+          }
+        } catch (e) {
+          console.warn('[LinkedIn] Failed to save imported profile:', e);
+        }
+      }
+
+      Toast.show({ type: 'success', text1: 'Profile Imported successfully!', text2: 'Your profile and review content have been updated.' });
       setStep('content');
     } catch (e: any) {
       handleApiError(e.message, { fallbackTitle: 'Import Failed' });

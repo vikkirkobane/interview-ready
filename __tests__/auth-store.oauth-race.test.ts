@@ -20,6 +20,9 @@ jest.mock('../src/lib/supabase', () => ({
       }),
       signInWithOAuth: jest.fn(),
       exchangeCodeForSession: jest.fn(),
+      linkIdentity: jest.fn(),
+      unlinkIdentity: jest.fn(),
+      getUserIdentities: jest.fn(),
     },
   },
 }));
@@ -263,5 +266,86 @@ describe('AuthStore — pendingOAuthCallback race condition fix', () => {
     const state = useAuthStore.getState();
     expect(state.session).toEqual(fakeSession);
     expect(state.user).toEqual(fakeSession.user);
+  });
+});
+
+describe('AuthStore — linkIdentity OAuth flow', () => {
+  const mockLinkIdentity = supabase.auth.linkIdentity as jest.Mock;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    resetStore();
+  });
+
+  it('opens the browser and completes linking via iOS code exchange', async () => {
+    const fakeSession = { user: { id: 'user-1', user_metadata: {} }, access_token: 'tok' };
+
+    mockLinkIdentity.mockResolvedValue({
+      data: { url: 'https://accounts.google.com/o/oauth2/...' },
+      error: null,
+    });
+    mockOpenAuthSession.mockResolvedValue({
+      type: 'success',
+      url: 'interviewready://auth/callback?code=link123',
+    });
+    mockExchangeCode.mockResolvedValue({ data: { session: fakeSession }, error: null });
+
+    const result = await useAuthStore.getState().linkIdentity('google');
+
+    expect(result.error).toBeNull();
+    expect(mockOpenAuthSession).toHaveBeenCalledWith(
+      'https://accounts.google.com/o/oauth2/...',
+      'interviewready://auth/callback'
+    );
+    expect(mockExchangeCode).toHaveBeenCalledWith('link123');
+    expect(useAuthStore.getState().session).toEqual(fakeSession);
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
+  });
+
+  it('leaves pendingOAuthCallback true on Android dismiss (deep link pending)', async () => {
+    mockLinkIdentity.mockResolvedValue({
+      data: { url: 'https://accounts.google.com/o/oauth2/...' },
+      error: null,
+    });
+    mockOpenAuthSession.mockResolvedValue({ type: 'dismiss' });
+
+    const result = await useAuthStore.getState().linkIdentity('google');
+
+    expect(result.error).toBeNull();
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(true);
+  });
+
+  it('clears the flag and returns an error when the user cancels', async () => {
+    mockLinkIdentity.mockResolvedValue({
+      data: { url: 'https://accounts.google.com/o/oauth2/...' },
+      error: null,
+    });
+    mockOpenAuthSession.mockResolvedValue({ type: 'cancel' });
+
+    const result = await useAuthStore.getState().linkIdentity('google');
+
+    expect(result.error).toBe('Authentication canceled.');
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
+  });
+
+  it('returns the provider error when Supabase rejects the link', async () => {
+    mockLinkIdentity.mockResolvedValue({
+      data: null,
+      error: { message: 'Provider not configured' },
+    });
+
+    const result = await useAuthStore.getState().linkIdentity('google');
+
+    expect(result.error).toBe('Provider not configured');
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
+  });
+
+  it('returns an error when no URL is returned', async () => {
+    mockLinkIdentity.mockResolvedValue({ data: { url: null }, error: null });
+
+    const result = await useAuthStore.getState().linkIdentity('google');
+
+    expect(result.error).toBe('No URL returned from Supabase.');
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
   });
 });

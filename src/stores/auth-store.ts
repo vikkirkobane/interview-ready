@@ -287,7 +287,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         path: 'auth/callback',
       });
 
-      const { error } = await supabase.auth.linkIdentity({
+      const { data, error } = await supabase.auth.linkIdentity({
         provider: provider as any,
         options: {
           redirectTo,
@@ -300,12 +300,61 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { error: error.message };
       }
 
-      // For manual linking, the user needs to complete the OAuth flow
-      // We'll handle the completion in the auth callback screen
-      return { error: null };
+      if (data?.url) {
+        // Mark the OAuth callback as pending so AuthGuard stays out of the
+        // way while the browser flow + async deep-link exchange completes.
+        set({ pendingOAuthCallback: true });
+
+        const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+        // User explicitly tapped back/cancel — nothing to do.
+        if (res.type === 'cancel') {
+          set({ pendingOAuthCallback: false });
+          return { error: 'Authentication canceled.' };
+        }
+
+        // ─── iOS success path ──────────────────────────────────────────────
+        // openAuthSessionAsync intercepts the redirect and returns the full
+        // callback URL inline. Exchange the PKCE code here so the identity is
+        // linked immediately without needing a deep link.
+        if (res.type === 'success' && res.url) {
+          try {
+            const parsedUrl = new URL(res.url);
+            const code = parsedUrl.searchParams.get('code');
+            if (code) {
+              const { data: sessionData, error: sessionError } =
+                await supabase.auth.exchangeCodeForSession(code);
+              if (sessionError) {
+                console.warn('[Identity] exchangeCodeForSession error:', sessionError.message);
+                set({ pendingOAuthCallback: false });
+                return { error: sessionError.message };
+              }
+              if (sessionData?.session) {
+                set({ session: sessionData.session, user: sessionData.session.user, pendingOAuthCallback: false });
+                return { error: null };
+              }
+            }
+          } catch (parseErr) {
+            console.warn('[Identity] Could not parse redirect URL:', parseErr);
+            set({ pendingOAuthCallback: false });
+          }
+        }
+
+        // ─── Android / fallback path ────────────────────────────────────────
+        // The deep-link listener in _layout.tsx exchanges the code
+        // asynchronously and updates the session. pendingOAuthCallback stays
+        // true until that handler clears it. Callers should poll
+        // getUserIdentities() to confirm the identity appeared.
+        console.log('[Identity] OAuth initiated, waiting for callback via deep link');
+        return { error: null };
+      }
+
+      set({ pendingOAuthCallback: false });
+      return { error: 'No URL returned from Supabase.' };
     } catch (err: any) {
       console.error('Error linking identity:', err);
-      return { error: err.message };
+      set({ pendingOAuthCallback: false });
+      return { error: err.message || 'Failed to link identity' };
     }
   },
 

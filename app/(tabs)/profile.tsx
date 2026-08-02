@@ -275,21 +275,25 @@ export default function ProfileScreen() {
           
           const storagePath = 'resume-uploads/' + userId + '/' + Date.now() + '-' + fileName;
           
-          // Get blob from payload
-          let blob;
+          // Get the file body to upload.
+          // On mobile, fetch().blob() returns a blob with type='text/plain' on Android,
+          // which causes Supabase Storage to store the wrong MIME type and can trigger
+          // bucket allowed_mime_types rejections. Using ArrayBuffer bypasses this —
+          // Supabase then uses the explicit contentType option we provide.
+          let uploadBody: Blob | ArrayBuffer;
           if (payload.webFile) {
-            // Web: we have a File object (which is a Blob)
-            blob = payload.webFile;
+            // Web: File object already has the correct type
+            uploadBody = payload.webFile;
           } else {
-            // Mobile: fetch the file URI to get a blob
+            // Mobile: use ArrayBuffer so the blob type cannot override contentType
             const response = await fetch(payload.fileUri);
-            blob = await response.blob();
+            uploadBody = await response.arrayBuffer();
           }
           
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')
-            .upload(storagePath, blob, {
+            .upload(storagePath, uploadBody, {
               contentType: payload.mimeType,
               upsert: false
             });
@@ -477,7 +481,7 @@ export default function ProfileScreen() {
 
         <Pressable 
           style={[styles.importBtn, { borderColor: colors.primary, backgroundColor: `${colors.primary}${isDark ? '1A' : '05'}` }]}
-          onPress={() => router.push('/(tabs)/linkedin')}
+          onPress={() => router.push('/(tabs)/linkedin?mode=import')}
         >
           <Ionicons name="logo-linkedin" size={18} color={colors.primary} style={{ marginRight: 8 }} />
           <Text style={[styles.importBtnText, { color: colors.primary }]}>Import Profile from LinkedIn</Text>
