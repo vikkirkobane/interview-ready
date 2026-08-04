@@ -179,10 +179,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // code exchange that follows on Android.
         set({ pendingOAuthCallback: true });
 
+        // Safety timeout: if the deep link never arrives (app killed, provider
+        // error page, etc.), clear the flag so AuthGuard isn't stuck forever.
+        const oauthTimeoutId = setTimeout(() => {
+          if (useAuthStore.getState().pendingOAuthCallback) {
+            console.warn('[OAuth] Callback timeout — clearing pending flag');
+            useAuthStore.getState().setPendingOAuthCallback(false);
+          }
+        }, 30_000);
+
         const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
         // User explicitly tapped the back/cancel button — nothing to do.
         if (res.type === 'cancel') {
+          clearTimeout(oauthTimeoutId);
           set({ pendingOAuthCallback: false });
           return { error: 'Authentication canceled.' };
         }
@@ -199,15 +209,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 await supabase.auth.exchangeCodeForSession(code);
               if (sessionError) {
                 console.warn('[OAuth] exchangeCodeForSession error:', sessionError.message);
+                clearTimeout(oauthTimeoutId);
                 set({ pendingOAuthCallback: false });
               } else if (sessionData?.session) {
                 // onAuthStateChange will also fire, but we set it here for immediate response
+                clearTimeout(oauthTimeoutId);
                 set({ session: sessionData.session, user: sessionData.session.user, pendingOAuthCallback: false });
                 return { error: null };
               }
             }
           } catch (parseErr) {
             console.warn('[OAuth] Could not parse redirect URL:', parseErr);
+            clearTimeout(oauthTimeoutId);
             set({ pendingOAuthCallback: false });
           }
         }
@@ -219,6 +232,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // exchangeCodeForSession. onAuthStateChange will fire and set the session.
         // pendingOAuthCallback stays true here — _layout.tsx clears it after
         // the code exchange completes (success or failure).
+        // The 30s timeout above acts as the final safety net.
         console.log('[OAuth] OAuth initiated, waiting for callback via deep link');
         return { error: null };
       }
@@ -305,10 +319,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // way while the browser flow + async deep-link exchange completes.
         set({ pendingOAuthCallback: true });
 
+        // Safety timeout: clear the flag if the deep link never arrives.
+        const linkTimeoutId = setTimeout(() => {
+          if (useAuthStore.getState().pendingOAuthCallback) {
+            console.warn('[Identity] Callback timeout — clearing pending flag');
+            useAuthStore.getState().setPendingOAuthCallback(false);
+          }
+        }, 30_000);
+
         const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
         // User explicitly tapped back/cancel — nothing to do.
         if (res.type === 'cancel') {
+          clearTimeout(linkTimeoutId);
           set({ pendingOAuthCallback: false });
           return { error: 'Authentication canceled.' };
         }
@@ -326,16 +349,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 await supabase.auth.exchangeCodeForSession(code);
               if (sessionError) {
                 console.warn('[Identity] exchangeCodeForSession error:', sessionError.message);
+                clearTimeout(linkTimeoutId);
                 set({ pendingOAuthCallback: false });
                 return { error: sessionError.message };
               }
               if (sessionData?.session) {
+                clearTimeout(linkTimeoutId);
                 set({ session: sessionData.session, user: sessionData.session.user, pendingOAuthCallback: false });
                 return { error: null };
               }
             }
           } catch (parseErr) {
             console.warn('[Identity] Could not parse redirect URL:', parseErr);
+            clearTimeout(linkTimeoutId);
             set({ pendingOAuthCallback: false });
           }
         }

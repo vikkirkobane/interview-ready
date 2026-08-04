@@ -209,6 +209,11 @@ export default function RootLayout() {
           if (exchangeError) {
             console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);
             useAuthStore.getState().setPendingOAuthCallback(false);
+            Toast.show({
+              type: 'error',
+              text1: 'Sign-in failed',
+              text2: 'Could not complete LinkedIn login. Please try again.',
+            });
             return;
           }
 
@@ -240,7 +245,7 @@ export default function RootLayout() {
       }
     }).catch((err) => {
       console.error('[DeepLink] getInitialURL error:', err);
-      pendingAuthCallback = false;
+      useAuthStore.getState().setPendingOAuthCallback(false);
     });
 
     // Handle link while app is already open (foreground)

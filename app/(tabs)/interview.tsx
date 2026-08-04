@@ -234,17 +234,20 @@ export default function InterviewScreen() {
             throw new Error('User not authenticated');
           }
           const storagePath = `jd-uploads/${userId}/${Date.now()}-${fileName}`;
-          let blob: Blob;
+          // Use ArrayBuffer on mobile — Android's fetch().blob() returns type='text/plain'
+          // which causes "Unsupported FormDataPart implementation" in Supabase Storage.
+          // ArrayBuffer bypasses blob type inference; contentType option controls MIME.
+          let uploadBody: Blob | ArrayBuffer;
           if (payload.webFile) {
-            blob = payload.webFile;
+            uploadBody = payload.webFile;
           } else {
             const response = await fetch(payload.fileUri);
-            blob = await response.blob();
+            uploadBody = await response.arrayBuffer();
           }
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')
-            .upload(storagePath, blob, {
+            .upload(storagePath, uploadBody, {
               contentType: payload.mimeType,
               upsert: false
             });
