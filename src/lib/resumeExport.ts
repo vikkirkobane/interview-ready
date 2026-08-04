@@ -248,7 +248,8 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
         throw new Error('DOCX export requires expo-sharing.');
       }
       
-      const FileSystem = require('expo-file-system');
+      // expo-file-system v56: use the /legacy import for writeAsStringAsync and cacheDirectory
+      const FileSystem = require('expo-file-system/legacy');
       
       const base64Data = await Packer.toBase64String(doc);
       if (FileSystem.cacheDirectory) {

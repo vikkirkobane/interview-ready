@@ -107,13 +107,32 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    initialize();
+    // CRITICAL: Check for a pending OAuth callback URL BEFORE calling initialize().
+    // On Android, when the app is cold-started via the interviewready://auth/callback
+    // deep link (LinkedIn/Google OAuth return), initialize() completes and sets
+    // initialized=true — which unblocks AuthGuard — before the Linking.addEventListener
+    // useEffect runs. AuthGuard then sees {session: null, pendingOAuthCallback: false}
+    // and incorrectly redirects to /(auth)/welcome.
+    //
+    // By setting pendingOAuthCallback=true synchronously here (before initialize()),
+    // AuthGuard will always see the flag already set when it first evaluates.
+    Linking.getInitialURL().then((url) => {
+      if (url && url.includes('auth/callback')) {
+        useAuthStore.getState().setPendingOAuthCallback(true);
+      }
+      initialize();
+    }).catch(() => {
+      initialize();
+    });
     mobileAds().initialize();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle OAuth deep links (interviewready://auth/callback?code=...)
   // This fires when the app is opened via the OAuth redirect URI.
+  // NOTE: getInitialURL() is intentionally NOT called here. It is pre-checked
+  // in the initialize() useEffect above to set pendingOAuthCallback before
+  // AuthGuard can evaluate. This listener only wires up the event handler.
   useEffect(() => {
     async function handleDeepLink(url: string) {
       // Handle referral deep links (interviewready://referral?code=XXXX)
@@ -237,7 +256,10 @@ export default function RootLayout() {
       }
     }
 
-    // Handle link that launched the app from cold start
+    // Handle link that launched the app from cold start.
+    // pendingOAuthCallback was already set to true in the initialize() useEffect
+    // above (if this is an auth callback URL) — so AuthGuard is already blocked
+    // by the time this async call resolves and handleDeepLink runs.
     Linking.getInitialURL().then((url) => {
       if (url) {
         console.log('[DeepLink] Handling initial URL:', url);

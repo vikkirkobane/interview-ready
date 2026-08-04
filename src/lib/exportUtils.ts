@@ -35,7 +35,10 @@ export function buildFileName(name: string | undefined | null, label: string, ex
  * proper filename so native share sheets deliver a correctly-named file.
  */
 export async function renameToCache(sourceUri: string, filename: string): Promise<string> {
-  const FileSystem = require('expo-file-system');
+  // expo-file-system v56 moved the legacy functional API (copyAsync, writeAsStringAsync, etc.)
+  // to "expo-file-system/legacy". Importing from the root module triggers a deprecation WARN
+  // and can silently fail on Android (confirmed in logcat: ReactNativeJS WARN twice per export).
+  const FileSystem = require('expo-file-system/legacy');
   const destinationUri = `${FileSystem.cacheDirectory}${filename}`;
   await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
   return destinationUri;

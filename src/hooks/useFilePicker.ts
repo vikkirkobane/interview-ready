@@ -20,7 +20,12 @@ export function useFilePicker() {
       
       const result = await DocumentPicker.getDocumentAsync({
         type: options.type,
-        copyToCacheDirectory: true,
+        // copyToCacheDirectory: false prevents a crash on Android 12 (API 31) where
+        // DocumentsUI PickActivity throws FileNotFoundException when attempting to
+        // restore the last-accessed Images root during a cache-copy operation.
+        // The native upload path in api.ts sends the file URI directly via FormData,
+        // so no cache copy is required on any platform.
+        copyToCacheDirectory: false,
       });
 
       if (result.canceled || !result.assets || result.assets.length === 0) {

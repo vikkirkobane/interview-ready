@@ -100,6 +100,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           session,
           user: session?.user ?? null,
+          // Clear the OAuth pending flag whenever a session is established so
+          // AuthGuard is never stuck if the deep-link handler races with this event.
+          ...((_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') && session
+            ? { pendingOAuthCallback: false }
+            : {}),
         });
         
         if (_event === 'SIGNED_OUT') {

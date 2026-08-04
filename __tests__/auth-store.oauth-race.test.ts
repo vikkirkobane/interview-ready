@@ -10,13 +10,20 @@
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
+// Holds the onAuthStateChange listener callback so tests can fire auth events
+// through the REAL store handler (specific to the Fix 2 behavior under test).
+let authStateListener: ((event: string, session: any) => void) | null = null;
+
 // Mock Supabase so we control what getSession / onAuthStateChange / exchangeCodeForSession return
 jest.mock('../src/lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
-      onAuthStateChange: jest.fn().mockReturnValue({
-        data: { subscription: { unsubscribe: jest.fn() } },
+      onAuthStateChange: jest.fn((callback) => {
+        authStateListener = callback;
+        return {
+          data: { subscription: { unsubscribe: jest.fn() } },
+        };
       }),
       signInWithOAuth: jest.fn(),
       exchangeCodeForSession: jest.fn(),
@@ -99,6 +106,7 @@ function resetStore() {
 describe('AuthStore — pendingOAuthCallback race condition fix', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    authStateListener = null;
     resetStore();
   });
 
@@ -253,7 +261,74 @@ describe('AuthStore — pendingOAuthCallback race condition fix', () => {
     expect(shouldRedirectToWelcome).toBe(true);
   });
 
-  // ── 10. setSession works correctly ───────────────────────────────────────
+  // ── 10. Fix 2: onAuthStateChange clears the flag on SIGNED_IN ─────────────
+
+  it('clears pendingOAuthCallback when onAuthStateChange fires SIGNED_IN with a session', async () => {
+    useAuthStore.setState({ pendingOAuthCallback: true });
+    await useAuthStore.getState().initialize();
+
+    const session = { user: { id: 'u1' }, access_token: 'at' } as any;
+    authStateListener!('SIGNED_IN', session);
+
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
+    expect(useAuthStore.getState().session).toEqual(session);
+  });
+
+  // ── 11. Fix 2: onAuthStateChange clears the flag on TOKEN_REFRESHED ──────
+
+  it('clears pendingOAuthCallback when onAuthStateChange fires TOKEN_REFRESHED with a session', async () => {
+    useAuthStore.setState({ pendingOAuthCallback: true });
+    await useAuthStore.getState().initialize();
+
+    const session = { user: { id: 'u1' }, access_token: 'at' } as any;
+    authStateListener!('TOKEN_REFRESHED', session);
+
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
+  });
+
+  // ── 12. Fix 2: SIGNED_IN without a session must NOT clear the flag ──────
+
+  it('does NOT clear pendingOAuthCallback when SIGNED_IN arrives without a session', async () => {
+    useAuthStore.setState({ pendingOAuthCallback: true });
+    await useAuthStore.getState().initialize();
+
+    // Edge case: event fires but no session yet → flag must stay true so
+    // AuthGuard remains blocked while the callback is still being processed.
+    authStateListener!('SIGNED_IN', null);
+
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(true);
+  });
+
+  // ── 13. Fix 1: cold-start auth/callback URL sets the flag BEFORE initialize ──
+
+  it('sets pendingOAuthCallback=true when the cold-start URL is an auth callback (race prevention)', () => {
+    useAuthStore.setState({ pendingOAuthCallback: false });
+
+    // Replicate the pre-initialize gate from _layout.tsx: getInitialURL() returns
+    // an auth/callback URL on Android cold-start. The flag must be set so that
+    // when initialize() later unblocks AuthGuard, it never sees an unprotected null.
+    const initialUrl = 'interviewready://auth/callback?code=PKCE_CODE';
+    if (initialUrl && initialUrl.includes('auth/callback')) {
+      useAuthStore.getState().setPendingOAuthCallback(true);
+    }
+
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(true);
+  });
+
+  // ── 14. Fix 1: a non-auth URL must NOT set the flag ──────────────────────
+
+  it('does NOT set pendingOAuthCallback when the cold-start URL is not an auth callback', () => {
+    useAuthStore.setState({ pendingOAuthCallback: false });
+
+    const initialUrl = 'interviewready://referral?code=ABC123';
+    if (initialUrl && initialUrl.includes('auth/callback')) {
+      useAuthStore.getState().setPendingOAuthCallback(true);
+    }
+
+    expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
+  });
+
+  // ── 15. setSession works correctly ───────────────────────────────────────
 
   it('setSession populates both session and user fields', () => {
     const fakeSession = {
