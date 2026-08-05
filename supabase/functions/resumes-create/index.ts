@@ -128,7 +128,15 @@ app.post('/*', async (c: any) => {
     }
 
     // Generate resume content via AI (asynchronous, stream updates via Realtime)
-    generateResumeContentAsync(user.id, resume.id, profile, jobAnalysis, templateId || '');
+    const bgTask = generateResumeContentAsync(user.id, resume.id, profile, jobAnalysis, templateId || '');
+    
+    // Register background task with Deno EdgeRuntime so the isolate doesn't terminate early
+    if ((globalThis as any).EdgeRuntime?.waitUntil) {
+      (globalThis as any).EdgeRuntime.waitUntil(bgTask);
+    } else {
+      // In local testing or environments where EdgeRuntime is not attached, await directly
+      await bgTask;
+    }
 
     // Return immediately with resume ID (content will be streamed)
     return c.json(

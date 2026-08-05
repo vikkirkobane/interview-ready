@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "test": "jest --runInBand",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "build:android": "eas build -p android --profile preview",
     "build:android:prod": "eas build -p android --profile production",
     "doctor": "npx react-doctor@latest"

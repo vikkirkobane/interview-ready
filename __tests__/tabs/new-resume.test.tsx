@@ -39,6 +39,14 @@ describe('Resume Builder (new-resume) — user stories', () => {
 
   const renderScreen = () => renderWithProviders(<NewResumeScreen />);
 
+  /** Simulate the server's Realtime generation_complete broadcast for a channel. */
+  const emitGenerationComplete = (content: any) => {
+    const { channelBuilder } = mockSupabase.__mockHelpers;
+    channelBuilder._emit('generation_complete', {
+      payload: { content },
+    });
+  };
+
   it('renders the resume builder form', async () => {
     const screen = await renderScreen();
     expect(screen.getByText('Resume Builder')).toBeTruthy();
@@ -70,9 +78,28 @@ describe('Resume Builder (new-resume) — user stories', () => {
     await waitFor(() => {
       expect(router.setParams).toHaveBeenCalledWith({ id: 'r1' });
     });
+
+    // Show the "Generating" info toast immediately (not success).
     expect(mockToast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ text1: 'Resume generated!' })
+      expect.objectContaining({ text1: 'Generating resume...' })
     );
+
+    // Success toast only appears after the Realtime broadcast arrives.
+    emitGenerationComplete({
+      header: { name: 'Jane Smith', title: 'Software Engineer', email: 'j@x.com' },
+      summary: { text: 'Summary' },
+      experience: [],
+      skills: [],
+      education: [],
+      recognition: [],
+      featured_project: { include: false },
+    });
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'Resume generated!' })
+      );
+    });
   });
 
   it('generates a tailored resume when a job description is provided', async () => {

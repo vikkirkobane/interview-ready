@@ -239,9 +239,12 @@ export default function ResumeBuilderScreen() {
   const parseResume = useParseResumeMutation();
   const deleteMutation = useDeleteResumeMutation();
   const [isImportingResume, setIsImportingResume] = useState(false);
+  // True while the async AI generation is running server-side (between HTTP 202 and Realtime event)
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
   const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const generationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleGenerate = async () => {
     if (!selectedTemplateId) {
@@ -249,7 +252,8 @@ export default function ResumeBuilderScreen() {
       return;
     }
     try {
-      Toast.show({ type: 'info', text1: 'Generating tailored resume...', text2: 'This may take a moment' });
+      Toast.show({ type: 'info', text1: 'Generating resume...', text2: 'This may take up to 30 seconds' });
+      setIsGenerating(true);
       let job_analysis_id = undefined;
 
       // Use file text if available, otherwise use text input
@@ -257,7 +261,7 @@ export default function ResumeBuilderScreen() {
       const finalJobUrl = jobUrl.trim();
 
       if (finalJobDescription.length > 10 || finalJobUrl.length > 5) {
-        const analyzeRes = await analyzeJobMutation.mutateAsync({ 
+        const analyzeRes = await analyzeJobMutation.mutateAsync({
           jdText: finalJobDescription.length > 10 ? finalJobDescription : undefined,
           jdUrl: finalJobUrl.length > 5 ? finalJobUrl : undefined,
           profileData: profile
@@ -265,6 +269,7 @@ export default function ResumeBuilderScreen() {
         job_analysis_id = analyzeRes.job_id;
       }
 
+      // Server returns 202 immediately — AI generation is async.
       const res = await createResumeMutation.mutateAsync({
         title: (jobDescription.trim().length > 10 || finalJobUrl.length > 5) ? 'Tailored Resume' : 'Base Resume',
         template_id: selectedTemplateId,
@@ -272,16 +277,91 @@ export default function ResumeBuilderScreen() {
         is_base: jobDescription.trim().length === 0 && jdFileText.trim().length === 0 && finalJobUrl.length === 0
       });
 
+      // Register the resume ID in the URL so the query is keyed correctly.
       router.setParams({ id: res.resume_id });
-      Toast.show({ type: 'success', text1: 'Resume generated!' });
 
-      incrementInterstitialCount();
-      const updatedCount = useUIStore.getState().interstitialActionCount;
-      if (!isPro && interstitialLoaded && updatedCount >= 2) {
-        showInterstitialAd();
-        resetInterstitialCount();
-      }
+      // Helper to populate draft from AI content returned by the server.
+      const applyGeneratedContent = (content: any) => {
+        setAiGeneratedContent(content);
+        setDraft({
+          templateId: selectedTemplateId || 'executive',
+          header: content.header || { name: '', title: '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
+          summary: content.summary?.text || '',
+          experience: (content.experience || []).map((e: any) => ({ ...e, id: e.id || uid() })),
+          skills: (content.skills || []).map((s: any) => ({ ...s, id: s.id || uid() })),
+          education: (content.education || []).map((e: any) => ({ ...e, id: e.id || uid() })),
+          certifications: content.certifications || [],
+          awards: content.recognition || [],
+          featuredProject: content.featured_project || { include: false, name: '', tech_stack: '', bullet: '' },
+          sections_to_include: content.sections_to_include || {
+            summary: true, skills: true, experience: true,
+            featured_project: false, education: true, certifications: false, recognition: false,
+          }
+        });
+        setIsGenerating(false);
+        Toast.show({ type: 'success', text1: 'Resume generated!' });
+      };
+
+      // Subscribe to the Realtime broadcast channel the server fires when done.
+      const channel = supabase.channel(res.stream_channel);
+      generationChannelRef.current = channel;
+
+      channel
+        .on('broadcast', { event: 'generation_complete' }, (payload) => {
+          if (generationTimeoutRef.current) clearTimeout(generationTimeoutRef.current);
+          applyGeneratedContent(payload.payload.content);
+          supabase.removeChannel(channel);
+          incrementInterstitialCount();
+          const updatedCount = useUIStore.getState().interstitialActionCount;
+          if (!isPro && interstitialLoaded && updatedCount >= 2) {
+            showInterstitialAd();
+            resetInterstitialCount();
+          }
+        })
+        .on('broadcast', { event: 'generation_failed' }, (payload) => {
+          if (generationTimeoutRef.current) clearTimeout(generationTimeoutRef.current);
+          setIsGenerating(false);
+          Toast.show({ type: 'error', text1: 'Generation Failed', text2: payload.payload?.error || 'Please try again.' });
+          supabase.removeChannel(channel);
+        });
+
+      channel.subscribe();
+
+      // Fallback: if the Realtime event is missed (e.g. brief network drop),
+      // poll the DB once after 90 s and populate draft from whatever was saved.
+      generationTimeoutRef.current = setTimeout(async () => {
+        if (!isGenerating) return; // already resolved
+        try {
+          const { data } = await supabase
+            .from('resumes')
+            .select('*, resume_contents(*)')
+            .eq('id', res.resume_id)
+            .single();
+          const content = Array.isArray(data?.resume_contents) ? data.resume_contents[0] : data?.resume_contents;
+          if (content) {
+            applyGeneratedContent({
+              header: content.contact || { name: content.name, title: content.title, subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
+              summary: { text: content.summary || '' },
+              experience: content.experience || [],
+              skills: content.skills || [],
+              education: content.education || [],
+              certifications: content.certifications || [],
+              recognition: content.awards || [],
+              featured_project: content.projects?.[0] || { include: false, name: '', tech_stack: '', bullet: '' },
+            });
+          } else {
+            setIsGenerating(false);
+            Toast.show({ type: 'error', text1: 'Generation timed out', text2: 'Please try again.' });
+          }
+        } catch {
+          setIsGenerating(false);
+          Toast.show({ type: 'error', text1: 'Generation timed out', text2: 'Please try again.' });
+        }
+        supabase.removeChannel(channel);
+      }, 90000);
+
     } catch (e: any) {
+      setIsGenerating(false);
       handleApiError(e.message, { fallbackTitle: 'Generation Failed' });
     }
   };
@@ -297,6 +377,9 @@ export default function ResumeBuilderScreen() {
     return () => {
       if (generationChannelRef.current) {
         supabase.removeChannel(generationChannelRef.current);
+      }
+      if (generationTimeoutRef.current) {
+        clearTimeout(generationTimeoutRef.current);
       }
     };
   }, []);
@@ -920,6 +1003,16 @@ export default function ResumeBuilderScreen() {
           </TouchableOpacity>
 
         </ScrollView>
+      </View>
+    );
+  }
+
+  if (isGenerating) {
+    return (
+      <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Crafting Your AI Resume...</Text>
+        <Text style={{ marginTop: 6, color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>Tailoring keywords and experience bullets to pass ATS filters. This may take up to 20 seconds.</Text>
       </View>
     );
   }
