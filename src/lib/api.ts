@@ -223,11 +223,29 @@ export async function apiUploadFile<T = any>(
       }
 
       const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`;
-      
+      let uploadUri = fileUri;
+      let cachedPath: string | null = null;
+
+      // Safely copy content:// URIs to internal app cache on Android
+      // to resolve permission boundaries that cause 'NativeRequest.start rejected' errors.
+      if (Platform.OS === 'android' && fileUri.startsWith('content://')) {
+        try {
+          const cacheDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+          if (cacheDir) {
+            const safeName = (fileName || 'upload.bin').replace(/[^a-zA-Z0-9_.-]/g, '_');
+            cachedPath = `${cacheDir}upload_${Date.now()}_${safeName}`;
+            await FileSystem.copyAsync({ from: fileUri, to: cachedPath });
+            uploadUri = cachedPath;
+          }
+        } catch (copyErr) {
+          console.warn('[Upload] Content URI copy to cache failed, falling back to original URI:', copyErr);
+        }
+      }
+
       try {
         const formData = new FormData();
         formData.append('file', {
-          uri: fileUri,
+          uri: uploadUri,
           name: fileName || 'upload.bin',
           type: mimeType || 'application/octet-stream',
         } as any);
@@ -239,6 +257,7 @@ export async function apiUploadFile<T = any>(
           },
           body: formData,
         });
+
 
         if (!response.ok) {
           let errorMsg = 'Upload failed';
@@ -253,9 +272,14 @@ export async function apiUploadFile<T = any>(
         return { data, error: null };
       } catch (err: any) {
         return { data: null, error: err.message || 'Upload failed' };
+      } finally {
+        if (cachedPath) {
+          FileSystem.deleteAsync(cachedPath, { idempotent: true }).catch(() => {});
+        }
       }
     }
   } catch (err: any) {
+
     console.error('[Upload] Upload error:', err);
     return { data: null, error: err.message || 'Upload failed' };
   }
