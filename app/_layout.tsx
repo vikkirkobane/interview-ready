@@ -117,8 +117,12 @@ export default function RootLayout() {
     // By setting pendingOAuthCallback=true synchronously here (before initialize()),
     // AuthGuard will always see the flag already set when it first evaluates.
     Linking.getInitialURL().then((url) => {
-      if (url && url.includes('auth/callback')) {
-        useAuthStore.getState().setPendingOAuthCallback(true);
+      if (url) {
+        if (url.includes('error=') || url.includes('error_code=')) {
+          useAuthStore.getState().setPendingOAuthCallback(false);
+        } else if (url.includes('auth/callback')) {
+          useAuthStore.getState().setPendingOAuthCallback(true);
+        }
       }
       initialize();
     }).catch(() => {
@@ -194,32 +198,34 @@ export default function RootLayout() {
         return;
       }
 
-      // Only handle auth callbacks
-      if (!url.includes('auth/callback')) return;
+      // Only handle auth callbacks or auth error redirects
+      const isAuthCallback = url.includes('auth/callback') || url.includes('error=') || url.includes('error_code=');
+      if (!isAuthCallback) return;
 
       // Mark that we're processing an auth callback — prevents AuthGuard
       // from redirecting to welcome while we exchange the code.
-      // (Flag was already set in signInWithOAuth before the browser opened,
-      // but getInitialURL cold-start path needs to set it here.)
       useAuthStore.getState().setPendingOAuthCallback(true);
 
       try {
         const parsedUrl = new URL(url);
         const code = parsedUrl.searchParams.get('code');
         const error = parsedUrl.searchParams.get('error');
+        const errorCode = parsedUrl.searchParams.get('error_code');
         const errorDescription = parsedUrl.searchParams.get('error_description');
 
-        // Handle OAuth errors from provider
-        if (error) {
-          console.error('[DeepLink] OAuth error:', error, errorDescription);
+        // Handle OAuth errors from provider / Supabase
+        if (error || errorCode) {
+          console.error('[DeepLink] OAuth error:', error || errorCode, errorDescription);
           useAuthStore.getState().setPendingOAuthCallback(false);
+          const isBadState = errorCode === 'bad_oauth_state' || errorDescription?.includes('bad_oauth_state');
           Toast.show({
             type: 'error',
-            text1: 'Authentication failed',
-            text2: errorDescription || error,
+            text1: isBadState ? 'Authentication session expired' : 'Authentication failed',
+            text2: isBadState ? 'Please tap the sign-in button again.' : (errorDescription || error || 'OAuth error occurred'),
           });
           return;
         }
+
 
         if (code) {
           console.log('[DeepLink] Exchanging code for session...');

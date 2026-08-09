@@ -162,7 +162,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithOAuth: async (provider) => {
+    if (get().pendingOAuthCallback) {
+      console.warn('[OAuth] OAuth already in progress — ignoring concurrent request');
+      return { error: null };
+    }
+
     try {
+      set({ pendingOAuthCallback: true });
+
       const redirectTo = makeRedirectUri({
         scheme: 'interviewready',
         path: 'auth/callback',
@@ -176,13 +183,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         },
       });
 
-      if (error) return { error: error.message };
+      if (error) {
+        set({ pendingOAuthCallback: false });
+        return { error: error.message };
+      }
 
       if (data?.url) {
-        // Set BEFORE opening the browser so AuthGuard is blocked for the
-        // entire duration of the OAuth flow, including the async deep-link
-        // code exchange that follows on Android.
-        set({ pendingOAuthCallback: true });
+
 
         // Safety timeout: if the deep link never arrives (app killed, provider
         // error page, etc.), clear the flag so AuthGuard isn't stuck forever.
@@ -300,7 +307,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   linkIdentity: async (provider) => {
+    if (get().pendingOAuthCallback) {
+      console.warn('[Identity] OAuth already in progress — ignoring concurrent request');
+      return { error: null };
+    }
+
     try {
+      set({ pendingOAuthCallback: true });
+
       const redirectTo = makeRedirectUri({
         scheme: 'interviewready',
         path: 'auth/callback',
@@ -316,13 +330,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) {
         console.error('Error linking identity:', error);
+        set({ pendingOAuthCallback: false });
         return { error: error.message };
       }
 
       if (data?.url) {
-        // Mark the OAuth callback as pending so AuthGuard stays out of the
-        // way while the browser flow + async deep-link exchange completes.
-        set({ pendingOAuthCallback: true });
+
 
         // Safety timeout: clear the flag if the deep link never arrives.
         const linkTimeoutId = setTimeout(() => {
