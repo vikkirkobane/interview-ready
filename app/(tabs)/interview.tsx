@@ -16,6 +16,8 @@ import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
+import { FileAttachmentBadge } from '../../src/components/ui';
+
 
 const TypingIndicator = ({ colors }: { colors: any }) => {
   const [dot1] = useState(() => new Animated.Value(0));
@@ -455,22 +457,14 @@ export default function InterviewScreen() {
               )}
             </Pressable>
 
-            {/* Attached File Info */}
-            {jdFileName && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 8 }}>
-                  <Ionicons name="close-circle" size={16} color={colors.error} />
-                </Pressable>
-              </View>
-            )}
-
-            {/* Attach JD File Loading State */}
-            {extractJdLoading && (
-              <View style={{ marginLeft: Spacing.sm, flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ color: colors.textMuted, fontSize: 12 }}>Extracting text...</Text>
-              </View>
-            )}
+            {/* Attached File Info Badge */}
+            <FileAttachmentBadge
+              fileName={jdFileName}
+              isLoading={extractJdLoading}
+              loadingText="Extracting file..."
+              onRemove={handleRemoveAttachedJd}
+              style={{ marginLeft: Spacing.xs }}
+            />
           </View>
         </View>
         <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>

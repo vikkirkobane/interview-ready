@@ -3,7 +3,8 @@ import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndi
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import Toast from 'react-native-toast-message';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Card, Button, ScoreRing } from '../../src/components/ui';
+import { Card, Button, ScoreRing, FileAttachmentBadge } from '../../src/components/ui';
+
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePastInterviewsQuery, useDeleteMockInterviewMutation, useExtractJdMutation } from '../../src/hooks/useApi';
@@ -203,15 +204,14 @@ export default function InterviewsLobbyScreen() {
                 )}
               </Pressable>
 
-              {/* Attached File Info */}
-              {jdFileName && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: Spacing.sm }}>
-                  <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                  <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
-                    <Ionicons name="close-circle" size={16} color={colors.error} />
-                  </Pressable>
-                </View>
-              )}
+              {/* Attached File Info Badge */}
+              <FileAttachmentBadge
+                fileName={jdFileName}
+                isLoading={extractJdLoading}
+                loadingText="Extracting file..."
+                onRemove={handleRemoveAttachedJd}
+                style={{ marginLeft: Spacing.xs }}
+              />
             </View>
           </View>
 

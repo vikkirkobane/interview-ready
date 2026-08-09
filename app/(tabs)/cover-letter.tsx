@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { Card, Button } from '../../src/components/ui';
+import { Card, Button, FileAttachmentBadge } from '../../src/components/ui';
+
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
@@ -406,19 +407,14 @@ export default function CoverLetterGeneratorScreen() {
                   )}
                 </Pressable>
 
-                {/* Attached File Info */}
-                {jdFileName && (
-                  <View style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginLeft: Spacing.sm
-                  }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                    <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
-                      <Ionicons name="close-circle" size={16} color={colors.error} />
-                    </Pressable>
-                  </View>
-                )}
+                {/* Attached File Info Badge */}
+                <FileAttachmentBadge
+                  fileName={jdFileName}
+                  isLoading={extractJdLoading}
+                  loadingText="Extracting file..."
+                  onRemove={handleRemoveAttachedJd}
+                  style={{ marginLeft: Spacing.xs }}
+                />
               </View>
             </View>
 

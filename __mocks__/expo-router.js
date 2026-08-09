@@ -104,7 +104,9 @@ module.exports = {
     router.replace.mockClear();
     router.back.mockClear();
     router.setParams.mockClear();
+    currentParams = {};
   },
+
 };
 
 // Also attach helpers directly to the router object for convenience.
@@ -113,7 +115,9 @@ router.__resetMockRouter = () => {
   router.replace.mockClear();
   router.back.mockClear();
   router.setParams.mockClear();
+  currentParams = {};
 };
+
 router.__setMockParams = (params) => { currentParams = params || {}; };
 router.__setMockSegments = (segments) => { currentSegments = segments || []; };
 router.__setMockPathname = (p) => { currentPathname = p; };

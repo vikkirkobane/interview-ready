@@ -1,5 +1,6 @@
 import React from 'react';
-import { waitFor, fireEvent } from '@testing-library/react-native';
+import { waitFor, fireEvent, act } from '@testing-library/react-native';
+
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 
@@ -37,15 +38,19 @@ describe('Resume Builder (new-resume) — user stories', () => {
     mockLoggedInSession(mockSupabase, session);
   });
 
-  const renderScreen = () => renderWithProviders(<NewResumeScreen />);
+  const renderScreen = () => renderWithProviders(<NewResumeScreen key={Math.random()} />);
+
 
   /** Simulate the server's Realtime generation_complete broadcast for a channel. */
   const emitGenerationComplete = (content: any) => {
     const { channelBuilder } = mockSupabase.__mockHelpers;
-    channelBuilder._emit('generation_complete', {
-      payload: { content },
+    act(() => {
+      channelBuilder._emit('generation_complete', {
+        payload: { content },
+      });
     });
   };
+
 
   it('renders the resume builder form', async () => {
     const screen = await renderScreen();
@@ -103,9 +108,12 @@ describe('Resume Builder (new-resume) — user stories', () => {
   });
 
   it('generates a tailored resume when a job description is provided', async () => {
-    mockApiCall.mockImplementation(async (fn: string) => {
+
+
+    router.__setMockParams({});
+    mockApiCall.mockImplementation((fn: string) => {
       if (fn === 'jobs-analyze') {
-        return { data: { job_id: 'job-9', analysis: {} }, error: null };
+        return { data: { job_id: 'job-9' }, error: null };
       }
       if (fn === 'resumes-create') {
         return { data: { resume_id: 'r2', message: 'ok', stream_channel: 'chan-2' }, error: null };
@@ -115,9 +123,10 @@ describe('Resume Builder (new-resume) — user stories', () => {
 
     const screen = await renderScreen();
     await fireEvent.changeText(
-      screen.getByPlaceholderText(/Or paste the full job description here/),
+      screen.getByPlaceholderText('Or paste the full job description here...'),
       'We are hiring a senior engineer with 5+ years of experience in distributed systems and Go.'
     );
+
     await fireEvent.press(screen.getByText('Generate Tailored Resume'));
 
     await waitFor(() => {

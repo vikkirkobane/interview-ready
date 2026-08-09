@@ -6,7 +6,8 @@ import {
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Button } from '../../src/components/ui';
+import { Button, FileAttachmentBadge } from '../../src/components/ui';
+
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
@@ -934,29 +935,13 @@ export default function ResumeBuilderScreen() {
                 </TouchableOpacity>
 
                 {/* Attached File Info Badge */}
-                {jdFileName && (
-                  <View style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginLeft: Spacing.sm,
-                    backgroundColor: `${colors.primary}1A`, // 10% opacity primary color
-                    paddingVertical: 4,
-                    paddingHorizontal: 8,
-                    borderRadius: 12,
-                    maxWidth: '75%', // Ensure it doesn't push out of bounds
-                  }}>
-                    <Text 
-                      style={{ color: colors.primary, fontSize: 12, fontWeight: '500', marginRight: 4, flexShrink: 1 }}
-                      numberOfLines={1}
-                      ellipsizeMode="middle"
-                    >
-                      {jdFileName}
-                    </Text>
-                    <TouchableOpacity onPress={handleRemoveAttachedJd} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                      <Ionicons name="close-circle" size={16} color={colors.primary} />
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <FileAttachmentBadge
+                  fileName={jdFileName}
+                  isLoading={extractJdLoading}
+                  loadingText="Extracting file..."
+                  onRemove={handleRemoveAttachedJd}
+                  style={{ marginLeft: Spacing.xs }}
+                />
               </View>
             </View>
           </View>

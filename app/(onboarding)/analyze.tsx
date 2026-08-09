@@ -9,7 +9,8 @@ import { Pressable ,
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing } from '../../src/components/ui';
+import { ScoreRing, FileAttachmentBadge } from '../../src/components/ui';
+
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAnalyzeJobMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
@@ -207,19 +208,14 @@ onFilePicked: async (payload) => {
                   )}
                 </Pressable>
 
-                {/* Attached File Info */}
-                {jdFileName && (
-                  <View style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginLeft: Spacing.sm
-                  }}>
-                    <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                    <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
-                      <Ionicons name="close-circle" size={16} color={colors.error} />
-                    </Pressable>
-                  </View>
-                )}
+                {/* Attached File Info Badge */}
+                <FileAttachmentBadge
+                  fileName={jdFileName}
+                  isLoading={extractJdLoading}
+                  loadingText="Extracting file..."
+                  onRemove={handleRemoveAttachedJd}
+                  style={{ marginLeft: Spacing.xs }}
+                />
               </View>
             </View>
 

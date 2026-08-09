@@ -11,6 +11,8 @@ import { handleApiError, isInsufficientCreditsError } from '../../src/lib/errorH
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../src/lib/supabase';
+import { FileAttachmentBadge } from '../../src/components/ui';
+
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
@@ -269,17 +271,17 @@ onFilePicked: async (payload) => {
             paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
           }
         ]}>
-          {jdFileText.trim().length > 0 && (
-            <View style={[styles.attachedChip, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Ionicons name="document-attach-outline" size={16} color={colors.primary} />
-              <Text style={[styles.attachedChipText, { color: colors.textPrimary }]} numberOfLines={1}>
-                {jdFileName || 'Attached document'}
-              </Text>
-              <Pressable onPress={handleRemoveAttachedJd} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-              </Pressable>
+          {(jdFileText.trim().length > 0 || extractJdLoading) && (
+            <View style={{ marginBottom: Spacing.xs, alignSelf: 'flex-start' }}>
+              <FileAttachmentBadge
+                fileName={jdFileName}
+                isLoading={extractJdLoading}
+                loadingText="Extracting file..."
+                onRemove={handleRemoveAttachedJd}
+              />
             </View>
           )}
+
           <View style={styles.inputRow}>
             <Pressable
               style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}

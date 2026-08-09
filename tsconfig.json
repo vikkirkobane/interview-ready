@@ -3,6 +3,8 @@
     "strict": true,
     "target": "ESNext",
     "lib": ["ESNext"],
+    "types": ["jest", "node"],
+
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",

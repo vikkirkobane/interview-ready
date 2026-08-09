@@ -15,4 +15,6 @@ export { AdBanner } from './AdBanner';
 export { CreditBadge } from './CreditBadge';
 export { CreditCostBadge } from './CreditCostBadge';
 export { EarnCreditsButton } from './EarnCreditsButton';
+export { FileAttachmentBadge } from './FileAttachmentBadge';
+
 

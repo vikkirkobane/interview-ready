@@ -15,6 +15,8 @@ import { useFilePicker } from '../../src/hooks/useFilePicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
+import { FileAttachmentBadge } from '../../src/components/ui';
+
 
 export default function JobFitScreen() {
   const { user } = useAuthStore();
@@ -229,24 +231,14 @@ export default function JobFitScreen() {
                      )}
                   </Pressable>
 
-                  {/* Attached File Info */}
-                  {jdFileName && (
-                    <View style={{
-                      backgroundColor: colors.bgCard,
-                      borderRadius: Radius.md,
-                      paddingHorizontal: Spacing.sm,
-                      paddingVertical: 4,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      flexDirection: 'row',
-                      alignItems: 'center'
-                    }}>
-                      <Text style={{ color: colors.textMuted, fontSize: 12 }}>{jdFileName}</Text>
-                      <Pressable onPress={handleRemoveAttachedJd} style={{ marginLeft: 4 }}>
-                        <Ionicons name="close-circle" size={16} color={colors.error} />
-                      </Pressable>
-                    </View>
-                  )}
+                  {/* Attached File Info Badge */}
+                  <FileAttachmentBadge
+                    fileName={jdFileName}
+                    isLoading={extractJdLoading}
+                    loadingText="Extracting file..."
+                    onRemove={handleRemoveAttachedJd}
+                    style={{ marginLeft: Spacing.xs }}
+                  />
 
                   {/* Analyze Button */}
                   <Pressable
