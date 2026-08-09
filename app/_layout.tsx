@@ -247,11 +247,17 @@ export default function RootLayout() {
           if (data?.session) {
             console.log('[DeepLink] Session obtained, setting in auth store');
             useAuthStore.getState().setSession(data.session);
+            Toast.show({
+              type: 'success',
+              text1: 'Signed in successfully!',
+              text2: 'Welcome to InterviewReady.',
+            });
           }
 
           console.log('[DeepLink] Code exchanged successfully');
           useAuthStore.getState().setPendingOAuthCallback(false);
           return;
+
         }
 
         console.warn('[DeepLink] No code found in callback URL');
