@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { CoverLetter } from '../types/schemas';
 import { buildCoverLetterHTML } from './coverLetterHTML';
 import { buildFileName, renameToCache, downloadBlob } from './exportUtils';
@@ -119,9 +120,6 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
       if (!shareAsync) {
         throw new Error('DOCX export requires expo-sharing.');
       }
-      
-      // expo-file-system v56: use the /legacy import for writeAsStringAsync and cacheDirectory
-      const FileSystem = require('expo-file-system/legacy');
       
       const base64Data = await Packer.toBase64String(doc);
       if (FileSystem.cacheDirectory) {

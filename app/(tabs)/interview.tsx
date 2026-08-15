@@ -5,6 +5,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import Toast from 'react-native-toast-message';
 
 
@@ -243,9 +244,9 @@ export default function InterviewScreen() {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')

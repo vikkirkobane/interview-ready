@@ -100,13 +100,77 @@ describe('Dashboard (Home tab) — user stories', () => {
     expect(router.push).toHaveBeenCalledWith('/(tabs)/cover-letter');
   });
 
-  it('shows recent activity items', async () => {
+  it('shows recent activity items across all available options (resumes, cover letters, job matches, interviews, company research, linkedin)', async () => {
     mockSupabase.__mockHelpers.tables['resumes'] = [
-      { id: 'r1', title: 'Senior Engineer Resume', updated_at: '2026-08-01T10:00:00Z' },
+      { id: 'r1', title: 'Senior Engineer Resume', updated_at: '2026-08-06T10:00:00Z' },
     ];
+    mockSupabase.__mockHelpers.tables['cover_letters'] = [
+      { id: 'c1', title: 'Google Cover Letter', updated_at: '2026-08-05T10:00:00Z' },
+    ];
+    mockSupabase.__mockHelpers.tables['job_applications'] = [
+      { id: 'j1', job_title: 'Fullstack Dev', company: 'Stripe', updated_at: '2026-08-04T10:00:00Z' },
+    ];
+    mockSupabase.__mockHelpers.tables['mock_interviews'] = [
+      { id: 'i1', role: 'System Architect', updated_at: '2026-08-03T10:00:00Z' },
+    ];
+    mockSupabase.__mockHelpers.tables['company_research'] = [
+      { id: 'cr1', company_name: 'OpenAI', updated_at: '2026-08-02T10:00:00Z' },
+    ];
+    mockSupabase.__mockHelpers.tables['linkedin_tasks'] = [
+      { id: 'l1', title: 'Connect with Recruiter', updated_at: '2026-08-01T10:00:00Z' },
+    ];
+
     const screen = await renderScreen();
+
     await waitFor(() => {
       expect(screen.getByText('Senior Engineer Resume')).toBeTruthy();
+      expect(screen.getByText('Google Cover Letter')).toBeTruthy();
+      expect(screen.getByText('Fullstack Dev at Stripe')).toBeTruthy();
+      expect(screen.getByText('Mock Interview: System Architect')).toBeTruthy();
+      expect(screen.getByText('Company Research: OpenAI')).toBeTruthy();
+    });
+  });
+
+  it('navigates correctly when clicking different recent activity options', async () => {
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      { id: 'r1', title: 'Resume Item', updated_at: '2026-08-06T10:00:00Z' },
+    ];
+    mockSupabase.__mockHelpers.tables['cover_letters'] = [
+      { id: 'c1', title: 'Cover Letter Item', updated_at: '2026-08-05T10:00:00Z' },
+    ];
+    mockSupabase.__mockHelpers.tables['job_applications'] = [
+      { id: 'j1', job_title: 'Backend Eng', company: 'Meta', updated_at: '2026-08-04T10:00:00Z' },
+    ];
+
+    const screen = await renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByText('Resume Item')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByText('Resume Item'));
+    expect(router.push).toHaveBeenCalledWith('/(tabs)/new-resume?id=r1&fromList=true');
+
+    await fireEvent.press(screen.getByText('Cover Letter Item'));
+    expect(router.push).toHaveBeenCalledWith('/(tabs)/cover-letter?id=c1&fromList=true');
+
+    await fireEvent.press(screen.getByText('Backend Eng at Meta'));
+    expect(router.push).toHaveBeenCalledWith('/job-match-results?id=j1&fromList=true');
+  });
+
+  it('renders Recent Activity title on the same line as SEE ALL button', async () => {
+    const screen = await renderScreen();
+    await waitFor(() => {
+      const title = screen.getByText('Recent Activity');
+      const seeAll = screen.getByText('SEE ALL');
+      expect(title).toBeTruthy();
+      expect(seeAll).toBeTruthy();
+      // Ensure Recent Activity has no bottom margin overriding sectionTitle defaults inside header
+      expect(title.props.style).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ marginBottom: 0 }),
+        ])
+      );
     });
   });
 

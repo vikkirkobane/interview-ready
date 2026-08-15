@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 declare let window: any;
 
@@ -286,6 +286,40 @@ export async function apiUploadFile<T = any>(
 }
 
 /**
+ * Safely fetch a file as an ArrayBuffer on native (iOS/Android) and web.
+ * On Android, if fileUri is a content:// URI, it copies the file to the app's internal cache
+ * first to resolve permission boundaries that cause 'NativeRequest.start rejected' errors.
+ */
+export async function fetchFileArrayBuffer(fileUri: string, fileName?: string): Promise<ArrayBuffer> {
+  if (Platform.OS === 'web') {
+    const res = await fetch(fileUri);
+    return await res.arrayBuffer();
+  }
+
+  let targetUri = fileUri;
+  let tempCachedPath: string | null = null;
+
+  try {
+    if (Platform.OS === 'android' && fileUri.startsWith('content://')) {
+      const cacheDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+      if (cacheDir) {
+        const safeName = (fileName || 'upload.bin').replace(/[^a-zA-Z0-9_.-]/g, '_');
+        tempCachedPath = `${cacheDir}arraybuf_${Date.now()}_${safeName}`;
+        await FileSystem.copyAsync({ from: fileUri, to: tempCachedPath });
+        targetUri = tempCachedPath;
+      }
+    }
+
+    const res = await fetch(targetUri);
+    return await res.arrayBuffer();
+  } finally {
+    if (tempCachedPath) {
+      FileSystem.deleteAsync(tempCachedPath, { idempotent: true }).catch(() => {});
+    }
+  }
+}
+
+/**
  * Error codes returned by Edge Functions.
  * Match the codes defined in _shared/errors.ts
  */
@@ -297,3 +331,4 @@ export const ErrorCodes = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
+

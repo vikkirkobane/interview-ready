@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import { ResumeContent } from '../types/schemas';
 import { buildResumeHTML } from './resumeHTML';
 import { buildFileName, renameToCache } from './exportUtils';
@@ -247,9 +248,6 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
       if (!shareAsync) {
         throw new Error('DOCX export requires expo-sharing.');
       }
-      
-      // expo-file-system v56: use the /legacy import for writeAsStringAsync and cacheDirectory
-      const FileSystem = require('expo-file-system/legacy');
       
       const base64Data = await Packer.toBase64String(doc);
       if (FileSystem.cacheDirectory) {

@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 import NewResumeScreen from '../../app/(tabs)/new-resume';
 import { supabase } from '../../src/lib/supabase';
 import { apiCall } from '../../src/lib/api';
-import { renderWithProviders } from '../helpers/render';
+import { renderWithProviders, flushPromises } from '../helpers/render';
 import { resetAllStores, mockLoggedInSession } from '../helpers/stores';
 import { buildSession } from '../helpers/supabase';
 
@@ -22,6 +22,10 @@ jest.mock('../../src/lib/api', () => {
   const { createApiMock } = require('../helpers/supabase');
   return createApiMock();
 });
+
+// Generation tests exercise AI + Realtime flows with async state settling;
+// raise the per-test budget so slow/cold runs don't trip the 5s default.
+jest.setTimeout(15000);
 
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
@@ -42,12 +46,13 @@ describe('Resume Builder (new-resume) — user stories', () => {
 
 
   /** Simulate the server's Realtime generation_complete broadcast for a channel. */
-  const emitGenerationComplete = (content: any) => {
+  const emitGenerationComplete = async (content: any) => {
     const { channelBuilder } = mockSupabase.__mockHelpers;
-    act(() => {
+    await act(async () => {
       channelBuilder._emit('generation_complete', {
         payload: { content },
       });
+      await flushPromises();
     });
   };
 
@@ -67,7 +72,10 @@ describe('Resume Builder (new-resume) — user stories', () => {
     });
 
     const screen = await renderScreen();
-    await fireEvent.press(screen.getByText('Generate Resume'));
+    await act(async () => {
+      await fireEvent.press(screen.getByText('Generate Resume'));
+      await flushPromises();
+    });
 
     await waitFor(() => {
       expect(mockApiCall).toHaveBeenCalledWith(
@@ -90,7 +98,7 @@ describe('Resume Builder (new-resume) — user stories', () => {
     );
 
     // Success toast only appears after the Realtime broadcast arrives.
-    emitGenerationComplete({
+    await emitGenerationComplete({
       header: { name: 'Jane Smith', title: 'Software Engineer', email: 'j@x.com' },
       summary: { text: 'Summary' },
       experience: [],
@@ -123,11 +131,14 @@ describe('Resume Builder (new-resume) — user stories', () => {
 
     const screen = await renderScreen();
     await fireEvent.changeText(
-      screen.getByPlaceholderText('Or paste the full job description here...'),
+      await screen.findByPlaceholderText('Or paste the full job description here...'),
       'We are hiring a senior engineer with 5+ years of experience in distributed systems and Go.'
     );
 
-    await fireEvent.press(screen.getByText('Generate Tailored Resume'));
+    await act(async () => {
+      await fireEvent.press(screen.getByText('Generate Tailored Resume'));
+      await flushPromises();
+    });
 
     await waitFor(() => {
       expect(mockApiCall).toHaveBeenCalledWith(
@@ -141,6 +152,24 @@ describe('Resume Builder (new-resume) — user stories', () => {
         'resumes-create',
         'POST',
         expect.objectContaining({ title: 'Tailored Resume', job_analysis_id: 'job-9' })
+      );
+    });
+
+    // Emit the Realtime completion so the screen's 90s fallback timer is
+    // cleared and the Jest process can exit cleanly (mirrors test 2).
+    await emitGenerationComplete({
+      header: { name: 'Jane Smith', title: 'Software Engineer', email: 'j@x.com' },
+      summary: { text: 'Summary' },
+      experience: [],
+      skills: [],
+      education: [],
+      recognition: [],
+      featured_project: { include: false },
+    });
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'Resume generated!' })
       );
     });
   });

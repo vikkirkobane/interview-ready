@@ -11,6 +11,7 @@ import { handleApiError, isInsufficientCreditsError } from '../../src/lib/errorH
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { FileAttachmentBadge } from '../../src/components/ui';
 
 
@@ -149,9 +150,9 @@ onFilePicked: async (payload) => {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')

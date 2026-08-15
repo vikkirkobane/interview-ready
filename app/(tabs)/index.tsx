@@ -240,7 +240,7 @@ export default function DashboardScreen() {
 
         <View style={styles.feedSection}>
           <View style={styles.feedHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Recent Activity</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]} numberOfLines={1}>Recent Activity</Text>
             <Pressable onPress={() => router.push('/(tabs)/activities' as any)}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>SEE ALL</Text>
             </Pressable>

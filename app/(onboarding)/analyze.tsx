@@ -18,6 +18,7 @@ import { isRateLimitedError } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useAuthStore } from '../../src/stores/auth-store';
 export default function AnalyzeScreen() {
   const router = useRouter();
@@ -98,9 +99,9 @@ onFilePicked: async (payload) => {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')

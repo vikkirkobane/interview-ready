@@ -4,6 +4,7 @@ import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndi
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useProfileStore } from '../../src/stores/profile-store';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation, useExtractJdMutation } from '../../src/hooks/useApi';
@@ -80,9 +81,9 @@ export default function JobFitScreen() {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')

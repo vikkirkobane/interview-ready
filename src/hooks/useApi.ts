@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiCall, apiUploadFile } from '../lib/api';
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../stores/auth-store';
 
 /**
  * Lightweight credit refresh that works outside React components.
@@ -841,8 +842,9 @@ export const usePastInterviewsQuery = () => {
  * Fetch Unified Recent Activities
  */
 export const useRecentActivitiesQuery = () => {
+  const { user } = useAuthStore();
   return useQuery({
-    queryKey: ['recentActivities'],
+    queryKey: ['recentActivities', user?.id],
     queryFn: async () => {
       const [
         { data: resumes },

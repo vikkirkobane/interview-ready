@@ -10,6 +10,7 @@ import { handleApiError } from '../../src/lib/errorHandler';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
 import { useFilePicker } from '../../src/hooks/useFilePicker';import { usePreviewStore } from '../../src/store/previewStore';
@@ -140,9 +141,9 @@ export default function CoverLetterGeneratorScreen() {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')

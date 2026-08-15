@@ -22,6 +22,7 @@ import { useNotificationStore } from '../../src/stores/notification-store';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -388,7 +389,6 @@ export default function ResumeBuilderScreen() {
   // Sync from remote when loaded
   React.useEffect(() => {
     if (remoteResume && !draft) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft({
         templateId: remoteResume.templateId || 'modern',
         header: remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
@@ -610,9 +610,9 @@ export default function ResumeBuilderScreen() {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const resp = await fetch(payload.fileUri);
-            uploadBody = await resp.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')
@@ -715,9 +715,9 @@ export default function ResumeBuilderScreen() {
           if (payload.webFile) {
             uploadBody = payload.webFile;
           } else {
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           const { error: uploadError } = await supabase
             .storage
             .from('interview-ready-files')

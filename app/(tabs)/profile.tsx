@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useDeleteAccountMutation, useUpdateProfileMutation, useParseResumeMutation } from '../../src/hooks/useApi';
 import { useFilePicker } from '../../src/hooks/useFilePicker';import Toast from 'react-native-toast-message';
 import { supabase } from '../../src/lib/supabase';
+import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -285,10 +286,10 @@ export default function ProfileScreen() {
             // Web: File object already has the correct type
             uploadBody = payload.webFile;
           } else {
-            // Mobile: use ArrayBuffer so the blob type cannot override contentType
-            const response = await fetch(payload.fileUri);
-            uploadBody = await response.arrayBuffer();
+            // Mobile: use fetchFileArrayBuffer to safely copy content:// URIs to cache on Android
+            uploadBody = await fetchFileArrayBuffer(payload.fileUri, payload.fileName);
           }
+
           
           const { error: uploadError } = await supabase
             .storage
