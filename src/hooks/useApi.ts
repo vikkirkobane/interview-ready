@@ -2,23 +2,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiCall, apiUploadFile } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/auth-store';
+import { queryClient as globalQueryClient } from '../lib/query-client';
 
 /**
- * Lightweight credit refresh that works outside React components.
- * Re-reads the user's ai_credits row so the useCredits hook picks
- * up the new balance on its next render / refetch cycle.
+ * Lightweight credit and profile cache refresh that works outside React components.
+ * Invalidates queries so all mounted UI screens pick up the updated balance and profile.
  */
 async function refreshCredits() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-    await supabase
-      .from('users')
-      .select('ai_credits')
-      .eq('id', session.user.id)
-      .single();
+    globalQueryClient.invalidateQueries({ queryKey: ['credits'] });
+    globalQueryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    globalQueryClient.invalidateQueries({ queryKey: ['profile'] });
   } catch {
-    // Silent fail — balance will refresh on next screen visit
+    // Silent fail
   }
 }
 

@@ -16,7 +16,31 @@ jest.mock('../../src/lib/supabase', () => {
   return { supabase: mock.supabase };
 });
 
+jest.mock('../../src/lib/api', () => {
+  const { createApiMock } = require('../helpers/supabase');
+  return createApiMock();
+});
+
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/job_desc.pdf',
+          fileName: 'job_desc.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 const mockSupabase = supabase as any;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 const mockToast = Toast as any;
 
 describe('Mock Interviews lobby — user stories', () => {
@@ -132,6 +156,70 @@ describe('Mock Interviews lobby — user stories', () => {
     const screen = await renderScreen();
     await waitFor(() => {
       expect(screen.getByText('No past interviews yet.')).toBeTruthy();
+    });
+  });
+
+  it('renders the attachment toolbar and formats hint', async () => {
+    const screen = await renderScreen();
+    expect(screen.getByText('Attach JD Document')).toBeTruthy();
+    expect(screen.getByText('PDF, DOCX, PNG, JPG (Max 5MB)')).toBeTruthy();
+  });
+
+  it('attaches a JD file, displays the attachment badge, and allows removing it', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Extracted text for interview simulation.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Attached File:')).toBeTruthy();
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    // Remove attachment
+    await fireEvent.press(screen.getByLabelText('Remove file attachment'));
+    await waitFor(() => {
+      expect(screen.queryByText('Attached File:')).toBeNull();
+    });
+  });
+
+  it('starts an interview using attached JD file text', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Extracted requirements for AI Interview role.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('Enter Job Role'), 'Platform Engineer');
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByText('Start Interview'));
+
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith(
+        expect.objectContaining({
+          pathname: '/interview',
+          params: expect.objectContaining({
+            role: 'Platform Engineer',
+            jobDescription: 'Extracted requirements for AI Interview role.',
+          }),
+        })
+      );
     });
   });
 });

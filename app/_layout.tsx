@@ -17,6 +17,7 @@ import { useNotificationStore } from '../src/stores/notification-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
 import { supabase } from '../src/lib/supabase';
+import { exchangeAuthCodeSafely } from '../src/lib/auth-code-exchange';
 import mobileAds from 'react-native-google-mobile-ads';
 
 if (!(Toast as any)._isPatched) {
@@ -217,7 +218,15 @@ export default function RootLayout() {
         if (error || errorCode) {
           console.error('[DeepLink] OAuth error:', error || errorCode, errorDescription);
           useAuthStore.getState().setPendingOAuthCallback(false);
-          const isBadState = errorCode === 'bad_oauth_state' || errorDescription?.includes('bad_oauth_state');
+          const currentSession = useAuthStore.getState().session;
+          const isBadState = errorCode === 'bad_oauth_state' || errorDescription?.includes('bad_oauth_state') || errorCode === 'flow_state_already_used' || errorDescription?.includes('already been used');
+
+          // If the user already has an active session, a duplicate callback with "already been used" state is harmless
+          if (isBadState && currentSession) {
+            console.log('[DeepLink] Ignoring duplicate OAuth state error since session is already active');
+            return;
+          }
+
           Toast.show({
             type: 'error',
             text1: isBadState ? 'Authentication session expired' : 'Authentication failed',
@@ -229,7 +238,7 @@ export default function RootLayout() {
 
         if (code) {
           console.log('[DeepLink] Exchanging code for session...');
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { session: exchangedSession, error: exchangeError } = await exchangeAuthCodeSafely(code);
 
           if (exchangeError) {
             console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);
@@ -244,9 +253,9 @@ export default function RootLayout() {
 
           // Explicitly set session in store for immediate response
           // onAuthStateChange will also fire, but this ensures no gap
-          if (data?.session) {
+          if (exchangedSession) {
             console.log('[DeepLink] Session obtained, setting in auth store');
-            useAuthStore.getState().setSession(data.session);
+            useAuthStore.getState().setSession(exchangedSession);
             Toast.show({
               type: 'success',
               text1: 'Signed in successfully!',
@@ -319,11 +328,11 @@ export default function RootLayout() {
         >
           <Stack.Screen name="index" />
           <Stack.Screen name="(auth)" />
-          <Stack.Screen name="auth" options={{ headerShown: false }} />
+          <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
           <Stack.Screen name="reset-password" options={{ headerShown: false }} />
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="payment" />
+          <Stack.Screen name="payment/callback" options={{ headerShown: false }} />
           <Stack.Screen name="preview" options={{ presentation: 'modal' }} />
         </Stack>
         <Toast config={toastConfig} />

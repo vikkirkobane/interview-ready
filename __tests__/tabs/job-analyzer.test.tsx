@@ -22,8 +22,27 @@ jest.mock('../../src/lib/api', () => {
   return createApiMock();
 });
 
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/job_desc.pdf',
+          fileName: 'job_desc.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 const mockToast = Toast as any;
 
 const JD_TEXT =
@@ -152,5 +171,64 @@ describe('Job Fit Analyzer — user stories', () => {
     });
     await fireEvent.press(screen.getByText('Frontend Engineer'));
     expect(router.push).toHaveBeenCalledWith('/job-match-results?id=app-2&fromList=true');
+  });
+
+  it('attaches a JD file, displays the attachment badge, and allows removing it', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: { extracted_text: 'Extracted job description text from attached PDF document.' },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    expect(screen.getByText('Attach JD Document')).toBeTruthy();
+    expect(screen.getByText('PDF, DOCX, PNG, JPG (Max 5MB)')).toBeTruthy();
+
+    // Press attach button
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    // Verify badge appears with file name
+    await waitFor(() => {
+      expect(screen.getByText('Attached File:')).toBeTruthy();
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    // Remove the attached file
+    const removeBtn = screen.getByLabelText('Remove file attachment');
+    await fireEvent.press(removeBtn);
+
+    // Verify badge is removed
+    await waitFor(() => {
+      expect(screen.queryByText('job_desc.pdf')).toBeNull();
+    });
+  });
+
+  it('analyzes using the extracted text from an attached file', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: { extracted_text: 'Extracted long job description text from PDF with more than twenty characters.' },
+      error: null,
+    });
+    mockApiCall.mockResolvedValue({ data: ANALYSIS, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByText('Analyze Job Match'));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        'jobs-analyze',
+        'POST',
+        expect.objectContaining({
+          job_description: 'Extracted long job description text from PDF with more than twenty characters.',
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith('/job-match-results?id=job-9');
+    });
   });
 });

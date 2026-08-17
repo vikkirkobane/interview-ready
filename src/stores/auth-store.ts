@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { signInWithGoogle, initializeGoogleSignIn, signOutFromGoogle } from '../lib/social-auth';
+import { exchangeAuthCodeSafely } from '../lib/auth-code-exchange';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -217,16 +218,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const parsedUrl = new URL(res.url);
             const code = parsedUrl.searchParams.get('code');
             if (code) {
-              const { data: sessionData, error: sessionError } =
-                await supabase.auth.exchangeCodeForSession(code);
+              const { session: sessionData, error: sessionError } =
+                await exchangeAuthCodeSafely(code);
               if (sessionError) {
                 console.warn('[OAuth] exchangeCodeForSession error:', sessionError.message);
                 clearTimeout(oauthTimeoutId);
                 set({ pendingOAuthCallback: false });
-              } else if (sessionData?.session) {
+              } else if (sessionData) {
                 // onAuthStateChange will also fire, but we set it here for immediate response
                 clearTimeout(oauthTimeoutId);
-                set({ session: sessionData.session, user: sessionData.session.user, pendingOAuthCallback: false });
+                set({ session: sessionData, user: sessionData.user, pendingOAuthCallback: false });
                 return { error: null };
               }
             }
@@ -363,17 +364,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const parsedUrl = new URL(res.url);
             const code = parsedUrl.searchParams.get('code');
             if (code) {
-              const { data: sessionData, error: sessionError } =
-                await supabase.auth.exchangeCodeForSession(code);
+              const { session: sessionData, error: sessionError } =
+                await exchangeAuthCodeSafely(code);
               if (sessionError) {
                 console.warn('[Identity] exchangeCodeForSession error:', sessionError.message);
                 clearTimeout(linkTimeoutId);
                 set({ pendingOAuthCallback: false });
                 return { error: sessionError.message };
               }
-              if (sessionData?.session) {
+              if (sessionData) {
                 clearTimeout(linkTimeoutId);
-                set({ session: sessionData.session, user: sessionData.session.user, pendingOAuthCallback: false });
+                set({ session: sessionData, user: sessionData.user, pendingOAuthCallback: false });
                 return { error: null };
               }
             }

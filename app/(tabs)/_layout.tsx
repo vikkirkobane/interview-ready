@@ -101,7 +101,7 @@ export default function TabLayout() {
                   <Image 
                     source={require('../../assets/logo.png')} 
                     style={{ width: 28, height: 28 }} 
-                    resizeMode="contain" 
+                    contentFit="contain" 
                   />
                 )}
               </View>

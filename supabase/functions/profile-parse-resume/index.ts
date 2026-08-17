@@ -6,7 +6,7 @@ import mammoth from 'npm:mammoth';
 import { Buffer } from 'node:buffer';
 import { AIClient } from '../_shared/ai-client.ts';
 import { checkCredits, deductCredits, getCreditsBalance, CREDIT_COSTS } from '../_shared/credits.ts';
-import { extractPdfText } from '../_shared/document-text.ts';
+import { extractPdfText, extractImageText } from '../_shared/document-text.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -69,7 +69,7 @@ app.post('/*', async (c: any) => {
     const file = formData.get('file') as File | null;
 
     if (!file) {
-      throw new Error('No resume file uploaded. Please select a PDF or DOCX file.');
+      throw new Error('No resume file uploaded. Please select a PDF, DOCX, or image file.');
     }
 
     if (file.size > 5 * 1024 * 1024) {
@@ -82,9 +82,14 @@ app.post('/*', async (c: any) => {
     const isDocx =
       fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       filename.toLowerCase().endsWith('.docx');
+    const isImage =
+      fileType.startsWith('image/') ||
+      filename.toLowerCase().endsWith('.png') ||
+      filename.toLowerCase().endsWith('.jpg') ||
+      filename.toLowerCase().endsWith('.jpeg');
 
-    if (!isPdf && !isDocx) {
-      throw new Error('Unsupported file type. Please upload a PDF or DOCX resume file.');
+    if (!isPdf && !isDocx && !isImage) {
+      throw new Error('Unsupported file type. Please upload a PDF, DOCX, PNG, or JPEG resume file.');
     }
 
     const buffer = new Uint8Array(await file.arrayBuffer());
@@ -92,7 +97,7 @@ app.post('/*', async (c: any) => {
 
     if (isPdf) {
       resumeText = await extractPdfText(buffer);
-    } else {
+    } else if (isDocx) {
       try {
         const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });
         resumeText = result.value?.trim() || '';
@@ -100,6 +105,14 @@ app.post('/*', async (c: any) => {
         const message = docxErr instanceof Error ? docxErr.message : String(docxErr);
         throw new Error(`Could not read the DOCX file: ${message}. Please ensure the file is not corrupted.`);
       }
+    } else if (isImage) {
+      let normalizedMime = fileType;
+      if (filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg') || fileType === 'image/jpg') {
+        normalizedMime = 'image/jpeg';
+      } else if (filename.toLowerCase().endsWith('.png') || fileType === 'image/png') {
+        normalizedMime = 'image/png';
+      }
+      resumeText = await extractImageText(buffer, normalizedMime);
     }
 
     if (!resumeText || resumeText.trim().length === 0) {

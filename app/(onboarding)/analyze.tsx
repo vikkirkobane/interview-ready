@@ -38,12 +38,22 @@ export default function AnalyzeScreen() {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const handleAnalyze = async () => {
-    if (!hasInput) return;
+    const finalJdText = (inputType === 2 ? jdFileText : (jdText || jdFileText)).trim();
+    const finalJdUrl = jdUrl.trim();
+
+    if (finalJdText.length < 20 && !finalJdUrl) {
+      Toast.show({
+        type: 'error',
+        text1: 'Input missing',
+        text2: 'Please paste a job description, provide a valid URL, or attach a document.',
+      });
+      return;
+    }
 
     try {
       const result = await analyzeJob.mutateAsync({
-        jdText: inputType === 0 ? jdText : inputType === 2 ? jdFileText : undefined,
-        jdUrl: inputType === 1 ? jdUrl : undefined,
+        jdText: finalJdText.length >= 20 ? finalJdText : undefined,
+        jdUrl: inputType === 1 ? finalJdUrl : undefined,
       });
 
       useOnboardingStore.getState().setAnalysisId(result.job_id);
@@ -81,8 +91,7 @@ export default function AnalyzeScreen() {
       type: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       allowedTypes: ['image/png', 'image/jpeg', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       maxSizeMb: 5,
-      
-onFilePicked: async (payload) => {
+      onFilePicked: async (payload) => {
         Toast.show({ type: 'info', text1: 'Uploading File...', text2: 'Saving your file to secure storage.' });
         try {
           const fileName = payload.fileName;
@@ -114,15 +123,16 @@ onFilePicked: async (payload) => {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
+          setJdText(extracted_text);
+          useOnboardingStore.getState().setJdText(extracted_text);
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          throw error;
         }
       },
       successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
     });
   };
-
-
 
   const handleRemoveAttachedJd = () => {
     setJdFileText('');
@@ -131,9 +141,9 @@ onFilePicked: async (payload) => {
   };
 
   const hasInput =
-    (inputType === 0 && jdText.length > 20) ||
+    (inputType === 0 && (jdText.length > 20 || jdFileText.trim().length > 20)) ||
     (inputType === 1 && jdUrl.length > 5) ||
-    (inputType === 2 && jdFileText.trim().length > 20);
+    (inputType === 2 && (jdFileText.trim().length > 20 || jdText.length > 20));
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
@@ -197,27 +207,47 @@ onFilePicked: async (payload) => {
                 <Ionicons name="information-circle" size={14} color={colors.textMuted} />
                 <Text style={[styles.inputFooterText, { color: colors.textMuted }]}>Min. 50 words recommended</Text>
               </View>
-              <View style={styles.inputActions}>
-                {/* Attach JD File Button */}
-                <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
-                  {extractJdLoading ? (
-                    <ActivityIndicator size="small" color={colors.primary} />
-                  ) : (
-                    <>
-                      <Ionicons name="attach" size={24} color={colors.textMuted} />
-                    </>
-                  )}
-                </Pressable>
+            </View>
 
-                {/* Attached File Info Badge */}
+            {/* File Attachment Shelf (Prominently displayed when picking, loading, or attached) */}
+            {(jdFileName || extractJdLoading) ? (
+              <View style={[styles.attachmentShelf, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                  <Ionicons name="document-attach-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                  <Text style={[styles.attachmentShelfLabel, { color: colors.textPrimary }]}>Attached File:</Text>
+                </View>
                 <FileAttachmentBadge
                   fileName={jdFileName}
                   isLoading={extractJdLoading}
-                  loadingText="Extracting file..."
+                  loadingText="Extracting file text..."
                   onRemove={handleRemoveAttachedJd}
-                  style={{ marginLeft: Spacing.xs }}
                 />
               </View>
+            ) : null}
+
+            {/* Toolbar: Attach Button + Format hint */}
+            <View style={styles.toolbarRow}>
+              <Pressable
+                style={[styles.attachActionBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+                onPress={handleAttachJdFile}
+                disabled={extractJdLoading}
+                accessibilityLabel="Attach job description document"
+                accessibilityRole="button"
+              >
+                {extractJdLoading ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="attach" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.attachActionText, { color: colors.textPrimary }]}>
+                      {jdFileName ? 'Replace Attached File' : 'Attach JD Document'}
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+              <Text style={[styles.supportedFormatsText, { color: colors.textMuted }]}>
+                PDF, DOCX, PNG, JPG (Max 5MB)
+              </Text>
             </View>
 
             {/* Primary Action */}
@@ -447,6 +477,46 @@ const styles = StyleSheet.create({
   },
   inputFooterText: {
     ...Typography.label,
+  },
+  attachmentShelf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    padding: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginVertical: Spacing.xs,
+  },
+  attachmentShelfLabel: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  toolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  attachActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  attachActionText: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  supportedFormatsText: {
+    ...Typography.bodySm,
+    fontSize: 11,
   },
   primaryBtn: {
     width: '100%',

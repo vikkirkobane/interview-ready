@@ -156,8 +156,10 @@ export default function CoverLetterGeneratorScreen() {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
+          setJobDescription(extracted_text);
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          throw error;
         }
       },
       successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
@@ -398,24 +400,45 @@ export default function CoverLetterGeneratorScreen() {
                 multiline
                 textAlignVertical="top"
               />
-              <View style={styles.inputActions}>
-                {/* Attach JD File Button */}
-                <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+              {/* File Attachment Shelf (Prominently displayed when picking, loading, or attached) */}
+              {(jdFileName || extractJdLoading) ? (
+                <View style={[styles.attachmentShelf, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                    <Ionicons name="document-attach-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.attachmentShelfLabel, { color: colors.textPrimary }]}>Attached File:</Text>
+                  </View>
+                  <FileAttachmentBadge
+                    fileName={jdFileName}
+                    isLoading={extractJdLoading}
+                    loadingText="Extracting file text..."
+                    onRemove={handleRemoveAttachedJd}
+                  />
+                </View>
+              ) : null}
+
+              {/* Toolbar: Attach Button + Format hint */}
+              <View style={styles.toolbarRow}>
+                <Pressable
+                  style={[styles.attachActionBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+                  onPress={handleAttachJdFile}
+                  disabled={extractJdLoading}
+                  accessibilityLabel="Attach job description document"
+                  accessibilityRole="button"
+                >
                   {extractJdLoading ? (
                     <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
-                    <Ionicons name="attach" size={24} color={colors.textMuted} />
+                    <>
+                      <Ionicons name="attach" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+                      <Text style={[styles.attachActionText, { color: colors.textPrimary }]}>
+                        {jdFileName ? 'Replace Attached File' : 'Attach JD Document'}
+                      </Text>
+                    </>
                   )}
                 </Pressable>
-
-                {/* Attached File Info Badge */}
-                <FileAttachmentBadge
-                  fileName={jdFileName}
-                  isLoading={extractJdLoading}
-                  loadingText="Extracting file..."
-                  onRemove={handleRemoveAttachedJd}
-                  style={{ marginLeft: Spacing.xs }}
-                />
+                <Text style={[styles.supportedFormatsText, { color: colors.textMuted }]}>
+                  PDF, DOCX, PNG, JPG (Max 5MB)
+                </Text>
               </View>
             </View>
 
@@ -573,19 +596,45 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  inputActions: {
+  attachmentShelf: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
-  attachBtn: {
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
     padding: Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: Radius.md,
+    borderWidth: 1,
+    marginVertical: Spacing.xs,
+  },
+  attachmentShelfLabel: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  attachActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: 'transparent',
+  },
+  attachActionText: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  supportedFormatsText: {
+    ...Typography.bodySm,
+    fontSize: 11,
   },
   toneGrid: {
     flexDirection: 'row',

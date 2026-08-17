@@ -7,10 +7,12 @@ import { useNotificationStore } from '../../src/stores/notification-store';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useNavigationStore } from '../../src/stores/navigation-store';
 import { usePreviewStore } from '../../src/store/previewStore';
+import { _resetCodeExchangeCache } from '../../src/lib/auth-code-exchange';
 import type { Session } from '@supabase/supabase-js';
 
 /** Reset every zustand store back to a clean, signed-out, not-onboarded state. */
 export function resetAllStores() {
+  _resetCodeExchangeCache();
   useAuthStore.setState({
     session: null,
     user: null,

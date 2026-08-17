@@ -28,7 +28,7 @@ export default function OnboardingLayout() {
               <Image 
                 source={require('../../assets/logo.png')} 
                 style={{ width: 28, height: 28 }} 
-                resizeMode="contain" 
+                contentFit="contain" 
               />
             </View>
             <Text style={[styles.headerTitleText, { color: colors.primary }]}>Interview Ready</Text>

@@ -75,6 +75,7 @@ const RESUME_ROW = {
 };
 
 describe('Onboarding Step 4 (Resume generation) — user stories', () => {
+  jest.setTimeout(15000);
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();

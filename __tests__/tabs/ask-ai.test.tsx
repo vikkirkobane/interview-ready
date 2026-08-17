@@ -22,8 +22,27 @@ jest.mock('../../src/lib/api', () => {
   return createApiMock();
 });
 
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/job_desc.pdf',
+          fileName: 'job_desc.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 const mockToast = Toast as any;
 
 const GREETING =
@@ -42,19 +61,21 @@ describe('Ask AI — user stories', () => {
 
   const renderScreen = () => renderWithProviders(<AskAIScreen />);
 
-  it('renders the chat with a pre-seeded greeting', async () => {
+  it('renders the chat with a pre-seeded greeting and format hint', async () => {
     const screen = await renderScreen();
     expect(screen.getByText('Ask AI')).toBeTruthy();
     expect(screen.getByText(GREETING)).toBeTruthy();
-    expect(screen.getByPlaceholderText('Ask a question')).toBeTruthy();
+    expect(screen.getByPlaceholderText(/Ask a question/)).toBeTruthy();
+    expect(screen.getByText('PDF, DOCX, PNG, JPG (Max 5MB)')).toBeTruthy();
+    expect(screen.getByLabelText('Attach document')).toBeTruthy();
   });
 
   it('asks a question and shows the AI answer', async () => {
     mockApiCall.mockResolvedValue({ data: { answer: 'Highlight your Kubernetes experience first.' }, error: null });
 
     const screen = await renderScreen();
-    await fireEvent.changeText(screen.getByPlaceholderText('Ask a question'), 'How do I answer "why do you want this job?"');
-    await fireEvent.press(screen.getByLabelText('send').parent as any);
+    await fireEvent.changeText(screen.getByPlaceholderText(/Ask a question/), 'How do I answer "why do you want this job?"');
+    await fireEvent.press(screen.getByLabelText('Send question'));
 
     await waitFor(() => {
       expect(mockApiCall).toHaveBeenCalledWith(
@@ -75,8 +96,8 @@ describe('Ask AI — user stories', () => {
     mockApiCall.mockResolvedValue({ data: { answer: 'Use the STAR method.' }, error: null });
 
     const screen = await renderScreen();
-    await fireEvent.changeText(screen.getByPlaceholderText('Ask a question'), 'Tell me about a conflict');
-    await fireEvent.press(screen.getByLabelText('send').parent as any);
+    await fireEvent.changeText(screen.getByPlaceholderText(/Ask a question/), 'Tell me about a conflict');
+    await fireEvent.press(screen.getByLabelText('Send question'));
 
     await waitFor(() => {
       expect(mockApiCall).toHaveBeenCalledWith(
@@ -92,6 +113,88 @@ describe('Ask AI — user stories', () => {
     await fireEvent.press(copyButtons[copyButtons.length - 1]);
     await waitFor(() => {
       expect(Clipboard.setStringAsync).toHaveBeenCalledWith('Use the STAR method.');
+    });
+  });
+
+  it('attaches a document file, displays the attachment shelf badge, and allows removing it', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Extracted requirements from PDF job document.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByLabelText('Attach document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Attached File:')).toBeTruthy();
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    // Remove attachment
+    await fireEvent.press(screen.getByLabelText('Remove file attachment'));
+    await waitFor(() => {
+      expect(screen.queryByText('Attached File:')).toBeNull();
+    });
+  });
+
+  it('sends a question with attached document context', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Job description requirements for Frontend Engineer.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    mockApiCall.mockResolvedValue({
+      data: { answer: 'Based on the attached job description, highlight your React expertise.' },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByLabelText('Attach document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    await fireEvent.changeText(screen.getByPlaceholderText(/Ask a question/), 'How should I tailor my answer?');
+    await fireEvent.press(screen.getByLabelText('Send question'));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        'answer-question',
+        'POST',
+        expect.objectContaining({
+          question: 'How should I tailor my answer?',
+          file_context: 'Job description requirements for Frontend Engineer.',
+        })
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Based on the attached job description, highlight your React expertise.')).toBeTruthy();
+    });
+  });
+
+  it('renders short conversation bubble messages such as "Hello" inside the bubble layout', async () => {
+    mockApiCall.mockResolvedValue({
+      data: { answer: 'Hello! How can I assist you with your application today?' },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText(/Ask a question/), 'Hello');
+    await fireEvent.press(screen.getByLabelText('Send question'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeTruthy();
+      expect(screen.getByText('Hello! How can I assist you with your application today?')).toBeTruthy();
     });
   });
 });

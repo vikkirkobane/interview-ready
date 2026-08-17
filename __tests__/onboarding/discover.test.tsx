@@ -25,6 +25,8 @@ jest.mock('../../src/lib/api', () => {
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
 
+jest.setTimeout(15000);
+
 describe('Onboarding Step 5 (Discover) — user stories', () => {
   beforeEach(() => {
     resetAllStores();

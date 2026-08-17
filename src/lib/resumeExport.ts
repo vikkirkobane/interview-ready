@@ -101,7 +101,7 @@ export async function exportResumePDF(resume: ResumeContent, templateId?: string
     }
     const { uri } = await printToFileAsync({ html });
     const namedUri = await renameToCache(uri, filename);
-    await shareAsync(namedUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
+    await shareAsync(namedUri, { UTI: 'com.adobe.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
   }
 }
 

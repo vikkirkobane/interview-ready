@@ -23,12 +23,31 @@ jest.mock('../../src/lib/api', () => {
   return createApiMock();
 });
 
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/job_desc.pdf',
+          fileName: 'job_desc.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 // Generation tests exercise AI + Realtime flows with async state settling;
 // raise the per-test budget so slow/cold runs don't trip the 5s default.
 jest.setTimeout(15000);
 
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 const mockToast = Toast as any;
 
 describe('Resume Builder (new-resume) — user stories', () => {
@@ -171,6 +190,37 @@ describe('Resume Builder (new-resume) — user stories', () => {
       expect(mockToast.show).toHaveBeenCalledWith(
         expect.objectContaining({ text1: 'Resume generated!' })
       );
+    });
+  });
+
+  it('renders the attachment toolbar and formats hint in Step 1', async () => {
+    const screen = await renderScreen();
+    expect(screen.getByText('Attach JD Document')).toBeTruthy();
+    expect(screen.getByText('PDF, DOCX, PNG, JPG (Max 5MB)')).toBeTruthy();
+  });
+
+  it('attaches a JD file, displays the attachment badge, and allows removing it', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Extracted text from attached JD for Resume tailoring.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Attached File:')).toBeTruthy();
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    // Remove attachment
+    await fireEvent.press(screen.getByLabelText('Remove file attachment'));
+    await waitFor(() => {
+      expect(screen.queryByText('Attached File:')).toBeNull();
     });
   });
 });

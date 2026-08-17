@@ -243,32 +243,26 @@ export async function apiUploadFile<T = any>(
       }
 
       try {
-        const formData = new FormData();
-        formData.append('file', {
-          uri: uploadUri,
-          name: fileName || 'upload.bin',
-          type: mimeType || 'application/octet-stream',
-        } as any);
-
-        const response = await fetch(url, {
-          method: 'POST',
+        const uploadResult = await FileSystem.uploadAsync(url, uploadUri, {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'file',
+          mimeType: mimeType || 'application/octet-stream',
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: formData,
         });
 
-
-        if (!response.ok) {
+        if (uploadResult.status < 200 || uploadResult.status >= 300) {
           let errorMsg = 'Upload failed';
           try {
-            const errJson = await response.json();
+            const errJson = JSON.parse(uploadResult.body);
             errorMsg = errJson.error || errorMsg;
           } catch {}
           return { data: null, error: errorMsg };
         }
 
-        const data = await response.json();
+        const data = JSON.parse(uploadResult.body);
         return { data, error: null };
       } catch (err: any) {
         return { data: null, error: err.message || 'Upload failed' };

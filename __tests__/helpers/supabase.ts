@@ -11,6 +11,7 @@ export function createApiMock() {
   return {
     apiCall: jest.fn(async (): Promise<{ data: any; error: any }> => ({ data: null, error: null })),
     apiUploadFile: jest.fn(async (): Promise<{ data: any; error: any }> => ({ data: null, error: null })),
+    fetchFileArrayBuffer: jest.fn(async () => new ArrayBuffer(8)),
     ErrorCodes: {
       INSUFFICIENT_CREDITS: 'INSUFFICIENT_CREDITS',
       NOT_FOUND: 'NOT_FOUND',
@@ -272,6 +273,7 @@ export function buildSession(overrides: Record<string, any> = {}) {
     access_token: 'test-access-token',
     refresh_token: 'test-refresh-token',
     expires_at: Math.floor(Date.now() / 1000) + 3600,
+    expires_in: 3600,
     token_type: 'bearer',
     user: {
       id: 'test-user-id',

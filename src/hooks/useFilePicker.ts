@@ -54,9 +54,9 @@ export function useFilePicker() {
         }
       }
 
-      // Infer mimeType if missing
+      // Infer mimeType if missing or generic
       let mimeType = fileAsset.mimeType || 'application/octet-stream';
-      if (!fileAsset.mimeType) {
+      if (!fileAsset.mimeType || fileAsset.mimeType === 'application/octet-stream' || fileAsset.mimeType === '*/*') {
         if (fileAsset.name.toLowerCase().endsWith('.pdf')) mimeType = 'application/pdf';
         else if (fileAsset.name.toLowerCase().endsWith('.docx')) mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         else if (fileAsset.name.toLowerCase().endsWith('.png')) mimeType = 'image/png';

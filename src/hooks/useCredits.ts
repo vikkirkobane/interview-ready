@@ -35,36 +35,50 @@ export interface CreditTransaction {
   createdAt: string;
 }
 
+let activeBalancePromise: Promise<CreditBalance | null> | null = null;
+
 export function useCredits() {
   const [balance, setBalance] = useState<CreditBalance | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch current credit balance
+  // Fetch current credit balance with in-flight promise deduplication
   const fetchBalance = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
       
-      if (!user) {
+      if (!userId) {
         throw new Error('Not authenticated');
       }
 
-      const { data, error: fetchError } = await supabase
-        .from('users')
-        .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at, plan')
-        .eq('id', user.id)
-        .single();
+      if (!activeBalancePromise) {
+        activeBalancePromise = (async () => {
+          const { data, error: fetchError } = await supabase
+            .from('users')
+            .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at, plan')
+            .eq('id', userId)
+            .single();
 
-      if (fetchError) throw fetchError;
+          if (fetchError) throw fetchError;
 
-      setBalance({
-        balance: data.ai_credits || 0,
-        totalEarned: data.total_credits_earned || 0,
-        totalUsed: data.total_credits_used || 0,
-        expiresAt: data.credits_expire_at,
-        plan: data.plan || 'FREE',
-      });
+          return {
+            balance: data.ai_credits || 0,
+            totalEarned: data.total_credits_earned || 0,
+            totalUsed: data.total_credits_used || 0,
+            expiresAt: data.credits_expire_at,
+            plan: data.plan || 'FREE',
+          };
+        })().finally(() => {
+          activeBalancePromise = null;
+        });
+      }
+
+      const balanceData = await activeBalancePromise;
+      if (balanceData) {
+        setBalance(balanceData);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch balance');
@@ -153,11 +167,10 @@ export function useCredits() {
     };
   }, [fetchBalance]);
 
-
-
   // Get credit transaction history
   const getTransactions = useCallback(async (limit = 50): Promise<CreditTransaction[]> => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     
     if (!user) {
       throw new Error('Not authenticated');
@@ -210,11 +223,12 @@ export function useCredits() {
     let isMounted = true;
 
     const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!isMounted || !user) return;
 
       channel = supabase
-        .channel('credit-changes')
+        .channel(`credit-changes-${user.id}`)
         .on(
           'postgres_changes',
           {

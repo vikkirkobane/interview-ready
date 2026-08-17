@@ -7,7 +7,7 @@ import AnalyzeScreen from '../../app/(onboarding)/analyze';
 import { supabase } from '../../src/lib/supabase';
 import { apiCall } from '../../src/lib/api';
 import { renderWithProviders } from '../helpers/render';
-import { resetAllStores } from '../helpers/stores';
+import { resetAllStores, mockLoggedInSession } from '../helpers/stores';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { buildSession } from '../helpers/supabase';
 
@@ -23,8 +23,27 @@ jest.mock('../../src/lib/api', () => {
   return createApiMock();
 });
 
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/job_desc.pdf',
+          fileName: 'job_desc.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 const mockToast = Toast as any;
 
 const JD_TEXT = 'We are hiring a Senior Software Engineer with 5+ years of experience in distributed systems. Strong experience with Kubernetes, Go and cloud architecture required. Nice to have: Rust and data pipelines.';
@@ -45,7 +64,7 @@ describe('Onboarding Step 3 (Analyze) — user stories', () => {
     mockToast.show.mockClear();
     router.__resetMockRouter();
     const session = buildSession({ user_metadata: { onboarding_completed: false } });
-    mockSupabase.auth.getSession.mockResolvedValue({ data: { session }, error: null });
+    mockLoggedInSession(mockSupabase, session);
   });
 
   const renderScreen = () => renderWithProviders(<AnalyzeScreen />);
@@ -187,6 +206,37 @@ describe('Onboarding Step 3 (Analyze) — user stories', () => {
     await waitFor(() => {
       expect(screen.getByText('Red Flags')).toBeTruthy();
       expect(screen.getByText('On-call rotation')).toBeTruthy();
+    });
+  });
+
+  it('renders the attachment toolbar and formats hint', async () => {
+    const screen = await renderScreen();
+    expect(screen.getByText('Attach JD Document')).toBeTruthy();
+    expect(screen.getByText('PDF, DOCX, PNG, JPG (Max 5MB)')).toBeTruthy();
+  });
+
+  it('attaches a JD file, displays the attachment badge, and allows removing it', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Extracted text for onboarding job matching.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Attached File:')).toBeTruthy();
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    // Remove attachment
+    await fireEvent.press(screen.getByLabelText('Remove file attachment'));
+    await waitFor(() => {
+      expect(screen.queryByText('Attached File:')).toBeNull();
     });
   });
 });

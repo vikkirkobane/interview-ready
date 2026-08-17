@@ -23,8 +23,27 @@ jest.mock('../../src/lib/api', () => {
   return createApiMock();
 });
 
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/job_desc.pdf',
+          fileName: 'job_desc.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 const mockToast = Toast as any;
 
 const LETTER = {
@@ -182,6 +201,73 @@ describe('Cover Letter Generator — user stories', () => {
     await fireEvent.press(screen.getByText('Try Another Tone'));
     await waitFor(() => {
       expect(screen.getByText('Generate Cover Letter')).toBeTruthy();
+    });
+  });
+
+  it('renders the attachment toolbar and formats hint', async () => {
+    const screen = await renderScreen();
+    expect(screen.getByText('Attach JD Document')).toBeTruthy();
+    expect(screen.getByText('PDF, DOCX, PNG, JPG (Max 5MB)')).toBeTruthy();
+  });
+
+  it('attaches a JD file, displays the attachment badge, and allows removing it', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Extracted text from attached JD for Cover Letter test.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Attached File:')).toBeTruthy();
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    // Remove attachment
+    await fireEvent.press(screen.getByLabelText('Remove file attachment'));
+    await waitFor(() => {
+      expect(screen.queryByText('Attached File:')).toBeNull();
+    });
+  });
+
+  it('generates cover letter using attached JD file text', async () => {
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Attached JD content with requirements.',
+        file_name: 'job_desc.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    mockApiCall.mockResolvedValue({ data: { cover_letter: LETTER }, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Acme Corp'), 'Acme');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Senior Software Engineer'), 'Engineer');
+    await fireEvent.press(screen.getByText('Attach JD Document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('job_desc.pdf')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByText('Generate Cover Letter'));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        'cover-letters-create',
+        'POST',
+        expect.objectContaining({
+          company_name: 'Acme',
+          job_title: 'Engineer',
+          job_description: 'Attached JD content with requirements.',
+        })
+      );
     });
   });
 });

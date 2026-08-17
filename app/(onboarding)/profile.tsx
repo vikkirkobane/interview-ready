@@ -59,8 +59,8 @@ export default function ProfileScreen() {
 
   const handleUploadResume = async () => {
     await pickFile({
-      type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-      allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+      type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'],
+      allowedTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/png', 'image/jpeg'],
       maxSizeMb: 5,
       onFilePicked: async (payload) => {
         Toast.show({ type: 'info', text1: 'Uploading Resume...', text2: 'Saving your file to secure storage.' });

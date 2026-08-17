@@ -105,7 +105,7 @@ export default function WelcomeScreen() {
             <Image 
               source={require('../../assets/logo.png')} 
               style={{ width: 48, height: 48 }} 
-              resizeMode="contain" 
+              contentFit="contain" 
             />
           </View>
 

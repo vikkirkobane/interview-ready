@@ -259,8 +259,10 @@ export default function InterviewScreen() {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
+          setInputText(extracted_text);
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          throw error;
         }
       },
       successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
@@ -397,14 +399,14 @@ export default function InterviewScreen() {
               <View style={[styles.bubble, isAi ? [styles.bubbleLeft, { backgroundColor: colors.bgCard, borderColor: colors.border }] : [styles.bubbleRight, { backgroundColor: colors.primary }]]}>
                 {isAi ? (
                   <Markdown style={{
-                    body: { ...Typography.bodyMd, color: colors.textPrimary },
+                    body: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
                     code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
                     code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
                     heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
                     heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
                     heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-                    paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-                    list_item: { ...Typography.bodyMd, color: colors.textPrimary },
+                    paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs, lineHeight: 22 },
+                    list_item: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
                     link: { color: colors.primary, textDecorationLine: 'underline' },
                     strong: { fontWeight: '700' },
                   }}>
@@ -450,22 +452,35 @@ export default function InterviewScreen() {
           </View>
           
           <View style={styles.inputActions}>
-            <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
+            <Pressable
+              style={[styles.attachBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+              onPress={handleAttachJdFile}
+              disabled={extractJdLoading}
+              accessibilityLabel="Attach job description document"
+              accessibilityRole="button"
+            >
               {extractJdLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <Ionicons name="attach" size={20} color={colors.textMuted} />
+                <>
+                  <Ionicons name="attach" size={16} color={colors.primary} style={{ marginRight: 4 }} />
+                  <Text style={[styles.attachBtnText, { color: colors.textPrimary }]}>
+                    {jdFileName ? 'Replace JD' : 'Attach JD'}
+                  </Text>
+                </>
               )}
             </Pressable>
 
             {/* Attached File Info Badge */}
-            <FileAttachmentBadge
-              fileName={jdFileName}
-              isLoading={extractJdLoading}
-              loadingText="Extracting file..."
-              onRemove={handleRemoveAttachedJd}
-              style={{ marginLeft: Spacing.xs }}
-            />
+            {(jdFileName || extractJdLoading) ? (
+              <FileAttachmentBadge
+                fileName={jdFileName}
+                isLoading={extractJdLoading}
+                loadingText="Extracting file..."
+                onRemove={handleRemoveAttachedJd}
+                style={{ marginLeft: Spacing.xs }}
+              />
+            ) : null}
           </View>
         </View>
         <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>
@@ -613,7 +628,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bubble: {
-    padding: Spacing.md,
+    minWidth: '45%',
+    maxWidth: '100%',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 4,
     borderRadius: 16,
     ...Shadow.sm,
   },
@@ -626,8 +644,8 @@ const styles = StyleSheet.create({
     ...Shadow.card,
   },
   bubbleText: {
-    ...Typography.bodyLg,
-    lineHeight: 28,
+    ...Typography.bodyMd,
+    lineHeight: 22,
   },
   bubbleTextLeft: {
   },
@@ -701,19 +719,21 @@ const styles = StyleSheet.create({
   inputActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
     paddingHorizontal: Spacing.xs,
+    marginTop: Spacing.xs,
   },
   attachBtn: {
-    padding: Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 6,
+    paddingHorizontal: Spacing.sm,
     borderRadius: Radius.md,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'transparent',
   },
   attachBtnText: {
-    ...Typography.label,
-    marginLeft: 4,
+    ...Typography.bodySm,
+    fontWeight: '600',
   },
 });

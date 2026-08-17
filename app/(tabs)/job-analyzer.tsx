@@ -96,8 +96,10 @@ export default function JobFitScreen() {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
+          setJdText(extracted_text);
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          throw error;
         }
       },
       successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for analysis.' }
@@ -114,8 +116,8 @@ export default function JobFitScreen() {
   const handleAnalyze = async () => {
     setUrlError('');
 
-    // Use JD file text if available, otherwise use text input
-    const finalJdText = jdFileText.trim().length > 0 ? jdFileText : jdText.trim();
+    // Use text area (or fallback to JD file text)
+    const finalJdText = (jdText.trim() || jdFileText.trim());
     const finalJdUrl = jdUrl.trim();
 
     // Require either text/file OR URL
@@ -210,54 +212,89 @@ export default function JobFitScreen() {
                   <Text style={[styles.errorText, { color: colors.error }]}>{urlError}</Text>
                 </View>
               ) : null}
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={[styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textBody }]}
-                  multiline
-                  placeholder="Paste the full job listing here to start the AI gap analysis..."
-                  placeholderTextColor={colors.textMuted}
-                  value={jdText}
-                  onChangeText={setJdText}
-                  textAlignVertical="top"
-                />
-                <View style={styles.inputActions}>
-                  {/* Attach JD File Button */}
-                  <Pressable style={styles.attachBtn} onPress={handleAttachJdFile} disabled={extractJdLoading}>
-                     {extractJdLoading ? (
-                       <ActivityIndicator size="small" color={colors.primary} />
-                     ) : (
-                       <>
-                         <Ionicons name="attach" size={24} color={colors.textMuted} />
-                       </>
-                     )}
-                  </Pressable>
+              {/* Divider */}
+              <View style={styles.dividerRow}>
+                <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                <Text style={[styles.dividerText, { color: colors.textMuted }]}>OR PASTE DESCRIPTION / ATTACH FILE</Text>
+                <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              </View>
 
-                  {/* Attached File Info Badge */}
+              {/* Text Area */}
+              <TextInput
+                style={[styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textBody }]}
+                multiline
+                placeholder="Paste the full job listing here to start the AI gap analysis..."
+                placeholderTextColor={colors.textMuted}
+                value={jdText}
+                onChangeText={setJdText}
+                textAlignVertical="top"
+              />
+
+              {/* File Attachment Shelf (Prominently displayed when picking, loading, or attached) */}
+              {(jdFileName || extractJdLoading) ? (
+                <View style={[styles.attachmentShelf, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                    <Ionicons name="document-attach-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                    <Text style={[styles.attachmentShelfLabel, { color: colors.textPrimary }]}>Attached File:</Text>
+                  </View>
                   <FileAttachmentBadge
                     fileName={jdFileName}
                     isLoading={extractJdLoading}
-                    loadingText="Extracting file..."
+                    loadingText="Extracting file text..."
                     onRemove={handleRemoveAttachedJd}
-                    style={{ marginLeft: Spacing.xs }}
                   />
-
-                  {/* Analyze Button */}
-                  <Pressable
-                    style={[styles.analyzeBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }, analyzeJob.isPending && { opacity: 0.7 }]}
-                    onPress={handleAnalyze}
-                    disabled={analyzeJob.isPending}
-                  >
-                    {analyzeJob.isPending ? (
-                      <ActivityIndicator size="small" color={colors.textInverse} />
-                    ) : (
-                      <>
-                        <MaterialCommunityIcons name="star-four-points" size={20} color="#FFFFFF" />
-                        <Text style={[styles.analyzeBtnText, { color: '#FFFFFF', fontWeight: '600' }]}>Analyze Job Match</Text>
-                      </>
-                    )}
-                  </Pressable>
                 </View>
+              ) : null}
+
+              {/* Toolbar: Attach Button + Format hint */}
+              <View style={styles.toolbarRow}>
+                <Pressable
+                  style={[styles.attachActionBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+                  onPress={handleAttachJdFile}
+                  disabled={extractJdLoading}
+                  accessibilityLabel="Attach job description document"
+                  accessibilityRole="button"
+                >
+                  {extractJdLoading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <>
+                      <Ionicons name="attach" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+                      <Text style={[styles.attachActionText, { color: colors.textPrimary }]}>
+                        {jdFileName ? 'Replace Attached File' : 'Attach JD Document'}
+                      </Text>
+                    </>
+                  )}
+                </Pressable>
+                <Text style={[styles.supportedFormatsText, { color: colors.textMuted }]}>
+                  PDF, DOCX, PNG, JPG (Max 5MB)
+                </Text>
               </View>
+
+              {/* Analyze CTA Button (Spacious, prominent, non-squished) */}
+              <Pressable
+                style={[
+                  styles.analyzeBtn,
+                  { backgroundColor: colors.primary },
+                  analyzeJob.isPending && { opacity: 0.7 }
+                ]}
+                onPress={handleAnalyze}
+                disabled={analyzeJob.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Analyze Job Match"
+              >
+                {analyzeJob.isPending ? (
+                  <View style={styles.btnContentRow}>
+                    <ActivityIndicator size="small" color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={[styles.analyzeBtnText, { color: '#FFFFFF' }]}>Analyzing Job Match...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.btnContentRow}>
+                    <MaterialCommunityIcons name="star-four-points" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={[styles.analyzeBtnText, { color: '#FFFFFF' }]}>Analyze Job Match</Text>
+                  </View>
+                )}
+              </Pressable>
             </View>
 
             {/* Past Job Matches */}
@@ -386,43 +423,86 @@ const styles = StyleSheet.create({
     ...Typography.bodyMd,
     flex: 1,
   },
-  inputWrapper: {
-    position: 'relative',
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    ...Typography.label,
+    fontSize: 10,
+    letterSpacing: 0.8,
   },
   textArea: {
-    height: 200,
+    height: 160,
     borderWidth: 1,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     ...Typography.bodyMd,
+    marginBottom: Spacing.xs,
   },
-  inputActions: {
-    position: 'absolute',
-    bottom: Spacing.sm,
-    right: Spacing.sm,
+  attachmentShelf: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  attachBtn: {
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
     padding: Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderRadius: Radius.md,
+    borderWidth: 1,
+    marginVertical: Spacing.xs,
+  },
+  attachmentShelfLabel: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  toolbarRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  attachActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: 'transparent',
+  },
+  attachActionText: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+  },
+  supportedFormatsText: {
+    ...Typography.bodySm,
+    fontSize: 11,
   },
   analyzeBtn: {
+    width: '100%',
+    height: 50,
+    borderRadius: Radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+    ...Shadow.sm,
+  },
+  btnContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: 10,
-    borderRadius: Radius.full,
-    gap: Spacing.xs,
+    justifyContent: 'center',
   },
   analyzeBtnText: {
     ...Typography.headingMd,
+    fontWeight: '600',
   },
   sectionTitle: {
     ...Typography.headingLg,

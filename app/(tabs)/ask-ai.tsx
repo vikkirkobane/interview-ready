@@ -165,8 +165,12 @@ onFilePicked: async (payload) => {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
+          if (!inputText.trim()) {
+            setInputText(extracted_text);
+          }
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          throw error;
         }
       },
       successMessage: { text1: 'Text extracted', text2: 'Text has been extracted from the file and is ready for use.' }
@@ -187,20 +191,24 @@ onFilePicked: async (payload) => {
              <MaterialCommunityIcons name="robot" size={16} color="#fff" />
           </View>
         )}
-        <View style={{ flexShrink: 1, maxWidth: '95%', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
-          <View style={[styles.messageBubble, isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]]}>
+        <View style={[styles.messageContainer, isUser ? styles.messageContainerUser : styles.messageContainerAi]}>
+          <View style={[
+            styles.messageBubble, 
+            isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] 
+                   : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]
+          ]}>
             {isUser ? (
-              <Text style={[styles.messageText, { color: '#fff' }]}>{msg.text}</Text>
+              <Text style={[styles.messageText, styles.messageTextUser]}>{msg.text}</Text>
             ) : (
               <Markdown style={{
-                body: { ...Typography.bodyMd, color: colors.textPrimary },
+                body: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
                 code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
                 code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
                 heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
                 heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
                 heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-                paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-                list_item: { ...Typography.bodyMd, color: colors.textPrimary },
+                paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs, lineHeight: 22 },
+                list_item: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
                 link: { color: colors.primary, textDecorationLine: 'underline' },
                 strong: { fontWeight: '700' },
               }}>
@@ -210,14 +218,14 @@ onFilePicked: async (payload) => {
           </View>
           <Pressable 
             onPress={() => copyToClipboard(msg.text)} 
-            style={{ 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              marginTop: 4, 
-              marginLeft: isUser ? 0 : 8,
-              marginRight: isUser ? 8 : 0,
-              opacity: 0.6 
-            }}
+            style={[
+              styles.copyActionBtn,
+              { 
+                alignSelf: isUser ? 'flex-end' : 'flex-start',
+                marginLeft: isUser ? 0 : 8,
+                marginRight: isUser ? 8 : 0,
+              }
+            ]}
           >
             <Ionicons name="copy-outline" size={13} color={colors.textMuted} />
             <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 3 }}>Copy</Text>
@@ -257,7 +265,7 @@ onFilePicked: async (payload) => {
               <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
                 <MaterialCommunityIcons name="robot" size={16} color="#fff" />
               </View>
-              <View style={[styles.messageBubble, styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <View style={[styles.messageBubble, styles.messageBubbleAi, { minWidth: 64, backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                 <ActivityIndicator size="small" color={colors.primary} />
               </View>
             </View>
@@ -272,49 +280,74 @@ onFilePicked: async (payload) => {
             paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
           }
         ]}>
-          {(jdFileText.trim().length > 0 || extractJdLoading) && (
-            <View style={{ marginBottom: Spacing.xs, alignSelf: 'flex-start' }}>
+          {(jdFileName || extractJdLoading) ? (
+            <View style={[styles.attachmentShelf, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                <Ionicons name="document-attach-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                <Text style={[styles.attachmentShelfLabel, { color: colors.textPrimary }]}>Attached File:</Text>
+              </View>
               <FileAttachmentBadge
                 fileName={jdFileName}
                 isLoading={extractJdLoading}
-                loadingText="Extracting file..."
+                loadingText="Extracting file text..."
                 onRemove={handleRemoveAttachedJd}
               />
             </View>
-          )}
+          ) : null}
 
           <View style={styles.inputRow}>
             <Pressable
-              style={[styles.attachBtn, extractJdLoading && { opacity: 0.5 }]}
+              style={[
+                styles.attachBtn,
+                {
+                  backgroundColor: jdFileName ? `${colors.primary}15` : colors.bgCard,
+                  borderColor: jdFileName ? colors.primary : colors.border,
+                },
+                extractJdLoading && { opacity: 0.5 }
+              ]}
               onPress={handleAttachJdFile}
               disabled={extractJdLoading}
+              accessibilityLabel={jdFileName ? 'Replace attached document' : 'Attach document'}
+              accessibilityRole="button"
             >
               {extractJdLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <>
-                  <Ionicons name="attach" size={20} color={colors.primary} />
-                </>
+                <Ionicons
+                  name={jdFileName ? 'document-text' : 'attach'}
+                  size={20}
+                  color={colors.primary}
+                />
               )}
             </Pressable>
             <View style={[styles.textInputContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
               <TextInput
                  style={[styles.textInput, { color: colors.textPrimary }]}
-                 placeholder="Ask a question"
+                 placeholder="Ask a question..."
                  placeholderTextColor={colors.textMuted}
                  value={inputText}
                  onChangeText={setInputText}
                  multiline
+                 accessibilityLabel="Ask a question"
               />
             </View>
             <Pressable
-              style={[styles.sendBtn, { backgroundColor: colors.primary }, (!inputText.trim() && !jdFileText.trim() || isTyping) && { opacity: 0.5 }]}
+              style={[
+                styles.sendBtn,
+                { backgroundColor: colors.primary },
+                ((!inputText.trim() && !jdFileText.trim()) || isTyping) && { opacity: 0.4 }
+              ]}
               onPress={handleSend}
               disabled={(!inputText.trim() && !jdFileText.trim()) || isTyping}
+              accessibilityLabel="Send question"
+              accessibilityRole="button"
             >
                <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
             </Pressable>
           </View>
+          <Text style={[styles.supportedFormatsText, { color: colors.textMuted }]}>
+            PDF, DOCX, PNG, JPG (Max 5MB)
+          </Text>
         </View>
       </KeyboardAvoidingView>
 
@@ -352,13 +385,24 @@ const styles = StyleSheet.create({
   messageWrapper: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    marginBottom: Spacing.md
+    marginBottom: Spacing.md,
+    width: '100%',
   },
   messageWrapperUser: {
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
   },
   messageWrapperAi: {
-    justifyContent: 'flex-start'
+    justifyContent: 'flex-start',
+  },
+  messageContainer: {
+    flexShrink: 1,
+    maxWidth: '85%',
+  },
+  messageContainerUser: {
+    alignItems: 'flex-end',
+  },
+  messageContainerAi: {
+    alignItems: 'flex-start',
   },
   avatarAi: {
     width: 28,
@@ -366,7 +410,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 8
+    marginRight: 8,
   },
   avatarUser: {
     width: 28,
@@ -375,12 +419,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 8
+    marginLeft: 8,
   },
   messageBubble: {
-    maxWidth: '95%',
-    padding: Spacing.md,
-    borderRadius: Radius.lg
+    minWidth: '45%',
+    maxWidth: '100%',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 4,
+    borderRadius: Radius.lg + 4,
   },
   messageBubbleAi: {
     borderBottomLeftRadius: 4,
@@ -392,8 +438,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   messageText: {
-    ...Typography.bodyLg,
-    lineHeight: 24
+    ...Typography.bodyMd,
+    lineHeight: 22,
+  },
+  messageTextUser: {
+    color: '#ffffff',
+  },
+  copyActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    opacity: 0.6,
   },
   inputArea: {
     padding: Spacing.md,
@@ -451,17 +506,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   attachBtn: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(107,70,254,0.08)',
     width: 52,
     height: 52,
     borderRadius: 26,
+    borderWidth: 1,
   },
   attachBtnText: {
     ...Typography.label,
     marginLeft: 4,
+  },
+  attachmentShelf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.sm,
+    maxWidth: 768,
+    width: '100%',
+    alignSelf: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  attachmentShelfLabel: {
+    ...Typography.label,
+    fontWeight: '600',
+    marginRight: Spacing.xs,
+  },
+  supportedFormatsText: {
+    ...Typography.caption,
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 6,
   },
 });
 

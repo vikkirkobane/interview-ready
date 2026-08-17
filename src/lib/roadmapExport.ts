@@ -54,7 +54,7 @@ export async function exportRoadmapPDF(
     }
     const { uri } = await printToFileAsync({ html });
     const namedUri = await renameToCache(uri, filename);
-    await shareAsync(namedUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
+    await shareAsync(namedUri, { UTI: 'com.adobe.pdf', mimeType: 'application/pdf', dialogTitle: `Download ${filename}` });
   }
 }
 

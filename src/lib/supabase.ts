@@ -1,7 +1,28 @@
 import 'react-native-url-polyfill/auto';
+import * as Crypto from 'expo-crypto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+
+// Polyfill WebCrypto API for Supabase GoTrue PKCE (S256 code challenges)
+if (typeof globalThis.crypto === 'undefined') {
+  (globalThis as any).crypto = {};
+}
+if (!globalThis.crypto.getRandomValues) {
+  (globalThis.crypto as any).getRandomValues = Crypto.getRandomValues;
+}
+if (!globalThis.crypto.subtle) {
+  (globalThis.crypto as any).subtle = {
+    digest: async (algorithm: any, data: BufferSource) => {
+      const algoName = typeof algorithm === 'string' ? algorithm : algorithm?.name;
+      if (algoName === 'SHA-256' || algoName === 'SHA256') {
+        return Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, data);
+      }
+      return Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, data);
+    },
+  };
+}
+
 
 /**
  * Supabase client configured for Expo React Native.
@@ -64,5 +85,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
     flowType: 'pkce',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   },
 });

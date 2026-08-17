@@ -22,8 +22,27 @@ jest.mock('../../src/lib/api', () => {
   return createApiMock();
 });
 
+let mockPickFileOptions: any = null;
+jest.mock('../../src/hooks/useFilePicker', () => ({
+  useFilePicker: () => ({
+    pickFile: jest.fn(async (options: any) => {
+      mockPickFileOptions = options;
+      if (options.onFilePicked) {
+        await options.onFilePicked({
+          fileUri: 'file:///mock/interview_jd.pdf',
+          fileName: 'interview_jd.pdf',
+          mimeType: 'application/pdf',
+          webFile: null,
+        });
+      }
+    }),
+    isPicking: false,
+  }),
+}));
+
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
+const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
 
 describe('Live Mock Interview — user stories', () => {
   beforeEach(() => {
@@ -114,6 +133,53 @@ describe('Live Mock Interview — user stories', () => {
       expect(router.push).toHaveBeenCalledWith(
         expect.objectContaining({ pathname: '/feedback', params: expect.objectContaining({ sessionId: 's1' }) })
       );
+    });
+  });
+
+  it('renders short candidate conversation messages such as "Hello" in the bubble layout', async () => {
+    mockStartResponse();
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByText('Tell me about yourself.')).toBeTruthy();
+    });
+
+    await fireEvent.changeText(screen.getByPlaceholderText('Type your response...'), 'Hello');
+    await fireEvent(screen.getByPlaceholderText('Type your response...'), 'submitEditing', {
+      nativeEvent: { text: 'Hello' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Hello')).toBeTruthy();
+      expect(screen.getByText('Great — let us dig deeper.')).toBeTruthy();
+    });
+  });
+
+  it('attaches a document file during live interview and displays the badge', async () => {
+    mockStartResponse();
+    mockApiUpload.mockResolvedValue({
+      data: {
+        extracted_text: 'Live interview JD context.',
+        file_name: 'interview_jd.pdf',
+        mime_type: 'application/pdf',
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByText('Tell me about yourself.')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Attach job description document'));
+
+    await waitFor(() => {
+      expect(screen.getByText('interview_jd.pdf')).toBeTruthy();
+    });
+
+    // Can remove the attachment
+    await fireEvent.press(screen.getByLabelText('Remove file attachment'));
+    await waitFor(() => {
+      expect(screen.queryByText('interview_jd.pdf')).toBeNull();
     });
   });
 });
