@@ -218,7 +218,7 @@ export function createSupabaseMock(initialTables: Record<string, AnyRow[]> = {})
           data: { publicUrl: 'https://mock.supabase.co/storage/v1/object/public/mock' },
         })),
         download: jest.fn(async () => ({
-          data: new Blob(['mock'], { type: 'text/plain' }),
+          data: new Blob(['mock'], { type: 'text/plain' } as any),
           error: null,
         })),
         remove: jest.fn(async () => ({ data: {}, error: null })),
