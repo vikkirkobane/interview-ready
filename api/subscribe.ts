@@ -248,18 +248,28 @@ export function generateEmailHtml(email: string, downloadUrl: string, waitlistSp
  * Creates Nodemailer transporter configured for Spaceship SMTP
  */
 function createSpaceshipTransporter() {
-  const host = process.env.SPACESHIP_SMTP_HOST || 'mail.spacemail.com';
-  const port = parseInt(process.env.SPACESHIP_SMTP_PORT || '465', 10);
-  const secure = process.env.SPACESHIP_SMTP_SECURE !== 'false' && (port === 465 || process.env.SPACESHIP_SMTP_SECURE === 'true');
-  const user = process.env.SPACESHIP_SMTP_USER;
-  const pass = process.env.SPACESHIP_SMTP_PASS;
+  let rawHost = (process.env.SPACESHIP_SMTP_HOST || 'mail.spacemail.com').trim().replace(/['"]/g, '');
+  
+  // If user accidentally put their email address in host, automatically fix to mail.spacemail.com
+  if (rawHost.includes('@') || !rawHost.includes('.')) {
+    rawHost = 'mail.spacemail.com';
+  }
+
+  const rawPort = (process.env.SPACESHIP_SMTP_PORT || '465').trim().replace(/['"]/g, '');
+  const port = parseInt(rawPort, 10) || 465;
+  const isPort465 = port === 465;
+  const secureEnv = (process.env.SPACESHIP_SMTP_SECURE || '').trim().toLowerCase();
+  const secure = secureEnv === 'true' || (secureEnv !== 'false' && isPort465);
+
+  const user = (process.env.SPACESHIP_SMTP_USER || '').trim().replace(/['"]/g, '');
+  const pass = (process.env.SPACESHIP_SMTP_PASS || '').trim().replace(/['"]/g, '');
 
   if (!user || !pass) {
     return null;
   }
 
   return nodemailer.createTransport({
-    host,
+    host: rawHost,
     port,
     secure, // true for 465, false for 587
     auth: {

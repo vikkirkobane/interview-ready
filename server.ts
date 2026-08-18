@@ -40,11 +40,18 @@ async function startServer() {
 
       console.log(`[Local Server] Processing subscription for: ${trimmedEmail} (Spot #${spot})`);
 
-      const smtpHost = process.env.SPACESHIP_SMTP_HOST || 'mail.spacemail.com';
-      const smtpPort = parseInt(process.env.SPACESHIP_SMTP_PORT || '465', 10);
-      const smtpSecure = process.env.SPACESHIP_SMTP_SECURE !== 'false' && (smtpPort === 465 || process.env.SPACESHIP_SMTP_SECURE === 'true');
-      const smtpUser = process.env.SPACESHIP_SMTP_USER;
-      const smtpPass = process.env.SPACESHIP_SMTP_PASS;
+      let smtpHost = (process.env.SPACESHIP_SMTP_HOST || 'mail.spacemail.com').trim().replace(/['"]/g, '');
+      if (smtpHost.includes('@') || !smtpHost.includes('.')) {
+        smtpHost = 'mail.spacemail.com';
+      }
+      const rawPort = (process.env.SPACESHIP_SMTP_PORT || '465').trim().replace(/['"]/g, '');
+      const smtpPort = parseInt(rawPort, 10) || 465;
+      const isPort465 = smtpPort === 465;
+      const secureEnv = (process.env.SPACESHIP_SMTP_SECURE || '').trim().toLowerCase();
+      const smtpSecure = secureEnv === 'true' || (secureEnv !== 'false' && isPort465);
+
+      const smtpUser = (process.env.SPACESHIP_SMTP_USER || '').trim().replace(/['"]/g, '');
+      const smtpPass = (process.env.SPACESHIP_SMTP_PASS || '').trim().replace(/['"]/g, '');
 
       let emailSent = false;
       let emailStatusMessage = '';
