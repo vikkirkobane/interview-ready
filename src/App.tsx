@@ -450,18 +450,8 @@ export default function App() {
             </a>
           </div>
 
-          {/* Desktop CTA & Download App Button */}
+          {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={() => {
-                setStandalonePage('download');
-                window.history.pushState({}, '', '/download');
-              }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-[#1A4F8A] text-xs font-bold rounded-xl border border-blue-200 transition-all shadow-xs active:scale-95 cursor-pointer"
-            >
-              <Smartphone className="w-4 h-4 text-[#1A4F8A]" />
-              <span>Download App</span>
-            </button>
             <a 
               href="#waitlist" 
               className="px-5 py-2.5 bg-[#1A4F8A] hover:bg-[#123761] text-white text-sm font-semibold rounded-xl transition-all shadow-sm active:scale-[0.98]"
@@ -485,20 +475,6 @@ export default function App() {
       {mobileMenuOpen && (
         <div className="fixed inset-0 top-16 z-40 bg-white md:hidden animate-fade-in flex flex-col justify-between p-6 shadow-xl border-t border-slate-100">
           <div className="flex flex-col gap-4 text-base font-semibold text-slate-700 font-display">
-            <button 
-              onClick={() => { 
-                setStandalonePage('download'); 
-                window.history.pushState({}, '', '/download');
-                setMobileMenuOpen(false); 
-              }}
-              className="py-3 border-b border-slate-100 flex items-center justify-between text-cyan-700 font-bold text-left"
-            >
-              <span className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-cyan-600" />
-                Download Mobile App
-              </span>
-              <ArrowRight className="w-4 h-4 text-slate-400" />
-            </button>
             <a 
               href="#features" 
               onClick={() => { setActiveSection('features'); setMobileMenuOpen(false); }}
@@ -537,13 +513,6 @@ export default function App() {
           </div>
 
           <div className="flex flex-col gap-3 mt-8">
-            <button
-              onClick={() => { setShowSheetsManager(true); setMobileMenuOpen(false); }}
-              className="bg-emerald-50 text-emerald-800 border border-emerald-200/80 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-xs"
-            >
-              <Sheet className="w-4 h-4 text-emerald-600" />
-              Google Sheets Integration Manager
-            </button>
             <a 
               href="#waitlist" 
               onClick={() => setMobileMenuOpen(false)}
