@@ -306,7 +306,8 @@ async function saveToAirtable(email: string, waitlistSpot: number): Promise<{ sa
           'Waitlist Spot': waitlistSpot,
           'Submitted At': new Date().toISOString(),
           'Status': 'Confirmed'
-        }
+        },
+        typecast: true
       })
     });
 

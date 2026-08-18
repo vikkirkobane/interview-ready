@@ -168,14 +168,17 @@ async function startServer() {
       const tableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
 
       if (apiKey && baseId) {
-        let formula = '';
-        if (trimmedEmail && !isNaN(numericSpot)) {
-          formula = `OR(LOWER({Email})='${trimmedEmail}', {Waitlist Spot}=${numericSpot})`;
-        } else if (trimmedEmail) {
-          formula = `LOWER({Email})='${trimmedEmail}'`;
-        } else if (!isNaN(numericSpot)) {
-          formula = `{Waitlist Spot}=${numericSpot}`;
+        const conditions: string[] = [];
+        if (trimmedEmail) {
+          conditions.push(`LOWER({Email})='${trimmedEmail}'`);
         }
+        if (!isNaN(numericSpot)) {
+          conditions.push(`{Waitlist Spot}=${numericSpot}`);
+          conditions.push(`{Waitlist Spot}='${numericSpot}'`);
+          conditions.push(`{Waitlist Spot}='#${numericSpot}'`);
+        }
+
+        const formula = conditions.length > 1 ? `OR(${conditions.join(',')})` : (conditions[0] || '');
 
         const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
         const searchRes = await fetch(searchUrl, {
@@ -207,6 +210,7 @@ async function startServer() {
               fields: {
                 'Status': 'Downloaded',
               },
+              typecast: true,
             }),
           });
 

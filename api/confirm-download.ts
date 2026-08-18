@@ -47,15 +47,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // If Airtable is connected, verify against live records
     if (apiKey && baseId) {
-      // Build filter formula
-      let formula = '';
-      if (trimmedEmail && !isNaN(numericSpot)) {
-        formula = `OR(LOWER({Email})='${trimmedEmail}', {Waitlist Spot}=${numericSpot})`;
-      } else if (trimmedEmail) {
-        formula = `LOWER({Email})='${trimmedEmail}'`;
-      } else if (!isNaN(numericSpot)) {
-        formula = `{Waitlist Spot}=${numericSpot}`;
+      // Build robust filter formula for email or spot (number or text format)
+      const conditions: string[] = [];
+      if (trimmedEmail) {
+        conditions.push(`LOWER({Email})='${trimmedEmail}'`);
       }
+      if (!isNaN(numericSpot)) {
+        conditions.push(`{Waitlist Spot}=${numericSpot}`);
+        conditions.push(`{Waitlist Spot}='${numericSpot}'`);
+        conditions.push(`{Waitlist Spot}='#${numericSpot}'`);
+      }
+
+      const formula = conditions.length > 1 ? `OR(${conditions.join(',')})` : (conditions[0] || '');
 
       console.log(`[Confirm Download] Querying Airtable with formula: ${formula}`);
 
@@ -96,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       console.log(`[Confirm Download] Match found (Record ID: ${recordId}). Updating status to Downloaded...`);
 
-      // Update record in Airtable to mark code as used & downloaded
+      // Update record in Airtable to mark code as used & downloaded with typecast enabled
       const patchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${recordId}`;
       const patchRes = await fetch(patchUrl, {
         method: 'PATCH',
@@ -108,13 +111,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           fields: {
             'Status': 'Downloaded',
           },
+          typecast: true,
         }),
       });
 
+      let airtableUpdated = false;
+      let updateErrorMsg = '';
+
       if (!patchRes.ok) {
         const patchErr = await patchRes.json().catch(() => ({}));
-        console.warn('[Confirm Download] Warning: Could not update status in Airtable:', patchErr);
+        console.error('[Confirm Download] Warning: Could not update status in Airtable:', patchErr);
+        updateErrorMsg = patchErr.error?.message || patchRes.statusText;
       } else {
+        airtableUpdated = true;
         console.log(`[Confirm Download] Successfully marked Record ${recordId} as Downloaded in Airtable!`);
       }
 
@@ -123,6 +132,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         verified: true,
         email: existingEmail,
         waitlistSpot: existingSpot,
+        airtableUpdated,
+        airtableError: updateErrorMsg || undefined,
         message: 'Access Code verified! Your Android APK download is unlocked.',
       });
     }
