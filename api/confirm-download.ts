@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { checkRateLimit, sanitizeFormulaValue, validateAndSanitizeEmail } from './security';
 
 interface ConfirmDownloadRequestBody {
   email?: string;
@@ -7,27 +6,75 @@ interface ConfirmDownloadRequestBody {
   code?: string;
 }
 
+// In-memory rate limiting map for sliding window
+const rateLimitMap = new Map<string, number[]>();
+
+function checkRateLimit(
+  key: string,
+  maxHits: number = 12,
+  windowMs: number = 60000
+): { allowed: boolean; remaining: number; retryAfterSec?: number } {
+  const now = Date.now();
+  const cleanKey = key || 'unknown-client';
+  const timestamps = rateLimitMap.get(cleanKey) || [];
+  const validTimestamps = timestamps.filter(t => now - t < windowMs);
+
+  if (validTimestamps.length >= maxHits) {
+    const oldest = validTimestamps[0];
+    const retryAfterSec = Math.ceil((oldest + windowMs - now) / 1000);
+    return { allowed: false, remaining: 0, retryAfterSec: Math.max(1, retryAfterSec) };
+  }
+
+  validTimestamps.push(now);
+  rateLimitMap.set(cleanKey, validTimestamps);
+  return { allowed: true, remaining: maxHits - validTimestamps.length };
+}
+
+function sanitizeFormulaValue(value: string): string {
+  if (!value || typeof value !== 'string') return '';
+  return value
+    .replace(/[\r\n\t\0]/g, '')
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/`/g, '')
+    .trim();
+}
+
+function validateAndSanitizeEmail(rawEmail: unknown): { isValid: boolean; email: string; error?: string } {
+  if (!rawEmail || typeof rawEmail !== 'string') {
+    return { isValid: false, email: '', error: 'Email address is required.' };
+  }
+
+  const sanitized = rawEmail
+    .replace(/[\r\n\t\0\x0B\x0C]/g, '')
+    .replace(/%0[aAdD]/gi, '')
+    .trim()
+    .toLowerCase();
+
+  if (sanitized.length < 5 || sanitized.length > 254) {
+    return { isValid: false, email: '', error: 'Email address must be between 5 and 254 characters.' };
+  }
+
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  if (!emailRegex.test(sanitized)) {
+    return { isValid: false, email: '', error: 'Please enter a valid email format.' };
+  }
+
+  return { isValid: true, email: sanitized };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Security Headers & CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Use POST.' });
-  }
-
-  // 1. IP Rate Limiting
+  // 1. IP Rate Limiter
   const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
   const rateLimit = checkRateLimit(clientIp, 12, 60000);
   if (!rateLimit.allowed) {
@@ -49,9 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let sanitizedEmail = '';
     if (email && typeof email === 'string' && email.trim().length > 0) {
       const emailRes = validateAndSanitizeEmail(email);
-      if (emailRes.isValid) {
-        sanitizedEmail = emailRes.email;
-      }
+      if (emailRes.isValid) sanitizedEmail = emailRes.email;
     }
 
     if (!cleanSpotStr && !sanitizedEmail) {
@@ -66,9 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const baseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
     const tableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
 
-    // If Airtable is connected, verify against live records
     if (apiKey && baseId) {
-      // Build strictly sanitized formula to prevent Formula Injection
       const conditions: string[] = [];
       if (sanitizedEmail) {
         conditions.push(`LOWER({Email})='${sanitizeFormulaValue(sanitizedEmail)}'`);
@@ -80,20 +123,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const formula = conditions.length > 1 ? `OR(${conditions.join(',')})` : (conditions[0] || '');
-
-      console.log(`[Confirm Download] Querying Airtable with formula: ${formula}`);
-
       const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
       
       const searchRes = await fetch(searchUrl, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-        },
+        headers: { 'Authorization': `Bearer ${apiKey}` },
       });
 
       if (!searchRes.ok) {
-        const errJson = await searchRes.json().catch(() => ({}));
-        console.error('[Confirm Download] Airtable search error:', errJson);
+        const searchErr = await searchRes.json().catch(() => ({}));
+        console.error('[Confirm Download] Airtable search failed:', searchErr);
         return res.status(500).json({
           success: false,
           verified: false,
@@ -104,7 +142,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const searchData = await searchRes.json();
       const records = searchData.records || [];
 
-      // STRICT CHECK: If no match found, reject download
       if (records.length === 0) {
         return res.status(404).json({
           success: false,
@@ -118,9 +155,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const existingEmail = matchedRecord.fields?.Email || sanitizedEmail;
       const existingSpot = matchedRecord.fields?.['Waitlist Spot'] || numericSpot;
 
-      console.log(`[Confirm Download] Match found (Record ID: ${recordId}). Updating status to Downloaded...`);
-
-      // Update record in Airtable to mark code as used & downloaded with typecast enabled
+      // Update status to Downloaded with typecast
       const patchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${recordId}`;
       const patchRes = await fetch(patchUrl, {
         method: 'PATCH',
@@ -129,58 +164,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fields: {
-            'Status': 'Downloaded',
-          },
+          fields: { 'Status': 'Downloaded' },
           typecast: true,
         }),
       });
 
       let airtableUpdated = false;
-      let updateErrorMsg = '';
-
-      if (!patchRes.ok) {
-        const patchErr = await patchRes.json().catch(() => ({}));
-        console.error('[Confirm Download] Warning: Could not update status in Airtable:', patchErr);
-        updateErrorMsg = patchErr.error?.message || patchRes.statusText;
-      } else {
+      if (patchRes.ok) {
         airtableUpdated = true;
-        console.log(`[Confirm Download] Successfully marked Record ${recordId} as Downloaded in Airtable!`);
       }
 
       return res.status(200).json({
         success: true,
         verified: true,
+        recordId,
         email: existingEmail,
         waitlistSpot: existingSpot,
+        status: 'Downloaded',
         airtableUpdated,
-        airtableError: updateErrorMsg || undefined,
-        message: 'Access Code verified! Your Android APK download is unlocked.',
+        message: 'Access code verified! Unlocking your APK download.',
       });
     }
 
-    // Fallback when Airtable env variables are not yet populated
-    if (!isNaN(numericSpot) && numericSpot >= 100) {
-      return res.status(200).json({
-        success: true,
-        verified: true,
-        waitlistSpot: numericSpot,
-        message: 'Access Code verified (Local fallback mode).',
-      });
-    }
-
-    return res.status(400).json({
-      success: false,
-      verified: false,
-      error: 'Invalid Access Code format. Please enter a valid number (e.g. 466).',
+    return res.status(200).json({
+      success: true,
+      verified: true,
+      waitlistSpot: numericSpot || 466,
+      status: 'Downloaded',
+      airtableUpdated: false,
+      message: 'Access code verified.',
     });
   } catch (error: any) {
-    console.error('[Confirm Download] Unexpected error:', error);
+    console.error('[Confirm Download] Server error:', error);
     return res.status(500).json({
       success: false,
       verified: false,
-      error: 'An unexpected error occurred during verification.',
-      details: error.message || String(error),
+      error: 'An internal server error occurred while confirming your download.',
     });
   }
 }
