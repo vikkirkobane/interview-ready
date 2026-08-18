@@ -282,6 +282,48 @@ function createSpaceshipTransporter() {
   });
 }
 
+async function saveToAirtable(email: string, waitlistSpot: number): Promise<{ saved: boolean; id?: string; error?: string }> {
+  const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PAT || '').trim().replace(/['"]/g, '');
+  const baseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
+  const tableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
+
+  if (!apiKey || !baseId) {
+    return { saved: false, error: 'Airtable not configured (AIRTABLE_API_KEY / AIRTABLE_BASE_ID)' };
+  }
+
+  try {
+    const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fields: {
+          'Email': email,
+          'Waitlist Spot': waitlistSpot,
+          'Submitted At': new Date().toISOString(),
+          'Status': 'Confirmed'
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      console.warn('[Airtable API] Error response:', errJson);
+      return { saved: false, error: errJson.error?.message || `HTTP ${response.status}` };
+    }
+
+    const result = await response.json();
+    console.log('[Airtable API] Record created with ID:', result.id);
+    return { saved: true, id: result.id };
+  } catch (err: any) {
+    console.warn('[Airtable API] Exception:', err);
+    return { saved: false, error: err.message || String(err) };
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS for frontend API calls
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -321,7 +363,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log(`[Subscribe API] Recording email submission: ${trimmedEmail} (Spot: #${spot})`);
 
-    // Prepare Spaceship SMTP email transport
+    // 1. Record in Airtable spreadsheet if configured
+    const airtableResult = await saveToAirtable(trimmedEmail, spot);
+
+    // 2. Prepare Spaceship SMTP email transport
     const transporter = createSpaceshipTransporter();
     let emailSent = false;
     let emailStatusMessage = '';
@@ -361,6 +406,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       waitlistSpot: spot,
       downloadUrl,
       emailSent,
+      airtableSaved: airtableResult.saved,
+      airtableMessage: airtableResult.error || (airtableResult.saved ? 'Saved to Airtable' : undefined),
       message: emailStatusMessage,
       recordedAt: new Date().toISOString(),
     });

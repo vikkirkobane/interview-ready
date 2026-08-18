@@ -439,28 +439,17 @@ export default function App() {
             </a>
           </div>
 
-          {/* Desktop CTA & Google Sheets Sync Button */}
+          {/* Desktop CTA & Download App Button */}
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={() => {
                 setStandalonePage('download');
                 window.history.pushState({}, '', '/download');
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-cyan-50 hover:bg-cyan-100 text-cyan-900 text-xs font-bold rounded-xl border border-cyan-200 transition-all shadow-xs active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-[#1A4F8A] text-xs font-bold rounded-xl border border-blue-200 transition-all shadow-xs active:scale-95 cursor-pointer"
             >
-              <Smartphone className="w-4 h-4 text-cyan-600" />
+              <Smartphone className="w-4 h-4 text-[#1A4F8A]" />
               <span>Download App</span>
-            </button>
-            <button
-              onClick={() => setShowSheetsManager(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200/80 transition-all shadow-xs active:scale-95"
-              title="Record and sync email submissions to Google Sheets"
-            >
-              <Sheet className="w-4 h-4 text-emerald-600" />
-              <span>Google Sheets</span>
-              {submissions.filter(s => !s.syncedToSheets).length > 0 && (
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-              )}
             </button>
             <a 
               href="#waitlist" 
@@ -1557,13 +1546,6 @@ export default function App() {
                 className="hover:text-white text-left transition-colors cursor-pointer font-normal text-blue-100/90 focus:outline-none w-fit"
               >
                 Terms of Service
-              </button>
-              <button 
-                onClick={() => setShowSheetsManager(true)}
-                className="hover:text-emerald-300 text-left transition-colors cursor-pointer font-bold text-emerald-400 focus:outline-none w-fit flex items-center gap-1.5 pt-1"
-              >
-                <Sheet className="w-3.5 h-3.5" />
-                Google Sheets Sync
               </button>
             </div>
 

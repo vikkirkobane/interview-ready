@@ -40,6 +40,41 @@ async function startServer() {
 
       console.log(`[Local Server] Processing subscription for: ${trimmedEmail} (Spot #${spot})`);
 
+      // 1. Record in Airtable if configured
+      let airtableSaved = false;
+      const airtableApiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PAT || '').trim().replace(/['"]/g, '');
+      const airtableBaseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
+      const airtableTableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
+
+      if (airtableApiKey && airtableBaseId) {
+        try {
+          const atRes = await fetch(`https://api.airtable.com/v0/${airtableBaseId}/${encodeURIComponent(airtableTableName)}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${airtableApiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              fields: {
+                'Email': trimmedEmail,
+                'Waitlist Spot': spot,
+                'Submitted At': new Date().toISOString(),
+                'Status': 'Confirmed'
+              }
+            })
+          });
+          if (atRes.ok) {
+            airtableSaved = true;
+            console.log('[Local Server] Successfully recorded submission in Airtable');
+          } else {
+            const err = await atRes.json().catch(() => ({}));
+            console.warn('[Local Server] Airtable error:', err);
+          }
+        } catch (atErr) {
+          console.warn('[Local Server] Airtable network error:', atErr);
+        }
+      }
+
       let smtpHost = (process.env.SPACESHIP_SMTP_HOST || 'mail.spacemail.com').trim().replace(/['"]/g, '');
       if (smtpHost.includes('@') || !smtpHost.includes('.')) {
         smtpHost = 'mail.spacemail.com';
@@ -101,6 +136,7 @@ async function startServer() {
         waitlistSpot: spot,
         downloadUrl,
         emailSent,
+        airtableSaved,
         message: emailStatusMessage,
         recordedAt: new Date().toISOString(),
       });
