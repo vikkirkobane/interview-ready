@@ -370,8 +370,10 @@ async function saveToAirtable(email: string, waitlistSpot: number): Promise<{ sa
   }
 }
 
+import { validateAndSanitizeEmail, checkRateLimit, stripHeaderInjection, escapeHtml } from '../src/lib/security';
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS for frontend API calls
+  // Security Headers & CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -379,6 +381,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -388,52 +392,74 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
 
-  try {
-    const { email, name, source, waitlistSpot }: SubscribeRequestBody = req.body || {};
+  // 1. IP Rate Limiting (Anti-Spam & DoS Protection)
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const rateLimit = checkRateLimit(clientIp, 8, 60000);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({
+      error: `Too many requests from your IP. Please try again in ${rateLimit.retryAfterSec} seconds.`,
+    });
+  }
 
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return res.status(400).json({ error: 'A valid email address is required.' });
+  try {
+    const { email, name, source, waitlistSpot, hp, website }: SubscribeRequestBody & { hp?: string; website?: string } = req.body || {};
+
+    // 2. Honeypot Anti-Bot Trap (Bots fill hidden fields)
+    if (hp || website) {
+      console.warn(`[Security] Bot detected via honeypot field from IP: ${clientIp}`);
+      return res.status(200).json({
+        success: true,
+        message: 'Subscription confirmed.',
+      });
     }
 
-    const trimmedEmail = email.trim().toLowerCase();
-    const spot = waitlistSpot || Math.floor(Math.random() * 200) + 400;
+    // 3. Strict RFC 5322 Email Validation & Sanitization
+    const emailCheck = validateAndSanitizeEmail(email);
+    if (!emailCheck.isValid) {
+      return res.status(400).json({ error: emailCheck.error || 'A valid email address is required.' });
+    }
+
+    const sanitizedEmail = emailCheck.email;
+    const spot = typeof waitlistSpot === 'number' && waitlistSpot >= 100 && waitlistSpot <= 999999
+      ? waitlistSpot
+      : Math.floor(Math.random() * 200) + 400;
 
     // Determine base application URL
     const appBaseUrl =
       process.env.APP_URL ||
       (req.headers.host ? `https://${req.headers.host}` : 'https://appinterviewready.top');
     
-    // Clean download link with referral email query
+    // Clean download link with sanitized query
     const cleanAppUrl = appBaseUrl.endsWith('/') ? appBaseUrl.slice(0, -1) : appBaseUrl;
-    const downloadUrl = `${cleanAppUrl}/download?email=${encodeURIComponent(trimmedEmail)}`;
+    const downloadUrl = `${cleanAppUrl}/download?spot=${spot}&email=${encodeURIComponent(sanitizedEmail)}`;
 
-    console.log(`[Subscribe API] Recording email submission: ${trimmedEmail} (Spot: #${spot})`);
+    console.log(`[Subscribe API] Secure submission recorded: ${sanitizedEmail} (Spot: #${spot})`);
 
-    // 1. Record in Airtable spreadsheet if configured
-    const airtableResult = await saveToAirtable(trimmedEmail, spot);
+    // 4. Record in Airtable spreadsheet if configured
+    const airtableResult = await saveToAirtable(sanitizedEmail, spot);
 
-    // 2. Prepare Spaceship SMTP email transport
+    // 5. Prepare Spaceship SMTP email transport
     const transporter = createSpaceshipTransporter();
     let emailSent = false;
     let emailStatusMessage = '';
 
     if (!transporter) {
       console.warn(
-        '[Subscribe API] Spaceship SMTP credentials (SPACESHIP_SMTP_USER / SPACESHIP_SMTP_PASS) not set in environment. Skipping email dispatch.'
+        '[Subscribe API] Spaceship SMTP credentials not set in environment. Skipping email dispatch.'
       );
       emailStatusMessage = 'Email recorded successfully. SMTP delivery skipped (environment credentials pending).';
     } else {
       try {
         const fromAddress =
           process.env.SPACESHIP_FROM_EMAIL ||
-          `"Interview Ready" <${process.env.SPACESHIP_SMTP_USER}>`;
+          `"Interview Ready" <${stripHeaderInjection(process.env.SPACESHIP_SMTP_USER || '')}>`;
 
         const mailOptions = {
           from: fromAddress,
-          to: trimmedEmail,
+          to: sanitizedEmail,
           subject: '📱 Your Interview Ready Mobile App Download is Ready!',
-          text: `Welcome to Interview Ready!\n\nYour early access spot is #${spot}.\n\nDownload and install the mobile app here:\n${downloadUrl}\n\nFor support, email us at info@appinterviewready.top`,
-          html: generateEmailHtml(trimmedEmail, downloadUrl, spot),
+          text: `Welcome to Interview Ready!\n\nYour waitlist access code is #${spot}.\n\nUnlock and download your mobile app here:\n${downloadUrl}\n\nFor support, email us at info@appinterviewready.top`,
+          html: generateEmailHtml(sanitizedEmail, downloadUrl, spot),
         };
 
         const info = await transporter.sendMail(mailOptions);
@@ -448,7 +474,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       success: true,
-      email: trimmedEmail,
+      email: sanitizedEmail,
       waitlistSpot: spot,
       downloadUrl,
       emailSent,

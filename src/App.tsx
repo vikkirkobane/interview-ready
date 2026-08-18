@@ -88,6 +88,8 @@ const DEMO_DATA: ProfessionDemo[] = [
   }
 ];
 
+import { validateAndSanitizeEmail } from './lib/security';
+
 export default function App() {
   const [activeDemo, setActiveDemo] = useState<ProfessionDemo>(DEMO_DATA[0]);
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
@@ -97,6 +99,7 @@ export default function App() {
   
   // Waitlist form state
   const [email, setEmail] = useState<string>('');
+  const [honeypot, setHoneypot] = useState<string>('');
   const [waitlistSubmitted, setWaitlistSubmitted] = useState<boolean>(false);
   const [waitlistNumber, setWaitlistNumber] = useState<number>(384);
   const [formError, setFormError] = useState<string>('');
@@ -277,10 +280,21 @@ export default function App() {
   // Handle Waitlist Form submission with live Spaceship SMTP email dispatch
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setFormError('Please enter a valid professional email address.');
+
+    // 1. Bot Honeypot check
+    if (honeypot) {
+      setWaitlistSubmitted(true);
       return;
     }
+
+    // 2. Strict RFC 5322 validation and sanitization
+    const emailValidation = validateAndSanitizeEmail(email);
+    if (!emailValidation.isValid) {
+      setFormError(emailValidation.error || 'Please enter a valid professional email address.');
+      return;
+    }
+
+    const sanitizedEmail = emailValidation.email;
     setFormError('');
     setIsSubmitting(true);
     
@@ -291,28 +305,49 @@ export default function App() {
     
     const newSub: EmailSubmission = {
       id: Date.now().toString(),
-      email: email.trim(),
+      email: sanitizedEmail,
       submittedAt: new Date().toISOString(),
       waitlistSpot: spot,
       syncedToSheets: false,
     };
 
-    // 1. Live call to /api/subscribe to record email and send download email via Spaceship
+    // Save locally
+    try {
+      const allSubmissions: EmailSubmission[] = JSON.parse(
+        localStorage.getItem('interview_ready_all_submissions') || '[]'
+      );
+      allSubmissions.push(newSub);
+      localStorage.setItem('interview_ready_all_submissions', JSON.stringify(allSubmissions));
+      localStorage.setItem('interview_ready_waitlist_email', sanitizedEmail);
+      localStorage.setItem('interview_ready_waitlist_number', spot.toString());
+      setSubmissions(allSubmissions);
+    } catch (e) {
+      console.warn('LocalStorage save error:', e);
+    }
+
+    // Live call to /api/subscribe to record email and send download email via Spaceship
     try {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), waitlistSpot: spot })
+        body: JSON.stringify({ 
+          email: sanitizedEmail, 
+          waitlistSpot: spot,
+          hp: honeypot 
+        })
       });
       if (res.ok) {
         const data = await res.json();
         if (data.downloadUrl) {
           setDownloadLink(data.downloadUrl);
         }
-        if (data.emailSent) {
-          setEmailApiFeedback('Mobile app download link sent to your email via Spaceship!');
-        } else if (data.message) {
+        if (data.message) {
           setEmailApiFeedback(data.message);
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (errData.error) {
+          setEmailApiFeedback(`Note: ${errData.error}`);
         }
       }
     } catch (apiErr) {
@@ -580,12 +615,25 @@ export default function App() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               {!waitlistSubmitted ? (
                 <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row w-full max-w-lg gap-2">
+                  {/* Anti-Spam Bot Honeypot Trap (Hidden from users) */}
+                  <input
+                    type="text"
+                    name="hp"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="hidden absolute opacity-0 pointer-events-none"
+                  />
                   <div className="relative flex-grow">
                     <input 
                       type="email" 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your professional email" 
+                      maxLength={254}
+                      autoComplete="email"
                       className="w-full px-4 py-3.5 border border-gray-200 bg-white text-gray-900 placeholder-gray-400 text-sm sm:text-base font-medium rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1A4F8A] transition-all duration-150 shadow-sm"
                       required
                     />
@@ -1449,11 +1497,24 @@ export default function App() {
           <div className="max-w-md mx-auto pt-4">
             {!waitlistSubmitted ? (
               <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row gap-2.5">
+                {/* Anti-Spam Bot Honeypot Trap (Hidden from users) */}
+                <input
+                  type="text"
+                  name="hp"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden absolute opacity-0 pointer-events-none"
+                />
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your professional email" 
+                  maxLength={254}
+                  autoComplete="email"
                   className="w-full px-4 py-3.5 border border-gray-300 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none bg-white text-slate-900 placeholder-slate-400 rounded-xl shadow-xs text-sm sm:text-base font-normal transition-all duration-200"
                   required
                 />

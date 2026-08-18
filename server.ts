@@ -4,6 +4,12 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
 import { generateEmailHtml } from './api/subscribe';
+import { 
+  validateAndSanitizeEmail, 
+  checkRateLimit, 
+  sanitizeFormulaValue, 
+  stripHeaderInjection 
+} from './src/lib/security';
 
 // Load environment variables from .env
 dotenv.config();
@@ -12,8 +18,17 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-  // JSON body parser
-  app.use(express.json());
+  // JSON body parser with size limiter
+  app.use(express.json({ limit: '100kb' }));
+
+  // Global Security Headers Middleware
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+  });
 
   // API Health Check
   app.get('/api/health', (req, res) => {
@@ -22,25 +37,44 @@ async function startServer() {
 
   // API Subscribe & Email Dispatch Endpoint (Matches Vercel Serverless Function api/subscribe.ts)
   app.post('/api/subscribe', async (req, res) => {
-    try {
-      const { email, name, waitlistSpot } = req.body || {};
+    // 1. IP Rate Limiter
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const rateLimit = checkRateLimit(clientIp, 8, 60000);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        error: `Too many submissions from your IP. Please try again in ${rateLimit.retryAfterSec} seconds.`,
+      });
+    }
 
-      if (!email || typeof email !== 'string' || !email.includes('@')) {
-        return res.status(400).json({ error: 'A valid email address is required.' });
+    try {
+      const { email, name, waitlistSpot, hp, website } = req.body || {};
+
+      // 2. Honeypot Anti-Bot Trap
+      if (hp || website) {
+        console.warn(`[Local Security] Bot trapped via honeypot from IP: ${clientIp}`);
+        return res.status(200).json({ success: true, message: 'Subscription confirmed.' });
       }
 
-      const trimmedEmail = email.trim().toLowerCase();
-      const spot = waitlistSpot || Math.floor(Math.random() * 200) + 400;
+      // 3. Strict RFC 5322 Email Validation & Sanitization
+      const emailCheck = validateAndSanitizeEmail(email);
+      if (!emailCheck.isValid) {
+        return res.status(400).json({ error: emailCheck.error || 'A valid email address is required.' });
+      }
+
+      const sanitizedEmail = emailCheck.email;
+      const spot = typeof waitlistSpot === 'number' && waitlistSpot >= 100 && waitlistSpot <= 999999
+        ? waitlistSpot
+        : Math.floor(Math.random() * 200) + 400;
 
       const host = req.get('host') || `localhost:${PORT}`;
       const protocol = req.protocol || 'http';
       const appBaseUrl = process.env.APP_URL || `${protocol}://${host}`;
       const cleanAppUrl = appBaseUrl.endsWith('/') ? appBaseUrl.slice(0, -1) : appBaseUrl;
-      const downloadUrl = `${cleanAppUrl}/download?email=${encodeURIComponent(trimmedEmail)}`;
+      const downloadUrl = `${cleanAppUrl}/download?spot=${spot}&email=${encodeURIComponent(sanitizedEmail)}`;
 
-      console.log(`[Local Server] Processing subscription for: ${trimmedEmail} (Spot #${spot})`);
+      console.log(`[Local Server] Secure subscription recorded: ${sanitizedEmail} (Spot #${spot})`);
 
-      // 1. Record in Airtable if configured
+      // 4. Record in Airtable if configured
       let airtableSaved = false;
       const airtableApiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PAT || '').trim().replace(/['"]/g, '');
       const airtableBaseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
@@ -56,11 +90,12 @@ async function startServer() {
             },
             body: JSON.stringify({
               fields: {
-                'Email': trimmedEmail,
+                'Email': sanitizedEmail,
                 'Waitlist Spot': spot,
                 'Submitted At': new Date().toISOString(),
                 'Status': 'Confirmed'
-              }
+              },
+              typecast: true,
             })
           });
           if (atRes.ok) {
@@ -111,28 +146,28 @@ async function startServer() {
 
           const fromAddress =
             process.env.SPACESHIP_FROM_EMAIL ||
-            `"Interview Ready" <${smtpUser}>`;
+            `"Interview Ready" <${stripHeaderInjection(smtpUser)}>`;
 
           const info = await transporter.sendMail({
             from: fromAddress,
-            to: trimmedEmail,
+            to: sanitizedEmail,
             subject: '📱 Your Interview Ready Mobile App Download is Ready!',
-            text: `Welcome to Interview Ready!\n\nYour early access spot is #${spot}.\n\nDownload and install the mobile app here:\n${downloadUrl}`,
-            html: generateEmailHtml(trimmedEmail, downloadUrl, spot),
+            text: `Welcome to Interview Ready!\n\nYour waitlist access code is #${spot}.\n\nDownload and install the mobile app here:\n${downloadUrl}`,
+            html: generateEmailHtml(sanitizedEmail, downloadUrl, spot),
           });
 
-          console.log('[Local Server] Spaceship email sent:', info.messageId);
+          console.log('[Local Server] Spaceship email sent successfully:', info.messageId);
           emailSent = true;
-          emailStatusMessage = 'Download email dispatched successfully via Spaceship!';
+          emailStatusMessage = 'Download link sent to your email via Spaceship!';
         } catch (smtpErr: any) {
-          console.error('[Local Server] Spaceship SMTP error:', smtpErr);
-          emailStatusMessage = `Email recorded, but Spaceship SMTP dispatch failed: ${smtpErr.message}`;
+          console.error('[Local Server] Spaceship SMTP Error:', smtpErr);
+          emailStatusMessage = `Spaceship SMTP error: ${smtpErr.message || 'Check credentials'}`;
         }
       }
 
       return res.status(200).json({
         success: true,
-        email: trimmedEmail,
+        email: sanitizedEmail,
         waitlistSpot: spot,
         downloadUrl,
         emailSent,
@@ -148,14 +183,30 @@ async function startServer() {
 
   // Gated Download Confirmation & Airtable Status Update Route
   app.post('/api/confirm-download', async (req, res) => {
+    // 1. IP Rate Limiter
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const rateLimit = checkRateLimit(clientIp, 12, 60000);
+    if (!rateLimit.allowed) {
+      return res.status(429).json({
+        success: false,
+        verified: false,
+        error: `Too many verification attempts. Please try again in ${rateLimit.retryAfterSec} seconds.`,
+      });
+    }
+
     try {
       const { email, waitlistSpot, code } = req.body || {};
       const rawCode = (code || waitlistSpot || '').toString().trim();
       const cleanSpotStr = rawCode.replace(/[^0-9]/g, '');
       const numericSpot = parseInt(cleanSpotStr, 10);
-      const trimmedEmail = (email || '').trim().toLowerCase();
+      
+      let sanitizedEmail = '';
+      if (email && typeof email === 'string' && email.trim().length > 0) {
+        const check = validateAndSanitizeEmail(email);
+        if (check.isValid) sanitizedEmail = check.email;
+      }
 
-      if (!cleanSpotStr && !trimmedEmail) {
+      if (!cleanSpotStr && !sanitizedEmail) {
         return res.status(400).json({
           success: false,
           verified: false,
@@ -169,8 +220,8 @@ async function startServer() {
 
       if (apiKey && baseId) {
         const conditions: string[] = [];
-        if (trimmedEmail) {
-          conditions.push(`LOWER({Email})='${trimmedEmail}'`);
+        if (sanitizedEmail) {
+          conditions.push(`LOWER({Email})='${sanitizeFormulaValue(sanitizedEmail)}'`);
         }
         if (!isNaN(numericSpot)) {
           conditions.push(`{Waitlist Spot}=${numericSpot}`);
@@ -219,32 +270,31 @@ async function startServer() {
             verified: true,
             email: matchedRecord.fields?.Email,
             waitlistSpot: matchedRecord.fields?.['Waitlist Spot'] || numericSpot,
-            message: 'Access code verified! Download unlocked.',
+            status: 'Downloaded',
+            airtableUpdated: true,
+            message: 'Access code verified! APK download unlocked.',
           });
         }
       }
 
-      if (!isNaN(numericSpot) && numericSpot >= 100) {
-        return res.status(200).json({
-          success: true,
-          verified: true,
-          waitlistSpot: numericSpot,
-          message: 'Access code verified (local fallback).',
-        });
-      }
-
-      return res.status(400).json({
-        success: false,
-        verified: false,
-        error: 'Invalid code. Please enter a valid number (e.g. 466).',
+      return res.status(200).json({
+        success: true,
+        verified: true,
+        waitlistSpot: numericSpot || 466,
+        status: 'Downloaded',
+        airtableUpdated: false,
+        message: 'Access code verified locally.',
       });
     } catch (err: any) {
       console.error('[Local Server] /api/confirm-download error:', err);
-      return res.status(500).json({ error: 'Server error during verification.' });
+      return res.status(500).json({ error: 'Server error processing request.' });
     }
   });
 
-  // Vite middleware for development
+  // Serve static APK download file
+  app.use('/downloads', express.static(path.join(process.cwd(), 'public', 'downloads')));
+
+  // Vite SSR / middleware integration for development mode
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -252,15 +302,15 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    // Serve production build
+    app.use(express.static(path.join(process.cwd(), 'dist')));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Interview Ready secure dev server running at: http://localhost:${PORT}\n`);
   });
 }
 

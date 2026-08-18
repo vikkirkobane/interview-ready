@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { checkRateLimit, sanitizeFormulaValue, validateAndSanitizeEmail } from '../src/lib/security';
 
 interface ConfirmDownloadRequestBody {
   email?: string;
@@ -7,7 +8,7 @@ interface ConfirmDownloadRequestBody {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
+  // Security Headers & CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -15,6 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -24,16 +27,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
 
+  // 1. IP Rate Limiting
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const rateLimit = checkRateLimit(clientIp, 12, 60000);
+  if (!rateLimit.allowed) {
+    return res.status(429).json({
+      success: false,
+      verified: false,
+      error: `Too many verification attempts. Please try again in ${rateLimit.retryAfterSec} seconds.`,
+    });
+  }
+
   try {
     const { email, waitlistSpot, code }: ConfirmDownloadRequestBody = req.body || {};
     
-    // Normalize code / spot
+    // 2. Strict Input Normalization & Formula Sanitization
     const rawCode = (code || waitlistSpot || '').toString().trim();
     const cleanSpotStr = rawCode.replace(/[^0-9]/g, '');
     const numericSpot = parseInt(cleanSpotStr, 10);
-    const trimmedEmail = (email || '').trim().toLowerCase();
+    
+    let sanitizedEmail = '';
+    if (email && typeof email === 'string' && email.trim().length > 0) {
+      const emailRes = validateAndSanitizeEmail(email);
+      if (emailRes.isValid) {
+        sanitizedEmail = emailRes.email;
+      }
+    }
 
-    if (!cleanSpotStr && !trimmedEmail) {
+    if (!cleanSpotStr && !sanitizedEmail) {
       return res.status(400).json({
         success: false,
         verified: false,
@@ -47,10 +68,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // If Airtable is connected, verify against live records
     if (apiKey && baseId) {
-      // Build robust filter formula for email or spot (number or text format)
+      // Build strictly sanitized formula to prevent Formula Injection
       const conditions: string[] = [];
-      if (trimmedEmail) {
-        conditions.push(`LOWER({Email})='${trimmedEmail}'`);
+      if (sanitizedEmail) {
+        conditions.push(`LOWER({Email})='${sanitizeFormulaValue(sanitizedEmail)}'`);
       }
       if (!isNaN(numericSpot)) {
         conditions.push(`{Waitlist Spot}=${numericSpot}`);
@@ -94,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const matchedRecord = records[0];
       const recordId = matchedRecord.id;
-      const existingEmail = matchedRecord.fields?.Email || trimmedEmail;
+      const existingEmail = matchedRecord.fields?.Email || sanitizedEmail;
       const existingSpot = matchedRecord.fields?.['Waitlist Spot'] || numericSpot;
 
       console.log(`[Confirm Download] Match found (Record ID: ${recordId}). Updating status to Downloaded...`);
