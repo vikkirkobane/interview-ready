@@ -370,7 +370,7 @@ async function saveToAirtable(email: string, waitlistSpot: number): Promise<{ sa
   }
 }
 
-import { validateAndSanitizeEmail, checkRateLimit, stripHeaderInjection, escapeHtml } from '../src/lib/security';
+import { validateAndSanitizeEmail, checkRateLimit, stripHeaderInjection, escapeHtml } from './security';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Security Headers & CORS

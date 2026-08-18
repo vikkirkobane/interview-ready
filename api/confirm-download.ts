@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { checkRateLimit, sanitizeFormulaValue, validateAndSanitizeEmail } from '../src/lib/security';
+import { checkRateLimit, sanitizeFormulaValue, validateAndSanitizeEmail } from './security';
 
 interface ConfirmDownloadRequestBody {
   email?: string;
