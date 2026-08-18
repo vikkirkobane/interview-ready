@@ -437,7 +437,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const info = await transporter.sendMail(mailOptions);
         emailSent = true;
-        emailStatusMessage = 'Download link sent to your email via Spaceship!';
+        emailStatusMessage = 'Download link sent to your email!';
       } catch (smtpError: any) {
         console.error('[Subscribe API] Error sending email via Spaceship SMTP:', smtpError);
         emailStatusMessage = `Email recorded, but SMTP failed: ${smtpError.message || 'Check credentials'}`;

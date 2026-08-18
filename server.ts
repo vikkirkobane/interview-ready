@@ -158,7 +158,7 @@ async function startServer() {
 
           console.log('[Local Server] Spaceship email sent successfully:', info.messageId);
           emailSent = true;
-          emailStatusMessage = 'Download link sent to your email via Spaceship!';
+          emailStatusMessage = 'Download link sent to your email!';
         } catch (smtpErr: any) {
           console.error('[Local Server] Spaceship SMTP Error:', smtpErr);
           emailStatusMessage = `Spaceship SMTP error: ${smtpErr.message || 'Check credentials'}`;

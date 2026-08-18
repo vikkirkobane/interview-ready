@@ -245,7 +245,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       Enter Your Waitlist Access Code
                     </h2>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      Please key in the waitlist number you copied from the homepage or received in your Spaceship confirmation email (e.g. <strong>466</strong>).
+                      Please key in the waitlist number you copied from the homepage or received in your confirmation email (e.g. <strong>466</strong>).
                     </p>
                   </div>
 

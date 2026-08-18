@@ -656,7 +656,7 @@ export default function App() {
                         Priority Spot Reserved! 🎉
                       </h4>
                       <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                        {emailApiFeedback || 'We sent your access credentials to your inbox via Spaceship.'}
+                        {emailApiFeedback || 'We sent your access credentials to your inbox.'}
                       </p>
                     </div>
                   </div>
@@ -1532,7 +1532,7 @@ export default function App() {
                 <div className="space-y-1">
                   <h4 className="font-display font-extrabold text-xl text-slate-900">Priority Spot Reserved! 🎉</h4>
                   <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                    {emailApiFeedback || "We've dispatched your mobile app download credentials via Spaceship!"}
+                    {emailApiFeedback || "We've dispatched your mobile app download credentials to your inbox!"}
                   </p>
                 </div>
 
