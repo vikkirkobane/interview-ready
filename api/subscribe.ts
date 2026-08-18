@@ -8,56 +8,56 @@ interface SubscribeRequestBody {
   waitlistSpot?: number;
 }
 
-export function generateEmailHtml(email: string, downloadUrl: string, waitlistSpot?: number): string {
+export function generateEmailHtml(userEmail: string, downloadUrl: string, waitlistSpot?: number): string {
   const spotNumber = waitlistSpot || Math.floor(Math.random() * 200) + 400;
-
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Interview Ready Mobile App Download</title>
+  <title>Your Interview Ready Mobile App Download is Ready</title>
   <style>
     body {
       margin: 0;
       padding: 0;
-      background-color: #050C1A;
+      background-color: #F1F5F9;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      color: #E2E8F0;
+      color: #1E293B;
       line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
     .wrapper {
       width: 100%;
-      background-color: #050C1A;
-      padding: 40px 10px;
+      background-color: #F1F5F9;
+      padding: 30px 15px;
+      box-sizing: border-box;
     }
     .container {
-      max-width: 600px;
+      max-width: 580px;
       margin: 0 auto;
-      background: linear-gradient(180deg, #0B192C 0%, #081220 100%);
-      border: 1px solid #1E293B;
-      border-radius: 16px;
+      background-color: #FFFFFF;
+      border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+      border: 1px solid #E2E8F0;
     }
     .header {
-      background: linear-gradient(135deg, #0A192F 0%, #0f2744 100%);
-      padding: 36px 30px;
+      background: linear-gradient(135deg, #1A4F8A 0%, #123761 100%);
+      padding: 36px 30px 30px;
       text-align: center;
-      border-bottom: 1px solid #1E293B;
     }
     .logo-badge {
       display: inline-block;
-      background: linear-gradient(135deg, #00F0FF 0%, #0072FF 100%);
-      color: #050C1A;
+      background: #0EA5E9;
+      color: #FFFFFF;
       font-weight: 800;
-      font-size: 14px;
+      font-size: 11px;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      padding: 6px 14px;
+      padding: 5px 14px;
       border-radius: 20px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .header h1 {
       margin: 0;
@@ -65,179 +65,223 @@ export function generateEmailHtml(email: string, downloadUrl: string, waitlistSp
       font-weight: 800;
       color: #FFFFFF;
       letter-spacing: -0.5px;
+      line-height: 1.2;
     }
     .header p {
       margin: 8px 0 0;
-      color: #94A3B8;
-      font-size: 15px;
+      color: #BAE6FD;
+      font-size: 14px;
+      font-weight: 400;
     }
     .content {
-      padding: 32px 30px;
+      padding: 32px 28px;
+      color: #334155;
     }
     .greeting {
       font-size: 18px;
       font-weight: 700;
-      color: #FFFFFF;
+      color: #0F172A;
       margin-bottom: 12px;
     }
+    p {
+      margin: 0 0 16px;
+      font-size: 14px;
+      color: #334155;
+    }
     .highlight-card {
-      background: rgba(0, 240, 255, 0.05);
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      border-radius: 12px;
-      padding: 18px;
+      background-color: #EFF6FF;
+      border: 2px solid #BFDBFE;
+      border-radius: 14px;
+      padding: 22px 18px;
       margin: 24px 0;
       text-align: center;
     }
-    .spot-number {
-      font-size: 32px;
-      font-weight: 900;
-      color: #00F0FF;
-      letter-spacing: -1px;
-    }
     .spot-label {
-      font-size: 13px;
-      color: #94A3B8;
+      font-size: 11px;
+      color: #1E40AF;
       text-transform: uppercase;
       letter-spacing: 1px;
-      font-weight: 600;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .spot-number {
+      font-size: 36px;
+      font-weight: 900;
+      color: #1A4F8A;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .spot-hint {
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: #475569;
+      font-weight: 500;
     }
     .btn-container {
       text-align: center;
-      margin: 32px 0 28px;
+      margin: 28px 0 24px;
     }
     .btn {
       display: inline-block;
-      background: linear-gradient(135deg, #00F0FF 0%, #0084FF 100%);
-      color: #050C1A !important;
+      background: #1A4F8A;
+      color: #FFFFFF !important;
       text-decoration: none;
-      font-size: 16px;
-      font-weight: 800;
-      padding: 16px 36px;
-      border-radius: 10px;
-      box-shadow: 0 8px 25px rgba(0, 240, 255, 0.35);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 15px 32px;
+      border-radius: 12px;
+      box-shadow: 0 4px 14px rgba(26, 79, 138, 0.35);
+      letter-spacing: 0.3px;
+    }
+    .url-fallback {
+      text-align: center;
+      font-size: 12px;
+      color: #64748B;
+      margin-bottom: 24px;
+      word-break: break-all;
+    }
+    .url-fallback a {
+      color: #1A4F8A;
+      font-weight: 600;
     }
     .feature-list {
-      margin: 28px 0;
+      margin: 24px 0;
       padding: 0;
       list-style: none;
+      border-top: 1px solid #F1F5F9;
+      padding-top: 18px;
     }
     .feature-item {
       display: flex;
       align-items: flex-start;
-      margin-bottom: 14px;
-      font-size: 14px;
-      color: #CBD5E1;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #334155;
     }
     .feature-icon {
-      color: #00F0FF;
-      margin-right: 12px;
-      font-size: 16px;
+      color: #0EA5E9;
+      font-weight: bold;
+      margin-right: 10px;
+      font-size: 15px;
       line-height: 1.4;
     }
     .instructions {
-      background-color: #0B132B;
-      border-radius: 10px;
-      padding: 20px;
+      background-color: #F8FAFC;
+      border-radius: 12px;
+      padding: 18px 20px;
       margin-top: 24px;
-      border: 1px solid #1E293B;
+      border: 1px solid #E2E8F0;
     }
     .instructions h4 {
-      margin: 0 0 12px;
-      color: #F8FAFC;
-      font-size: 14px;
+      margin: 0 0 10px;
+      color: #0F172A;
+      font-size: 13px;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .instructions ol {
       margin: 0;
-      padding-left: 20px;
+      padding-left: 18px;
       font-size: 13px;
-      color: #94A3B8;
+      color: #475569;
     }
     .instructions li {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .footer {
-      background-color: #060E1A;
-      padding: 24px 30px;
+      background-color: #1A4F8A;
+      padding: 24px 28px;
       text-align: center;
       font-size: 12px;
-      color: #64748B;
-      border-top: 1px solid #1E293B;
+      color: #E2E8F0;
+    }
+    .footer p {
+      margin: 0 0 6px;
+      color: #E2E8F0;
     }
     .footer a {
-      color: #00F0FF;
+      color: #7DD3FC;
       text-decoration: none;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
   <div class="wrapper">
     <div class="container">
+      
+      <!-- Brand Header -->
       <div class="header">
         <div class="logo-badge">⚡ VIP Early Access</div>
         <h1>Interview Ready</h1>
-        <p>Your AI-Powered Mock Interview Platform</p>
+        <p>AI-Powered Career & Mock Interview Platform</p>
       </div>
 
+      <!-- Main Body -->
       <div class="content">
-        <div class="greeting">Hello,</div>
+        <div class="greeting">Welcome to Interview Ready!</div>
         <p>
-          Thank you for joining <strong>Interview Ready</strong>! Your mobile app access has been unlocked.
+          Thank you for joining our priority waitlist. Your standalone Android APK installer is ready to download and install.
         </p>
 
+        <!-- Access Code Highlight Box -->
         <div class="highlight-card">
           <div class="spot-label">Your Waitlist Access Code</div>
           <div class="spot-number">#${spotNumber}</div>
-          <p style="margin: 6px 0 0; font-size: 13px; color: #94A3B8;">
-            Key in this code <strong>#${spotNumber}</strong> on the download page to unlock your APK
-          </p>
+          <div class="spot-hint">
+            Key in this code <strong>#${spotNumber}</strong> on the download page to unlock the APK installer.
+          </div>
         </div>
 
+        <!-- Primary CTA Button -->
         <div class="btn-container">
           <a href="${downloadUrl}" class="btn" target="_blank">
-            📱 Unlock & Download Mobile App
+            📱 Unlock & Download Android APK
           </a>
         </div>
 
-        <div style="text-align: center; font-size: 12px; color: #64748B; margin-top: -16px; margin-bottom: 24px;">
-          Or copy this URL into your browser: <br/>
-          <a href="${downloadUrl}" style="color: #00F0FF; word-break: break-all;">${downloadUrl}</a>
+        <div class="url-fallback">
+          Or open this link directly in your mobile browser:<br/>
+          <a href="${downloadUrl}">${downloadUrl}</a>
         </div>
 
+        <!-- App Features -->
         <ul class="feature-list">
           <li class="feature-item">
             <span class="feature-icon">✨</span>
-            <div><strong>Dynamic AI Mock Interviewer:</strong> Practice job interviews customized for software engineering, product, finance, and management roles.</div>
-          </li>
-          <li class="feature-item">
-            <span class="feature-icon">🎙️</span>
-            <div><strong>Voice & Real-Time Feedback:</strong> Get instant critiques on clarity, confidence, pacing, and keyword accuracy.</div>
+            <div><strong>Dynamic Voice Interviews:</strong> Practice job questions spoken aloud with intelligent follow-ups.</div>
           </li>
           <li class="feature-item">
             <span class="feature-icon">📊</span>
-            <div><strong>Performance Analytics:</strong> Track your mastery score across behavioral, technical, and situational question sets.</div>
+            <div><strong>Instant AI Scoring:</strong> Real-time feedback on confidence, clarity, pacing, and keywords.</div>
+          </li>
+          <li class="feature-item">
+            <span class="feature-icon">⚡</span>
+            <div><strong>Offline Question Bank:</strong> Review 500+ curated interview flashcards anywhere.</div>
           </li>
         </ul>
 
+        <!-- Installation Instructions -->
         <div class="instructions">
-          <h4>Quick Installation Steps (Android)</h4>
+          <h4>Quick 3-Step Installation (Android)</h4>
           <ol>
-            <li>Tap the <strong>Unlock & Download Mobile App</strong> button above.</li>
-            <li>Key in your access code <strong>#${spotNumber}</strong> to unlock the APK installer.</li>
-            <li>If prompted with <em>"File might be harmful"</em>, tap <strong>Download anyway</strong>, then tap <strong>Install</strong>.</li>
+            <li>Tap the <strong>Unlock & Download Android APK</strong> button above.</li>
+            <li>Key in your access code <strong>#${spotNumber}</strong> to unlock the installer.</li>
+            <li>Tap <strong>Download</strong> and open the APK to complete installation.</li>
           </ol>
         </div>
+
       </div>
 
+      <!-- Footer -->
       <div class="footer">
         <p>© ${new Date().getFullYear()} Interview Ready. All rights reserved.</p>
         <p>
-          Need help? Contact our support team at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>
+          Questions or need help? Reach us at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>
         </p>
       </div>
+
     </div>
   </div>
 </body>
