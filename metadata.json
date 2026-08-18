@@ -1,0 +1,6 @@
+{
+  "name": "Interview Ready",
+  "description": "Land your next job faster with AI-powered resumes and cover letters built for every profession. ATS-optimised, recruiter-tested, and tailored to any job description in seconds.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
