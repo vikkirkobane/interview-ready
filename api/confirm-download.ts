@@ -174,6 +174,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         airtableUpdated = true;
       }
 
+      // Generate a secure, time-bounded session (15-minute validity window)
+      const sessionDurationSeconds = 900;
+      const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
+      const sessionToken = `ir_sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+
       return res.status(200).json({
         success: true,
         verified: true,
@@ -182,9 +187,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         waitlistSpot: existingSpot,
         status: 'Downloaded',
         airtableUpdated,
+        sessionToken,
+        sessionExpiresAt,
+        sessionDurationSeconds,
         message: 'Access code verified! Unlocking your APK download.',
       });
     }
+
+    const sessionDurationSeconds = 900;
+    const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
+    const sessionToken = `ir_sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
     return res.status(200).json({
       success: true,
@@ -192,6 +204,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       waitlistSpot: numericSpot || 466,
       status: 'Downloaded',
       airtableUpdated: false,
+      sessionToken,
+      sessionExpiresAt,
+      sessionDurationSeconds,
       message: 'Access code verified.',
     });
   } catch (error: any) {

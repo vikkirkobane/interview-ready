@@ -18,12 +18,18 @@ import {
   KeyRound,
   Shield, 
   Clock, 
-  FileCheck
+  FileCheck,
+  Timer,
+  RefreshCw
 } from 'lucide-react';
 
 interface StandaloneDownloadPageProps {
   onBack?: () => void;
 }
+
+// Default session validity window (15 minutes)
+const SESSION_DURATION_SECONDS = 15 * 60; // 900 seconds
+const SESSION_STORAGE_KEY = 'interview_ready_download_session';
 
 export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPageProps) {
   const [inputCode, setInputCode] = useState<string>('');
@@ -33,6 +39,11 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
   const [verificationError, setVerificationError] = useState<string>('');
   const [verificationSuccessMsg, setVerificationSuccessMsg] = useState<string>('');
   
+  // Session management state
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(SESSION_DURATION_SECONDS);
+  const [isSessionExpired, setIsSessionExpired] = useState<boolean>(false);
+
   const [downloadStarted, setDownloadStarted] = useState<boolean>(false);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
@@ -56,13 +67,70 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
       if (savedSpot) setInputCode(`#${savedSpot}`);
     }
 
-    // Check if previously verified on this device
-    const previouslyDownloaded = localStorage.getItem('interview_ready_app_downloaded');
-    if (previouslyDownloaded === 'true') {
-      setIsVerified(true);
-      setVerificationSuccessMsg('Access Code already verified on this device.');
+    // Inspect active session
+    try {
+      const storedSession = sessionStorage.getItem(SESSION_STORAGE_KEY) || localStorage.getItem(SESSION_STORAGE_KEY);
+      if (storedSession) {
+        const sessionData = JSON.parse(storedSession);
+        const expiresAt = Number(sessionData.expiresAt);
+        const now = Date.now();
+
+        if (expiresAt && now < expiresAt) {
+          // Active valid session
+          setIsVerified(true);
+          setSessionExpiresAt(expiresAt);
+          setSecondsRemaining(Math.max(0, Math.floor((expiresAt - now) / 1000)));
+          setVerificationSuccessMsg('Download session active.');
+        } else if (expiresAt && now >= expiresAt) {
+          // Expired session
+          clearSession();
+          setIsSessionExpired(true);
+        }
+      }
+    } catch (err) {
+      console.warn('Session parse warning:', err);
     }
   }, []);
+
+  // Real-time 1-second countdown timer for active session
+  useEffect(() => {
+    if (!isVerified || !sessionExpiresAt) return;
+
+    const timer = setInterval(() => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.floor((sessionExpiresAt - now) / 1000));
+      setSecondsRemaining(remaining);
+
+      if (remaining <= 0) {
+        // Session expired!
+        clearInterval(timer);
+        handleSessionExpired();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isVerified, sessionExpiresAt]);
+
+  const clearSession = () => {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem('interview_ready_app_downloaded');
+    setSessionExpiresAt(null);
+  };
+
+  const handleSessionExpired = () => {
+    clearSession();
+    setIsVerified(false);
+    setIsSessionExpired(true);
+    setVerificationSuccessMsg('');
+    setVerificationError('Your download session has expired (sessions last 15 minutes for security). Please key in your access code to start a fresh session.');
+  };
+
+  const formatCountdown = (totalSeconds: number): string => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     if (onBack) {
@@ -72,6 +140,12 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
   };
 
   const triggerApkFileDownload = () => {
+    // Verify session validity before initiating file download
+    if (sessionExpiresAt && Date.now() >= sessionExpiresAt) {
+      handleSessionExpired();
+      return;
+    }
+
     setDownloadStarted(true);
     const link = document.createElement('a');
     link.href = '/downloads/interview-ready.apk';
@@ -89,6 +163,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
     e.preventDefault();
     setVerificationError('');
     setVerificationSuccessMsg('');
+    setIsSessionExpired(false);
 
     const cleanCode = inputCode.replace(/[^0-9]/g, '');
     const trimmedEmail = inputEmail.trim().toLowerCase();
@@ -121,13 +196,30 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
         return;
       }
 
-      // Verification successful!
-      setIsVerified(true);
-      setVerificationSuccessMsg(data.message || 'Access code verified! Unlocking your APK download.');
-      localStorage.setItem('interview_ready_app_downloaded', 'true');
+      // Verification successful: establish fresh 15-minute session
+      const now = Date.now();
+      const durationSeconds = data.sessionDurationSeconds || SESSION_DURATION_SECONDS;
+      const expiresAt = now + durationSeconds * 1000;
+
+      const sessionObj = {
+        token: data.sessionToken || `sess_${now}`,
+        verifiedAt: now,
+        expiresAt: expiresAt,
+        waitlistSpot: data.waitlistSpot || cleanCode,
+        email: data.email || trimmedEmail,
+      };
+
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionObj));
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionObj));
       if (data.waitlistSpot) {
         localStorage.setItem('interview_ready_waitlist_number', data.waitlistSpot.toString());
       }
+
+      setIsVerified(true);
+      setSessionExpiresAt(expiresAt);
+      setSecondsRemaining(durationSeconds);
+      setIsSessionExpired(false);
+      setVerificationSuccessMsg(data.message || 'Access code verified! 15-minute download session activated.');
 
       // Start actual APK download
       triggerApkFileDownload();
@@ -164,7 +256,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
   return (
     <div className="min-h-screen font-sans bg-[#F9FAFB] text-slate-900 flex flex-col selection:bg-[#1A4F8A]/25 selection:text-slate-900">
       
-      {/* SECTION 1 — NAVIGATION BAR (Matching Main Page) */}
+      {/* SECTION 1 — NAVIGATION BAR */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100/80 transition-all duration-200">
         <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
           
@@ -216,13 +308,13 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
 
           {/* Subtitle */}
           <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-            Enter your priority Waitlist Access Code below to verify your early access spot and unlock the standalone Android package installer.
+            Enter your priority Waitlist Access Code below to verify your early access spot and activate your secure 15-minute download session.
           </p>
 
         </div>
       </header>
 
-      {/* SECTION 3 — GATED DOWNLOAD / VERIFICATION EXPERIENCE */}
+      {/* SECTION 3 — GATED DOWNLOAD / SESSION-MANAGED EXPERIENCE */}
       <main className="flex-grow py-10 md:py-16">
         <div className="max-w-4xl mx-auto px-6 space-y-10">
           
@@ -237,15 +329,25 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                 <div className="md:col-span-7 space-y-5">
                   
                   <div className="space-y-2">
-                    <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-                      Access Code Verification Required
-                    </span>
+                    {isSessionExpired ? (
+                      <span className="px-3 py-1 rounded-full bg-red-50 text-red-800 border border-red-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 animate-pulse">
+                        <Timer className="w-3.5 h-3.5 text-red-600" />
+                        Session Expired • Re-verification Required
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                        Access Code Verification Required
+                      </span>
+                    )}
                     <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-                      Enter Your Waitlist Access Code
+                      {isSessionExpired ? 'Renew Your Download Session' : 'Enter Your Waitlist Access Code'}
                     </h2>
                     <p className="text-slate-600 text-sm leading-relaxed">
-                      Please key in the waitlist number you copied from the homepage or received in your confirmation email (e.g. <strong>466</strong>).
+                      {isSessionExpired 
+                        ? 'For security, download sessions expire after 15 minutes. Key in your code below to instantly activate a new session.'
+                        : 'Please key in the waitlist number you copied from the homepage or received in your confirmation email (e.g. 466).'
+                      }
                     </p>
                   </div>
 
@@ -296,7 +398,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       ) : (
                         <>
                           <Unlock className="w-5 h-5" />
-                          <span>Verify Code & Unlock APK</span>
+                          <span>{isSessionExpired ? 'Renew Session & Unlock APK' : 'Verify Code & Unlock APK'}</span>
                         </>
                       )}
                     </button>
@@ -337,18 +439,30 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
 
               </div>
             ) : (
-              /* UNLOCKED & VERIFIED STATE */
+              /* UNLOCKED & ACTIVE SESSION STATE */
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center animate-fadeIn">
                 
                 {/* Left Column: APK Details & Download CTA */}
                 <div className="md:col-span-7 space-y-5">
                   
-                  <div className="flex flex-wrap items-center gap-2">
+                  {/* Session Status & Badges */}
+                  <div className="flex flex-wrap items-center gap-2.5">
                     <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      Access Code Verified & Unlocked
+                      Session Active
                     </span>
-                    <span className="text-xs text-slate-500 font-mono font-medium">
+
+                    {/* Live Session Expiry Countdown Badge */}
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold flex items-center gap-1.5 border transition-all ${
+                      secondsRemaining < 120 
+                        ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
+                        : 'bg-blue-50 text-[#1A4F8A] border-blue-200'
+                    }`}>
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Expires in {formatCountdown(secondsRemaining)}</span>
+                    </span>
+
+                    <span className="text-xs text-slate-500 font-mono font-medium hidden sm:inline">
                       v1.0.0-beta • ~24.8 MB
                     </span>
                   </div>
@@ -358,7 +472,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                   </h2>
 
                   <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
-                    Your code has been verified and confirmed in our database. You can now install the standalone Android application package directly on your mobile device.
+                    Your early access code is verified. Your secure download window is active for <strong>{formatCountdown(secondsRemaining)}</strong>. You can now download and install the APK installer on your Android device.
                   </p>
 
                   {/* Action Buttons */}
@@ -394,6 +508,17 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       {verificationSuccessMsg}
                     </div>
                   )}
+
+                  {/* Lock/Exit Session button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={handleSessionExpired}
+                      className="text-xs text-slate-500 hover:text-red-600 font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Lock className="w-3 h-3" />
+                      <span>End download session early</span>
+                    </button>
+                  </div>
 
                 </div>
 
@@ -536,7 +661,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
         </div>
       </main>
 
-      {/* SECTION 5 — FOOTER (Matching Main Page) */}
+      {/* SECTION 5 — FOOTER */}
       <footer id="footer" className="bg-[#1A4F8A] text-white/80 py-16 border-t border-blue-900/30 mt-12">
         <div className="w-full max-w-6xl mx-auto px-6">
           

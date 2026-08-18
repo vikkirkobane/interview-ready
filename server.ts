@@ -265,6 +265,10 @@ async function startServer() {
             }),
           });
 
+          const sessionDurationSeconds = 900;
+          const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
+          const sessionToken = `ir_sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+
           return res.status(200).json({
             success: true,
             verified: true,
@@ -272,10 +276,17 @@ async function startServer() {
             waitlistSpot: matchedRecord.fields?.['Waitlist Spot'] || numericSpot,
             status: 'Downloaded',
             airtableUpdated: true,
+            sessionToken,
+            sessionExpiresAt,
+            sessionDurationSeconds,
             message: 'Access code verified! APK download unlocked.',
           });
         }
       }
+
+      const sessionDurationSeconds = 900;
+      const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
+      const sessionToken = `ir_sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
       return res.status(200).json({
         success: true,
@@ -283,6 +294,9 @@ async function startServer() {
         waitlistSpot: numericSpot || 466,
         status: 'Downloaded',
         airtableUpdated: false,
+        sessionToken,
+        sessionExpiresAt,
+        sessionDurationSeconds,
         message: 'Access code verified locally.',
       });
     } catch (err: any) {
