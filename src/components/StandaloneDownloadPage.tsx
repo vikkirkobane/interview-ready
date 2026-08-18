@@ -12,12 +12,8 @@ import {
   Mic, 
   BarChart3, 
   Zap, 
-  Layers, 
-  HelpCircle,
-  ExternalLink,
-  ChevronRight,
-  Shield,
-  Clock,
+  Shield, 
+  Clock, 
   FileCheck
 } from 'lucide-react';
 
@@ -26,7 +22,6 @@ interface StandaloneDownloadPageProps {
 }
 
 export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPageProps) {
-  const [activeTab, setActiveTab] = useState<'android' | 'ios'>('android');
   const [userEmail, setUserEmail] = useState<string>('');
   const [downloadStarted, setDownloadStarted] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -92,7 +87,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                 Interview Ready
               </span>
               <span className="text-[11px] font-display font-bold uppercase tracking-wider bg-blue-50 text-[#1A4F8A] border border-blue-100 px-2 py-0.5 rounded-full hidden sm:inline-block">
-                Mobile App
+                Android App
               </span>
             </div>
           </a>
@@ -122,17 +117,17 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
           {/* Early Access Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#1A4F8A] text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-[#0EA5E9]" />
-            <span>Official Mobile Release • v1.0.0 Beta</span>
+            <span>Official Android APK • v1.0.0 Beta</span>
           </div>
 
           {/* Main Title */}
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Install <span className="text-[#1A4F8A]">Interview Ready</span> on Your Phone
+            Download <span className="text-[#1A4F8A]">Interview Ready</span> APK
           </h1>
 
           {/* Subtitle */}
           <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-            Practice AI mock interviews with real-time audio analysis, instant scoring, and personalized answer critiques anywhere on your smartphone.
+            Practice AI mock interviews with real-time audio analysis, instant scoring, and personalized answer critiques directly on your Android smartphone.
           </p>
 
           {/* User Email Banner if referred */}
@@ -148,252 +143,151 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
         </div>
       </header>
 
-      {/* SECTION 3 — OS TAB SWITCHER & DOWNLOAD EXPERIENCE */}
+      {/* SECTION 3 — ANDROID DOWNLOAD EXPERIENCE */}
       <main className="flex-grow py-10 md:py-16">
         <div className="max-w-4xl mx-auto px-6 space-y-10">
           
-          {/* Platform Tab Switcher */}
-          <div className="flex justify-center">
-            <div className="p-1.5 bg-slate-100 border border-slate-200 rounded-2xl flex items-center shadow-xs">
-              <button
-                onClick={() => setActiveTab('android')}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-display text-sm font-bold transition-all duration-200 cursor-pointer ${
-                  activeTab === 'android'
-                    ? 'bg-[#1A4F8A] text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Smartphone className="w-4 h-4" />
-                Android (Direct APK)
-              </button>
+          {/* Main Download Card */}
+          <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+              
+              {/* Left Column: APK Details & Download CTA */}
+              <div className="md:col-span-7 space-y-5">
+                
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    VirusTotal Clean & Verified
+                  </span>
+                  <span className="text-xs text-slate-500 font-mono font-medium">
+                    v1.0.0-beta • ~24.8 MB
+                  </span>
+                </div>
 
-              <button
-                onClick={() => setActiveTab('ios')}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-display text-sm font-bold transition-all duration-200 cursor-pointer ${
-                  activeTab === 'ios'
-                    ? 'bg-[#1A4F8A] text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Layers className="w-4 h-4" />
-                iOS / iPhone (Safari PWA)
-              </button>
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
+                  Interview Ready for Android
+                </h2>
+
+                <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
+                  Download the official standalone Android application package directly. Compatible with Android 8.0+ on Samsung, Google Pixel, Tecno, Infinix, Xiaomi, OnePlus, and all Android devices.
+                </p>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    onClick={handleDownloadApk}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base px-8 py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Download className="w-5 h-5" />
+                    {downloadStarted ? 'Starting Download...' : 'Download Android APK'}
+                  </button>
+
+                  <button
+                    onClick={copyPageUrl}
+                    className="flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold border border-slate-200 transition-colors cursor-pointer"
+                    title="Copy download link to send to your phone"
+                  >
+                    {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+                    {copiedLink ? 'Link Copied!' : 'Copy Link'}
+                  </button>
+                </div>
+
+                {downloadStarted && (
+                  <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs sm:text-sm text-[#1A4F8A] font-medium flex items-center gap-2.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#0EA5E9] shrink-0" />
+                    Download started! Check your phone's notification panel or Downloads folder to install.
+                  </div>
+                )}
+
+              </div>
+
+              {/* Right Column: QR Code for Desktop Users */}
+              <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="Scan QR Code to open download on mobile" 
+                    className="w-36 h-36 rounded-lg object-contain"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="font-display text-xs font-bold text-slate-900 flex items-center justify-center gap-1.5">
+                    <QrCode className="w-3.5 h-3.5 text-[#1A4F8A]" />
+                    On Desktop? Scan with Phone
+                  </span>
+                  <p className="text-[11px] text-slate-500 max-w-[200px] leading-tight">
+                    Point your mobile camera at this code to open the download page directly on your phone.
+                  </p>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          {/* TAB 1: ANDROID DOWNLOAD */}
-          {activeTab === 'android' && (
-            <div className="space-y-8 animate-fadeIn">
+          {/* Step-by-Step Android Installation Guide */}
+          <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
+            
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1A4F8A] flex items-center justify-center font-display font-extrabold text-sm border border-blue-100">
+                1-4
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-slate-900">How to Install the APK on Your Android Device</h3>
+                <p className="text-xs text-slate-500 font-normal">Takes less than 30 seconds</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
-              {/* Main Download Card */}
-              <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                  
-                  {/* Left Column: APK Details & Download CTA */}
-                  <div className="md:col-span-7 space-y-5">
-                    
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                        VirusTotal Clean & Verified
-                      </span>
-                      <span className="text-xs text-slate-500 font-mono font-medium">
-                        v1.0.0-beta • ~24.8 MB
-                      </span>
-                    </div>
-
-                    <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-                      Interview Ready for Android
-                    </h2>
-
-                    <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
-                      Download the official standalone Android application package directly. Compatible with Android 8.0+ on Samsung, Google Pixel, Tecno, Infinix, Xiaomi, OnePlus, and all Android devices.
-                    </p>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-3 pt-2">
-                      <button
-                        onClick={handleDownloadApk}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base px-8 py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Download className="w-5 h-5" />
-                        {downloadStarted ? 'Starting Download...' : 'Download Android APK'}
-                      </button>
-
-                      <button
-                        onClick={copyPageUrl}
-                        className="flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold border border-slate-200 transition-colors cursor-pointer"
-                        title="Copy download link to send to your phone"
-                      >
-                        {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
-                        {copiedLink ? 'Link Copied!' : 'Copy Link'}
-                      </button>
-                    </div>
-
-                    {downloadStarted && (
-                      <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs sm:text-sm text-[#1A4F8A] font-medium flex items-center gap-2.5">
-                        <CheckCircle2 className="w-4 h-4 text-[#0EA5E9] shrink-0" />
-                        Download started! Check your phone's notification panel or Downloads folder to install.
-                      </div>
-                    )}
-
-                  </div>
-
-                  {/* Right Column: QR Code for Desktop Users */}
-                  <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
-                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-xs">
-                      <img 
-                        src={qrCodeUrl} 
-                        alt="Scan QR Code to open download on mobile" 
-                        className="w-36 h-36 rounded-lg object-contain"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <span className="font-display text-xs font-bold text-slate-900 flex items-center justify-center gap-1.5">
-                        <QrCode className="w-3.5 h-3.5 text-[#1A4F8A]" />
-                        On Desktop? Scan with Phone
-                      </span>
-                      <p className="text-[11px] text-slate-500 max-w-[200px] leading-tight">
-                        Point your mobile camera at this code to open the download page directly on your phone.
-                      </p>
-                    </div>
-                  </div>
-
+              {/* Step 1 */}
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">1</span>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Tap Download</h4>
                 </div>
+                <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
+                  Tap the <strong className="text-[#1A4F8A]">"Download Android APK"</strong> button above. The file will save to your Downloads.
+                </p>
               </div>
 
-              {/* Step-by-Step Android Installation Guide */}
-              <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xs">
-                
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1A4F8A] flex items-center justify-center font-display font-extrabold text-sm border border-blue-100">
-                    1-4
-                  </div>
-                  <div>
-                    <h3 className="font-display text-lg font-bold text-slate-900">How to Install on Android</h3>
-                    <p className="text-xs text-slate-500 font-normal">Takes less than 30 seconds</p>
-                  </div>
+              {/* Step 2 */}
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">2</span>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Allow Download</h4>
                 </div>
+                <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
+                  If Chrome prompts <em>"File might be harmful"</em>, tap <strong className="text-slate-900">Download anyway</strong> (standard Android notice for direct APKs).
+                </p>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  
-                  {/* Step 1 */}
-                  <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">1</span>
-                      <h4 className="font-display text-sm font-bold text-slate-900">Tap Download</h4>
-                    </div>
-                    <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                      Tap the <strong className="text-[#1A4F8A]">"Download Android APK"</strong> button above. The installer will save to your Downloads.
-                    </p>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">2</span>
-                      <h4 className="font-display text-sm font-bold text-slate-900">Allow Download</h4>
-                    </div>
-                    <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                      If Chrome prompts <em>"File might be harmful"</em>, tap <strong className="text-slate-900">Download anyway</strong> (standard notice for APKs).
-                    </p>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">3</span>
-                      <h4 className="font-display text-sm font-bold text-slate-900">Allow Unknown Sources</h4>
-                    </div>
-                    <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                      Open the APK from notification bar. If prompted, toggle <strong className="text-slate-900">"Allow from this source"</strong> in Settings.
-                    </p>
-                  </div>
-
-                  {/* Step 4 */}
-                  <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">4</span>
-                      <h4 className="font-display text-sm font-bold text-slate-900">Tap Install & Launch</h4>
-                    </div>
-                    <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                      Tap <strong className="text-[#1A4F8A]">Install</strong>. Once done, tap Open to start practicing your AI mock interviews immediately!
-                    </p>
-                  </div>
-
+              {/* Step 3 */}
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">3</span>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Allow Unknown Sources</h4>
                 </div>
+                <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
+                  Open the APK from notification bar. If prompted, toggle <strong className="text-slate-900">"Allow from this source"</strong> in Settings.
+                </p>
+              </div>
 
+              {/* Step 4 */}
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">4</span>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Tap Install & Launch</h4>
+                </div>
+                <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
+                  Tap <strong className="text-[#1A4F8A]">Install</strong>. Once done, tap Open to start practicing your AI mock interviews immediately!
+                </p>
               </div>
 
             </div>
-          )}
 
-          {/* TAB 2: IOS / IPHONE INSTALLATION */}
-          {activeTab === 'ios' && (
-            <div className="space-y-8 animate-fadeIn">
-              
-              <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-10 shadow-sm space-y-6">
-                
-                <div className="space-y-2">
-                  <span className="px-2.5 py-1 rounded-md bg-blue-50 text-[#1A4F8A] border border-blue-100 text-xs font-bold uppercase tracking-wider">
-                    iOS & iPadOS Native Web App
-                  </span>
-                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-                    Install on iPhone (No App Store Needed)
-                  </h2>
-                  <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
-                    Install Interview Ready directly to your iOS home screen as a high-performance standalone Progressive Web App with full offline capabilities and audio support.
-                  </p>
-                </div>
+          </div>
 
-                {/* 3 Step Visual Guide for iOS */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                  
-                  <div className="p-5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1A4F8A] flex items-center justify-center font-display font-extrabold text-base border border-blue-100">
-                      1
-                    </div>
-                    <h4 className="font-display text-sm font-bold text-slate-900">Open in Safari</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                      Open <strong className="text-[#1A4F8A]">appinterviewready.top</strong> in <strong className="text-slate-900">Apple Safari</strong> on your iPhone or iPad.
-                    </p>
-                  </div>
-
-                  <div className="p-5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1A4F8A] flex items-center justify-center font-display font-extrabold text-base border border-blue-100">
-                      2
-                    </div>
-                    <h4 className="font-display text-sm font-bold text-slate-900">Tap Share Icon</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                      Tap the <strong className="text-slate-900">Share button (⎋ with arrow)</strong> at the bottom center of Safari's toolbar.
-                    </p>
-                  </div>
-
-                  <div className="p-5 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-2">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#1A4F8A] flex items-center justify-center font-display font-extrabold text-base border border-blue-100">
-                      3
-                    </div>
-                    <h4 className="font-display text-sm font-bold text-slate-900">Add to Home Screen</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                      Scroll down the menu and tap <strong className="text-[#1A4F8A]">"Add to Home Screen"</strong>, then tap <strong className="text-slate-900">Add</strong> in the top right.
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-xs sm:text-sm text-[#1A4F8A] font-medium flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-[#0EA5E9] shrink-0" />
-                  <div>
-                    <strong>Native TestFlight Beta:</strong> We are also packaging an Apple TestFlight build. All subscribers will automatically receive early invitations.
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-          {/* SECTION 4 — APP FEATURES BREAKDOWN (Matching Main Page Card Design) */}
+          {/* SECTION 4 — APP FEATURES BREAKDOWN */}
           <div className="space-y-4 pt-4">
             
             <div className="text-center space-y-1 mb-6">

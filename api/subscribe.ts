@@ -223,10 +223,11 @@ export function generateEmailHtml(email: string, downloadUrl: string, waitlistSp
         </ul>
 
         <div class="instructions">
-          <h4>Quick Installation Steps</h4>
+          <h4>Quick Installation Steps (Android)</h4>
           <ol>
-            <li><strong>Android:</strong> Tap the download button above, download the APK, and tap <em>Install</em> (allow from this source if prompted).</li>
-            <li><strong>iOS (iPhone):</strong> Open the link in Safari, tap the <em>Share (⎋)</em> button, and tap <em>"Add to Home Screen"</em>.</li>
+            <li>Tap the <strong>Download & Install</strong> button above to download the APK.</li>
+            <li>If prompted with <em>"File might be harmful"</em>, tap <strong>Download anyway</strong>.</li>
+            <li>Open the file from your notification bar and tap <strong>Install</strong>.</li>
           </ol>
         </div>
       </div>
