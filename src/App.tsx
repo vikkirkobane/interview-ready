@@ -1608,16 +1608,6 @@ export default function App() {
               <a href="#features" className="hover:text-white transition-colors font-normal text-blue-100/90">Features</a>
               <a href="#how-it-works" className="hover:text-white transition-colors font-normal text-blue-100/90">How It Works</a>
               <a href="#testimonials" className="hover:text-white transition-colors font-normal text-blue-100/90">Testimonials</a>
-              <button 
-                onClick={() => {
-                  setStandalonePage('download');
-                  window.history.pushState({}, '', '/download');
-                }}
-                className="hover:text-white text-left transition-colors cursor-pointer font-semibold text-cyan-300 focus:outline-none flex items-center gap-1.5"
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                Mobile App
-              </button>
             </div>
 
             {/* Column 3: Company */}

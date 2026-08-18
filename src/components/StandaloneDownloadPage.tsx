@@ -684,10 +684,6 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
               <a href="/#features" className="hover:text-white transition-colors font-normal text-blue-100/90">Features</a>
               <a href="/#how-it-works" className="hover:text-white transition-colors font-normal text-blue-100/90">How It Works</a>
               <a href="/#testimonials" className="hover:text-white transition-colors font-normal text-blue-100/90">Testimonials</a>
-              <a href="/download" className="hover:text-white font-semibold text-cyan-300 transition-colors flex items-center gap-1.5">
-                <Smartphone className="w-3.5 h-3.5" />
-                Mobile App
-              </a>
             </div>
 
             {/* Column 3: Company */}
