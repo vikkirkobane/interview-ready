@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
     const { error } = await signInWithGoogleIdToken();
     if (error) {
       setLoadingProvider(null);
-      if (error !== 'Sign in was cancelled') {
+      if (!error.toLowerCase().includes('cancel')) {
         Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
       }
     }
@@ -74,7 +74,7 @@ export default function WelcomeScreen() {
     const { error } = await signInWithLinkedInIdToken();
     if (error) {
       setLoadingProvider(null);
-      if (error !== 'Authentication cancelled') {
+      if (!error.toLowerCase().includes('cancel')) {
         Toast.show({ type: 'error', text1: 'Sign in failed', text2: error });
       }
     }

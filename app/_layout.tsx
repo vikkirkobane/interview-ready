@@ -17,7 +17,13 @@ import { useNotificationStore } from '../src/stores/notification-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
 import { supabase } from '../src/lib/supabase';
-import { exchangeAuthCodeSafely } from '../src/lib/auth-code-exchange';
+import {
+  exchangeAuthCodeSafely,
+  isUrlAlreadyHandled,
+  markUrlHandled,
+  hasInFlightExchange,
+  waitForAnyInFlightExchange,
+} from '../src/lib/auth-code-exchange';
 import mobileAds from 'react-native-google-mobile-ads';
 
 if (!(Toast as any)._isPatched) {
@@ -203,6 +209,12 @@ export default function RootLayout() {
       const isAuthCallback = url.includes('auth/callback') || url.includes('error=') || url.includes('error_code=');
       if (!isAuthCallback) return;
 
+      if (isUrlAlreadyHandled(url)) {
+        console.log('[DeepLink] URL already handled, skipping:', url);
+        return;
+      }
+      markUrlHandled(url);
+
       // Mark that we're processing an auth callback — prevents AuthGuard
       // from redirecting to welcome while we exchange the code.
       useAuthStore.getState().setPendingOAuthCallback(true);
@@ -216,16 +228,30 @@ export default function RootLayout() {
 
         // Handle OAuth errors from provider / Supabase
         if (error || errorCode) {
-          console.error('[DeepLink] OAuth error:', error || errorCode, errorDescription);
-          useAuthStore.getState().setPendingOAuthCallback(false);
-          const currentSession = useAuthStore.getState().session;
-          const isBadState = errorCode === 'bad_oauth_state' || errorDescription?.includes('bad_oauth_state') || errorCode === 'flow_state_already_used' || errorDescription?.includes('already been used');
+          console.error('[DeepLink] OAuth error in callback URL:', error || errorCode, errorDescription);
 
-          // If the user already has an active session, a duplicate callback with "already been used" state is harmless
-          if (isBadState && currentSession) {
-            console.log('[DeepLink] Ignoring duplicate OAuth state error since session is already active');
+          // If an auth code exchange is currently in-flight, await it first
+          if (hasInFlightExchange()) {
+            console.log('[DeepLink] Waiting for in-flight code exchange before processing error...');
+            await waitForAnyInFlightExchange();
+          }
+
+          const currentSession = useAuthStore.getState().session;
+          const isBadState =
+            errorCode === 'bad_oauth_state' ||
+            errorDescription?.includes('bad_oauth_state') ||
+            errorCode === 'flow_state_already_used' ||
+            errorDescription?.includes('already been used') ||
+            errorDescription?.includes('flow state');
+
+          // If the user already has an active session (e.g. exchanged code concurrently), ignore the error
+          if (currentSession) {
+            console.log('[DeepLink] Ignoring OAuth state error since session is active');
+            useAuthStore.getState().setPendingOAuthCallback(false);
             return;
           }
+
+          useAuthStore.getState().setPendingOAuthCallback(false);
 
           Toast.show({
             type: 'error',
@@ -235,19 +261,23 @@ export default function RootLayout() {
           return;
         }
 
-
         if (code) {
           console.log('[DeepLink] Exchanging code for session...');
           const { session: exchangedSession, error: exchangeError } = await exchangeAuthCodeSafely(code);
 
           if (exchangeError) {
             console.error('[DeepLink] exchangeCodeForSession error:', exchangeError.message);
-            useAuthStore.getState().setPendingOAuthCallback(false);
-            Toast.show({
-              type: 'error',
-              text1: 'Sign-in failed',
-              text2: 'Could not complete LinkedIn login. Please try again.',
-            });
+            const currentSession = useAuthStore.getState().session;
+            if (!currentSession) {
+              useAuthStore.getState().setPendingOAuthCallback(false);
+              Toast.show({
+                type: 'error',
+                text1: 'Sign-in failed',
+                text2: 'Could not complete LinkedIn login. Please try again.',
+              });
+            } else {
+              useAuthStore.getState().setPendingOAuthCallback(false);
+            }
             return;
           }
 
@@ -266,7 +296,6 @@ export default function RootLayout() {
           console.log('[DeepLink] Code exchanged successfully');
           useAuthStore.getState().setPendingOAuthCallback(false);
           return;
-
         }
 
         console.warn('[DeepLink] No code found in callback URL');

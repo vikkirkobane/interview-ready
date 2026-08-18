@@ -5,8 +5,55 @@ import type { Session, AuthError } from '@supabase/supabase-js';
 // Cache of codes exchanged within this app session to prevent duplicate network calls.
 const processedCodes = new Set<string>();
 
+// Cache of handled callback URLs to avoid processing stale or duplicate deep links.
+const handledUrls = new Set<string>();
+
 // In-flight exchanges map to handle simultaneous triggers (e.g. openAuthSessionAsync return + Linking event).
 const inFlightExchanges = new Map<string, Promise<{ session: Session | null; error: AuthError | null }>>();
+
+/**
+ * Checks if a specific deep link callback URL has already been handled.
+ */
+export function isUrlAlreadyHandled(url: string): boolean {
+  return handledUrls.has(url);
+}
+
+/**
+ * Marks a URL as handled.
+ */
+export function markUrlHandled(url: string): void {
+  handledUrls.add(url);
+  if (handledUrls.size > 50) {
+    const firstKey = handledUrls.values().next().value;
+    if (firstKey) handledUrls.delete(firstKey);
+  }
+}
+
+/**
+ * Checks if any auth code exchange is currently in flight.
+ */
+export function hasInFlightExchange(): boolean {
+  return inFlightExchanges.size > 0;
+}
+
+/**
+ * Waits for all current in-flight exchanges to settle, returning the first valid session if any.
+ */
+export async function waitForAnyInFlightExchange(): Promise<{ session: Session | null; error: AuthError | null } | null> {
+  if (inFlightExchanges.size === 0) return null;
+  try {
+    const promises = Array.from(inFlightExchanges.values());
+    const results = await Promise.allSettled(promises);
+    for (const res of results) {
+      if (res.status === 'fulfilled' && res.value?.session) {
+        return res.value;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
 
 /**
  * Safely exchanges a PKCE authorization code for a Supabase session.
@@ -41,7 +88,8 @@ export async function exchangeAuthCodeSafely(code: string): Promise<{
         const isAlreadyUsed =
           error.message?.toLowerCase().includes('already been used') ||
           error.message?.toLowerCase().includes('flow state') ||
-          (error as any).code === 'flow_state_not_found';
+          (error as any).code === 'flow_state_not_found' ||
+          (error as any).code === 'bad_oauth_state';
 
         const currentSession = useAuthStore.getState().session;
         if (isAlreadyUsed && currentSession) {
@@ -80,5 +128,6 @@ export async function exchangeAuthCodeSafely(code: string): Promise<{
  */
 export function _resetCodeExchangeCache() {
   processedCodes.clear();
+  handledUrls.clear();
   inFlightExchanges.clear();
 }

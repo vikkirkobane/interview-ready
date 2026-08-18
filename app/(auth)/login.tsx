@@ -80,7 +80,7 @@ export default function LoginScreen() {
   const handleLinkedInSignIn = async () => {
     setError('');
     const { error: authError } = await signInWithLinkedInIdToken();
-    if (authError) {
+    if (authError && !authError.toLowerCase().includes('cancel')) {
       setError(authError);
     }
     // Routing is handled by the session-watcher effect above (OAuth delivers
