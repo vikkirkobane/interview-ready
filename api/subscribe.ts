@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import nodemailer from 'nodemailer';
+import { validateAndSanitizeEmail, checkRateLimit, stripHeaderInjection, escapeHtml } from './security';
 
 interface SubscribeRequestBody {
   email: string;
@@ -369,8 +370,6 @@ async function saveToAirtable(email: string, waitlistSpot: number): Promise<{ sa
     return { saved: false, error: err.message || String(err) };
   }
 }
-
-import { validateAndSanitizeEmail, checkRateLimit, stripHeaderInjection, escapeHtml } from './security';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Security Headers & CORS
