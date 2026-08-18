@@ -139,14 +139,23 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
     }
   };
 
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://appinterviewready.top/download';
+  // Compute dynamic direct URL including user's specific access code & email
+  const cleanSpot = inputCode.replace(/[^0-9]/g, '');
+  const directMobileUrl = (() => {
+    const base = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://appinterviewready.top';
+    const params = new URLSearchParams();
+    if (cleanSpot) params.set('spot', cleanSpot);
+    if (inputEmail) params.set('email', inputEmail.trim().toLowerCase());
+    const query = params.toString();
+    return `${base}/download${query ? `?${query}` : ''}`;
+  })();
   
-  // High-contrast QR Code with navy (#1A4F8A) on white
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(currentUrl)}&color=1A4F8A&bgcolor=FFFFFF&margin=12`;
+  // High-contrast Navy (#1A4F8A) QR Code on pure white background
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(directMobileUrl)}&color=1A4F8A&bgcolor=FFFFFF&margin=10`;
 
   const copyPageUrl = () => {
     if (navigator.clipboard) {
-      navigator.clipboard.writeText(currentUrl);
+      navigator.clipboard.writeText(directMobileUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     }
@@ -222,90 +231,109 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
             
             {!isVerified ? (
               /* GATED / LOCKED STATE */
-              <div className="space-y-6 max-w-xl mx-auto text-center py-2">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
                 
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-[#1A4F8A] flex items-center justify-center mx-auto shadow-2xs">
-                  <Lock className="w-7 h-7 text-[#1A4F8A]" />
-                </div>
-
-                <div className="space-y-2">
-                  <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-                    Access Code Verification Required
-                  </span>
-                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-                    Enter Your Waitlist Access Code
-                  </h2>
-                  <p className="text-slate-600 text-sm leading-relaxed">
-                    Please key in the waitlist number you copied from the homepage or received in your Spaceship confirmation email (e.g. <strong>466</strong>).
-                  </p>
-                </div>
-
-                {/* Verification Form */}
-                <form onSubmit={handleVerifyAndDownload} className="space-y-4 pt-2 text-left">
+                {/* Left Column: Verification Form */}
+                <div className="md:col-span-7 space-y-5">
                   
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Waitlist Access Code <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
+                  <div className="space-y-2">
+                    <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                      Access Code Verification Required
+                    </span>
+                    <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
+                      Enter Your Waitlist Access Code
+                    </h2>
+                    <p className="text-slate-600 text-sm leading-relaxed">
+                      Please key in the waitlist number you copied from the homepage or received in your Spaceship confirmation email (e.g. <strong>466</strong>).
+                    </p>
+                  </div>
+
+                  {/* Verification Form */}
+                  <form onSubmit={handleVerifyAndDownload} className="space-y-4 pt-1">
+                    
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Waitlist Access Code <span className="text-red-500">*</span>
+                      </label>
                       <input 
                         type="text" 
                         value={inputCode}
                         onChange={(e) => setInputCode(e.target.value)}
                         placeholder="e.g. #466 or 466"
-                        className="w-full px-4 py-3.5 border-2 border-slate-200 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none rounded-xl text-base font-bold text-slate-900 tracking-wide transition-all"
+                        className="w-full px-4 py-3.5 border-2 border-slate-200 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none rounded-xl text-base font-bold text-slate-900 tracking-wide transition-all shadow-2xs"
                         required
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                      Registered Email Address <span className="text-slate-400 font-normal">(Optional for faster lookup)</span>
-                    </label>
-                    <input 
-                      type="email" 
-                      value={inputEmail}
-                      onChange={(e) => setInputEmail(e.target.value)}
-                      placeholder="your.email@example.com"
-                      className="w-full px-4 py-3 border border-slate-200 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none rounded-xl text-sm text-slate-900 transition-all"
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Registered Email Address <span className="text-slate-400 font-normal">(Optional)</span>
+                      </label>
+                      <input 
+                        type="email" 
+                        value={inputEmail}
+                        onChange={(e) => setInputEmail(e.target.value)}
+                        placeholder="your.email@example.com"
+                        className="w-full px-4 py-3 border border-slate-200 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none rounded-xl text-sm text-slate-900 transition-all shadow-2xs"
+                      />
+                    </div>
+
+                    {verificationError && (
+                      <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 flex items-start gap-2.5">
+                        <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                        <span>{verificationError}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isVerifying}
+                      className="w-full flex items-center justify-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-75"
+                    >
+                      {isVerifying ? (
+                        <span>Verifying Code in Airtable...</span>
+                      ) : (
+                        <>
+                          <Unlock className="w-5 h-5" />
+                          <span>Verify Code & Unlock APK</span>
+                        </>
+                      )}
+                    </button>
+
+                    <div className="pt-1 text-center sm:text-left">
+                      <a 
+                        href="/#waitlist" 
+                        onClick={handleHomeClick}
+                        className="text-xs font-semibold text-[#1A4F8A] hover:underline inline-flex items-center gap-1"
+                      >
+                        Don't have a waitlist code yet? Return to Homepage to join →
+                      </a>
+                    </div>
+
+                  </form>
+
+                </div>
+
+                {/* Right Column: QR Code for Mobile Scanning */}
+                <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                  <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="Scan QR Code to open download on mobile" 
+                      className="w-40 h-40 rounded-lg object-contain"
                     />
                   </div>
-
-                  {verificationError && (
-                    <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 flex items-start gap-2.5">
-                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
-                      <span>{verificationError}</span>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isVerifying}
-                    className="w-full flex items-center justify-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-75"
-                  >
-                    {isVerifying ? (
-                      <span>Verifying Code in Airtable...</span>
-                    ) : (
-                      <>
-                        <Unlock className="w-5 h-5" />
-                        <span>Verify Code & Unlock APK</span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="pt-2 text-center">
-                    <a 
-                      href="/#waitlist" 
-                      onClick={handleHomeClick}
-                      className="text-xs font-semibold text-[#1A4F8A] hover:underline"
-                    >
-                      Don't have a waitlist code yet? Return to Homepage to join →
-                    </a>
+                  <div className="space-y-1">
+                    <span className="font-display text-xs font-bold text-slate-900 flex items-center justify-center gap-1.5">
+                      <QrCode className="w-3.5 h-3.5 text-[#1A4F8A]" />
+                      On Desktop? Scan with Phone
+                    </span>
+                    <p className="text-[11px] text-slate-500 max-w-[210px] leading-tight">
+                      Point your phone's camera at this code to open the download page directly with your credentials.
+                    </p>
                   </div>
-
-                </form>
+                </div>
 
               </div>
             ) : (
@@ -375,7 +403,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                     <img 
                       src={qrCodeUrl} 
                       alt="Scan QR Code to open download on mobile" 
-                      className="w-36 h-36 rounded-lg object-contain"
+                      className="w-40 h-40 rounded-lg object-contain"
                     />
                   </div>
                   <div className="space-y-1">
@@ -383,8 +411,8 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       <QrCode className="w-3.5 h-3.5 text-[#1A4F8A]" />
                       On Desktop? Scan with Phone
                     </span>
-                    <p className="text-[11px] text-slate-500 max-w-[200px] leading-tight">
-                      Point your mobile camera at this code to open and install the APK on your Android phone.
+                    <p className="text-[11px] text-slate-500 max-w-[210px] leading-tight">
+                      Point your phone's camera at this code to open and install the APK on your Android phone.
                     </p>
                   </div>
                 </div>
