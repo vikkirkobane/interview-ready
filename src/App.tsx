@@ -30,7 +30,9 @@ import {
   Plus,
   Clock,
   Sheet,
-  Smartphone
+  Smartphone,
+  Copy,
+  Check
 } from 'lucide-react';
 
 // Define the content for the interactive live optimizer simulator
@@ -101,6 +103,15 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [emailApiFeedback, setEmailApiFeedback] = useState<string>('');
   const [downloadLink, setDownloadLink] = useState<string>('/download');
+  const [copiedSpot, setCopiedSpot] = useState<boolean>(false);
+
+  const copySpotCode = (code: string | number) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code.toString());
+      setCopiedSpot(true);
+      setTimeout(() => setCopiedSpot(false), 2500);
+    }
+  };
 
   // Mobile navigation overlay state
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
@@ -619,30 +630,58 @@ export default function App() {
                   </button>
                 </form>
               ) : (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 text-emerald-900 w-full max-w-lg shadow-md space-y-3">
+                <div className="bg-white border-2 border-emerald-300/80 rounded-2xl p-5 text-slate-900 w-full max-w-lg shadow-lg space-y-4">
+                  
                   <div className="flex items-start gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                      <h4 className="font-bold text-sm sm:text-base text-emerald-950">You're on the priority list! (Spot #{waitlistNumber}) 🎉</h4>
-                      <p className="text-xs sm:text-sm text-emerald-800 leading-relaxed">
-                        {emailApiFeedback || 'We sent a mobile app download link to your email via Spaceship!'}
+                      <h4 className="font-display font-extrabold text-base text-slate-900">
+                        Priority Spot Reserved! 🎉
+                      </h4>
+                      <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                        {emailApiFeedback || 'We sent your access credentials to your inbox via Spaceship.'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-1 flex flex-wrap items-center gap-2.5">
+                  {/* Access Code Display & One-Click Copy */}
+                  <div className="flex items-center justify-between p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl shadow-2xs">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Your Waitlist Access Code
+                      </span>
+                      <span className="font-display font-extrabold text-2xl text-[#1A4F8A]">
+                        #{waitlistNumber}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copySpotCode(waitlistNumber || '')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-[#1A4F8A] border border-blue-200 rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Copy your access code"
+                    >
+                      {copiedSpot ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#1A4F8A]" />}
+                      <span>{copiedSpot ? 'Copied!' : 'Copy Code'}</span>
+                    </button>
+                  </div>
+
+                  {/* Direct Unlock Action */}
+                  <div className="pt-1">
                     <button
                       onClick={() => {
                         setStandalonePage('download');
-                        window.history.pushState({}, '', '/download');
+                        window.history.pushState({}, '', `/download?spot=${waitlistNumber}&email=${encodeURIComponent(email)}`);
                       }}
-                      className="inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white text-sm font-bold px-5 py-3.5 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                     >
                       <Smartphone className="w-4 h-4" />
-                      Download Mobile App Now
+                      Proceed to Download & Unlock APK →
                     </button>
-                    <span className="text-[11px] text-emerald-700">Android APK & iOS Safari ready</span>
+                    <p className="text-[11px] text-center text-slate-500 mt-2">
+                      Key in code <strong>#{waitlistNumber}</strong> on the download page to unlock the APK installer.
+                    </p>
                   </div>
+
                 </div>
               )}
             </div>
@@ -1458,23 +1497,50 @@ export default function App() {
                 </button>
               </form>
             ) : (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-slate-900 text-center shadow-lg space-y-3">
+              <div className="bg-white border-2 border-emerald-300/80 rounded-2xl p-6 text-slate-900 text-center shadow-lg space-y-4">
                 <CheckCircle className="w-8 h-8 text-emerald-600 mx-auto" />
-                <h4 className="font-display font-extrabold text-xl text-slate-900">Spot #{waitlistNumber} Saved!</h4>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {emailApiFeedback || "We've dispatched your mobile app download credentials via Spaceship!"}
-                </p>
-                <div className="pt-2">
+                <div className="space-y-1">
+                  <h4 className="font-display font-extrabold text-xl text-slate-900">Priority Spot Reserved! 🎉</h4>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+                    {emailApiFeedback || "We've dispatched your mobile app download credentials via Spaceship!"}
+                  </p>
+                </div>
+
+                {/* Access Code Display & One-Click Copy */}
+                <div className="flex items-center justify-between p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl shadow-2xs text-left">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                      Your Waitlist Access Code
+                    </span>
+                    <span className="font-display font-extrabold text-2xl text-[#1A4F8A]">
+                      #{waitlistNumber}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copySpotCode(waitlistNumber || '')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-[#1A4F8A] border border-blue-200 rounded-lg text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                    title="Copy your access code"
+                  >
+                    {copiedSpot ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#1A4F8A]" />}
+                    <span>{copiedSpot ? 'Copied!' : 'Copy Code'}</span>
+                  </button>
+                </div>
+
+                <div className="pt-1">
                   <button
                     onClick={() => {
                       setStandalonePage('download');
-                      window.history.pushState({}, '', '/download');
+                      window.history.pushState({}, '', `/download?spot=${waitlistNumber}&email=${encodeURIComponent(email)}`);
                     }}
-                    className="inline-flex items-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                   >
                     <Smartphone className="w-4 h-4" />
-                    Open Mobile App Download Page
+                    Unlock & Download APK with this Code →
                   </button>
+                  <p className="text-[11px] text-center text-slate-500 mt-2">
+                    Key in code <strong>#{waitlistNumber}</strong> on the download page to unlock the APK installer.
+                  </p>
                 </div>
               </div>
             )}

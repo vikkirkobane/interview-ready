@@ -189,16 +189,16 @@ export function generateEmailHtml(email: string, downloadUrl: string, waitlistSp
         </p>
 
         <div class="highlight-card">
-          <div class="spot-label">Your Early Access Priority Spot</div>
+          <div class="spot-label">Your Waitlist Access Code</div>
           <div class="spot-number">#${spotNumber}</div>
           <p style="margin: 6px 0 0; font-size: 13px; color: #94A3B8;">
-            Direct mobile installation link is active below
+            Key in this code <strong>#${spotNumber}</strong> on the download page to unlock your APK
           </p>
         </div>
 
         <div class="btn-container">
           <a href="${downloadUrl}" class="btn" target="_blank">
-            📱 Download & Install Mobile App
+            📱 Unlock & Download Mobile App
           </a>
         </div>
 
@@ -225,9 +225,9 @@ export function generateEmailHtml(email: string, downloadUrl: string, waitlistSp
         <div class="instructions">
           <h4>Quick Installation Steps (Android)</h4>
           <ol>
-            <li>Tap the <strong>Download & Install</strong> button above to download the APK.</li>
-            <li>If prompted with <em>"File might be harmful"</em>, tap <strong>Download anyway</strong>.</li>
-            <li>Open the file from your notification bar and tap <strong>Install</strong>.</li>
+            <li>Tap the <strong>Unlock & Download Mobile App</strong> button above.</li>
+            <li>Key in your access code <strong>#${spotNumber}</strong> to unlock the APK installer.</li>
+            <li>If prompted with <em>"File might be harmful"</em>, tap <strong>Download anyway</strong>, then tap <strong>Install</strong>.</li>
           </ol>
         </div>
       </div>

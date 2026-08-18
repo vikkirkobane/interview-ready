@@ -1,0 +1,154 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+interface ConfirmDownloadRequestBody {
+  email?: string;
+  waitlistSpot?: string | number;
+  code?: string;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed. Use POST.' });
+  }
+
+  try {
+    const { email, waitlistSpot, code }: ConfirmDownloadRequestBody = req.body || {};
+    
+    // Normalize code / spot
+    const rawCode = (code || waitlistSpot || '').toString().trim();
+    const cleanSpotStr = rawCode.replace(/[^0-9]/g, '');
+    const numericSpot = parseInt(cleanSpotStr, 10);
+    const trimmedEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanSpotStr && !trimmedEmail) {
+      return res.status(400).json({
+        success: false,
+        verified: false,
+        error: 'Please enter your Waitlist Access Code or registered email address.',
+      });
+    }
+
+    const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PAT || '').trim().replace(/['"]/g, '');
+    const baseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
+    const tableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
+
+    // If Airtable is connected, verify against live records
+    if (apiKey && baseId) {
+      // Build filter formula
+      let formula = '';
+      if (trimmedEmail && !isNaN(numericSpot)) {
+        formula = `OR(LOWER({Email})='${trimmedEmail}', {Waitlist Spot}=${numericSpot})`;
+      } else if (trimmedEmail) {
+        formula = `LOWER({Email})='${trimmedEmail}'`;
+      } else if (!isNaN(numericSpot)) {
+        formula = `{Waitlist Spot}=${numericSpot}`;
+      }
+
+      console.log(`[Confirm Download] Querying Airtable with formula: ${formula}`);
+
+      const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
+      
+      const searchRes = await fetch(searchUrl, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
+      });
+
+      if (!searchRes.ok) {
+        const errJson = await searchRes.json().catch(() => ({}));
+        console.error('[Confirm Download] Airtable search error:', errJson);
+        return res.status(500).json({
+          success: false,
+          verified: false,
+          error: 'Verification service error. Please try again or contact support.',
+        });
+      }
+
+      const searchData = await searchRes.json();
+      const records = searchData.records || [];
+
+      // STRICT CHECK: If no match found, reject download
+      if (records.length === 0) {
+        return res.status(404).json({
+          success: false,
+          verified: false,
+          error: 'No registered waitlist entry was found for this code. Please join the waitlist on the homepage first.',
+        });
+      }
+
+      const matchedRecord = records[0];
+      const recordId = matchedRecord.id;
+      const existingEmail = matchedRecord.fields?.Email || trimmedEmail;
+      const existingSpot = matchedRecord.fields?.['Waitlist Spot'] || numericSpot;
+
+      console.log(`[Confirm Download] Match found (Record ID: ${recordId}). Updating status to Downloaded...`);
+
+      // Update record in Airtable to mark code as used & downloaded
+      const patchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${recordId}`;
+      const patchRes = await fetch(patchUrl, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fields: {
+            'Status': 'Downloaded',
+          },
+        }),
+      });
+
+      if (!patchRes.ok) {
+        const patchErr = await patchRes.json().catch(() => ({}));
+        console.warn('[Confirm Download] Warning: Could not update status in Airtable:', patchErr);
+      } else {
+        console.log(`[Confirm Download] Successfully marked Record ${recordId} as Downloaded in Airtable!`);
+      }
+
+      return res.status(200).json({
+        success: true,
+        verified: true,
+        email: existingEmail,
+        waitlistSpot: existingSpot,
+        message: 'Access Code verified! Your Android APK download is unlocked.',
+      });
+    }
+
+    // Fallback when Airtable env variables are not yet populated
+    if (!isNaN(numericSpot) && numericSpot >= 100) {
+      return res.status(200).json({
+        success: true,
+        verified: true,
+        waitlistSpot: numericSpot,
+        message: 'Access Code verified (Local fallback mode).',
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      verified: false,
+      error: 'Invalid Access Code format. Please enter a valid number (e.g. 466).',
+    });
+  } catch (error: any) {
+    console.error('[Confirm Download] Unexpected error:', error);
+    return res.status(500).json({
+      success: false,
+      verified: false,
+      error: 'An unexpected error occurred during verification.',
+      details: error.message || String(error),
+    });
+  }
+}

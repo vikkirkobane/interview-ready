@@ -146,6 +146,100 @@ async function startServer() {
     }
   });
 
+  // Gated Download Confirmation & Airtable Status Update Route
+  app.post('/api/confirm-download', async (req, res) => {
+    try {
+      const { email, waitlistSpot, code } = req.body || {};
+      const rawCode = (code || waitlistSpot || '').toString().trim();
+      const cleanSpotStr = rawCode.replace(/[^0-9]/g, '');
+      const numericSpot = parseInt(cleanSpotStr, 10);
+      const trimmedEmail = (email || '').trim().toLowerCase();
+
+      if (!cleanSpotStr && !trimmedEmail) {
+        return res.status(400).json({
+          success: false,
+          verified: false,
+          error: 'Please enter your Waitlist Access Code or email address.',
+        });
+      }
+
+      const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PAT || '').trim().replace(/['"]/g, '');
+      const baseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
+      const tableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
+
+      if (apiKey && baseId) {
+        let formula = '';
+        if (trimmedEmail && !isNaN(numericSpot)) {
+          formula = `OR(LOWER({Email})='${trimmedEmail}', {Waitlist Spot}=${numericSpot})`;
+        } else if (trimmedEmail) {
+          formula = `LOWER({Email})='${trimmedEmail}'`;
+        } else if (!isNaN(numericSpot)) {
+          formula = `{Waitlist Spot}=${numericSpot}`;
+        }
+
+        const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
+        const searchRes = await fetch(searchUrl, {
+          headers: { 'Authorization': `Bearer ${apiKey}` },
+        });
+
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          const records = searchData.records || [];
+
+          if (records.length === 0) {
+            return res.status(404).json({
+              success: false,
+              verified: false,
+              error: 'No registered waitlist entry was found for this code. Please join the waitlist on the homepage first.',
+            });
+          }
+
+          const matchedRecord = records[0];
+          const recordId = matchedRecord.id;
+
+          await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${recordId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              fields: {
+                'Status': 'Downloaded',
+              },
+            }),
+          });
+
+          return res.status(200).json({
+            success: true,
+            verified: true,
+            email: matchedRecord.fields?.Email,
+            waitlistSpot: matchedRecord.fields?.['Waitlist Spot'] || numericSpot,
+            message: 'Access code verified! Download unlocked.',
+          });
+        }
+      }
+
+      if (!isNaN(numericSpot) && numericSpot >= 100) {
+        return res.status(200).json({
+          success: true,
+          verified: true,
+          waitlistSpot: numericSpot,
+          message: 'Access code verified (local fallback).',
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        verified: false,
+        error: 'Invalid code. Please enter a valid number (e.g. 466).',
+      });
+    } catch (err: any) {
+      console.error('[Local Server] /api/confirm-download error:', err);
+      return res.status(500).json({ error: 'Server error during verification.' });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

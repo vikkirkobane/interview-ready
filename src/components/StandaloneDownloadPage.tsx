@@ -12,6 +12,10 @@ import {
   Mic, 
   BarChart3, 
   Zap, 
+  Lock,
+  Unlock,
+  AlertCircle,
+  KeyRound,
   Shield, 
   Clock, 
   FileCheck
@@ -22,19 +26,41 @@ interface StandaloneDownloadPageProps {
 }
 
 export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPageProps) {
-  const [userEmail, setUserEmail] = useState<string>('');
-  const [downloadStarted, setDownloadStarted] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [inputCode, setInputCode] = useState<string>('');
+  const [inputEmail, setInputEmail] = useState<string>('');
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [verificationError, setVerificationError] = useState<string>('');
+  const [verificationSuccessMsg, setVerificationSuccessMsg] = useState<string>('');
+  
+  const [downloadStarted, setDownloadStarted] = useState<boolean>(false);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Extract email from query params or localStorage
+  // Extract code & email from query params or localStorage on mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const emailParam = urlParams.get('email');
+    const spotParam = urlParams.get('spot') || urlParams.get('code');
+
     if (emailParam) {
-      setUserEmail(emailParam);
+      setInputEmail(emailParam);
     } else {
-      const saved = localStorage.getItem('interview_ready_waitlist_email');
-      if (saved) setUserEmail(saved);
+      const savedEmail = localStorage.getItem('interview_ready_waitlist_email');
+      if (savedEmail) setInputEmail(savedEmail);
+    }
+
+    if (spotParam) {
+      setInputCode(spotParam.startsWith('#') ? spotParam : `#${spotParam}`);
+    } else {
+      const savedSpot = localStorage.getItem('interview_ready_waitlist_number');
+      if (savedSpot) setInputCode(`#${savedSpot}`);
+    }
+
+    // Check if previously verified on this device
+    const previouslyDownloaded = localStorage.getItem('interview_ready_app_downloaded');
+    if (previouslyDownloaded === 'true') {
+      setIsVerified(true);
+      setVerificationSuccessMsg('Access Code already verified on this device.');
     }
   }, []);
 
@@ -45,7 +71,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
     }
   };
 
-  const handleDownloadApk = () => {
+  const triggerApkFileDownload = () => {
     setDownloadStarted(true);
     const link = document.createElement('a');
     link.href = '/downloads/interview-ready.apk';
@@ -57,6 +83,60 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
     setTimeout(() => {
       setDownloadStarted(false);
     }, 4000);
+  };
+
+  const handleVerifyAndDownload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerificationError('');
+    setVerificationSuccessMsg('');
+
+    const cleanCode = inputCode.replace(/[^0-9]/g, '');
+    const trimmedEmail = inputEmail.trim().toLowerCase();
+
+    if (!cleanCode && !trimmedEmail) {
+      setVerificationError('Please enter your Waitlist Access Code (e.g. 466) or email address.');
+      return;
+    }
+
+    setIsVerifying(true);
+
+    try {
+      const res = await fetch('/api/confirm-download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: trimmedEmail,
+          code: cleanCode,
+          waitlistSpot: cleanCode,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.verified) {
+        setIsVerified(false);
+        setVerificationError(
+          data.error || 'Invalid or unregistered access code. Please join the waitlist on the homepage first.'
+        );
+        return;
+      }
+
+      // Verification successful!
+      setIsVerified(true);
+      setVerificationSuccessMsg(data.message || 'Access code verified! Unlocking your APK download.');
+      localStorage.setItem('interview_ready_app_downloaded', 'true');
+      if (data.waitlistSpot) {
+        localStorage.setItem('interview_ready_waitlist_number', data.waitlistSpot.toString());
+      }
+
+      // Start actual APK download
+      triggerApkFileDownload();
+    } catch (err: any) {
+      console.error('Verification network error:', err);
+      setVerificationError('Network error during code validation. Please check your internet connection and try again.');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://appinterviewready.top/download';
@@ -114,7 +194,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
 
         <div className="max-w-4xl mx-auto px-6 text-center space-y-4">
           
-          {/* Early Access Badge */}
+          {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#1A4F8A] text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-[#0EA5E9]" />
             <span>Official Android APK • v1.0.0 Beta</span>
@@ -122,106 +202,196 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
 
           {/* Main Title */}
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            Download <span className="text-[#1A4F8A]">Interview Ready</span> APK
+            Unlock & Install <span className="text-[#1A4F8A]">Interview Ready</span> APK
           </h1>
 
           {/* Subtitle */}
           <p className="text-slate-600 text-base sm:text-lg max-w-2xl mx-auto font-normal leading-relaxed">
-            Practice AI mock interviews with real-time audio analysis, instant scoring, and personalized answer critiques directly on your Android smartphone.
+            Enter your priority Waitlist Access Code below to verify your early access spot and unlock the standalone Android package installer.
           </p>
-
-          {/* User Email Banner if referred */}
-          {userEmail && (
-            <div className="pt-2">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-medium shadow-xs">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Access Unlocked for <strong className="text-slate-900 font-bold">{userEmail}</strong>
-              </span>
-            </div>
-          )}
 
         </div>
       </header>
 
-      {/* SECTION 3 — ANDROID DOWNLOAD EXPERIENCE */}
+      {/* SECTION 3 — GATED DOWNLOAD / VERIFICATION EXPERIENCE */}
       <main className="flex-grow py-10 md:py-16">
         <div className="max-w-4xl mx-auto px-6 space-y-10">
           
-          {/* Main Download Card */}
+          {/* Main Card: Gated Access Code Verification or Unlocked Download */}
           <div className="bg-white border border-gray-200/80 rounded-3xl p-6 sm:p-10 shadow-sm relative overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-              
-              {/* Left Column: APK Details & Download CTA */}
-              <div className="md:col-span-7 space-y-5">
+            
+            {!isVerified ? (
+              /* GATED / LOCKED STATE */
+              <div className="space-y-6 max-w-xl mx-auto text-center py-2">
                 
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    VirusTotal Clean & Verified
-                  </span>
-                  <span className="text-xs text-slate-500 font-mono font-medium">
-                    v1.0.0-beta • ~24.8 MB
-                  </span>
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-[#1A4F8A] flex items-center justify-center mx-auto shadow-2xs">
+                  <Lock className="w-7 h-7 text-[#1A4F8A]" />
                 </div>
 
-                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
-                  Interview Ready for Android
-                </h2>
-
-                <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
-                  Download the official standalone Android application package directly. Compatible with Android 8.0+ on Samsung, Google Pixel, Tecno, Infinix, Xiaomi, OnePlus, and all Android devices.
-                </p>
-
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-3 pt-2">
-                  <button
-                    onClick={handleDownloadApk}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base px-8 py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
-                  >
-                    <Download className="w-5 h-5" />
-                    {downloadStarted ? 'Starting Download...' : 'Download Android APK'}
-                  </button>
-
-                  <button
-                    onClick={copyPageUrl}
-                    className="flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold border border-slate-200 transition-colors cursor-pointer"
-                    title="Copy download link to send to your phone"
-                  >
-                    {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
-                    {copiedLink ? 'Link Copied!' : 'Copy Link'}
-                  </button>
-                </div>
-
-                {downloadStarted && (
-                  <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs sm:text-sm text-[#1A4F8A] font-medium flex items-center gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#0EA5E9] shrink-0" />
-                    Download started! Check your phone's notification panel or Downloads folder to install.
-                  </div>
-                )}
-
-              </div>
-
-              {/* Right Column: QR Code for Desktop Users */}
-              <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
-                <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-xs">
-                  <img 
-                    src={qrCodeUrl} 
-                    alt="Scan QR Code to open download on mobile" 
-                    className="w-36 h-36 rounded-lg object-contain"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <span className="font-display text-xs font-bold text-slate-900 flex items-center justify-center gap-1.5">
-                    <QrCode className="w-3.5 h-3.5 text-[#1A4F8A]" />
-                    On Desktop? Scan with Phone
+                <div className="space-y-2">
+                  <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                    Access Code Verification Required
                   </span>
-                  <p className="text-[11px] text-slate-500 max-w-[200px] leading-tight">
-                    Point your mobile camera at this code to open the download page directly on your phone.
+                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
+                    Enter Your Waitlist Access Code
+                  </h2>
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    Please key in the waitlist number you copied from the homepage or received in your Spaceship confirmation email (e.g. <strong>466</strong>).
                   </p>
                 </div>
-              </div>
 
-            </div>
+                {/* Verification Form */}
+                <form onSubmit={handleVerifyAndDownload} className="space-y-4 pt-2 text-left">
+                  
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Waitlist Access Code <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        value={inputCode}
+                        onChange={(e) => setInputCode(e.target.value)}
+                        placeholder="e.g. #466 or 466"
+                        className="w-full px-4 py-3.5 border-2 border-slate-200 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none rounded-xl text-base font-bold text-slate-900 tracking-wide transition-all"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Registered Email Address <span className="text-slate-400 font-normal">(Optional for faster lookup)</span>
+                    </label>
+                    <input 
+                      type="email" 
+                      value={inputEmail}
+                      onChange={(e) => setInputEmail(e.target.value)}
+                      placeholder="your.email@example.com"
+                      className="w-full px-4 py-3 border border-slate-200 focus:border-[#1A4F8A] focus:ring-1 focus:ring-[#1A4F8A] focus:outline-none rounded-xl text-sm text-slate-900 transition-all"
+                    />
+                  </div>
+
+                  {verificationError && (
+                    <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 flex items-start gap-2.5">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                      <span>{verificationError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isVerifying}
+                    className="w-full flex items-center justify-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer disabled:opacity-75"
+                  >
+                    {isVerifying ? (
+                      <span>Verifying Code in Airtable...</span>
+                    ) : (
+                      <>
+                        <Unlock className="w-5 h-5" />
+                        <span>Verify Code & Unlock APK</span>
+                      </>
+                    )}
+                  </button>
+
+                  <div className="pt-2 text-center">
+                    <a 
+                      href="/#waitlist" 
+                      onClick={handleHomeClick}
+                      className="text-xs font-semibold text-[#1A4F8A] hover:underline"
+                    >
+                      Don't have a waitlist code yet? Return to Homepage to join →
+                    </a>
+                  </div>
+
+                </form>
+
+              </div>
+            ) : (
+              /* UNLOCKED & VERIFIED STATE */
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center animate-fadeIn">
+                
+                {/* Left Column: APK Details & Download CTA */}
+                <div className="md:col-span-7 space-y-5">
+                  
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      Access Code Verified & Unlocked
+                    </span>
+                    <span className="text-xs text-slate-500 font-mono font-medium">
+                      v1.0.0-beta • ~24.8 MB
+                    </span>
+                  </div>
+
+                  <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
+                    Interview Ready for Android
+                  </h2>
+
+                  <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-normal">
+                    Your code has been verified and confirmed in our database. You can now install the standalone Android application package directly on your mobile device.
+                  </p>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      onClick={triggerApkFileDownload}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-[#1A4F8A] hover:bg-[#123761] text-white font-display font-bold text-base px-8 py-4 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Download className="w-5 h-5" />
+                      {downloadStarted ? 'Downloading APK...' : 'Download Android APK'}
+                    </button>
+
+                    <button
+                      onClick={copyPageUrl}
+                      className="flex items-center justify-center gap-2 px-4 py-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold border border-slate-200 transition-colors cursor-pointer"
+                      title="Copy download link to send to your phone"
+                    >
+                      {copiedLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-500" />}
+                      {copiedLink ? 'Link Copied!' : 'Copy Link'}
+                    </button>
+                  </div>
+
+                  {downloadStarted && (
+                    <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs sm:text-sm text-[#1A4F8A] font-medium flex items-center gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#0EA5E9] shrink-0" />
+                      Download started! Check your phone's notification panel or Downloads folder to install.
+                    </div>
+                  )}
+
+                  {verificationSuccessMsg && !downloadStarted && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      {verificationSuccessMsg}
+                    </div>
+                  )}
+
+                </div>
+
+                {/* Right Column: QR Code for Desktop Users */}
+                <div className="md:col-span-5 flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-3">
+                  <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-xs">
+                    <img 
+                      src={qrCodeUrl} 
+                      alt="Scan QR Code to open download on mobile" 
+                      className="w-36 h-36 rounded-lg object-contain"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="font-display text-xs font-bold text-slate-900 flex items-center justify-center gap-1.5">
+                      <QrCode className="w-3.5 h-3.5 text-[#1A4F8A]" />
+                      On Desktop? Scan with Phone
+                    </span>
+                    <p className="text-[11px] text-slate-500 max-w-[200px] leading-tight">
+                      Point your mobile camera at this code to open and install the APK on your Android phone.
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
           </div>
 
           {/* Step-by-Step Android Installation Guide */}
@@ -243,10 +413,10 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
               <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">1</span>
-                  <h4 className="font-display text-sm font-bold text-slate-900">Tap Download</h4>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Verify & Download</h4>
                 </div>
                 <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                  Tap the <strong className="text-[#1A4F8A]">"Download Android APK"</strong> button above. The file will save to your Downloads.
+                  Key in your access code above and tap <strong className="text-[#1A4F8A]">"Verify Code & Unlock APK"</strong>.
                 </p>
               </div>
 
@@ -257,7 +427,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                   <h4 className="font-display text-sm font-bold text-slate-900">Allow Download</h4>
                 </div>
                 <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                  If Chrome prompts <em>"File might be harmful"</em>, tap <strong className="text-slate-900">Download anyway</strong> (standard Android notice for direct APKs).
+                  If Chrome prompts <em>"File might be harmful"</em>, tap <strong className="text-slate-900">Download anyway</strong> (standard Android notice for APKs).
                 </p>
               </div>
 
