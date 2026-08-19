@@ -39,6 +39,7 @@ supabase_logs*.json
 
 # Scratch / temporary scripts
 scratch/
+supabase/.temp/
 
 # Archived dev artifacts (untracked)
 _archive/
