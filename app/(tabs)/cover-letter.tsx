@@ -125,6 +125,7 @@ export default function CoverLetterGeneratorScreen() {
         setCoverLetterObj(mappedCoverLetter);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pastCoverLetter]);
 
   // ── File Attachment Handlers ────────────────────────────────────────

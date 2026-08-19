@@ -40,13 +40,15 @@ export default function ResumeGenScreen() {
   const { targetRole, analysisId, resumeId, setResumeId } = useOnboardingStore();
   const createResume = useCreateResumeMutation();
   const { data: resumeData } = useResumeQuery(isDone ? resumeId : null);
-  const activeResume = resumeData || generatedResume || {
-    header: { name: 'Professional Resume', title: targetRole || 'Target Role' },
-    summary: { text: '' },
-    experience: [],
-    skills: [],
-    education: [],
-  };
+  const activeResume = useMemo(() => {
+    return resumeData || generatedResume || {
+      header: { name: 'Professional Resume', title: targetRole || 'Target Role' },
+      summary: { text: '' },
+      experience: [],
+      skills: [],
+      education: [],
+    };
+  }, [resumeData, generatedResume, targetRole]);
 
   const previewHtml = useMemo(() => {
     if (!activeResume || !activeResume.header) return '';
