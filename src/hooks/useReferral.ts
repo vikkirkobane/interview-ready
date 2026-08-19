@@ -99,35 +99,109 @@ export function useReferral(): UseReferralReturn {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/referral-apply`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ referralCode: code }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
+      const normalizedCode = (code || '').trim().toUpperCase();
+      if (!normalizedCode) {
         return {
           success: false,
-          error: result.error || 'Failed to apply referral code',
+          error: 'Please enter a valid code.',
         };
       }
 
-      // Refresh stats after successful application
-      await fetchStats();
+      // 1. Attempt Edge Function first
+      try {
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/referral-apply`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ referralCode: normalizedCode }),
+          }
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            await fetchStats();
+            return {
+              success: true,
+              message: result.data?.message || 'Code applied successfully!',
+              creditsGranted: result.data?.credits_granted,
+              isPromo: result.data?.is_promo,
+            };
+          }
+          if (result.error && !result.error.toLowerCase().includes('invalid referral code')) {
+            return {
+              success: false,
+              error: result.error,
+            };
+          }
+        }
+      } catch (fnErr) {
+        console.warn('[useReferral] Edge function unavailable, proceeding to direct RPC:', fnErr);
+      }
+
+      // 2. Direct Supabase RPC: Evaluate Promo Code (e.g. LINKEDIN20, WELCOME20, WELCOME50)
+      try {
+        const { data: promoData, error: promoError } = await supabase.rpc('apply_promo_code', {
+          p_user_id: session.user.id,
+          p_promo_code: normalizedCode,
+        });
+
+        if (!promoError && promoData?.success) {
+          await fetchStats();
+          return {
+            success: true,
+            message: promoData.message || `Success! Promo code applied! You received ${promoData.credits_granted || 20} bonus credits!`,
+            creditsGranted: promoData.credits_granted || 20,
+            isPromo: true,
+          };
+        }
+
+        // If user already redeemed a promo code, return specific error
+        if (!promoError && promoData && !promoData.success && promoData.error?.includes('already redeemed')) {
+          return {
+            success: false,
+            error: promoData.error,
+          };
+        }
+      } catch (promoRpcErr) {
+        console.warn('[useReferral] apply_promo_code RPC error:', promoRpcErr);
+      }
+
+      // 3. Direct Supabase RPC: Evaluate Peer Referral Code (e.g. JOHN1234)
+      try {
+        const { data: refData, error: refError } = await supabase.rpc('apply_referral_code', {
+          p_referred_user_id: session.user.id,
+          p_referral_code: normalizedCode,
+        });
+
+        if (!refError && refData?.success) {
+          await fetchStats();
+          return {
+            success: true,
+            message: refData.message || 'Referral code applied successfully!',
+            creditsGranted: refData.credits_granted || 10,
+            isPromo: false,
+          };
+        }
+
+        if (refData?.error) {
+          const reason = refData.error;
+          return {
+            success: false,
+            error: reason.includes('own referral') ? 'You cannot use your own referral code.' : 'Invalid referral or promo code. Please check and try again.',
+          };
+        }
+      } catch (refRpcErr) {
+        console.warn('[useReferral] apply_referral_code RPC error:', refRpcErr);
+      }
 
       return {
-        success: true,
-        message: result.data.message,
-        creditsGranted: result.data.credits_granted,
-        isPromo: result.data.is_promo,
+        success: false,
+        error: 'Invalid referral or promo code. Please check and try again.',
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
