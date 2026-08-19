@@ -1,5 +1,3 @@
-import pdf from 'npm:pdf-parse@1.1.1';
-
 /**
  * Safely convert a Uint8Array to Base64 without stack overflow on large files.
  */
@@ -76,88 +74,136 @@ export async function extractTextWithOcrSpace(
 }
 
 /**
+ * Vision model rotation pool for image/document text extraction.
+ * Rotates dynamically across DashScope Vision models with automatic failover.
+ */
+const ROTATING_VISION_MODELS = [
+  'qwen-omni-turbo',
+  'qwen-vl-plus',
+  'qwen-vl-max',
+  'qwen3-vl-flash',
+  'qwen3-vl-plus',
+] as const;
+
+let visionModelIndex = 0;
+
+/**
+ * Returns the vision models ordered starting from the next rotated model.
+ */
+export function getNextVisionModelPool(): string[] {
+  const pool = [...ROTATING_VISION_MODELS];
+  const startIdx = visionModelIndex % pool.length;
+  visionModelIndex = (visionModelIndex + 1) % pool.length;
+  return [...pool.slice(startIdx), ...pool.slice(0, startIdx)];
+}
+
+/**
  * Fallback to multimodal Vision AI when OCR services are unavailable or fail.
+ * Rotates through the configured Vision models:
+ * qwen-omni-turbo, qwen-vl-plus, qwen-vl-max, qwen3-vl-flash, qwen3-vl-plus
  */
 export async function extractTextWithVisionAI(bytes: Uint8Array, mimeType: string): Promise<string> {
   const base64 = uint8ArrayToBase64(bytes);
   const dataUri = `data:${mimeType};base64,${base64}`;
 
-  const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
   const dashscopeApiKey = Deno.env.get('DASHSCOPE_API_KEY');
+  const openrouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
 
-  const visionPrompt = 'Please extract all readable text from this job description / document image accurately and verbatim. Return ONLY the plain extracted text, without commentary or markdown code fences.';
+  const visionPrompt =
+    'Please extract all readable text from this job description / document image accurately and verbatim. Return ONLY the plain extracted text, without commentary or markdown code fences.';
 
-  if (openrouterApiKey) {
-    try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openrouterApiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://interviewready.app',
-          'X-Title': 'InterviewReady',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-001',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: visionPrompt },
-                { type: 'image_url', image_url: { url: dataUri } },
-              ],
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 4096,
-        }),
-      });
+  // 1. Primary: Rotate through DashScope Vision Models
+  if (dashscopeApiKey) {
+    const candidateModels = getNextVisionModelPool();
 
-      if (res.ok) {
-        const json = await res.json();
-        const content = json.choices?.[0]?.message?.content?.trim();
-        if (content && content.length > 0) {
-          return content;
+    for (const model of candidateModels) {
+      try {
+        console.log(`[document-text] Attempting vision extraction with model: ${model}`);
+        const res = await fetch('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${dashscopeApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: visionPrompt },
+                  { type: 'image_url', image_url: { url: dataUri } },
+                ],
+              },
+            ],
+            temperature: 0.1,
+            max_tokens: 4096,
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const content = json.choices?.[0]?.message?.content?.trim();
+          if (content && content.length > 0) {
+            console.log(`[document-text] Vision extraction succeeded with model: ${model}`);
+            return content;
+          }
+        } else {
+          const errText = await res.text();
+          console.warn(`[document-text] Vision model ${model} failed (${res.status}): ${errText}`);
         }
+      } catch (e) {
+        console.warn(`[document-text] Vision model ${model} request error:`, e);
       }
-    } catch (e) {
-      console.warn('[document-text] OpenRouter Vision fallback failed:', e);
     }
   }
 
-  if (dashscopeApiKey) {
-    try {
-      const res = await fetch('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${dashscopeApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'qwen-vl-max',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: visionPrompt },
-                { type: 'image_url', image_url: { url: dataUri } },
-              ],
-            },
-          ],
-          temperature: 0.1,
-          max_tokens: 4096,
-        }),
-      });
+  // 2. Secondary: Fallback to OpenRouter Multimodal Vision Models
+  if (openrouterApiKey) {
+    const openrouterVisionModels = [
+      'google/gemini-2.0-flash-001',
+      'meta-llama/llama-3.2-11b-vision-instruct:free',
+      'qwen/qwen-2.5-vl-72b-instruct:free',
+    ];
 
-      if (res.ok) {
-        const json = await res.json();
-        const content = json.choices?.[0]?.message?.content?.trim();
-        if (content && content.length > 0) {
-          return content;
+    for (const orModel of openrouterVisionModels) {
+      try {
+        console.log(`[document-text] Attempting OpenRouter vision fallback with model: ${orModel}`);
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openrouterApiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://interviewready.app',
+            'X-Title': 'InterviewReady',
+          },
+          body: JSON.stringify({
+            model: orModel,
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: visionPrompt },
+                  { type: 'image_url', image_url: { url: dataUri } },
+                ],
+              },
+            ],
+            temperature: 0.1,
+            max_tokens: 4096,
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const content = json.choices?.[0]?.message?.content?.trim();
+          if (content && content.length > 0) {
+            console.log(`[document-text] OpenRouter vision succeeded with model: ${orModel}`);
+            return content;
+          }
         }
+      } catch (e) {
+        console.warn(`[document-text] OpenRouter Vision model ${orModel} failed:`, e);
       }
-    } catch (e) {
-      console.warn('[document-text] Dashscope Vision fallback failed:', e);
     }
   }
 
@@ -191,8 +237,13 @@ export async function extractPdfText(bytes: Uint8Array): Promise<string> {
   let text = '';
 
   try {
-    const pdfData = await pdf(bytes);
-    text = pdfData.text?.trim() || '';
+    // @ts-ignore
+    const pdfModule = await import('npm:pdf-parse@1.1.1').catch(() => null);
+    const pdf = pdfModule?.default || pdfModule;
+    if (pdf && typeof pdf === 'function') {
+      const pdfData = await pdf(bytes);
+      text = pdfData.text?.trim() || '';
+    }
   } catch (pdfErr: unknown) {
     const message = pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
     throw new Error(

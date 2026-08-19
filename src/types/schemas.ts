@@ -125,8 +125,10 @@ export type CoverLetter = {
   };
   header: {
     candidate_name: string;
+    target_role?: string;
     phone: string;
     email: string;
+    location?: string;
     linkedin: string;
     portfolio: string;
     date: string;

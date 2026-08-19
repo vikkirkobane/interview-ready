@@ -208,8 +208,10 @@ export const COVER_LETTER_SCHEMA = z.object({
   
   header: z.object({
     candidate_name: z.string().optional().default(''),
+    target_role: z.string().optional().default(''),
     phone: z.string().optional().default(''),
     email: z.string().optional().default(''),
+    location: z.string().optional().default(''),
     linkedin: z.string().optional().default(''),
     portfolio: z.string().optional().default(''),
     date: z.string().optional().default(''),
