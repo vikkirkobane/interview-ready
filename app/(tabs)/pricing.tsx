@@ -18,6 +18,7 @@ import { useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { COUNTRIES, Country, getPaymentMethods } from '../../src/constants/countries';
 import { useAuthStore } from '../../src/stores/auth-store';
+import * as Linking from 'expo-linking';
 
 type PaymentMode = 'USD' | 'KES';
 
@@ -501,8 +502,21 @@ export default function PricingScreen() {
                     )}
                   </Pressable>
                   <Text style={styles.footerTextInline}>
-                    By subscribing, you agree to our Terms of Service and Privacy Policy.
-                    Your subscription will auto-renew unless cancelled.
+                    By subscribing, you agree to our{' '}
+                    <Text
+                      style={{ color: colors.primary, fontWeight: '600' }}
+                      onPress={() => Linking.openURL('https://appinterviewready.top/terms')}
+                    >
+                      Terms of Service
+                    </Text>{' '}
+                    and{' '}
+                    <Text
+                      style={{ color: colors.primary, fontWeight: '600' }}
+                      onPress={() => Linking.openURL('https://appinterviewready.top/privacy')}
+                    >
+                      Privacy Policy
+                    </Text>
+                    . Your subscription will auto-renew unless cancelled.
                   </Text>
                 </View>
               )}

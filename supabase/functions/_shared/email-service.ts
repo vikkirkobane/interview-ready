@@ -108,7 +108,7 @@ export async function sendEmail({
   }
 
   // Get sender email
-  const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <noreply@interviewready.app>';
+  const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <info@appinterviewready.top>';
 
   // Get user_id if we have a supabase client that is authenticated, otherwise we might need to find the user by email
   let userId = null;

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+*.jks
 
 # Documentation (not needed for mobile build)
 docs/
@@ -11,11 +12,19 @@ docs/
 # Backend (separate from mobile app)
 supabase/
 
-# Dev / AI tooling
+# Dev / AI / IDE tooling
 .agents/
 _dev/
 .bob/
 .vscode/
+.idea/
+.kiro/
+.qoder/
+.qwen/
+.trae/
+.windsurf/
+.claude/
+.react-doctor/
 eslint.config.js
 skills-lock.json
 test-connection.*
@@ -26,6 +35,20 @@ refactor_new_resume.py
 APPLY_FIX.sql
 mappings.json
 npx_out.txt
+test_out.log
+
+# Logs & Logcat dumps
+*.log
+*.logcat
+supabase_logs*.json
+
+# Scratch & Archive
+scratch/
+_archive/
+
+# Tests & Mocks
+__tests__/
+__mocks__/
 
 # Local Expo cache
 .expo/

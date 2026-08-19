@@ -61,14 +61,6 @@ export async function exportInterviewReportPDF(
   }
 }
 
-const RECOMMENDATION_LABEL: Record<string, string> = {
-  STRONG_HIRE: 'Strong Hire',
-  HIRE: 'Hire',
-  MAYBE: 'Maybe',
-  NO_HIRE: 'No Hire',
-  STRONG_NO_HIRE: 'Strong No Hire',
-};
-
 function recommendationColor(recommendation: string): string {
   switch (recommendation) {
     case 'STRONG_HIRE': return '#16A34A';
@@ -140,7 +132,7 @@ function buildInterviewReportHTML(
   const questionBlocks = questionFeedback.map((q: any, i: number) => `
     <div class="q-block">
       <div class="q-header">
-        <span class="q-number">Q${i + 1}</span>
+        <span class="q-number">Question ${i + 1}</span>
         <span class="q-score" style="color: ${q.score >= 80 ? '#16A34A' : q.score >= 60 ? '#D97706' : '#DC2626'};">${Math.round(q.score ?? 0)}/100</span>
       </div>
       <p class="q-question">${esc(q.question)}</p>
@@ -166,127 +158,156 @@ function buildInterviewReportHTML(
   <meta charset="UTF-8">
   <title>Interview Report - ${esc(role || candidateName || 'Interview')}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-    @page { size: A4; margin: 18mm 16mm; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @page { size: A4 portrait; margin: 16mm 14mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 12px;
-      color: #1A1A1A;
+      color: #0f172a;
       line-height: 1.55;
+      background: #ffffff;
       -webkit-print-color-adjust: exact;
     }
     .header {
       display: flex;
       align-items: center;
-      border-bottom: 2px solid #6B46FE;
+      border-bottom: 2px solid #2563EB;
       padding-bottom: 14px;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .logo { width: 44px; height: 46px; margin-right: 14px; object-fit: contain; }
-    .header-title { font-size: 22px; font-weight: 800; color: #1A1A1A; }
-    .header-subtitle { font-size: 12px; color: #666; }
-    .title-section { text-align: center; margin-bottom: 24px; }
-    .main-title { font-size: 26px; font-weight: 800; color: #6B46FE; margin-bottom: 6px; }
-    .meta-line { font-size: 13px; color: #333; font-weight: 600; margin: 2px 0; }
-    .date-line { font-size: 12px; color: #666; }
+    .header-title { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+    .header-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
+    .title-section {
+      text-align: center;
+      margin-bottom: 22px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .badge-pill {
+      display: inline-block;
+      background: #eff6ff;
+      color: #2563EB;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+    }
+    .main-title { font-size: 26px; font-weight: 800; color: #2563EB; margin-bottom: 6px; }
+    .meta-line { font-size: 13px; color: #334155; font-weight: 600; margin: 2px 0; }
+    .date-line { font-size: 12px; color: #64748b; }
 
     .score-card {
       display: flex;
       align-items: center;
       gap: 24px;
-      background: #F9FAFB;
-      border: 1px solid #E5E7EB;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 14px;
-      padding: 20px 24px;
-      margin-bottom: 24px;
+      padding: 18px 24px;
+      margin-bottom: 22px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .score-ring {
-      width: 96px; height: 96px; border-radius: 50%;
+      width: 90px; height: 90px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      background: conic-gradient(#6B46FE ${overall}%, #EDE9FE ${overall}% 100%);
+      background: conic-gradient(#2563EB ${overall}%, #DBEAFE ${overall}% 100%);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
     }
     .score-ring-inner {
-      width: 76px; height: 76px; border-radius: 50%;
+      width: 72px; height: 72px; border-radius: 50%;
       background: #fff;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-    .score-num { font-size: 24px; font-weight: 800; color: #1A1A1A; }
-    .score-cap { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: #6B7280; }
-    .score-text h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .score-num { font-size: 22px; font-weight: 800; color: #0f172a; }
+    .score-cap { font-size: 9px; font-weight: 700; letter-spacing: 1px; color: #64748b; }
+    .score-text h2 { font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
     .rec-badge {
       display: inline-block;
       padding: 4px 12px;
       border-radius: 999px;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
       color: #fff;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
-    .section { margin-bottom: 22px; }
+    .section {
+      margin-bottom: 20px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
     .section-title {
-      font-size: 16px; font-weight: 800; color: #6B46FE;
-      border-left: 4px solid #6B46FE;
+      font-size: 15px; font-weight: 800; color: #2563EB;
+      border-left: 4px solid #2563EB;
       padding-left: 10px; margin-bottom: 12px;
     }
 
     .dimension-row {
       display: flex; align-items: center; gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
-    .dimension-label { width: 150px; font-weight: 600; color: #333; }
-    .dimension-bar-bg { flex: 1; height: 10px; border-radius: 5px; background: #EDE9FE; overflow: hidden; }
-    .dimension-bar-fill { height: 100%; border-radius: 5px; background: #6B46FE; }
-    .dimension-value { width: 40px; text-align: right; font-weight: 700; color: #1A1A1A; }
+    .dimension-label { width: 150px; font-weight: 600; color: #334155; font-size: 12px; }
+    .dimension-bar-bg { flex: 1; height: 10px; border-radius: 5px; background: #dbeafe; overflow: hidden; }
+    .dimension-bar-fill { height: 100%; border-radius: 5px; background: #2563EB; }
+    .dimension-value { width: 40px; text-align: right; font-weight: 700; color: #0f172a; font-size: 12px; }
 
-    .two-col { display: flex; gap: 16px; }
+    .two-col { display: flex; gap: 14px; break-inside: avoid; page-break-inside: avoid; }
     .col { flex: 1; }
     .col-box {
-      background: #F9FAFB; border: 1px solid #E5E7EB;
+      background: #f8fafc; border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 14px 16px; height: 100%;
     }
     .col-box h4 {
       font-size: 13px; font-weight: 700; margin-bottom: 8px;
+      color: #0f172a;
       display: flex; align-items: center; gap: 6px;
     }
     .col-box ul { padding-left: 18px; }
-    .col-box li { margin-bottom: 6px; color: #374151; }
+    .col-box li { margin-bottom: 5px; color: #334155; font-size: 12px; line-height: 1.5; }
 
     .q-block {
-      background: #F9FAFB; border: 1px solid #E5E7EB;
+      background: #f8fafc; border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+      break-inside: avoid;
       page-break-inside: avoid;
     }
     .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .q-number { font-weight: 800; color: #6B46FE; font-size: 13px; }
+    .q-number { font-weight: 800; color: #2563EB; font-size: 13px; }
     .q-score { font-weight: 800; font-size: 13px; }
-    .q-question { font-weight: 600; color: #1A1A1A; margin-bottom: 6px; }
-    .q-answer { color: #374151; margin-bottom: 6px; }
-    .q-feedback { color: #6B46FE; }
+    .q-question { font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 12.5px; }
+    .q-answer { color: #334155; margin-bottom: 6px; font-size: 12px; }
+    .q-feedback { color: #1e40af; background: #eff6ff; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #2563EB; font-size: 12px; }
 
     .transcript {
-      background: #F9FAFB; border: 1px solid #E5E7EB;
+      background: #f8fafc; border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 14px 16px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .transcript-row { margin-bottom: 10px; }
-    .transcript-role {
-      display: inline-block; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.5px; padding: 2px 8px; border-radius: 4px;
-      margin-bottom: 3px;
-    }
-    .role-ai { background: #EDE9FE; color: #6B46FE; }
-    .role-user { background: #DCFCE7; color: #166534; }
-    .transcript-text { color: #374151; }
+    .transcript-row { display: flex; gap: 12px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; break-inside: avoid; page-break-inside: avoid; }
+    .transcript-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .transcript-role { font-weight: 700; width: 90px; flex-shrink: 0; font-size: 11px; text-transform: uppercase; }
+    .role-user { color: #2563EB; }
+    .role-ai { color: #059669; }
+    .transcript-text { flex: 1; color: #334155; font-size: 12px; line-height: 1.5; }
 
     .footer {
-      margin-top: 24px; text-align: center;
-      font-size: 11px; color: #9CA3AF;
-      border-top: 1px solid #E5E7EB; padding-top: 12px;
-    }
-    .summary-box {
-      background: #F9FAFB; border: 1px solid #E5E7EB;
-      border-radius: 12px; padding: 14px 16px; color: #374151;
+      margin-top: 28px;
+      text-align: center;
+      font-size: 11px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   </style>
 </head>
@@ -295,14 +316,15 @@ function buildInterviewReportHTML(
     <img class="logo" src="${APP_LOGO_DATA_URI}" alt="Interview Ready Logo" />
     <div>
       <h1 class="header-title">Interview Ready</h1>
-      <p class="header-subtitle">Mock Interview Performance Report</p>
+      <p class="header-subtitle">Mock Interview Performance Report • appinterviewready.top</p>
     </div>
   </div>
 
   <div class="title-section">
-    <h2 class="main-title">${esc(role || 'Mock Interview')}${company ? ` at ${esc(company)}` : ''}</h2>
-    ${candidateName ? `<p class="meta-line">Prepared for ${esc(candidateName)}</p>` : ''}
-    <p class="meta-line">${esc(subjectLine || 'Interview Report')}</p>
+    <div class="badge-pill">AI INTERVIEW REPORT</div>
+    <h2 class="main-title">${esc(role || 'Interview Evaluation')}</h2>
+    ${subjectLine ? `<p class="meta-line">${esc(subjectLine)}</p>` : ''}
+    ${candidateName ? `<p class="meta-line">Candidate: <strong>${esc(candidateName)}</strong></p>` : ''}
     <p class="date-line">${today}</p>
   </div>
 
@@ -310,63 +332,63 @@ function buildInterviewReportHTML(
     <div class="score-ring">
       <div class="score-ring-inner">
         <span class="score-num">${overall}</span>
-        <span class="score-cap">SCORE</span>
+        <span class="score-cap">OUT OF 100</span>
       </div>
     </div>
     <div class="score-text">
-      <h2>Interview Complete</h2>
-      <p>${esc(feedback?.interview_summary || '')}</p>
-      ${recommendation ? `<span class="rec-badge" style="background: ${recColor};">${esc(RECOMMENDATION_LABEL[recommendation] || recommendation)}</span>` : ''}
+      <h2>Overall Performance: ${overall >= 80 ? 'Exceptional' : overall >= 60 ? 'Strong Potential' : 'Needs Practice'}</h2>
+      <p style="color: #64748b; font-size: 12px;">Recommendation Status:</p>
+      <span class="rec-badge" style="background: ${recColor};">${esc(recommendation.replace(/_/g, ' ') || 'Evaluation Complete')}</span>
     </div>
   </div>
 
   <div class="section">
-    <h3 class="section-title">Score Breakdown</h3>
+    <h3 class="section-title">Core Dimensions Evaluation</h3>
     ${dimensionBars}
   </div>
 
-  <div class="section">
-    <div class="two-col">
-      <div class="col">
-        <div class="col-box">
-          <h4>✅ Core Strengths</h4>
-          <ul>${strengthsList || '<li>No strengths recorded.</li>'}</ul>
-        </div>
+  <div class="two-col" style="margin-bottom: 20px;">
+    <div class="col">
+      <div class="col-box">
+        <h4 style="color: #166534;">✓ Key Strengths</h4>
+        <ul>${strengthsList || '<li>Demonstrated good baseline domain knowledge.</li>'}</ul>
       </div>
-      <div class="col">
-        <div class="col-box">
-          <h4>⚠️ Improvement Areas</h4>
-          <ul>${improvementsList || '<li>No improvement areas recorded.</li>'}</ul>
-        </div>
+    </div>
+    <div class="col">
+      <div class="col-box">
+        <h4 style="color: #b45309;">⚠️ Areas for Growth</h4>
+        <ul>${improvementsList || '<li>Practice providing structured STAR method examples.</li>'}</ul>
       </div>
     </div>
   </div>
 
-  ${questionBlocks ? `
-  <div class="section">
-    <h3 class="section-title">Question-by-Question Feedback</h3>
-    ${questionBlocks}
-  </div>
+  ${questionBlocks.length > 0 ? `
+    <div class="section">
+      <h3 class="section-title">Question by Question Breakdown</h3>
+      ${questionBlocks}
+    </div>
   ` : ''}
 
   ${suggestedList ? `
-  <div class="section">
-    <h3 class="section-title">Suggested Follow-Up Topics</h3>
-    <div class="col-box">
-      <ul>${suggestedList}</ul>
+    <div class="section">
+      <h3 class="section-title">Suggested Follow-Up Practice</h3>
+      <div class="col-box">
+        <ul>${suggestedList}</ul>
+      </div>
     </div>
-  </div>
   ` : ''}
 
   ${transcript ? `
-  <div class="section">
-    <h3 class="section-title">Interview Transcript</h3>
-    <div class="transcript">${transcript}</div>
-  </div>
+    <div class="section">
+      <h3 class="section-title">Interview Transcript Excerpt</h3>
+      <div class="transcript">
+        ${transcript}
+      </div>
+    </div>
   ` : ''}
 
   <div class="footer">
-    Generated by Interview Ready AI • Confidential • Do not distribute
+    Generated by Interview Ready AI • https://appinterviewready.top • Confidential
   </div>
 </body>
 </html>`;

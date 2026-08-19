@@ -6,6 +6,7 @@ import { Typography, Spacing, useTheme } from '../../src/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -209,7 +210,23 @@ export default function SignupScreen() {
               <Text style={[styles.footerLink, { color: colors.primary }]}>Sign In</Text>
             </Text>
           </Pressable>
-          <Text style={[styles.termsText, { color: colors.textMuted }]}>By creating an account, you agree to our Terms of Service and Privacy Policy.</Text>
+          <Text style={[styles.termsText, { color: colors.textMuted }]}>
+            By creating an account, you agree to our{' '}
+            <Text
+              style={[styles.footerLink, { color: colors.primary }]}
+              onPress={() => Linking.openURL('https://appinterviewready.top/terms')}
+            >
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text
+              style={[styles.footerLink, { color: colors.primary }]}
+              onPress={() => Linking.openURL('https://appinterviewready.top/privacy')}
+            >
+              Privacy Policy
+            </Text>
+            .
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -278,5 +295,6 @@ const styles = StyleSheet.create({
   termsText: {
     ...Typography.caption,
     textAlign: 'center',
+    lineHeight: 18,
   },
 });

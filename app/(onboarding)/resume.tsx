@@ -35,15 +35,17 @@ export default function ResumeGenScreen() {
   // Animations
   const [pulseAnim] = useState(() => new Animated.Value(1));
   const [fadeAnim] = useState(() => new Animated.Value(0));
+  const [generatedResume, setGeneratedResume] = useState<any>(null);
 
   const { targetRole, analysisId, resumeId, setResumeId } = useOnboardingStore();
   const createResume = useCreateResumeMutation();
   const { data: resumeData } = useResumeQuery(isDone ? resumeId : null);
+  const activeResume = resumeData || generatedResume;
 
   const previewHtml = useMemo(() => {
-    if (!resumeData || !resumeData.header) return '';
-    return buildResumeHTML(resumeData);
-  }, [resumeData]);
+    if (!activeResume || !activeResume.header) return '';
+    return buildResumeHTML(activeResume);
+  }, [activeResume]);
 
   useEffect(() => {
     let channel: any;
@@ -65,6 +67,10 @@ export default function ResumeGenScreen() {
         channel = supabase
           .channel(stream_channel)
           .on('broadcast', { event: 'generation_complete' }, async (payload) => {
+            const content = payload?.payload?.content || (payload as any)?.content;
+            if (content) {
+              setGeneratedResume(content);
+            }
             setStage(4);
             setIsDone(true);
 
@@ -254,7 +260,7 @@ export default function ResumeGenScreen() {
             <View style={styles.actionBlock}>
               <Pressable 
                 style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]} 
-                onPress={() => resumeData ? exportResumeDOCX(resumeData) : null}
+                onPress={() => activeResume ? exportResumeDOCX(activeResume) : null}
               >
                 <Ionicons name="document" size={20} color="#fff" />
                 <Text style={styles.primaryActionText}>Download .docx</Text>
@@ -262,7 +268,7 @@ export default function ResumeGenScreen() {
               
               <Pressable 
                 style={[styles.secondaryActionBtn, { borderColor: colors.border }]} 
-                onPress={() => resumeData ? exportResumePDF(resumeData) : null}
+                onPress={() => activeResume ? exportResumePDF(activeResume) : null}
               >
                 <Ionicons name="document" size={20} color={colors.textPrimary} />
                 <Text style={[styles.secondaryActionText, { color: colors.textPrimary }]}>Download PDF</Text>

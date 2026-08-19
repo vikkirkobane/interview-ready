@@ -13,8 +13,10 @@ import { supabase } from '../../src/lib/supabase';
 import { fetchFileArrayBuffer } from '../../src/lib/api';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
-import { useFilePicker } from '../../src/hooks/useFilePicker';import { usePreviewStore } from '../../src/store/previewStore';
+import { useFilePicker } from '../../src/hooks/useFilePicker';
+import { usePreviewStore } from '../../src/store/previewStore';
 import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
+import { formatPersonName } from '../../src/lib/exportUtils';
 import { CoverLetter } from '../../src/types/schemas';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -79,8 +81,15 @@ export default function CoverLetterGeneratorScreen() {
       if (pastCoverLetter.body) {
         setGeneratedLetter(pastCoverLetter.body);
 
-        // Map flat DB row → structured CoverLetter type
+        // Map flat DB row → structured CoverLetter type with authenticated candidate details
         const signatureParts = (pastCoverLetter.signature || '').split('\n');
+        const candidateName = formatPersonName(
+          user?.user_metadata?.full_name ||
+          `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() ||
+          user?.user_metadata?.name ||
+          ''
+        );
+
         const mappedCoverLetter: CoverLetter = {
           meta: {
             tone: pastCoverLetter.tone,
@@ -88,12 +97,15 @@ export default function CoverLetterGeneratorScreen() {
             generated_at: pastCoverLetter.created_at,
           },
           header: {
-            candidate_name: '',
-            phone: '',
-            email: '',
-            linkedin: '',
-            portfolio: '',
-            date: pastCoverLetter.created_at || '',
+            candidate_name: candidateName,
+            phone: user?.user_metadata?.phone || '',
+            email: user?.email || user?.user_metadata?.email || '',
+            linkedin: user?.user_metadata?.linkedin_url || user?.user_metadata?.linkedin || '',
+            portfolio: user?.user_metadata?.portfolio_url || user?.user_metadata?.portfolio || '',
+            location: user?.user_metadata?.location || '',
+            date: pastCoverLetter.created_at
+              ? new Date(pastCoverLetter.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+              : new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
             hiring_manager: '',
             company_name: pastCoverLetter.title?.split(' - ')[0] || '',
             company_address: '',
@@ -106,8 +118,8 @@ export default function CoverLetterGeneratorScreen() {
             closing: { text: '' },
           },
           sign_off: {
-            closing_phrase: signatureParts[0] || '',
-            name: signatureParts.slice(1).join(' ').trim(),
+            closing_phrase: signatureParts[0] || 'Sincerely,',
+            name: signatureParts.slice(1).join(' ').trim() || candidateName,
           },
         };
         setCoverLetterObj(mappedCoverLetter);
@@ -218,6 +230,23 @@ export default function CoverLetterGeneratorScreen() {
       if (!letterData) {
         throw new Error('No cover letter data returned from the server.');
       }
+
+      if (!letterData.header) {
+        letterData.header = {} as any;
+      }
+      if (!letterData.header.candidate_name) {
+        letterData.header.candidate_name = formatPersonName(
+          user?.user_metadata?.full_name ||
+          `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() ||
+          user?.user_metadata?.name ||
+          ''
+        );
+      }
+      if (!letterData.header.email) letterData.header.email = user?.email || user?.user_metadata?.email || '';
+      if (!letterData.header.phone) letterData.header.phone = user?.user_metadata?.phone || '';
+      if (!letterData.header.linkedin) letterData.header.linkedin = user?.user_metadata?.linkedin_url || user?.user_metadata?.linkedin || '';
+      if (!letterData.header.portfolio) letterData.header.portfolio = user?.user_metadata?.portfolio_url || user?.user_metadata?.portfolio || '';
+      if (!letterData.header.location) letterData.header.location = user?.user_metadata?.location || '';
 
       setCoverLetterObj(letterData);
 

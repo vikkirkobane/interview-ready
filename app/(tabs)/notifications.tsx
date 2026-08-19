@@ -7,6 +7,8 @@ import { useRouter } from 'expo-router';
 import { useNotificationStore, AppNotification } from '../../src/stores/notification-store';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
+import { useUIStore } from '../../src/stores/ui-store';
+import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +28,7 @@ const timeAgo = (dateStr: string) => {
 export default function NotificationsScreen() {
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { notificationsEnabled, setNotificationsEnabled } = useUIStore();
   const { user } = useAuthStore();
   const { profile } = useProfileStore();
   const { colors, isDark } = useTheme();
@@ -121,6 +124,27 @@ export default function NotificationsScreen() {
         <View style={{ width: 60 }} />
       </View>
 
+      {!notificationsEnabled && (
+        <View style={[styles.mutedBanner, { backgroundColor: `${colors.warning}15`, borderColor: `${colors.warning}40` }]}>
+          <Ionicons name="notifications-off-outline" size={20} color={colors.warning} style={{ marginRight: 10 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.mutedBannerTitle, { color: colors.textPrimary }]}>In-app popups are muted</Text>
+            <Text style={[styles.mutedBannerText, { color: colors.textMuted }]}>
+              Enable to receive popups for new activities.
+            </Text>
+          </View>
+          <Pressable
+            style={[styles.enableBtn, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              setNotificationsEnabled(true);
+              Toast.show({ type: 'success', text1: 'Notifications Enabled' });
+            }}
+          >
+            <Text style={styles.enableBtnText}>Enable</Text>
+          </Pressable>
+        </View>
+      )}
+
       <View style={styles.actionHeader}>
         <Text style={[styles.countText, dynamicStyles.countText]}>
           {displayNotifications.length} {displayNotifications.length === 1 ? 'Notification' : 'Notifications'}
@@ -135,7 +159,7 @@ export default function NotificationsScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomNavPadding }]} showsVerticalScrollIndicator={false}>
         {displayNotifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="checkmark-done" size={48} color={colors.textMuted} style={{ marginBottom: Spacing.lg }} />
@@ -224,6 +248,36 @@ const styles = StyleSheet.create({
   actionBtnText: {
     ...Typography.label,
     letterSpacing: 1,
+  },
+  mutedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+  },
+  mutedBannerTitle: {
+    ...Typography.subtitle2,
+    fontWeight: '700',
+  },
+  mutedBannerText: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  enableBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: Radius.full,
+    marginLeft: Spacing.sm,
+  },
+  enableBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,

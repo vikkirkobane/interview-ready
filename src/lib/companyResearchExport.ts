@@ -26,7 +26,7 @@ try {
 
 export async function exportCompanyResearchPDF(result: CompanyResearchResult): Promise<void> {
   const html = buildCompanyResearchHTML(result);
-  const filename = buildFileName(result.company_name, 'Company_Research', 'pdf');
+  const filename = buildFileName(result.company_name, 'Company_Intelligence_Report', 'pdf');
 
   if (Platform.OS === 'web') {
     const win = window.open('', '_blank');
@@ -109,110 +109,145 @@ function buildCompanyResearchHTML(data: CompanyResearchResult): string {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>${esc(companyName)} - Company Research Report</title>
+      <title>${esc(companyName)} - Company Research Intelligence Report</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        @page { size: A4; margin: 18mm 16mm; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @page { size: A4 portrait; margin: 16mm 14mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-          font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-          color: #1A1A1A;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          color: #0f172a;
           background: #ffffff;
           line-height: 1.55;
-          font-size: 12.5px;
+          font-size: 12px;
           -webkit-print-color-adjust: exact;
         }
 
         .header {
           display: flex;
           align-items: center;
-          border-bottom: 2px solid #6B46FE;
+          border-bottom: 2px solid #2563EB;
           padding-bottom: 14px;
-          margin-bottom: 22px;
+          margin-bottom: 20px;
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
         .logo { width: 44px; height: 46px; margin-right: 14px; object-fit: contain; }
-        .header-title { font-size: 22px; font-weight: 800; color: #1A1A1A; }
-        .header-subtitle { font-size: 12px; color: #6B7280; }
+        .header-title { font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+        .header-subtitle { font-size: 12px; color: #64748b; font-weight: 500; }
 
-        .title-section { text-align: center; margin-bottom: 22px; }
-        .main-title { font-size: 26px; font-weight: 800; color: #6B46FE; margin-bottom: 6px; }
-        .tagline { font-size: 14px; color: #4B5563; font-style: italic; margin-bottom: 6px; }
-        .date-line { font-size: 12px; color: #6B7280; }
+        .title-section {
+          text-align: center;
+          margin-bottom: 22px;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        .badge-pill {
+          display: inline-block;
+          background: #eff6ff;
+          color: #2563EB;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          padding: 4px 14px;
+          border-radius: 9999px;
+          margin-bottom: 8px;
+        }
+        .main-title { font-size: 26px; font-weight: 800; color: #2563EB; margin-bottom: 6px; }
+        .tagline { font-size: 13.5px; color: #475569; font-style: italic; margin-bottom: 6px; }
+        .date-line { font-size: 12px; color: #64748b; }
 
-        .scores-section { display: flex; gap: 16px; margin-bottom: 24px; }
+        .scores-section {
+          display: flex;
+          gap: 14px;
+          margin-bottom: 20px;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
         .score-card {
           flex: 1;
-          background: #F9FAFB;
-          border: 1px solid #E5E7EB;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
           border-radius: 12px;
-          padding: 16px;
+          padding: 14px;
           text-align: center;
         }
-        .score-card .score-title { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #6B7280; text-transform: uppercase; margin-bottom: 6px; }
-        .score-card .score-value { font-size: 26px; color: #6B46FE; font-weight: 800; }
+        .score-card .score-title { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+        .score-card .score-value { font-size: 24px; color: #2563EB; font-weight: 800; }
 
-        .section { margin-bottom: 26px; page-break-inside: avoid; }
+        .section {
+          margin-bottom: 20px;
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
         .section-title {
-          font-size: 15px;
+          font-size: 14.5px;
           font-weight: 800;
-          color: #6B46FE;
-          border-left: 4px solid #6B46FE;
+          color: #2563EB;
+          border-left: 4px solid #2563EB;
           padding-left: 10px;
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
 
         .verdict {
-          background: #F5F3FF;
-          border-left: 4px solid #6B46FE;
-          padding: 16px;
-          margin-bottom: 24px;
+          background: #eff6ff;
+          border-left: 4px solid #2563EB;
+          padding: 14px 16px;
+          margin-bottom: 20px;
           border-radius: 0 10px 10px 0;
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
-        .verdict-title { font-weight: 800; color: #6B46FE; margin-bottom: 8px; font-size: 15px; }
+        .verdict-title { font-weight: 800; color: #2563EB; margin-bottom: 6px; font-size: 14px; }
 
-        .fact-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+        .fact-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
         .fact-item {
           flex: 1 1 45%;
-          background: #F9FAFB;
+          background: #f8fafc;
           padding: 10px 12px;
           border-radius: 8px;
-          border: 1px solid #E5E7EB;
+          border: 1px solid #e2e8f0;
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
         .fact-label {
           font-size: 10px;
           font-weight: 700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          color: #6B7280;
-          margin-bottom: 4px;
+          color: #64748b;
+          margin-bottom: 3px;
         }
-        .fact-value { font-size: 13.5px; font-weight: 600; color: #111827; }
+        .fact-value { font-size: 13px; font-weight: 600; color: #0f172a; }
 
-        p { color: #374151; font-size: 13px; line-height: 1.65; }
-        .text-muted { color: #9CA3AF; font-size: 13px; }
+        p { color: #334155; font-size: 12.5px; line-height: 1.6; }
+        .text-muted { color: #94a3b8; font-size: 12px; }
 
-        .list { padding-left: 20px; margin: 0; color: #374151; font-size: 13px; }
-        .list li { margin-bottom: 7px; line-height: 1.55; }
+        .list { padding-left: 18px; margin: 0; color: #334155; font-size: 12.5px; }
+        .list li { margin-bottom: 5px; line-height: 1.5; }
 
-        .two-col { display: flex; gap: 14px; }
-        .two-col > div { flex: 1; }
-        .sub-label { font-weight: 700; color: #111827; font-size: 13px; margin-bottom: 6px; display: block; }
+        .two-col { display: flex; gap: 14px; break-inside: avoid; page-break-inside: avoid; }
+        .two-col > div { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+        .sub-label { font-weight: 700; color: #0f172a; font-size: 12.5px; margin-bottom: 6px; display: block; }
 
-        .news-item { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #E5E7EB; }
+        .news-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; break-inside: avoid; page-break-inside: avoid; }
         .news-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .news-headline { font-weight: 700; font-size: 13.5px; color: #111827; margin-bottom: 4px; }
-        .news-summary { font-size: 12.5px; color: #4B5563; }
+        .news-headline { font-weight: 700; font-size: 13px; color: #0f172a; margin-bottom: 3px; }
+        .news-summary { font-size: 12px; color: #475569; }
 
-        .red-flags { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px; margin-bottom: 24px; border-radius: 0 10px 10px 0; }
-        .red-flags .section-title { color: #B45309; border-color: #F59E0B; }
+        .red-flags { background: #fefce8; border-left: 4px solid #f59e0b; padding: 14px 16px; margin-bottom: 20px; border-radius: 0 10px 10px 0; break-inside: avoid; page-break-inside: avoid; }
+        .red-flags .section-title { color: #b45309; border-color: #f59e0b; }
 
         .footer {
           margin-top: 28px;
           text-align: center;
           font-size: 11px;
-          color: #9CA3AF;
-          border-top: 1px solid #E5E7EB;
+          color: #94a3b8;
+          border-top: 1px solid #e2e8f0;
           padding-top: 12px;
+          break-inside: avoid;
+          page-break-inside: avoid;
         }
       </style>
     </head>
@@ -222,18 +257,19 @@ function buildCompanyResearchHTML(data: CompanyResearchResult): string {
         <img class="logo" src="${APP_LOGO_DATA_URI}" alt="Interview Ready Logo" />
         <div>
           <h1 class="header-title">Interview Ready</h1>
-          <p class="header-subtitle">Company Research Intelligence Brief</p>
+          <p class="header-subtitle">Company Intelligence Brief • appinterviewready.top</p>
         </div>
       </div>
 
       <div class="title-section">
+        <div class="badge-pill">COMPANY INTELLIGENCE</div>
         <h2 class="main-title">${esc(companyName)}</h2>
         ${data.tagline ? `<p class="tagline">${esc(data.tagline)}</p>` : ''}
         <p class="date-line">Prepared on ${today}</p>
       </div>
 
       <div class="verdict">
-        <div class="verdict-title">Strategic Verdict</div>
+        <div class="verdict-title">Strategic Overview Verdict</div>
         <p>${esc(data.summary_verdict)}</p>
       </div>
 
@@ -308,27 +344,27 @@ function buildCompanyResearchHTML(data: CompanyResearchResult): string {
         </div>
       ` : ''}
 
-      <div class="section" style="page-break-before: always;">
-        <div class="section-title">Interview Prep: Talking Points</div>
-        <p>Show knowledge of these in your interview answers:</p>
+      <div class="section">
+        <div class="section-title">Interview Prep: Key Talking Points</div>
+        <p style="margin-bottom: 8px;">Showcase familiarity with these focus points in your interview:</p>
         ${renderList(data.interview_talking_points)}
       </div>
 
       <div class="section">
-        <div class="section-title">Smart Questions to Ask</div>
-        <p>These questions show strategic thinking and genuine interest:</p>
+        <div class="section-title">Smart Questions to Ask Hiring Managers</div>
+        <p style="margin-bottom: 8px;">Demonstrate strategic interest by asking these questions:</p>
         ${renderList(data.smart_questions_to_ask)}
       </div>
 
       ${data.recent_news && data.recent_news.length > 0 ? `
-        <div class="section" style="page-break-before: always;">
-          <div class="section-title">Recent News</div>
+        <div class="section">
+          <div class="section-title">Recent News & Developments</div>
           ${renderNews(data.recent_news)}
         </div>
       ` : ''}
 
       <div class="footer">
-        Generated by Interview Ready AI • Powered by Interview Ready
+        Generated by Interview Ready AI • https://appinterviewready.top • Confidential
       </div>
 
     </body>

@@ -10,6 +10,8 @@ import Toast from 'react-native-toast-message';
 import { Colors, Spacing, Typography } from '../../src/theme/tokens';
 import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { useProfileStore } from '../../src/stores/profile-store';
+import { queryClient } from '../../src/lib/query-client';
 
 type PaymentStatus = 'verifying' | 'success' | 'failed' | 'error';
 
@@ -73,6 +75,11 @@ export default function PaymentCallbackScreen() {
         if (refreshData?.session) {
           setSession(refreshData.session);
         }
+
+        // Invalidate queries & fetch updated profile to reflect changes everywhere immediately
+        queryClient.invalidateQueries({ queryKey: ['credits'] });
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        useProfileStore.getState().fetchProfile().catch(() => {});
 
         setStatus('success');
         setMessage('Payment successful! Your subscription is now active.');

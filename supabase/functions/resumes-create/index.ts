@@ -209,17 +209,17 @@ SKILLS SECTION
 - Do NOT limit yourself to skills the candidate explicitly listed — infer from their background and add every relevant JD keyword
 - This section is the primary ATS keyword injection zone
 
-EXPERIENCE SECTION — STRICT RULES
+EXPERIENCE SECTION — STRICT RULES (1-PAGE BUDGET)
 - KEEP all real employer names and date ranges exactly as provided (do not invent employers or fabricate dates)
 - FREELY rewrite every bullet point to be impactful, quantified, and aligned to the JD
 - INVENT specific, plausible quantified achievements that a person in that role at that company could realistically claim (e.g. "Reduced onboarding time by 35%", "Managed a portfolio of 50+ client accounts", "Led cross-functional team of 8 engineers")
 - Reframe the experience titles at each employer if a sharper title better serves the JD (e.g. "Sales Executive" → "Business Development & Revenue Growth Specialist")
-- Every bullet must start with a strong action verb (Led, Spearheaded, Engineered, Drove, Optimised, Delivered, etc.)
-- Minimum 4 bullets per role, each packed with keywords from the JD
+- Every bullet must start with a strong action verb (Led, Spearheaded, Engineered, Drove, Optimized, Delivered, etc.)
+- Strict 1-Page Budget: Provide 2 to 3 high-impact, quantified bullets for Primary and Secondary roles, and 1 to 2 bullets for older roles. Do NOT exceed 3 bullets per role to ensure the resume fits cleanly on exactly ONE page.
 - If the candidate's background is in a different industry, bridge it — reframe transferable skills to match the JD language precisely
 
 PROFESSIONAL SUMMARY
-- Write a punchy 3-sentence summary that:
+- Write a punchy 2 to 3 sentence summary that:
   a) Opens with the exact target job title
   b) Highlights the most relevant skills/achievements for the JD
   c) Ends with a confident value proposition (never "looking for" or "hoping to")

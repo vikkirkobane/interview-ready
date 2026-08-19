@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, Switch, Alert, Platform } from 'react-native';
+import { Pressable,  View, Text, StyleSheet, ScrollView, Switch, Alert, Platform, ActivityIndicator } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { Card, Button, Badge } from '../../src/components/ui';
@@ -9,6 +9,8 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useProfileStore } from '../../src/stores/profile-store';
+import { useDeleteAccountMutation } from '../../src/hooks/useApi';
+import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
 import { Image } from 'expo-image';
@@ -23,6 +25,8 @@ export default function SettingsScreen() {
   const { user } = useAuthStore();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { profile } = useProfileStore();
+  const deleteAccountMutation = useDeleteAccountMutation();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const signOut = () => useAuthStore.getState().signOut();
 
@@ -67,6 +71,52 @@ export default function SettingsScreen() {
         ]
       );
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    const runDeletion = async () => {
+      try {
+        setIsDeleting(true);
+        await deleteAccountMutation.mutateAsync();
+        Toast.show({ type: 'success', text1: 'Account deleted successfully' });
+        await signOut();
+        router.replace('/(auth)/welcome');
+      } catch (error: any) {
+        Toast.show({ type: 'error', text1: 'Failed to delete account', text2: error.message || 'Please try again.' });
+      } finally {
+        setIsDeleting(false);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if ((window as any).confirm("Delete Account? This action is permanent and will delete all your resumes, cover letters, and profile data.")) {
+        runDeletion();
+      }
+    } else {
+      Alert.alert(
+        "Delete Account",
+        "This action cannot be undone. All your resumes, data, and profile will be permanently deleted.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Delete Account", 
+            style: "destructive",
+            onPress: runDeletion
+          }
+        ]
+      );
+    }
+  };
+
+  const handleToggleNotifications = (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    Toast.show({
+      type: enabled ? 'success' : 'info',
+      text1: enabled ? 'Notifications Enabled' : 'Notifications Muted',
+      text2: enabled
+        ? 'You will receive in-app alerts and updates.'
+        : 'In-app notification popups have been muted.',
+    });
   };
 
   return (
@@ -116,8 +166,9 @@ export default function SettingsScreen() {
           rightElement={
             <Switch 
               value={notificationsEnabled} 
-              onValueChange={setNotificationsEnabled}
+              onValueChange={handleToggleNotifications}
               trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={notificationsEnabled ? colors.primary : '#f4f3f4'}
             />
           }
         />
@@ -151,13 +202,13 @@ export default function SettingsScreen() {
       {/* Support & Legal */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support & Legal</Text>
       <Card style={[styles.settingsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-        <SettingRow title="Help Center & FAQ" onPress={() => Linking.openURL('https://appinterviewready.top/')} />
+        <SettingRow title="Help Center & FAQ" onPress={() => Linking.openURL('https://appinterviewready.top/#faq')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <SettingRow title="Contact Support" onPress={() => Linking.openURL('mailto:info@appinterviewready.top')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Privacy Policy" onPress={() => Linking.openURL('https://interview-ready.ai.studio/privacy')} />
+        <SettingRow title="Privacy Policy" onPress={() => Linking.openURL('https://appinterviewready.top/privacy')} />
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow title="Terms of Service" onPress={() => Linking.openURL('https://interview-ready.ai.studio/terms')} />
+        <SettingRow title="Terms of Service" onPress={() => Linking.openURL('https://appinterviewready.top/terms')} />
       </Card>
 
       {/* Danger Zone */}
@@ -170,9 +221,20 @@ export default function SettingsScreen() {
           onPress={handleLogout}
           hideChevron
         />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <SettingRow 
+          iconName="trash-outline"
+          title="Delete Account"
+          titleStyle={{ color: colors.error }}
+          rightElement={isDeleting ? <ActivityIndicator size="small" color={colors.error} /> : undefined}
+          onPress={handleDeleteAccount}
+          hideChevron
+        />
       </Card>
 
-      <Text style={[styles.versionText, { color: colors.textMuted }]}>Interview Ready v1.0.0</Text>
+      <Text style={[styles.versionText, { color: colors.textMuted }]}>
+        Interview Ready v{Constants.expoConfig?.version || '1.0.1'}
+      </Text>
     </ScrollView>
   );
 }

@@ -7,7 +7,7 @@ import { useTheme } from '../../src/theme/useTheme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
-
+import * as Linking from 'expo-linking';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -192,7 +192,21 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
           <Text style={[styles.termsText, { color: colors.textMuted }]}>
-            By signing in, you agree to our Terms of Service and Privacy Policy.
+            By signing in, you agree to our{' '}
+            <Text
+              style={[styles.footerLink, { color: colors.primary }]}
+              onPress={() => Linking.openURL('https://appinterviewready.top/terms')}
+            >
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text
+              style={[styles.footerLink, { color: colors.primary }]}
+              onPress={() => Linking.openURL('https://appinterviewready.top/privacy')}
+            >
+              Privacy Policy
+            </Text>
+            .
           </Text>
         </View>
       </ScrollView>
@@ -266,5 +280,6 @@ const styles = StyleSheet.create({
   termsText: {
     ...Typography.caption,
     textAlign: 'center',
+    lineHeight: 18,
   },
 });

@@ -7,6 +7,34 @@ import * as FileSystem from 'expo-file-system/legacy';
 declare let document: any;
 
 /**
+ * Capitalizes the first letter of each word in a person's name,
+ * correctly handling hyphens, apostrophes, and multiple words.
+ * e.g. "john doe" -> "John Doe", "o'connor" -> "O'Connor", "mary-jane smith" -> "Mary-Jane Smith"
+ */
+export function formatPersonName(name: string | undefined | null): string {
+  if (!name) return '';
+  const trimmed = String(name).trim();
+  if (!trimmed) return '';
+  return trimmed
+    .split(/\s+/)
+    .map(word => {
+      return word
+        .split('-')
+        .map(part => {
+          return part
+            .split("'")
+            .map(subPart => {
+              if (!subPart) return '';
+              return subPart.charAt(0).toUpperCase() + subPart.slice(1).toLowerCase();
+            })
+            .join("'");
+        })
+        .join('-');
+    })
+    .join(' ');
+}
+
+/**
  * Sanitize a candidate name into a safe, readable filename segment.
  * Returns an empty string when there is nothing usable to keep, so callers
  * can fall back to a plain filename without a redundant prefix.
@@ -27,7 +55,8 @@ export function sanitizeFileNameSegment(name: string | undefined | null): string
  *   ""            + "Resume" -> "Resume.pdf"
  */
 export function buildFileName(name: string | undefined | null, label: string, ext: string): string {
-  const segment = sanitizeFileNameSegment(name);
+  const formatted = formatPersonName(name);
+  const segment = sanitizeFileNameSegment(formatted);
   const stem = segment ? `${segment}_${label}` : label;
   return `${stem}.${ext}`;
 }

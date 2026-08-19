@@ -21,7 +21,13 @@ interface UseReferralReturn {
   stats: ReferralStats | null;
   loading: boolean;
   error: string | null;
-  applyReferralCode: (code: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  applyReferralCode: (code: string) => Promise<{
+    success: boolean;
+    message?: string;
+    creditsGranted?: number;
+    isPromo?: boolean;
+    error?: string;
+  }>;
   refreshStats: () => Promise<void>;
 }
 
@@ -120,6 +126,8 @@ export function useReferral(): UseReferralReturn {
       return {
         success: true,
         message: result.data.message,
+        creditsGranted: result.data.credits_granted,
+        isPromo: result.data.is_promo,
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';

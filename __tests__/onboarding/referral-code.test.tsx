@@ -23,7 +23,13 @@ const mockToast = Toast as any;
 function mockFetchSuccess() {
   (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
     if (url.includes('referral-apply')) {
-      return { ok: true, json: async () => ({ success: true, data: { message: 'Applied' } }) };
+      return { 
+        ok: true, 
+        json: async () => ({ 
+          success: true, 
+          data: { message: 'Applied', credits_granted: 10, is_promo: false } 
+        }) 
+      };
     }
     return {
       ok: true,
@@ -34,7 +40,9 @@ function mockFetchSuccess() {
   });
 }
 
-describe('Referral code (onboarding) — user stories', () => {
+jest.setTimeout(30000);
+
+describe('Referral and Promo code (onboarding) — user stories', () => {
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
@@ -53,12 +61,13 @@ describe('Referral code (onboarding) — user stories', () => {
 
   const renderScreen = () => renderWithProviders(<ReferralCodeScreen />);
 
-  it('renders the referral code step', async () => {
+  it('renders the referral & promo code step', async () => {
     const screen = await renderScreen();
-    expect(screen.getByText('Got a referral code?')).toBeTruthy();
-    expect(screen.getByPlaceholderText('e.g. JOHN1234')).toBeTruthy();
+    expect(screen.getByText('Got a referral or promo code?')).toBeTruthy();
+    expect(screen.getByPlaceholderText('e.g. LINKEDIN20 or JOHN1234')).toBeTruthy();
     expect(screen.getByText('Apply Code')).toBeTruthy();
     expect(screen.getByText('Skip for now')).toBeTruthy();
+    expect(screen.getByText('LinkedIn Community Bonus')).toBeTruthy();
   });
 
   it('warns when applying an empty code', async () => {
@@ -72,14 +81,18 @@ describe('Referral code (onboarding) — user stories', () => {
     expect(router.replace).not.toHaveBeenCalled();
   });
 
-  it('applies a valid code, grants credits and advances', async () => {
+  it('applies a standard peer referral code (10 credits) and advances', async () => {
     const screen = await renderScreen();
-    await fireEvent.changeText(screen.getByPlaceholderText('e.g. JOHN1234'), 'john1234');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. LINKEDIN20 or JOHN1234'), 'john1234');
     await fireEvent.press(screen.getByText('Apply Code'));
 
     await waitFor(() => {
       expect(mockToast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', text1: 'Code Applied!' })
+        expect.objectContaining({ 
+          type: 'success', 
+          text1: 'Referral Code Applied! 🎁',
+          text2: 'You received 10 free AI credits!'
+        })
       );
     });
     await waitFor(() => {
@@ -88,10 +101,52 @@ describe('Referral code (onboarding) — user stories', () => {
     expect(useOnboardingStore.getState().referralCodeSkipped).toBe(true);
   });
 
-  it('rejects an invalid referral code', async () => {
+  it('applies a promotional code like LINKEDIN20 (20 credits) and advances', async () => {
     (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
       if (url.includes('referral-apply')) {
-        return { ok: false, json: async () => ({ success: false, error: 'Code not found' }) };
+        return { 
+          ok: true, 
+          json: async () => ({ 
+            success: true, 
+            data: { 
+              message: 'Promo code applied!', 
+              credits_granted: 20, 
+              is_promo: true,
+              promo_code: 'LINKEDIN20' 
+            } 
+          }) 
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          data: { referral_code: 'MYCODE', total_referrals: 0, credits_earned: 0, referrals: [] },
+        }),
+      };
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. LINKEDIN20 or JOHN1234'), 'LINKEDIN20');
+    await fireEvent.press(screen.getByText('Apply Code'));
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ 
+          type: 'success', 
+          text1: 'Promo Code Applied! 🎉',
+          text2: 'You received 20 free AI credits!'
+        })
+      );
+    });
+    await waitFor(() => {
+      expect(router.replace).toHaveBeenCalledWith('/(onboarding)/role');
+    });
+  });
+
+  it('rejects an invalid referral or promo code', async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+      if (url.includes('referral-apply')) {
+        return { ok: false, json: async () => ({ success: false, error: 'Invalid referral or promo code. Please check and try again.' }) };
       }
       return {
         ok: true,
@@ -102,7 +157,7 @@ describe('Referral code (onboarding) — user stories', () => {
     });
 
     const screen = await renderScreen();
-    await fireEvent.changeText(screen.getByPlaceholderText('e.g. JOHN1234'), 'BADCODE');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. LINKEDIN20 or JOHN1234'), 'BADCODE');
     await fireEvent.press(screen.getByText('Apply Code'));
 
     await waitFor(() => {

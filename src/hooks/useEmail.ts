@@ -163,7 +163,7 @@ export const EmailHelpers = {
         amount: params.amount,
         currency: params.currency,
         error_message: params.errorMessage,
-        retry_url: params.retryUrl || 'https://interviewready.co/billing',
+        retry_url: params.retryUrl || 'https://appinterviewready.top/pricing',
       },
       emailType: 'payment_failed',
     });
@@ -178,6 +178,7 @@ export const EmailHelpers = {
     planName: string;
     billingPeriod: string;
     nextBillingDate: string;
+    credits?: string;
   }) => {
     return sendEmailDirectly({
       to: params.to,
@@ -188,6 +189,7 @@ export const EmailHelpers = {
         plan_name: params.planName,
         billing_period: params.billingPeriod,
         next_billing_date: params.nextBillingDate,
+        credits: params.credits || '150',
       },
       emailType: 'subscription_created',
       metadata: {
@@ -228,6 +230,7 @@ export const EmailHelpers = {
   sendWelcome: async (params: {
     to: string;
     userName: string;
+    credits?: string;
   }) => {
     return sendEmailDirectly({
       to: params.to,
@@ -235,6 +238,11 @@ export const EmailHelpers = {
       templateKey: 'welcome',
       templateVariables: {
         user_name: params.userName,
+        first_name: params.userName,
+        credits: params.credits || '10',
+        app_url: 'https://appinterviewready.top',
+        help_url: 'https://appinterviewready.top/#faq',
+        current_year: new Date().getFullYear().toString(),
       },
       emailType: 'welcome',
     });

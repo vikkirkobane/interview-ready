@@ -15,6 +15,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -177,7 +178,21 @@ export default function WelcomeScreen() {
           </Pressable>
 
           <Text style={[styles.termsText, { color: colors.textDisabled }]}>
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            By continuing, you agree to our{' '}
+            <Text
+              style={{ color: colors.primary, fontWeight: '600' }}
+              onPress={() => Linking.openURL('https://appinterviewready.top/terms')}
+            >
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text
+              style={{ color: colors.primary, fontWeight: '600' }}
+              onPress={() => Linking.openURL('https://appinterviewready.top/privacy')}
+            >
+              Privacy Policy
+            </Text>
+            .
           </Text>
         </Animated.View>
       </ScrollView>

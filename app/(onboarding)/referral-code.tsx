@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useReferral } from '../../src/hooks/useReferral';
+import { useProfileStore } from '../../src/stores/profile-store';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -38,7 +39,7 @@ export default function ReferralCodeScreen() {
       Toast.show({
         type: 'error',
         text1: 'Empty Code',
-        text2: 'Please enter a referral code or skip this step.',
+        text2: 'Please enter a referral or promo code, or skip this step.',
       });
       return;
     }
@@ -48,15 +49,20 @@ export default function ReferralCodeScreen() {
       const result = await applyReferralCode(trimmedCode);
 
       if (result.success) {
+        const credits = result.creditsGranted || (result.isPromo ? 20 : 10);
+        
         Toast.show({
           type: 'success',
-          text1: 'Code Applied!',
-          text2: `You received 10 free AI credits!`,
+          text1: result.isPromo ? 'Promo Code Applied! 🎉' : 'Referral Code Applied! 🎁',
+          text2: `You received ${credits} free AI credits!`,
         });
 
         if (deepLinkCode) {
           clearReferralCode();
         }
+
+        // Refresh user profile to sync credits immediately
+        useProfileStore.getState().fetchProfile().catch(() => {});
 
         // Mark step 0 as passed and move to step 1 (role screen)
         useOnboardingStore.getState().setReferralCodeSkipped(true);
@@ -73,7 +79,7 @@ export default function ReferralCodeScreen() {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error.message || 'Failed to apply referral code.',
+        text2: error.message || 'Failed to apply code.',
       });
     } finally {
       setIsApplying(false);
@@ -114,18 +120,33 @@ export default function ReferralCodeScreen() {
             <Ionicons name="gift" size={40} color={colors.primary} />
           </View>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Got a referral code?
+            Got a referral or promo code?
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {/* eslint-disable-next-line react/no-unescaped-entities */}
-            Enter a friend's referral code to get 10 free AI credits instantly. You can also skip this step and enter it later.
+            Enter a friend's referral code or a LinkedIn campaign promo code to get up to 20 free AI credits instantly.
           </Text>
         </View>
+
+        {/* LinkedIn Community Callout */}
+        <Pressable 
+          style={[styles.promoTipBox, { backgroundColor: `${colors.primary}12`, borderColor: `${colors.primary}30` }]}
+          onPress={() => setCode('LINKEDIN20')}
+        >
+          <Ionicons name="sparkles" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.promoTipTitle, { color: colors.primary }]}>LinkedIn Community Bonus</Text>
+            <Text style={[styles.promoTipSubtitle, { color: colors.textBody }]}>
+              Tap to use code <Text style={{ fontWeight: '700', color: colors.primary }}>LINKEDIN20</Text> for 20 free credits!
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward-circle" size={22} color={colors.primary} />
+        </Pressable>
 
         {/* Input Card */}
         <View style={[styles.formCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <View style={styles.fieldGroup}>
-            <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>REFERRAL CODE</Text>
+            <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>REFERRAL OR PROMO CODE</Text>
             <TextInput
               style={[
                 styles.textInput,
@@ -134,11 +155,11 @@ export default function ReferralCodeScreen() {
               ]}
               value={code}
               onChangeText={(text) => setCode(text.toUpperCase())}
-              placeholder="e.g. JOHN1234"
+              placeholder="e.g. LINKEDIN20 or JOHN1234"
               placeholderTextColor={colors.textMuted}
               autoCapitalize="characters"
               autoCorrect={false}
-              maxLength={12}
+              maxLength={20}
               keyboardType="ascii-capable"
             />
           </View>
@@ -147,10 +168,10 @@ export default function ReferralCodeScreen() {
           <View style={styles.howItWorksMini}>
             <View style={styles.miniStep}>
               <View style={[styles.miniIcon, { backgroundColor: `${colors.primary}1A` }]}>
-                <Ionicons name="person-add-outline" size={18} color={colors.primary} />
+                <Ionicons name="pricetag-outline" size={18} color={colors.primary} />
               </View>
               <Text style={[styles.miniText, { color: colors.textMuted }]}>
-                A friend shares their code with you
+                Enter a referral code (10 credits) or promo code (20 credits)
               </Text>
             </View>
             <View style={styles.miniStep}>
@@ -158,7 +179,7 @@ export default function ReferralCodeScreen() {
                 <Ionicons name="diamond-outline" size={18} color={colors.success} />
               </View>
               <Text style={[styles.miniText, { color: colors.textMuted }]}>
-                You both get 10 AI credits
+                Credits are added immediately to your balance
               </Text>
             </View>
           </View>
@@ -245,7 +266,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: { height: '100%' },
   titleSection: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
     alignItems: 'center',
   },
   heroIconBox: {
@@ -265,6 +286,23 @@ const styles = StyleSheet.create({
     ...Typography.bodyLg,
     textAlign: 'center',
     paddingHorizontal: Spacing.md,
+  },
+  promoTipBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+  },
+  promoTipTitle: {
+    ...Typography.subtitle2,
+    fontWeight: '700',
+  },
+  promoTipSubtitle: {
+    ...Typography.bodySm,
+    fontSize: 12,
+    marginTop: 2,
   },
   formCard: {
     borderRadius: Radius.xl,
@@ -286,7 +324,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   codeInputFilled: {
-    letterSpacing: 4,
+    letterSpacing: 3,
     fontWeight: '700',
   },
   howItWorksMini: {

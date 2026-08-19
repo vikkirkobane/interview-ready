@@ -16,11 +16,11 @@ import { RateLimitError, InternalError } from './errors.ts';
 
 const CONFIG = {
   /** Max concurrent AI requests per user (1 = no parallel AI calls per user) */
-  PER_USER_CONCURRENCY: 1,
-  /** Max concurrent AI requests across all users */
-  GLOBAL_CONCURRENCY: 15,
+  PER_USER_CONCURRENCY: 2,
+  /** Max concurrent AI requests across all users (multi-model rotation supports higher throughput) */
+  GLOBAL_CONCURRENCY: 50,
   /** Max requests per user per minute (time-based window) */
-  PER_USER_RATE_LIMIT: 10,
+  PER_USER_RATE_LIMIT: 20,
   /** Rate limit window in seconds */
   RATE_LIMIT_WINDOW_MS: 60_000,
   /** KV key prefixes */

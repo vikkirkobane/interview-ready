@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../src/lib/query-client';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, Text, Pressable } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '../src/components/ui';
 import { useAuthStore } from '../src/stores/auth-store';
@@ -12,8 +12,10 @@ import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useTheme } from '../src/theme';
 import * as Font from 'expo-font';
 import * as Linking from 'expo-linking';
+import * as SplashScreen from 'expo-splash-screen';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNotificationStore } from '../src/stores/notification-store';
+import { useUIStore } from '../src/stores/ui-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
 import { supabase } from '../src/lib/supabase';
@@ -26,12 +28,22 @@ import {
 } from '../src/lib/auth-code-exchange';
 import mobileAds from 'react-native-google-mobile-ads';
 
+// Prevent native splash screen from hiding until fonts and auth state are loaded
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
 if (!(Toast as any)._isPatched) {
   const originalToastShow = Toast.show;
   Toast.show = (params) => {
-    originalToastShow(params);
+    const isError = params.type === 'error';
+    const notificationsEnabled = useUIStore.getState().notificationsEnabled;
+
+    // Always display error alerts; only display info/success toasts if notifications are enabled
+    if (isError || notificationsEnabled) {
+      originalToastShow(params);
+    }
+
     const type = params.type || 'info';
-    if (type === 'success' || type === 'info') {
+    if ((type === 'success' || type === 'info') && notificationsEnabled) {
       useNotificationStore.getState().addNotification({
         title: params.text1 || 'Notification',
         description: params.text2 || '',
@@ -329,6 +341,13 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
+  // Hide native splash screen once resources and initial state are ready
+  useEffect(() => {
+    if (initialized && fontsLoaded && !isChecking) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [initialized, fontsLoaded, isChecking]);
+
   // Wait for both session restore and font loading
   if (!initialized || !fontsLoaded || isChecking) {
     return (
@@ -370,6 +389,42 @@ export default function RootLayout() {
   );
 }
 
+/**
+ * Global Error Boundary for Expo Router.
+ * Gracefully catches unhandled runtime rendering crashes and provides
+ * a clean retry / recovery mechanism for users.
+ */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  const router = useRouter();
+
+  return (
+    <View style={styles.errorContainer}>
+      <Ionicons name="alert-circle" size={64} color="#FF2A2A" style={styles.errorIcon} />
+      <Text style={styles.errorTitle}>Something went wrong</Text>
+      <Text style={styles.errorMessage}>
+        {error?.message || 'An unexpected error occurred while loading this view.'}
+      </Text>
+      <View style={styles.errorActions}>
+        <Pressable style={styles.errorRetryBtn} onPress={retry}>
+          <Text style={styles.errorRetryBtnText}>Try Again</Text>
+        </Pressable>
+        <Pressable
+          style={styles.errorHomeBtn}
+          onPress={() => {
+            try {
+              router.replace('/(tabs)');
+            } catch {
+              retry();
+            }
+          }}
+        >
+          <Text style={styles.errorHomeBtnText}>Go to Home</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -378,5 +433,59 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    backgroundColor: '#FAFAFA',
+  },
+  errorIcon: {
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0A0A0A',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+    maxWidth: 320,
+  },
+  errorActions: {
+    width: '100%',
+    maxWidth: 280,
+    gap: 12,
+  },
+  errorRetryBtn: {
+    backgroundColor: '#0055FF',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorRetryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  errorHomeBtn: {
+    backgroundColor: '#EAEAEA',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorHomeBtnText: {
+    color: '#0A0A0A',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

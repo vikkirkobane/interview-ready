@@ -24,6 +24,7 @@ const PERSISTED_STORE_KEYS = [
   'resume-store',
   'dashboard-store',
   'onboarding-storage',
+  'notification-storage',
 ];
 
 /**

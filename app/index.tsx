@@ -19,6 +19,10 @@ export default function Index() {
   }
 
   if (session) {
+    const isCompleted = session.user?.user_metadata?.onboarding_completed;
+    if (!isCompleted) {
+      return <Redirect href="/(onboarding)/referral-code" />;
+    }
     return <Redirect href="/(tabs)" />;
   }
 
