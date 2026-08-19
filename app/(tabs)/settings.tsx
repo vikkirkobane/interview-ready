@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, Switch, Alert, Platform, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { Pressable,  View, Text, StyleSheet, ScrollView, Switch, Alert, Platform } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { Card, Button, Badge } from '../../src/components/ui';
@@ -8,7 +8,6 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useProfileStore } from '../../src/stores/profile-store';
-import { useDeleteAccountMutation } from '../../src/hooks/useApi';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
@@ -24,8 +23,6 @@ export default function SettingsScreen() {
   const { user } = useAuthStore();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { profile } = useProfileStore();
-  const deleteAccountMutation = useDeleteAccountMutation();
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const signOut = () => useAuthStore.getState().signOut();
 
@@ -66,41 +63,6 @@ export default function SettingsScreen() {
             onPress: async () => {
               await signOut();
             }
-          }
-        ]
-      );
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    const runDeletion = async () => {
-      try {
-        setIsDeleting(true);
-        await deleteAccountMutation.mutateAsync();
-        Toast.show({ type: 'success', text1: 'Account deleted successfully' });
-        await signOut();
-        router.replace('/(auth)/welcome');
-      } catch (error: any) {
-        Toast.show({ type: 'error', text1: 'Failed to delete account', text2: error.message || 'Please try again.' });
-      } finally {
-        setIsDeleting(false);
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      if ((window as any).confirm("Delete Account? This action is permanent and will delete all your resumes, cover letters, and profile data.")) {
-        runDeletion();
-      }
-    } else {
-      Alert.alert(
-        "Delete Account",
-        "This action cannot be undone. All your resumes, data, and profile will be permanently deleted.",
-        [
-          { text: "Cancel", style: "cancel" },
-          { 
-            text: "Delete Account", 
-            style: "destructive",
-            onPress: runDeletion
           }
         ]
       );
@@ -220,15 +182,6 @@ export default function SettingsScreen() {
           onPress={handleLogout}
           hideChevron
         />
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <SettingRow 
-          iconName="trash-outline"
-          title="Delete Account"
-          titleStyle={{ color: colors.error }}
-          rightElement={isDeleting ? <ActivityIndicator size="small" color={colors.error} /> : undefined}
-          onPress={handleDeleteAccount}
-          hideChevron
-        />
       </Card>
 
       <Text style={[styles.versionText, { color: colors.textMuted }]}>
@@ -249,7 +202,7 @@ function SettingRow({
   titleStyle?: any
 }) {
   const { colors } = useTheme();
-  const isDestructive = title === 'Log Out' || title === 'Delete Account';
+  const isDestructive = title === 'Log Out';
 
   const content = (
     <View style={styles.settingRow}>
