@@ -31,6 +31,9 @@ interface StandaloneDownloadPageProps {
 const SESSION_DURATION_SECONDS = 15 * 60; // 900 seconds
 const SESSION_STORAGE_KEY = 'interview_ready_download_session';
 
+// Official GitHub Release CDN direct download link
+const GITHUB_APK_DOWNLOAD_URL = 'https://github.com/vikkirkobane/interview-ready/releases/download/v1.0.0/interview-ready-v1.0.0.apk';
+
 export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPageProps) {
   const [inputCode, setInputCode] = useState<string>('');
   const [inputEmail, setInputEmail] = useState<string>('');
@@ -148,8 +151,10 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
 
     setDownloadStarted(true);
     const link = document.createElement('a');
-    link.href = '/downloads/interview-ready-v1.0.0.apk';
-    link.download = 'interview-ready-v1.0.0.apk';
+    link.href = GITHUB_APK_DOWNLOAD_URL;
+    link.setAttribute('download', 'interview-ready-v1.0.0.apk');
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
