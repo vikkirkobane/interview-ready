@@ -447,6 +447,15 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                     <p className="text-[11px] text-slate-500 max-w-[210px] leading-tight">
                       Point your phone's camera at this code to open the download page directly with your credentials.
                     </p>
+                    <button
+                      type="button"
+                      onClick={copyPageUrl}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Copy download page link to open in another browser"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#1A4F8A]" />}
+                      <span>{copiedLink ? 'Link Copied!' : 'Copy Download Page Link'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -560,6 +569,15 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                     <p className="text-[11px] text-slate-500 max-w-[210px] leading-tight">
                       Point your phone's camera at this code to open and install the APK on your Android phone.
                     </p>
+                    <button
+                      type="button"
+                      onClick={copyPageUrl}
+                      className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                      title="Copy download page link to open in another browser"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#1A4F8A]" />}
+                      <span>{copiedLink ? 'Link Copied!' : 'Copy Download Page Link'}</span>
+                    </button>
                   </div>
                 </div>
 

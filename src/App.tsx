@@ -107,12 +107,24 @@ export default function App() {
   const [emailApiFeedback, setEmailApiFeedback] = useState<string>('');
   const [downloadLink, setDownloadLink] = useState<string>('/download');
   const [copiedSpot, setCopiedSpot] = useState<boolean>(false);
+  const [copiedDownloadLink, setCopiedDownloadLink] = useState<boolean>(false);
 
   const copySpotCode = (code: string | number) => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(code.toString());
       setCopiedSpot(true);
       setTimeout(() => setCopiedSpot(false), 2500);
+    }
+  };
+
+  const copyDownloadPageLink = () => {
+    const origin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://appinterviewready.top';
+    const cleanEmail = encodeURIComponent(email || '');
+    const url = `${origin}/download?spot=${waitlistNumber}${cleanEmail ? `&email=${cleanEmail}` : ''}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      setCopiedDownloadLink(true);
+      setTimeout(() => setCopiedDownloadLink(false), 2500);
     }
   };
 
@@ -694,10 +706,22 @@ export default function App() {
                       <Smartphone className="w-4 h-4" />
                       Proceed to Download & Unlock APK →
                     </button>
+
+                    {/* Copy Full Download Page Link Button */}
+                    <button
+                      type="button"
+                      onClick={copyDownloadPageLink}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold px-4 py-3 rounded-xl border border-slate-200 transition-all active:scale-95 cursor-pointer mt-2.5 shadow-2xs"
+                      title="Copy download page link to open in another browser"
+                    >
+                      {copiedDownloadLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-600" />}
+                      <span>{copiedDownloadLink ? 'Download Page Link Copied!' : 'Copy Download Page Link'}</span>
+                    </button>
+
                     <p className="text-[11px] text-center text-slate-500 mt-2">
                       Key in code <strong>#{waitlistNumber}</strong> on the download page to unlock the APK installer.
                     </p>
-                    <p className="text-[11px] text-center text-amber-900 bg-amber-50 border border-amber-200 p-2 rounded-lg mt-1 font-bold">
+                    <p className="text-[11px] text-center text-amber-900 bg-amber-50 border border-amber-200 p-2.5 rounded-lg mt-1 font-bold">
                       Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome.
                     </p>
                   </div>
@@ -1569,10 +1593,25 @@ export default function App() {
                     className="w-full inline-flex items-center justify-center gap-2 bg-[#1A4F8A] hover:bg-[#123761] text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                   >
                     <Smartphone className="w-4 h-4" />
-                    Unlock & Download APK with this Code →
+                    Proceed to Download & Unlock APK →
                   </button>
+
+                  {/* Copy Full Download Page Link Button */}
+                  <button
+                    type="button"
+                    onClick={copyDownloadPageLink}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-bold px-4 py-3 rounded-xl border border-slate-200 transition-all active:scale-95 cursor-pointer mt-2.5 shadow-2xs"
+                    title="Copy download page link to open in another browser"
+                  >
+                    {copiedDownloadLink ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-slate-600" />}
+                    <span>{copiedDownloadLink ? 'Download Page Link Copied!' : 'Copy Download Page Link'}</span>
+                  </button>
+
                   <p className="text-[11px] text-center text-slate-500 mt-2">
                     Key in code <strong>#{waitlistNumber}</strong> on the download page to unlock the APK installer.
+                  </p>
+                  <p className="text-[11px] text-center text-amber-900 bg-amber-50 border border-amber-200 p-2.5 rounded-lg mt-1 font-bold">
+                    Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome.
                   </p>
                 </div>
               </div>
