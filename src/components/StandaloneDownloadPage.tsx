@@ -148,8 +148,8 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
 
     setDownloadStarted(true);
     const link = document.createElement('a');
-    link.href = '/downloads/interview-ready.apk';
-    link.download = 'interview-ready.apk';
+    link.href = '/downloads/interview-ready-v1.0.0.apk';
+    link.download = 'interview-ready-v1.0.0.apk';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -463,7 +463,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                     </span>
 
                     <span className="text-xs text-slate-500 font-mono font-medium hidden sm:inline">
-                      v1.0.0-beta • ~24.8 MB
+                      v1.0.0-beta • ~114 MB
                     </span>
                   </div>
 
