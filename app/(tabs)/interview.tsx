@@ -138,6 +138,7 @@ export default function InterviewScreen() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -430,24 +431,52 @@ export default function InterviewScreen() {
       <View style={[
         styles.inputArea, 
         { 
-          backgroundColor: colors.bgPrimary, 
+          backgroundColor: isDark ? colors.bgPrimary : '#FFFFFF', 
           borderTopColor: colors.border,
-          paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
+          paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.md) : Spacing.sm, 
         }
       ]}>
-        <View style={[styles.inputContainer, { flexDirection: 'column', alignItems: 'stretch', gap: Spacing.xs }]}>
+        <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
             <TextInput
-              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, paddingLeft: 24 }]}
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: isDark ? colors.bgCard : '#F8FAFC',
+                  borderColor: isFocused ? colors.primary : (isDark ? '#334155' : '#CBD5E1'),
+                  color: colors.textPrimary,
+                }
+              ]}
               placeholder="Type your response..."
               placeholderTextColor={colors.textMuted}
               value={inputText}
               onChangeText={setInputText}
               onSubmitEditing={handleSend}
               returnKeyType="send"
+              multiline={true}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              accessibilityLabel="Type your response"
             />
-            <Pressable style={[styles.sendBtn, { backgroundColor: colors.primary }]} onPress={handleSend}>
-              <Ionicons name="send" size={14} color="#fff" style={{ transform: [{ translateX: 1 }] }} />
+            <Pressable
+              style={[
+                styles.sendBtn,
+                {
+                  backgroundColor: inputText.trim() ? colors.primary : (isDark ? '#334155' : '#E2E8F0'),
+                  opacity: isTyping ? 0.6 : 1,
+                }
+              ]}
+              onPress={handleSend}
+              disabled={isTyping || !inputText.trim()}
+              accessibilityLabel="Send response"
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name="send"
+                size={16}
+                color={inputText.trim() ? '#FFFFFF' : colors.textMuted}
+                style={{ transform: [{ translateX: 1 }] }}
+              />
             </Pressable>
           </View>
           
@@ -666,14 +695,14 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   inputArea: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingTop: Spacing.sm + 2,
     borderTopWidth: 1,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: Spacing.xs,
     maxWidth: 768,
     alignSelf: 'center',
     width: '100%',
@@ -688,23 +717,34 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flex: 1,
     position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    width: '100%',
   },
   textInput: {
-    borderWidth: 1,
-    borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingLeft: 46,
-    paddingVertical: 12,
-    paddingRight: 56,
-    ...Typography.bodyLg,
+    flex: 1,
+    minHeight: 56,
+    maxHeight: 140,
+    borderWidth: 1.5,
+    borderRadius: Radius.xl,
+    paddingHorizontal: Spacing.md,
+    paddingLeft: Spacing.md,
+    paddingTop: Platform.OS === 'ios' ? 14 : 12,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 12,
+    paddingRight: 52,
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '500',
+    textAlignVertical: 'center',
+    ...Shadow.sm,
   },
   sendBtn: {
     position: 'absolute',
-    right: 6,
-    top: 6,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    right: 8,
+    bottom: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadow.sm,
