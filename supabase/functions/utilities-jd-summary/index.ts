@@ -4,6 +4,7 @@ import { createAuthClient } from '../_shared/supabase-client.ts';
 import { UnauthorizedError, ValidationError } from '../_shared/errors.ts';
 import { aiClient } from '../_shared/ai-client.ts';
 import { JD_SUMMARY_SCHEMA } from '../_shared/zod-schemas.ts';
+import { scrapeJobUrl, normalizeJobUrl } from '../_shared/scraper.ts';
 import { z } from 'npm:zod@3.22.4'; // eslint-disable-line import/no-unresolved
 
 const app = new Hono();
@@ -11,9 +12,9 @@ const app = new Hono();
 app.use('/*', cors());
 
 const JDSummaryInput = z.object({
-  job_description: z.string().max(10000).optional(),
-  job_url: z.string().url().optional(),
-}).refine((data: any) => data.job_description || data.job_url, {
+  job_description: z.string().max(50000).optional(),
+  job_url: z.string().optional().transform((val) => normalizeJobUrl(val)),
+}).refine((data: any) => (data.job_description && data.job_description.trim().length > 0) || (data.job_url && data.job_url.trim().length > 0), {
   message: "Either job_description or job_url must be provided",
 });
 
@@ -46,63 +47,34 @@ app.post('/*', async (c: any) => {
       throw error;
     }
 
-    let actualJobDescription = input.job_description || '';
+    let actualJobDescription = (input.job_description || '').trim();
 
     if (input.job_url) {
       console.log(`Scraping job from URL: ${input.job_url}`);
-      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
-      if (!SGAI_API_KEY) {
-        throw new ValidationError('SGAI_API_KEY is not configured. Cannot scrape URL.', { url: input.job_url });
-      }
-      try {
-        const scrapePayload = {
-          url: input.job_url,
-          prompt: `Extract the complete job description from this page. Include: job title, company name, location, job type, required qualifications, responsibilities, required skills, preferred skills, benefits, and any other relevant job details. Return all text content in a structured, readable format.`,
-          schema: {
-            type: 'object',
-            properties: {
-              job_title: { type: 'string' },
-              company: { type: 'string' },
-              description: { type: 'string' },
-              responsibilities: { type: 'array', items: { type: 'string' } },
-              required_skills: { type: 'array', items: { type: 'string' } },
-            },
-          },
-        };
+      const scrapeResult = await scrapeJobUrl(input.job_url);
 
-        const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'SGAI-APIKEY': SGAI_API_KEY,
-          },
-          body: JSON.stringify(scrapePayload),
-        });
-
-        if (scrapeResponse.ok) {
-          const scrapeResult = await scrapeResponse.json();
-          const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
-          
-          const scrapedText = [
-            extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
-            extractedData.company ? `Company: ${extractedData.company}` : '',
-            extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
-            extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
-            extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
-          ].filter(Boolean).join('\n');
-          
-          if (scrapedText.trim().length > 50) {
-            actualJobDescription = actualJobDescription 
-              ? actualJobDescription + '\n\n' + scrapedText 
-              : scrapedText;
-          }
+      if (scrapeResult.success && scrapeResult.extractedText) {
+        actualJobDescription = actualJobDescription 
+          ? actualJobDescription + '\n\n' + scrapeResult.extractedText 
+          : scrapeResult.extractedText;
+      } else {
+        if (!actualJobDescription || actualJobDescription.length < 20) {
+          throw new ValidationError(
+            'Could not read job link. Please paste the job text or attach a file instead.',
+            { url: input.job_url, code: 'SCRAPE_FAILED', details: scrapeResult.error }
+          );
         }
-      } catch (err: any) {
-        console.warn('Failed to scrape job URL for JD summary:', err.message);
+        console.warn('Failed to scrape job URL for JD summary, proceeding with user text:', scrapeResult.error);
       }
     }
 
-    // Proceed even if description is short — the AI will extract what it can.
+    if (!actualJobDescription || actualJobDescription.length < 20) {
+      throw new ValidationError('Please provide a job description via text, file, or valid URL.');
+    }
+
+    if (actualJobDescription.length > 15000) {
+      actualJobDescription = actualJobDescription.substring(0, 15000) + '\n\n[Job description truncated for summary]';
+    }
 
     const systemPrompt = `You are an expert technical recruiter. Analyze the job description and extract a concise summary.
 Focus on identifying the core responsibilities, must-have requirements, nice-to-haves, and any potential red flags or culture signals.

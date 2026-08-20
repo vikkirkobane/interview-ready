@@ -98,7 +98,7 @@ describe('Referral — user stories', () => {
   it('applies a referral code', async () => {
     (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
       if (url.includes('referral-apply')) {
-        return { ok: true, json: async () => ({ success: true, data: { message: 'Applied' } }) } as any;
+        return { ok: true, json: async () => ({ success: true, data: { message: 'Applied', credits_granted: 10, is_promo: false } }) } as any;
       }
       return {
         ok: true,
@@ -109,12 +109,51 @@ describe('Referral — user stories', () => {
     });
 
     const screen = await renderScreen();
-    await fireEvent.changeText(screen.getByPlaceholderText('Enter code here'), 'friend123');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. LINKEDIN20 or JOHN1234'), 'friend123');
     await fireEvent.press(screen.getByText('Apply'));
 
     await waitFor(() => {
       expect(mockToast.show).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', text1: 'Success!' })
+        expect.objectContaining({ type: 'success', text1: 'Referral Code Applied! 🎁' })
+      );
+    });
+  });
+
+  it('applies a promo code like LINKEDIN20 and grants 20 credits', async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+      if (url.includes('referral-apply')) {
+        return { 
+          ok: true, 
+          json: async () => ({ 
+            success: true, 
+            data: { 
+              message: 'Promo code applied!', 
+              credits_granted: 20, 
+              is_promo: true,
+              promo_code: 'LINKEDIN20' 
+            } 
+          }) 
+        } as any;
+      }
+      return {
+        ok: true,
+        json: async () => ({
+          data: { referral_code: 'JANE1234', total_referrals: 0, referrals: [] },
+        }),
+      } as any;
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. LINKEDIN20 or JOHN1234'), 'LINKEDIN20');
+    await fireEvent.press(screen.getByText('Apply'));
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ 
+          type: 'success', 
+          text1: 'Promo Code Applied! 🎉',
+          text2: 'Promo code applied!'
+        })
       );
     });
   });

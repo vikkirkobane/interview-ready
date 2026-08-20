@@ -223,4 +223,117 @@ describe('Resume Builder (new-resume) — user stories', () => {
       expect(screen.queryByText('Attached File:')).toBeNull();
     });
   });
+
+  it('normalizes URL and requests tailoring via jobs-analyze', async () => {
+    mockApiCall.mockImplementation((fn: string) => {
+      if (fn === 'jobs-analyze') {
+        return { data: { job_id: 'job-9' }, error: null };
+      }
+      if (fn === 'resumes-create') {
+        return { data: { resume_id: 'r2', message: 'ok', stream_channel: 'chan-2' }, error: null };
+      }
+      return { data: null, error: null };
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+      'linkedin.com/jobs/view/999'
+    );
+    await fireEvent.press(screen.getByText('Generate Tailored Resume'));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        'jobs-analyze',
+        'POST',
+        expect.objectContaining({ job_url: 'https://linkedin.com/jobs/view/999' })
+      );
+    });
+  });
+
+  it('shows concise error notification when URL scrape fails in new-resume', async () => {
+    mockApiCall.mockImplementation((fn: string) => {
+      if (fn === 'jobs-analyze') {
+        return {
+          data: null,
+          error: 'Could not read job link. Please paste the job text or attach a file instead.',
+        };
+      }
+      return { data: null, error: null };
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+      'https://blocked-site.com/job/555'
+    );
+    await fireEvent.press(screen.getByText('Generate Tailored Resume'));
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text or attach a file instead.',
+        })
+      );
+    });
+    expect(screen.getByText('Link inaccessible. Paste text or attach file.')).toBeTruthy();
+  });
+
+  it('enhances resume summary using AI Rewrite in the editor', async () => {
+    router.__setMockParams({ id: 'resume-123' });
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      {
+        id: 'resume-123',
+        user_id: 'test-user-id',
+        title: 'Lead PM Resume',
+        resume_contents: [
+          {
+            templateId: 'executive',
+            contact: { name: 'Alex Morgan', title: 'Product Lead', email: 'alex@example.com' },
+            summary: 'Experienced product leader building scalable apps.',
+            experience: [{ id: 'exp-1', title: 'Lead PM', company: 'Tech Corp', bullets: ['Led cross-functional team'] }],
+            skills: [{ id: 'sk-1', category: 'Core', items: ['Product Management'] }],
+            education: [],
+            certifications: [],
+            awards: [],
+            sections_to_include: { summary: true, experience: true, skills: true },
+          },
+        ],
+      },
+    ];
+
+    mockApiCall.mockImplementation((fn: string, method: string, payload: any) => {
+      if (fn === 'resumes-section-rewrite') {
+        return Promise.resolve({
+          data: {
+            rewritten: 'Strategic Product Leader with 8+ years scaling B2B platforms to $50M ARR.',
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
+
+    const screen = await renderScreen();
+    await waitFor(() => expect(screen.getByText('AI Rewrite')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('AI Rewrite'));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        'resumes-section-rewrite',
+        'POST',
+        expect.objectContaining({
+          section_type: 'summary',
+          text: 'Experienced product leader building scalable apps.',
+        })
+      );
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'Summary improved!' })
+      );
+      expect(screen.getByDisplayValue('Strategic Product Leader with 8+ years scaling B2B platforms to $50M ARR.')).toBeTruthy();
+    });
+  });
 });

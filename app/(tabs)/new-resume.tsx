@@ -260,7 +260,20 @@ export default function ResumeBuilderScreen() {
 
       // Use file text if available, otherwise use text input
       const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
-      const finalJobUrl = jobUrl.trim();
+      let finalJobUrl = jobUrl.trim();
+
+      if (finalJobUrl) {
+        if (!/^https?:\/\//i.test(finalJobUrl)) {
+          finalJobUrl = `https://${finalJobUrl}`;
+        }
+        try {
+          new URL(finalJobUrl);
+        } catch {
+          setUrlError('Please enter a valid job URL');
+          setIsGenerating(false);
+          return;
+        }
+      }
 
       if (finalJobDescription.length > 10 || finalJobUrl.length > 5) {
         const analyzeRes = await analyzeJobMutation.mutateAsync({
@@ -364,12 +377,28 @@ export default function ResumeBuilderScreen() {
 
     } catch (e: any) {
       setIsGenerating(false);
-      handleApiError(e.message, { fallbackTitle: 'Generation Failed' });
+      const errMsg = e.message || '';
+      if (
+        errMsg.includes('Could not read job link') || 
+        errMsg.includes('SCRAPE_FAILED') || 
+        errMsg.includes('extract content') || 
+        errMsg.includes('scrape')
+      ) {
+        setUrlError('Link inaccessible. Paste text or attach file.');
+        Toast.show({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text or attach a file instead.',
+          visibilityTime: 4000,
+        });
+      } else {
+        handleApiError(errMsg, { fallbackTitle: 'Generation Failed' });
+      }
     }
   };
 
   const { data: resumeData, isLoading } = useResumeQuery(id as string);
-  const remoteResume = resumeData?.resume_contents?.[0];
+  const remoteResume = (resumeData as any)?.resume_contents?.[0] || resumeData;
   const { profile } = useProfileStore();
 
   const [draft, setDraft] = useState<DraftResume | null>(null);
@@ -388,11 +417,12 @@ export default function ResumeBuilderScreen() {
 
   // Sync from remote when loaded
   React.useEffect(() => {
-    if (remoteResume && !draft) {
+    if (remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
+      const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
       setDraft({
         templateId: remoteResume.templateId || 'modern',
-        header: remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
-        summary: remoteResume.summary || '',
+        header: remoteResume.header || remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
+        summary: summaryText,
         experience: (remoteResume.experience || []).map((e: any) => ({ ...e, id: e.id || uid(), bullets: e.bullets || [] })),
         skills: (remoteResume.skills || []).map((s: any) => ({ ...s, id: s.id || uid(), items: s.items || [] })),
         education: (remoteResume.education || []).map((e: any) => ({ ...e, id: e.id || uid() })),
@@ -402,18 +432,18 @@ export default function ResumeBuilderScreen() {
           }
           return { ...c, id: c.id || uid() };
         }),
-        awards: (remoteResume.awards || []).map((a: any) => ({ ...a, id: a.id || uid() })),
-        featuredProject: (remoteResume.projects && remoteResume.projects.length > 0) 
+        awards: (remoteResume.awards || remoteResume.recognition || []).map((a: any) => ({ ...a, id: a.id || uid() })),
+        featuredProject: remoteResume.featuredProject || (remoteResume.projects && remoteResume.projects.length > 0 
           ? remoteResume.projects[0] 
-          : { include: false, name: '', tech_stack: '', bullet: '' },
+          : (remoteResume.featured_project || { include: false, name: '', tech_stack: '', bullet: '' })),
         sections_to_include: remoteResume.sections_to_include || {
           summary: true,
           skills: true,
           experience: true,
           featured_project: false,
           education: true,
-          certifications: remoteResume.certifications?.length > 0,
-          recognition: remoteResume.awards?.length > 0,
+          certifications: (remoteResume.certifications?.length || 0) > 0,
+          recognition: (remoteResume.awards?.length || remoteResume.recognition?.length || 0) > 0,
         }
       });
     }

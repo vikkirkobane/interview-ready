@@ -6,6 +6,7 @@ import { aiClient } from '../_shared/ai-client.ts';
 import { JD_ANALYSIS_SCHEMA, JD_SUMMARY_SCHEMA } from '../_shared/zod-schemas.ts';
 import { deductCredits, checkCredits } from '../_shared/credits.ts';
 import { withRateLimit } from '../_shared/rate-limiter.ts';
+import { scrapeJobUrl, normalizeJobUrl } from '../_shared/scraper.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -15,10 +16,10 @@ app.use('/*', cors());
 const AnalyzeJobInput = z.object({
   job_id: z.string().uuid().optional(),
   job_description: z.string().max(50000).optional(),
-  job_url: z.string().url().optional(),
+  job_url: z.string().optional().transform((val) => normalizeJobUrl(val)),
   user_role: z.string().optional(), // For context/personalization
   user_profile: z.record(z.any()).optional(), // The user's full profile
-}).refine(data => data.job_description || data.job_url, {
+}).refine(data => (data.job_description && data.job_description.trim().length > 0) || (data.job_url && data.job_url.trim().length > 0), {
   message: "Either job_description or job_url must be provided",
 });
 
@@ -64,91 +65,39 @@ app.post('/*', async (c: any) => {
       throw new InsufficientCreditsError(1, 0);
     }
 
-    let actualJobDescription = input.job_description || '';
+    let actualJobDescription = (input.job_description || '').trim();
 
-    // Extract job URL if provided using ScrapeGraphAI
+    // Extract job URL if provided using shared scraper
     if (input.job_url) {
       console.log(`Scraping job from URL: ${input.job_url}`);
-      
-      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
-      if (!SGAI_API_KEY) {
-        throw new ValidationError('SGAI_API_KEY is not configured. Cannot scrape URL.', { url: input.job_url });
-      }
-      
-      try {
-        const scrapePayload = {
-          url: input.job_url,
-          prompt: `Extract the complete job description from this page. Include: job title, company name, location, job type (remote/hybrid/onsite), salary range if mentioned, required qualifications, responsibilities, required skills, preferred skills, benefits, and any other relevant job details. Return all text content in a structured, readable format.`,
-          schema: {
-            type: 'object',
-            properties: {
-              job_title: { type: 'string' },
-              company: { type: 'string' },
-              location: { type: 'string' },
-              job_type: { type: 'string' },
-              salary: { type: 'string' },
-              description: { type: 'string' },
-              responsibilities: { type: 'array', items: { type: 'string' } },
-              required_qualifications: { type: 'array', items: { type: 'string' } },
-              required_skills: { type: 'array', items: { type: 'string' } },
-              preferred_skills: { type: 'array', items: { type: 'string' } },
-              benefits: { type: 'array', items: { type: 'string' } },
-            },
-          },
-        };
+      const scrapeResult = await scrapeJobUrl(input.job_url);
 
-        const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'SGAI-APIKEY': SGAI_API_KEY,
-          },
-          body: JSON.stringify(scrapePayload),
-        });
-
-        if (!scrapeResponse.ok) {
-          const errorText = await scrapeResponse.text().catch(() => 'Unknown error');
-          console.error(`ScrapeGraphAI failed with status ${scrapeResponse.status}:`, errorText);
-          throw new Error(`Scraper returned ${scrapeResponse.status}: ${errorText}`);
+      if (scrapeResult.success && scrapeResult.extractedText) {
+        actualJobDescription = actualJobDescription
+          ? actualJobDescription + '\n\n' + scrapeResult.extractedText
+          : scrapeResult.extractedText;
+        console.log(`Successfully scraped ${scrapeResult.extractedText.length} characters from URL`);
+      } else {
+        // If user provided NO text/file and ONLY gave a URL that failed to scrape,
+        // do not deduct credits or run AI on empty text. Notify user to paste text or attach file.
+        if (!actualJobDescription || actualJobDescription.length < 20) {
+          throw new ValidationError(
+            'Could not read job link. Please paste the job text or attach a file instead.',
+            { url: input.job_url, code: 'SCRAPE_FAILED', details: scrapeResult.error }
+          );
         }
-
-        const scrapeResult = await scrapeResponse.json();
-        const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
-        
-        // Convert structured data to readable text
-        const scrapedText = [
-          extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
-          extractedData.company ? `Company: ${extractedData.company}` : '',
-          extractedData.location ? `Location: ${extractedData.location}` : '',
-          extractedData.job_type ? `Job Type: ${extractedData.job_type}` : '',
-          extractedData.salary ? `Salary: ${extractedData.salary}` : '',
-          extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
-          extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
-          extractedData.required_qualifications?.length ? `\nRequired Qualifications:\n${extractedData.required_qualifications.map((q: string) => `- ${q}`).join('\n')}` : '',
-          extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
-          extractedData.preferred_skills?.length ? `\nPreferred Skills:\n${extractedData.preferred_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
-          extractedData.benefits?.length ? `\nBenefits:\n${extractedData.benefits.map((b: string) => `- ${b}`).join('\n')}` : '',
-        ].filter(Boolean).join('\n');
-        
-        if (!scrapedText || scrapedText.trim().length < 100) {
-          // Soft fallback: some sites (LinkedIn, Greenhouse) block scrapers.
-          // Log and continue — the AI will generate based on the user's profile only.
-          console.warn('ScrapeGraphAI returned insufficient content (possibly bot-protected page). Falling back to profile-only generation.', JSON.stringify(extractedData).substring(0, 200));
-        } else {
-          actualJobDescription = actualJobDescription
-            ? actualJobDescription + '\n\n' + scrapedText
-            : scrapedText;
-          console.log(`Successfully scraped ${scrapedText.length} characters from URL using ScrapeGraphAI`);
-        }
-      } catch (err: any) {
-        // Non-fatal: log the error but don't block the user.
-        // Many job boards (LinkedIn, Workday, Greenhouse) actively block scrapers.
-        console.warn('URL scraping failed (non-fatal), proceeding without URL context:', err.message);
+        console.warn('URL scraping failed, proceeding with user provided description:', scrapeResult.error);
       }
     }
 
-    // If no job description was extracted/provided, the AI will generate based on profile only.
-    // This is a valid use-case (base resume, generic cover letter, etc.).
+    if (!actualJobDescription || actualJobDescription.length < 20) {
+      throw new ValidationError('Please provide a job description via text, file, or valid URL.');
+    }
+
+    // Ensure job description is capped safely for AI context window (max 15,000 chars)
+    if (actualJobDescription.length > 15000) {
+      actualJobDescription = actualJobDescription.substring(0, 15000) + '\n\n[Job description truncated for analysis]';
+    }
 
     // Call AI to analyze job
     const systemPrompt = `You are an expert career coach and ATS (Applicant Tracking System) specialist.

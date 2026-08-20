@@ -1,5 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { queryClient as globalQueryClient } from '../lib/query-client';
+import { useProfileStore } from '../stores/profile-store';
+
+async function syncCreditCaches() {
+  try {
+    globalQueryClient.invalidateQueries({ queryKey: ['credits'] });
+    globalQueryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    globalQueryClient.invalidateQueries({ queryKey: ['profile'] });
+    await useProfileStore.getState().fetchProfile().catch(() => {});
+  } catch {
+    // Ignore cache invalidation errors
+  }
+}
 
 interface ReferralStats {
   referralCode: string | null;
@@ -121,18 +134,25 @@ export function useReferral(): UseReferralReturn {
           }
         );
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            await fetchStats();
-            return {
-              success: true,
-              message: result.data?.message || 'Code applied successfully!',
-              creditsGranted: result.data?.credits_granted,
-              isPromo: result.data?.is_promo,
-            };
-          }
-          if (result.error && !result.error.toLowerCase().includes('invalid referral code')) {
+        const result = await response.json().catch(() => ({}));
+        if (response.ok && result.success) {
+          await fetchStats();
+          await syncCreditCaches();
+          return {
+            success: true,
+            message: result.data?.message || 'Code applied successfully!',
+            creditsGranted: result.data?.credits_granted,
+            isPromo: result.data?.is_promo,
+          };
+        }
+
+        if (result.error) {
+          if (
+            result.error.includes('already redeemed') ||
+            result.error.includes('maximum limit') ||
+            result.error.includes('Too many') ||
+            result.error.includes('own referral')
+          ) {
             return {
               success: false,
               error: result.error,
@@ -152,6 +172,7 @@ export function useReferral(): UseReferralReturn {
 
         if (!promoError && promoData?.success) {
           await fetchStats();
+          await syncCreditCaches();
           return {
             success: true,
             message: promoData.message || `Success! Promo code applied! You received ${promoData.credits_granted || 20} bonus credits!`,
@@ -180,6 +201,7 @@ export function useReferral(): UseReferralReturn {
 
         if (!refError && refData?.success) {
           await fetchStats();
+          await syncCreditCaches();
           return {
             success: true,
             message: refData.message || 'Referral code applied successfully!',

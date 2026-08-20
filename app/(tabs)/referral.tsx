@@ -48,17 +48,18 @@ export default function ReferralScreen() {
     const result = await applyReferralCode(inputCode.trim());
     setSubmitting(false);
     if (result.success) {
+      const credits = result.creditsGranted || (result.isPromo ? 20 : 10);
       Toast.show({
         type: 'success',
-        text1: 'Success!',
-        text2: result.message || 'Referral code applied successfully!',
+        text1: result.isPromo ? 'Promo Code Applied! 🎉' : 'Referral Code Applied! 🎁',
+        text2: result.message || `You received ${credits} free AI credits!`,
       });
       setInputCode('');
     } else {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: result.error || 'Failed to apply referral code.',
+        text2: result.error || 'Failed to apply code.',
       });
     }
   };
@@ -140,11 +141,11 @@ export default function ReferralScreen() {
         )}
 
         <View style={[styles.submitCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-          <Text style={[styles.submitTitle, { color: colors.textPrimary }]}>Have a referral code?</Text>
+          <Text style={[styles.submitTitle, { color: colors.textPrimary }]}>Have a referral or promo code?</Text>
           <View style={styles.submitRow}>
             <TextInput
               style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
-              placeholder="Enter code here"
+              placeholder="e.g. LINKEDIN20 or JOHN1234"
               placeholderTextColor={colors.textMuted}
               value={inputCode}
               onChangeText={setInputCode}

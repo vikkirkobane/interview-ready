@@ -376,13 +376,27 @@ export type LinkedInAnalysis = z.infer<typeof LINKEDIN_ANALYSIS_SCHEMA>;
  */
 export const LINKEDIN_HEADLINE_SCHEMA = z.object({
   variants: z.array(z.object({
-    /** The headline text — must be ≤ 220 characters */
-    text:      z.string().max(220).optional().default(''),
+    /** The headline text */
+    text:      z.string().optional().default(''),
     /** Why this option was written this way */
     rationale: z.string().optional().default(''),
     /** Primary optimisation axis */
-    focus:     z.enum(['SEARCH_RANK', 'DIFFERENTIATION', 'IMPACT_METRIC']).optional().default('SEARCH_RANK'),
-  })).min(0).max(10).optional().default([]),
+    focus:     z.string().optional().default('SEARCH_RANK'),
+  })).optional().default([]),
+  headlines: z.array(z.any()).optional(),
+}).transform((data) => {
+  if ((!data.variants || data.variants.length === 0) && data.headlines && Array.isArray(data.headlines)) {
+    return {
+      variants: data.headlines.map((h: any) => typeof h === 'string' ? { text: h, rationale: '', focus: 'SEARCH_RANK' } : {
+        text: h.text || h.headline || '',
+        rationale: h.rationale || h.reason || '',
+        focus: h.focus || 'SEARCH_RANK',
+      }),
+    };
+  }
+  return {
+    variants: data.variants || [],
+  };
 });
 
 export type LinkedInHeadline = z.infer<typeof LINKEDIN_HEADLINE_SCHEMA>;
@@ -393,14 +407,19 @@ export type LinkedInHeadline = z.infer<typeof LINKEDIN_HEADLINE_SCHEMA>;
  * Hook → Credibility → Value Delivery Framework → Human Element → CTA
  */
 export const LINKEDIN_ABOUT_SCHEMA = z.object({
-  /** The full ready-to-paste About section (≤ 2600 characters LinkedIn limit) */
-  content: z.string().max(2600).optional().default(''),
+  /** The full ready-to-paste About section */
+  content: z.string().optional().default(''),
+  about: z.string().optional(),
+  summary: z.string().optional(),
   /** Map of keywords embedded, with placement notes for the user */
   keyword_map: z.array(z.object({
     keyword:   z.string().optional().default(''),
     placement: z.string().optional().default(''), // e.g. "opening hook", "value delivery bullet 2"
   })).optional().default([]),
-});
+}).transform((data) => ({
+  content: data.content || data.about || data.summary || '',
+  keyword_map: data.keyword_map || [],
+}));
 
 export type LinkedInAbout = z.infer<typeof LINKEDIN_ABOUT_SCHEMA>;
 
@@ -415,7 +434,30 @@ export const LINKEDIN_EXPERIENCE_SCHEMA = z.object({
     company: z.string().optional().default(''),
     /** Each bullet starts with a **bolded quantified outcome**: … */
     bullets: z.array(z.string()).optional().default([]),
+    experience: z.array(z.string()).optional(),
   })).optional().default([]),
+  roles: z.array(z.any()).optional(),
+  experience: z.array(z.any()).optional(),
+}).transform((data) => {
+  if (!data.rewritten_roles || data.rewritten_roles.length === 0) {
+    const rawRoles = data.roles || data.experience || [];
+    if (Array.isArray(rawRoles) && rawRoles.length > 0) {
+      return {
+        rewritten_roles: rawRoles.map((r: any) => ({
+          title: r.title || r.job_title || '',
+          company: r.company || r.company_name || '',
+          bullets: r.bullets || r.experience || (typeof r.description === 'string' ? [r.description] : []),
+        })),
+      };
+    }
+  }
+  return {
+    rewritten_roles: (data.rewritten_roles || []).map((r) => ({
+      title: r.title || '',
+      company: r.company || '',
+      bullets: r.bullets && r.bullets.length > 0 ? r.bullets : (r.experience || []),
+    })),
+  };
 });
 
 export type LinkedInExperience = z.infer<typeof LINKEDIN_EXPERIENCE_SCHEMA>;
@@ -426,7 +468,9 @@ export type LinkedInExperience = z.infer<typeof LINKEDIN_EXPERIENCE_SCHEMA>;
  */
 export const LINKEDIN_SKILLS_SCHEMA = z.object({
   /** The 5 skills to pin — ordered by recruiter search priority */
-  pinned_top_5: z.array(z.string()).min(0).max(10).optional().default([]),
+  pinned_top_5: z.array(z.string()).optional().default([]),
+  top_5: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
   /** Full categorised list for maximum Boolean-search coverage */
   categorized: z.object({
     core_technical:  z.array(z.string()).optional().default([]),
@@ -441,7 +485,16 @@ export const LINKEDIN_SKILLS_SCHEMA = z.object({
     leadership: [],
     soft_skills: [],
   }),
-});
+}).transform((data) => ({
+  pinned_top_5: data.pinned_top_5 && data.pinned_top_5.length > 0 ? data.pinned_top_5 : (data.top_5 || data.skills?.slice(0, 5) || []),
+  categorized: data.categorized || {
+    core_technical: [],
+    industry_domain: [],
+    tools_platforms: [],
+    leadership: [],
+    soft_skills: [],
+  },
+}));
 
 export type LinkedInSkills = z.infer<typeof LINKEDIN_SKILLS_SCHEMA>;
 
@@ -451,14 +504,33 @@ export type LinkedInSkills = z.infer<typeof LINKEDIN_SKILLS_SCHEMA>;
  */
 export const LINKEDIN_FEATURED_SCHEMA = z.object({
   recommended_items: z.array(z.object({
-    type:        z.enum(['CREDENTIAL', 'PORTFOLIO', 'CASE_STUDY', 'CERTIFICATION', 'THOUGHT_LEADERSHIP']).optional().default('PORTFOLIO'),
+    type:        z.string().optional().default('PORTFOLIO'),
     /** Keyword-rich title for the featured card */
     title:       z.string().optional().default(''),
     /** 1-2 sentence description focused on relevance and impact */
     description: z.string().optional().default(''),
     /** Clear CTA text e.g. "View case study", "Download portfolio" */
     cta:         z.string().optional().default(''),
-  })).min(0).max(10).optional().default([]),
+  })).optional().default([]),
+  items: z.array(z.any()).optional(),
+  featured: z.array(z.any()).optional(),
+}).transform((data) => {
+  if (!data.recommended_items || data.recommended_items.length === 0) {
+    const rawItems = data.items || data.featured || [];
+    if (Array.isArray(rawItems) && rawItems.length > 0) {
+      return {
+        recommended_items: rawItems.map((item: any) => ({
+          type: item.type || 'PORTFOLIO',
+          title: item.title || '',
+          description: item.description || '',
+          cta: item.cta || 'View item',
+        })),
+      };
+    }
+  }
+  return {
+    recommended_items: data.recommended_items || [],
+  };
 });
 
 export type LinkedInFeatured = z.infer<typeof LINKEDIN_FEATURED_SCHEMA>;
@@ -474,11 +546,16 @@ export const LINKEDIN_OUTREACH_SCHEMA = z.object({
   proactive_outreach: z.string().optional().default(''),
   /** For requesting a referral from a mutual connection */
   referral_request: z.string().optional().default(''),
-}).optional().default({
-  inbound_response: '',
-  proactive_outreach: '',
-  referral_request: '',
-});
+  templates: z.object({
+    inbound_response: z.string().optional(),
+    proactive_outreach: z.string().optional(),
+    referral_request: z.string().optional(),
+  }).optional(),
+}).transform((data) => ({
+  inbound_response: data.inbound_response || data.templates?.inbound_response || '',
+  proactive_outreach: data.proactive_outreach || data.templates?.proactive_outreach || '',
+  referral_request: data.referral_request || data.templates?.referral_request || '',
+}));
 
 export type LinkedInOutreach = z.infer<typeof LINKEDIN_OUTREACH_SCHEMA>;
 

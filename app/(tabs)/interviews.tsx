@@ -114,12 +114,23 @@ export default function InterviewsLobbyScreen() {
     }
 
     const finalJobDescription = jdFileText.trim().length > 0 ? jdFileText : jobDescription.trim();
-    const finalJobUrl = jobUrl.trim();
+    let finalJobUrl = jobUrl.trim();
 
     // Validate URL if provided
-    if (finalJobUrl && !/^https?:\/\/.+/i.test(finalJobUrl)) {
-      setUrlError('Please enter a valid URL starting with http:// or https://');
-      return;
+    if (finalJobUrl) {
+      if (!/^https?:\/\//i.test(finalJobUrl)) {
+        finalJobUrl = `https://${finalJobUrl}`;
+      }
+      try {
+        const parsed = new URL(finalJobUrl);
+        if (!parsed.hostname || !parsed.hostname.includes('.')) {
+          setUrlError('Please enter a valid URL starting with http:// or https://');
+          return;
+        }
+      } catch {
+        setUrlError('Please enter a valid URL starting with http:// or https://');
+        return;
+      }
     }
     setUrlError('');
 

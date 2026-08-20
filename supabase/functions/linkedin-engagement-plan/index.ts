@@ -17,10 +17,10 @@ app.use('/*', cors());
  * Only accessible after the user has completed the main analysis.
  */
 const EngagementPlanInput = z.object({
-  target_roles:     z.array(z.string()).min(1).max(3),
+  target_roles:     z.array(z.string()).min(0).max(10).optional().default(['Professional']),
   target_companies: z.array(z.string()).optional(),
   industry:         z.string().optional(),
-  tone:             z.enum(['PROFESSIONAL', 'APPROACHABLE', 'DATA_DRIVEN', 'NARRATIVE', 'INSPIRATIONAL']).optional(),
+  tone:             z.enum(['PROFESSIONAL', 'APPROACHABLE', 'DATA_DRIVEN', 'NARRATIVE', 'INSPIRATIONAL']).optional().default('PROFESSIONAL'),
   /** Key achievement or insight from the profile analysis to anchor content ideas */
   top_achievement:  z.string().optional(),
 });

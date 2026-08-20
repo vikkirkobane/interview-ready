@@ -118,7 +118,19 @@ export default function JobFitScreen() {
 
     // Use text area (or fallback to JD file text)
     const finalJdText = (jdText.trim() || jdFileText.trim());
-    const finalJdUrl = jdUrl.trim();
+    let finalJdUrl = jdUrl.trim();
+
+    if (finalJdUrl) {
+      if (!/^https?:\/\//i.test(finalJdUrl)) {
+        finalJdUrl = `https://${finalJdUrl}`;
+      }
+      try {
+        new URL(finalJdUrl);
+      } catch {
+        setUrlError('Please enter a valid job URL');
+        return;
+      }
+    }
 
     // Require either text/file OR URL
     if (finalJdText.length < 20 && !finalJdUrl) {
@@ -144,9 +156,21 @@ export default function JobFitScreen() {
       // Navigate to standalone results screen
       router.push(`/job-match-results?id=${result.job_id}` as any);
     } catch (error: any) {
-      if (error.message.includes('extract content from the provided URL') || error.message.includes('URL')) {
-        setUrlError(error.message);
-      } else if (isRateLimitedError(error.message) && !isRetrying) {
+      const errMsg = error.message || '';
+      if (
+        errMsg.includes('Could not read job link') || 
+        errMsg.includes('SCRAPE_FAILED') || 
+        errMsg.includes('extract content') || 
+        errMsg.includes('scrape')
+      ) {
+        setUrlError('Link inaccessible. Paste text or attach file.');
+        Toast.show({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text or attach a file instead.',
+          visibilityTime: 4000,
+        });
+      } else if (isRateLimitedError(errMsg) && !isRetrying) {
         // Auto-retry once after 3 seconds for rate-limited requests
         setIsRetrying(true);
         Toast.show({
@@ -160,7 +184,7 @@ export default function JobFitScreen() {
           handleAnalyze();
         }, 3000);
       } else {
-        handleApiError(error.message, { fallbackTitle: 'Analysis Failed' });
+        handleApiError(errMsg, { fallbackTitle: 'Analysis Failed' });
       }
     }
   };

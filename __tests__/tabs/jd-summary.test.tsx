@@ -135,4 +135,56 @@ describe('JD Summarizer — user stories', () => {
       expect(screen.getByText('Analyze Job Description')).toBeTruthy();
     });
   });
+
+  it('normalizes URL and requests summary', async () => {
+    mockApiCall.mockResolvedValue({
+      data: {
+        title: 'Backend Engineer JD',
+        key_requirements: ['Go'],
+        niceToHaves: [],
+        red_flags: [],
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+      'linkedin.com/jobs/view/444'
+    );
+    await fireEvent.press(screen.getByLabelText('SUMMARIZE →'));
+
+    await waitFor(() => {
+      expect(mockApiCall).toHaveBeenCalledWith(
+        'utilities-jd-summary',
+        'POST',
+        expect.objectContaining({ job_url: 'https://linkedin.com/jobs/view/444' })
+      );
+    });
+  });
+
+  it('shows concise error notification when link scrape fails', async () => {
+    mockApiCall.mockResolvedValue({
+      data: null,
+      error: 'Could not read job link. Please paste the job text or attach a file instead.',
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+      'https://blocked-job.com/444'
+    );
+    await fireEvent.press(screen.getByLabelText('SUMMARIZE →'));
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text instead.',
+        })
+      );
+    });
+    expect(screen.getByText('Link inaccessible. Paste text below.')).toBeTruthy();
+  });
 });

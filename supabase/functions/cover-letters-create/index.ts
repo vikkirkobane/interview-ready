@@ -5,6 +5,7 @@ import { UnauthorizedError, ValidationError, InsufficientCreditsError, NotFoundE
 import { aiClient } from '../_shared/ai-client.ts';
 import { COVER_LETTER_SCHEMA } from '../_shared/zod-schemas.ts';
 import { deductCredits, checkCredits } from '../_shared/credits.ts';
+import { scrapeJobUrl, normalizeJobUrl } from '../_shared/scraper.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -18,7 +19,7 @@ const CreateCoverLetterInput = z.object({
   tone: z.enum(['PROFESSIONAL', 'ENTHUSIASTIC', 'CONCISE', 'STORYTELLING', 'FORMAL']),
   resume_id: z.string().uuid().optional(),
   job_description: z.string().optional(),
-  job_url: z.string().url().optional(),
+  job_url: z.string().optional().transform((val) => normalizeJobUrl(val)),
 });
 
 type CreateCoverLetterInputType = z.infer<typeof CreateCoverLetterInput>;
@@ -89,72 +90,53 @@ app.post('/*', async (c: any) => {
     }
 
     // Fetch job application / JD context
-    let jobDescriptionText = input.job_description || '';
+    let jobDescriptionText = (input.job_description || '').trim();
+    let targetJobTitle = input.job_title;
+    let targetCompany = input.company_name;
+
     if (input.job_application_id) {
       const { data: jobApp } = await client
         .from('job_applications')
-        .select('raw_jd, jd_summary')
+        .select('raw_jd, jd_summary, job_title, company')
         .eq('id', input.job_application_id)
         .single();
         
       if (jobApp) {
         jobDescriptionText = jobApp.raw_jd || JSON.stringify(jobApp.jd_summary);
+        if (targetJobTitle === 'Target Role' && jobApp.job_title) targetJobTitle = jobApp.job_title;
+        if (targetCompany === 'Target Company' && jobApp.company) targetCompany = jobApp.company;
       }
     }
 
     if (input.job_url) {
       console.log(`Scraping job from URL: ${input.job_url}`);
-      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
-      if (!SGAI_API_KEY) {
-        throw new ValidationError('SGAI_API_KEY is not configured. Cannot scrape URL.', { url: input.job_url });
-      }
-      try {
-        const scrapePayload = {
-          url: input.job_url,
-          prompt: `Extract the complete job description from this page. Include: job title, company name, location, job type, required qualifications, responsibilities, required skills, preferred skills, benefits, and any other relevant job details. Return all text content in a structured, readable format.`,
-          schema: {
-            type: 'object',
-            properties: {
-              job_title: { type: 'string' },
-              company: { type: 'string' },
-              description: { type: 'string' },
-              responsibilities: { type: 'array', items: { type: 'string' } },
-              required_skills: { type: 'array', items: { type: 'string' } },
-            },
-          },
-        };
+      const scrapeResult = await scrapeJobUrl(input.job_url);
 
-        const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'SGAI-APIKEY': SGAI_API_KEY,
-          },
-          body: JSON.stringify(scrapePayload),
-        });
-
-        if (scrapeResponse.ok) {
-          const scrapeResult = await scrapeResponse.json();
-          const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
-          
-          const scrapedText = [
-            extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
-            extractedData.company ? `Company: ${extractedData.company}` : '',
-            extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
-            extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
-            extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
-          ].filter(Boolean).join('\n');
-          
-          if (scrapedText.trim().length > 50) {
-            jobDescriptionText = jobDescriptionText 
-              ? jobDescriptionText + '\n\n' + scrapedText 
-              : scrapedText;
-          }
+      if (scrapeResult.success && scrapeResult.extractedText) {
+        jobDescriptionText = jobDescriptionText
+          ? jobDescriptionText + '\n\n' + scrapeResult.extractedText
+          : scrapeResult.extractedText;
+        if ((!targetJobTitle || targetJobTitle === 'Target Role') && scrapeResult.data?.job_title) {
+          targetJobTitle = scrapeResult.data.job_title;
         }
-      } catch (err: any) {
-        console.warn('Failed to scrape job URL for cover letter:', err.message);
-        // Continue with the text we already have
+        if ((!targetCompany || targetCompany === 'Target Company') && scrapeResult.data?.company) {
+          targetCompany = scrapeResult.data.company;
+        }
+        console.log(`Successfully scraped ${scrapeResult.extractedText.length} characters for cover letter`);
+      } else {
+        if (!jobDescriptionText || jobDescriptionText.length < 20) {
+          throw new ValidationError(
+            'Could not read job link. Please paste the job text or attach a file instead.',
+            { url: input.job_url, code: 'SCRAPE_FAILED', details: scrapeResult.error }
+          );
+        }
+        console.warn('URL scraping failed for cover letter, continuing with existing text:', scrapeResult.error);
       }
+    }
+
+    // Ensure JD text is capped safely for AI context (max 15,000 chars)
+    if (jobDescriptionText.length > 15000) {
+      jobDescriptionText = jobDescriptionText.substring(0, 15000) + '\n\n[Job description truncated for cover letter]';
     }
 
     const systemPrompt = `You are an expert Career Coach and Professional Cover Letter Writer with 15+ years of
@@ -338,8 +320,8 @@ CANDIDATE'S TOP ACHIEVEMENTS (optional but highly recommended):
 
 TARGET JOB DETAILS:
 
-Job Title: ${input.job_title}
-Company Name: ${input.company_name}
+Job Title: ${targetJobTitle || input.job_title}
+Company Name: ${targetCompany || input.company_name}
 Company Description (optional): 
 Hiring Manager Name (optional): 
 Job Description: ${jobDescriptionText}
@@ -359,8 +341,8 @@ Any industry, cultural, or geographic context?`;
 
     // Deduct credits
     await deductCredits(user.id, 'COVER_LETTER', {
-      job_title: input.job_title,
-      company: input.company_name,
+      job_title: targetJobTitle || input.job_title,
+      company: targetCompany || input.company_name,
     });
 
     // Save to database

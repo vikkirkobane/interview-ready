@@ -3,6 +3,7 @@ import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient } from '../_shared/supabase-client.ts';
 import { UnauthorizedError, ValidationError, InsufficientCreditsError } from '../_shared/errors.ts';
 import { deductCredits, checkCredits } from '../_shared/credits.ts';
+import { scrapeJobUrl, normalizeJobUrl } from '../_shared/scraper.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -14,9 +15,9 @@ const StartInterviewInput = z.object({
   role: z.string().min(1),
   company: z.string().optional(),
   job_description: z.string().optional(),
-  job_url: z.string().url().optional(),
-  interview_type: z.enum(['TECHNICAL', 'BEHAVIORAL', 'SYSTEM_DESIGN', 'MIXED', 'CASE_STUDY']),
-  difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'SENIOR']).optional().default('INTERMEDIATE'),
+  job_url: z.string().optional().transform((val) => normalizeJobUrl(val)),
+  interview_type: z.enum(['TECHNICAL', 'BEHAVIORAL', 'SYSTEM_DESIGN', 'MIXED', 'CASE_STUDY', 'LEADERSHIP']),
+  difficulty: z.enum(['BEGINNER', 'INTERMEDIATE', 'SENIOR', 'EASY', 'MEDIUM', 'HARD']).optional().default('INTERMEDIATE'),
 });
 
 type StartInterviewInputType = z.infer<typeof StartInterviewInput>;
@@ -41,7 +42,7 @@ app.post('/*', async (c: any) => {
       input = StartInterviewInput.parse(body);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        throw new ValidationError('Invalid start interview input', {
+        throw new ValidationError('Invalid interview input', {
           errors: error.errors.map((e: any) => ({ path: e.path.join('.'), message: e.message })),
         });
       }
@@ -61,58 +62,18 @@ app.post('/*', async (c: any) => {
     });
 
     // Extract job description from URL if provided
-    let actualJobDescription = input.job_description || '';
+    let actualJobDescription = (input.job_description || '').trim();
     if (input.job_url) {
-      const SGAI_API_KEY = Deno.env.get('SGAI_API_KEY');
-      if (SGAI_API_KEY) {
-        try {
-          const scrapePayload = {
-            url: input.job_url,
-            prompt: `Extract the complete job description from this page. Include: job title, company name, responsibilities, required skills, and any other relevant job details.`,
-            schema: {
-              type: 'object',
-              properties: {
-                job_title: { type: 'string' },
-                company: { type: 'string' },
-                description: { type: 'string' },
-                responsibilities: { type: 'array', items: { type: 'string' } },
-                required_skills: { type: 'array', items: { type: 'string' } },
-              },
-            },
-          };
-
-          const scrapeResponse = await fetch('https://v2-api.scrapegraphai.com/api/extract', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'SGAI-APIKEY': SGAI_API_KEY,
-            },
-            body: JSON.stringify(scrapePayload),
-          });
-
-          if (scrapeResponse.ok) {
-            const scrapeResult = await scrapeResponse.json();
-            const extractedData = scrapeResult.data ?? scrapeResult.result ?? scrapeResult;
-            
-            const scrapedText = [
-              extractedData.job_title ? `Job Title: ${extractedData.job_title}` : '',
-              extractedData.company ? `Company: ${extractedData.company}` : '',
-              extractedData.description ? `\nDescription:\n${extractedData.description}` : '',
-              extractedData.responsibilities?.length ? `\nResponsibilities:\n${extractedData.responsibilities.map((r: string) => `- ${r}`).join('\n')}` : '',
-              extractedData.required_skills?.length ? `\nRequired Skills:\n${extractedData.required_skills.map((s: string) => `- ${s}`).join('\n')}` : '',
-            ].filter(Boolean).join('\n');
-            
-            if (scrapedText.trim().length > 50) {
-              actualJobDescription = actualJobDescription 
-                ? actualJobDescription + '\n\n' + scrapedText 
-                : scrapedText;
-            }
-          }
-        } catch (err) {
-          console.warn('Failed to scrape job URL for interview:', err);
-          // Non-fatal, continue with provided description
-        }
+      const scrapeResult = await scrapeJobUrl(input.job_url);
+      if (scrapeResult.success && scrapeResult.extractedText) {
+        actualJobDescription = actualJobDescription 
+          ? actualJobDescription + '\n\n' + scrapeResult.extractedText 
+          : scrapeResult.extractedText;
       }
+    }
+
+    if (actualJobDescription.length > 15000) {
+      actualJobDescription = actualJobDescription.substring(0, 15000) + '\n\n[Job description truncated for interview]';
     }
 
     // Generate first message (System/Interviewer greeting)

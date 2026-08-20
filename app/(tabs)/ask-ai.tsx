@@ -77,13 +77,23 @@ export default function AskAIScreen() {
       return;
     }
 
+    // If user pasted a link, inform them to paste only application questions or job descriptions directly.
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[a-zA-Z0-9-]+\.[^\s]+)/i;
+    if (urlRegex.test(question)) {
+      const userMsgText = question || `[Analyze attached file: ${jdFileName || 'document'}]`;
+      const userMsg: Message = { id: Date.now().toString(), role: 'user', text: userMsgText };
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        text: 'Please paste only application questions or job descriptions.'
+      };
+      setMessages(prev => [...prev, userMsg, aiMsg]);
+      setInputText('');
+      return;
+    }
+
     // If only a file is attached, ask the AI to analyze it thoroughly.
     const effectiveQuestion = question || 'Please analyze the attached document thoroughly and provide a clear, detailed summary of the key points, requirements, and anything notable.';
-
-    // Extract URL from question or file text if present
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = (question || fileContext).match(urlRegex);
-    const extractedUrl = urls ? urls[0] : undefined;
 
     const userMsgText = question || `[Analyze attached file: ${jdFileName || 'document'}]`;
 
@@ -97,7 +107,6 @@ export default function AskAIScreen() {
       const response = await answerQuestionMutation.mutateAsync({
         question: effectiveQuestion,
         context_source: 'profile',
-        job_url: extractedUrl,
         file_context: fileContext || undefined,
       });
 

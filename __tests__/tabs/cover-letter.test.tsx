@@ -270,4 +270,31 @@ describe('Cover Letter Generator — user stories', () => {
       );
     });
   });
+
+  it('shows concise notification and sets inline error when link scrape fails', async () => {
+    mockApiCall.mockResolvedValue({
+      data: null,
+      error: 'Could not read job link. Please paste the job text or attach a file instead.',
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Acme Corp'), 'Acme');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Senior Software Engineer'), 'Engineer');
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('https://www.linkedin.com/jobs/view/...'),
+      'https://blocked-site.com/job/123'
+    );
+    await fireEvent.press(screen.getByText('Generate Cover Letter'));
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text or attach a file instead.',
+        })
+      );
+    });
+    expect(screen.getByText('Link inaccessible. Paste text or attach file.')).toBeTruthy();
+  });
 });

@@ -267,7 +267,23 @@ export default function CoverLetterGeneratorScreen() {
         resetInterstitialCount();
       }
     } catch (e: any) {
-      handleApiError(e.message, { fallbackTitle: 'Generation Failed' });
+      const errMsg = e.message || '';
+      if (
+        errMsg.includes('Could not read job link') || 
+        errMsg.includes('SCRAPE_FAILED') || 
+        errMsg.includes('extract content') || 
+        errMsg.includes('scrape')
+      ) {
+        setUrlError('Link inaccessible. Paste text or attach file.');
+        Toast.show({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text or attach a file instead.',
+          visibilityTime: 4000,
+        });
+      } else {
+        handleApiError(errMsg, { fallbackTitle: 'Generation Failed' });
+      }
     } finally {
       setGenerating(false);
     }

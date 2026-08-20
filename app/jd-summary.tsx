@@ -31,9 +31,21 @@ export default function JdSummaryScreen() {
 
   const handleGenerate = async () => {
     setUrlError('');
-    const finalJobUrl = jobUrl.trim();
+    let finalJobUrl = jobUrl.trim();
     const finalJobDescription = jdText.trim();
     
+    if (finalJobUrl) {
+      if (!/^https?:\/\//i.test(finalJobUrl)) {
+        finalJobUrl = `https://${finalJobUrl}`;
+      }
+      try {
+        new URL(finalJobUrl);
+      } catch {
+        setUrlError('Please enter a valid job URL');
+        return;
+      }
+    }
+
     if (!finalJobDescription && !finalJobUrl) {
       Toast.show({ type: 'error', text1: 'Input Required', text2: 'Please provide a job description or URL.' });
       return;
@@ -53,7 +65,23 @@ export default function JdSummaryScreen() {
         redFlags: result.red_flags || result.redFlags || []
       });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Analysis Failed', text2: e.message });
+      const errMsg = e.message || '';
+      if (
+        errMsg.includes('Could not read job link') || 
+        errMsg.includes('SCRAPE_FAILED') || 
+        errMsg.includes('extract content') || 
+        errMsg.includes('scrape')
+      ) {
+        setUrlError('Link inaccessible. Paste text below.');
+        Toast.show({
+          type: 'error',
+          text1: 'Could not read job link',
+          text2: 'Please paste the job text instead.',
+          visibilityTime: 4000,
+        });
+      } else {
+        Toast.show({ type: 'error', text1: 'Analysis Failed', text2: errMsg });
+      }
     } finally {
       setGenerating(false);
     }

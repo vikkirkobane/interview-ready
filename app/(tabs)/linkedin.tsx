@@ -199,9 +199,37 @@ export default function LinkedinOptimizerScreen() {
   const addExpRole = () =>
     setWizard(w => ({ ...w, experience: [...w.experience, { title: '', company: '', description: '' }] }));
 
+  const handleNextToSpike = () => {
+    if (wizard.targetRoles.length === 0) {
+      Toast.show({ type: 'error', text1: 'Add at least one target role' });
+      return;
+    }
+    if (!wizard.headline?.trim()) {
+      Toast.show({ type: 'error', text1: 'LinkedIn headline is required' });
+      return;
+    }
+    setStep('spike');
+  };
+
   const handleAnalyze = async () => {
     if (wizard.targetRoles.length === 0) {
       Toast.show({ type: 'error', text1: 'Add at least one target role' });
+      return;
+    }
+    if (!wizard.headline?.trim()) {
+      Toast.show({ type: 'error', text1: 'LinkedIn headline is required' });
+      return;
+    }
+    if (!wizard.spike?.differentiator?.trim()) {
+      Toast.show({ type: 'error', text1: 'Please describe what sets you apart' });
+      return;
+    }
+    if (!wizard.spike?.praised_for?.trim()) {
+      Toast.show({ type: 'error', text1: 'Please specify what colleagues/clients praise' });
+      return;
+    }
+    if (!wizard.spike?.problems_solved?.trim()) {
+      Toast.show({ type: 'error', text1: 'Please specify problems you solve best' });
       return;
     }
     // Clear stale optimization results when re-analyzing
@@ -209,14 +237,18 @@ export default function LinkedinOptimizerScreen() {
     setEngagementPlan(null);
     try {
       const result = await analyzeMutation.mutateAsync({
-        headline:         wizard.headline || undefined,
-        about:            wizard.about    || undefined,
+        headline:         wizard.headline.trim(),
+        about:            wizard.about?.trim() || undefined,
         experience:       wizard.experience.filter(e => e.title && e.company),
         skills:           wizard.skills.length > 0 ? wizard.skills : undefined,
         target_roles:     wizard.targetRoles,
         target_companies: wizard.targetCompanies.length > 0 ? wizard.targetCompanies : undefined,
         years_experience: wizard.yearsExp ? (parseInt(wizard.yearsExp) || undefined) : undefined,
-        spike:            wizard.spike.differentiator ? wizard.spike : undefined,
+        spike:            {
+          differentiator: wizard.spike.differentiator.trim(),
+          praised_for:    wizard.spike.praised_for.trim(),
+          problems_solved: wizard.spike.problems_solved.trim(),
+        },
         tone:             wizard.tone,
       });
       setAnalysis(result.analysis);
@@ -235,32 +267,53 @@ export default function LinkedinOptimizerScreen() {
   const handleOptimizeSection = async (section: string) => {
     setOptimizingSection(section);
     try {
+      const targetRoles = wizard.targetRoles.length > 0
+        ? wizard.targetRoles
+        : (profile?.target_roles && profile.target_roles.length > 0 ? profile.target_roles : ['Professional']);
+
       const payload: any = {
         section,
-        target_roles:     wizard.targetRoles,
+        target_roles:     targetRoles,
         target_companies: wizard.targetCompanies.length > 0 ? wizard.targetCompanies : undefined,
         years_experience: wizard.yearsExp ? (parseInt(wizard.yearsExp) || undefined) : undefined,
-        spike:            wizard.spike.differentiator ? wizard.spike : undefined,
-        tone:             wizard.tone,
+        spike:            wizard.spike?.differentiator ? wizard.spike : undefined,
+        tone:             wizard.tone || 'PROFESSIONAL',
       };
-      if (section === 'HEADLINE')         payload.current_content = wizard.headline;
-      if (section === 'ABOUT')            payload.current_content = wizard.about;
-      if (section === 'SKILLS')           payload.current_content = wizard.skills.join(', ');
-      if (section === 'FEATURED')         payload.current_content = wizard.about;
-      if (section === 'OUTREACH_KIT')     payload.current_content = wizard.about;
+      if (section === 'HEADLINE')         payload.current_content = wizard.headline || profile?.title || '';
+      if (section === 'ABOUT')            payload.current_content = wizard.about || profile?.summary || '';
+      if (section === 'SKILLS')           payload.current_content = wizard.skills.length > 0 ? wizard.skills.join(', ') : (profile?.skills?.join(', ') || '');
+      if (section === 'FEATURED')         payload.current_content = wizard.about || profile?.summary || '';
+      if (section === 'OUTREACH_KIT')     payload.current_content = wizard.about || profile?.summary || '';
       if (section === 'EXPERIENCE_BULLETS') {
-        payload.work_history = wizard.experience.filter(e => e.title && e.company);
+        const validHistory = wizard.experience.filter(e => e.title && e.company);
+        if (validHistory.length > 0) {
+          payload.work_history = validHistory;
+        } else if (profile?.experience && profile.experience.length > 0) {
+          payload.work_history = profile.experience.map((e: any) => ({
+            title: e.title || e.job_title || 'Role',
+            company: e.company || e.company_name || 'Company',
+            description: e.description || e.responsibilities || '',
+          }));
+        } else {
+          payload.work_history = [
+            {
+              title: targetRoles[0] || 'Professional',
+              company: 'Current Role',
+              description: wizard.about || 'Delivered key initiatives, led cross-functional projects, and achieved measurable outcomes.',
+            },
+          ];
+        }
       }
       const result = await optimizeMutation.mutateAsync(payload);
       setSectionResults(prev => ({ ...prev, [section]: result.result }));
-      Toast.show({ type: 'success', text1: `${section.replace(/_/g, ' ')} optimised!` });
+      Toast.show({ type: 'success', text1: `${section.replace(/_/g, ' ')} optimized!` });
       addNotification({
         title: 'LinkedIn Optimization Saved',
         description: `${section.replace(/_/g, ' ')} has been optimized.`,
         type: 'success',
       });
     } catch (e: any) {
-      handleApiError(e.message, { fallbackTitle: 'Optimisation Failed' });
+      handleApiError(e.message, { fallbackTitle: 'Optimization Failed' });
     } finally {
       setOptimizingSection(null);
     }
@@ -330,16 +383,19 @@ export default function LinkedinOptimizerScreen() {
 
   const handleEngagementPlan = async () => {
     try {
+      const targetRoles = wizard.targetRoles.length > 0
+        ? wizard.targetRoles
+        : (profile?.target_roles && profile.target_roles.length > 0 ? profile.target_roles : ['Professional']);
       const result = await engagementMutation.mutateAsync({
-        target_roles:     wizard.targetRoles,
+        target_roles:     targetRoles,
         target_companies: wizard.targetCompanies.length > 0 ? wizard.targetCompanies : undefined,
-        tone:             wizard.tone,
-        top_achievement:  wizard.spike.differentiator || undefined,
+        tone:             wizard.tone || 'PROFESSIONAL',
+        top_achievement:  wizard.spike?.differentiator || undefined,
       });
       setEngagementPlan(result.plan);
       setActiveTab('plan');
     } catch (e: any) {
-      handleApiError(e.message, { fallbackTitle: 'Plan generation failed' });
+      handleApiError(e.message, { fallbackTitle: 'Plan Generation Failed' });
     }
   };
 
@@ -584,12 +640,12 @@ export default function LinkedinOptimizerScreen() {
           </View>
 
           {/* LinkedIn Headline */}
-          <FieldLabel label="LinkedIn Headline" colors={colors} style={{ marginTop: Spacing.lg }} />
+          <FieldLabel label="LinkedIn Headline *" colors={colors} style={{ marginTop: Spacing.lg }} />
           <Text style={[s.hint, { color: colors.textMuted }]}>
             { }
             {hasScraped && wizard.headline
               ? '✓ Imported from your LinkedIn profile. Review and edit if needed.'
-              : 'Copy this from your LinkedIn profile header. This is the most important field.'}
+              : 'Copy this from your LinkedIn profile header. This is required for accurate scoring.'}
           </Text>
           <TextInput style={[s.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder='e.g. "Senior Product Manager | SaaS | ex-Google"'
@@ -650,7 +706,7 @@ export default function LinkedinOptimizerScreen() {
 
         <View style={s.navRow}>
           <Button title="← Back" variant="outline" onPress={() => setStep('prefill')} style={{ flex: 1, marginRight: Spacing.sm }} />
-          <Button title="Next → Custom Spike" onPress={() => setStep('spike')} style={{ flex: 1.5 }} />
+          <Button title="Next → Custom Spike" onPress={handleNextToSpike} style={{ flex: 1.5 }} />
         </View>
         </ScrollView>
         <View style={{ height: bottomNavPadding }} />
@@ -670,7 +726,7 @@ export default function LinkedinOptimizerScreen() {
         </Text>
 
         <Card style={[s.wizardCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-          <FieldLabel label="What sets you apart from other candidates?" colors={colors} />
+          <FieldLabel label="What sets you apart from other candidates? *" colors={colors} />
           <Text style={[s.hint, { color: colors.textMuted }]}>The one thing no one else can easily replicate about your background.</Text>
           <TextInput style={[s.input, s.multilineSm, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder={"e.g. \"I'm the only PM with both an engineering degree and 5 years in emerging markets fintech\""}
@@ -678,14 +734,14 @@ export default function LinkedinOptimizerScreen() {
             value={wizard.spike.differentiator}
             onChangeText={(v) => setWizard(w => ({ ...w, spike: { ...w.spike, differentiator: v } }))} />
 
-          <FieldLabel label="What do colleagues / clients consistently praise?" colors={colors} style={{ marginTop: Spacing.lg }} />
+          <FieldLabel label="What do colleagues / clients consistently praise? *" colors={colors} style={{ marginTop: Spacing.lg }} />
           <TextInput style={[s.input, s.multilineSm, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder='e.g. "My ability to translate technical complexity into business language"'
             placeholderTextColor={colors.textMuted} multiline
             value={wizard.spike.praised_for}
             onChangeText={(v) => setWizard(w => ({ ...w, spike: { ...w.spike, praised_for: v } }))} />
 
-          <FieldLabel label="Problems you solve better than most" colors={colors} style={{ marginTop: Spacing.lg }} />
+          <FieldLabel label="Problems you solve better than most *" colors={colors} style={{ marginTop: Spacing.lg }} />
           <TextInput style={[s.input, s.multilineSm, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
             placeholder='e.g. "Turning underperforming products into category leaders"'
             placeholderTextColor={colors.textMuted} multiline
@@ -1035,7 +1091,7 @@ function SectionCard({ section, score, issues, suggestion, optimizing, done, onO
             <Text key={i} style={[s.issueItem, { color: colors.textSecondary }]}>• {iss}</Text>
           ))}
           <Button
-            title={optimizing ? 'Optimising…' : done ? '✓ Optimised — see tab' : 'AI Rewrite'}
+            title={optimizing ? 'Optimizing…' : done ? '✓ Optimized — see tab' : 'AI Rewrite & Enhance'}
             variant="outline" size="sm" onPress={onOptimize} disabled={optimizing}
             style={{ marginTop: Spacing.md }} />
         </View>

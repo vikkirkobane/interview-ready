@@ -197,4 +197,19 @@ describe('Ask AI — user stories', () => {
       expect(screen.getByText('Hello! How can I assist you with your application today?')).toBeTruthy();
     });
   });
+
+  it('responds with instruction to paste questions or JDs when user pastes a link', async () => {
+    const screen = await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText(/Ask a question/),
+      'https://linkedin.com/jobs/view/123456'
+    );
+    await fireEvent.press(screen.getByLabelText('Send question'));
+
+    await waitFor(() => {
+      expect(screen.getByText('https://linkedin.com/jobs/view/123456')).toBeTruthy();
+      expect(screen.getByText('Please paste only application questions or job descriptions.')).toBeTruthy();
+    });
+    expect(mockApiCall).not.toHaveBeenCalled();
+  });
 });
