@@ -3,6 +3,8 @@
  * Import these inside jest.mock factories in test files.
  */
 
+import type { Session } from '@supabase/supabase-js';
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type AnyRow = Record<string, any>;
@@ -268,7 +270,7 @@ export function createSupabaseMock(initialTables: Record<string, AnyRow[]> = {})
 export type SupabaseMock = ReturnType<typeof createSupabaseMock>;
 
 /** Builds a fake session object usable across tests. */
-export function buildSession(overrides: Record<string, any> = {}) {
+export function buildSession(overrides: Record<string, any> = {}): Session {
   return {
     access_token: 'test-access-token',
     refresh_token: 'test-refresh-token',
@@ -291,5 +293,5 @@ export function buildSession(overrides: Record<string, any> = {}) {
       ...overrides.user,
     },
     ...overrides,
-  };
+  } as unknown as Session;
 }
