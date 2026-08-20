@@ -13,7 +13,6 @@ import { useProfileStore } from '../../src/stores/profile-store';
 import { Ionicons } from '@expo/vector-icons';
 import { useUIStore } from '../../src/stores/ui-store';
 import { Image } from 'expo-image';
-import { IdentityManager } from '../../src/components/IdentityManager';
 declare const window: any;
 
 interface WorkHistoryItem {
@@ -610,17 +609,7 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        {/* Identity Manager */}
-        <IdentityManager />
-
-        <View style={{ marginTop: Spacing.xl, marginBottom: Spacing.xl }}>
-          <Button
-            title="Sign Out"
-            variant="outline"
-            onPress={handleSignOut}
-            fullWidth
-          />
-        </View>
+        <View style={{ height: Spacing.xl }} />
 
       </ScrollView>
 
