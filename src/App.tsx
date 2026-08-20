@@ -697,6 +697,9 @@ export default function App() {
                     <p className="text-[11px] text-center text-slate-500 mt-2">
                       Key in code <strong>#{waitlistNumber}</strong> on the download page to unlock the APK installer.
                     </p>
+                    <p className="text-[11px] text-center text-amber-900 bg-amber-50 border border-amber-200 p-2 rounded-lg mt-1 font-bold">
+                      Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome.
+                    </p>
                   </div>
 
                 </div>

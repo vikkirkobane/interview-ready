@@ -271,6 +271,10 @@ export function generateEmailHtml(userEmail: string, downloadUrl: string, waitli
           <div class="code-hint">Copy this number — you'll key it in on the download page to unlock the APK.</div>
         </div>
 
+        <div style="background-color: #FEF3C7; border: 1px solid #FCD34D; border-radius: 10px; padding: 12px 16px; margin: 20px 0 16px; font-size: 13px; color: #78350F; line-height: 1.5;">
+          <strong>⚠️ Recommended: Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome.</strong>
+        </div>
+
         <div class="btn-container">
           <a href="${downloadUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">
             📱 Unlock &amp; Download Android APK

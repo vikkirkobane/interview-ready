@@ -354,6 +354,14 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                         : 'Please key in the waitlist number you copied from the homepage or received in your confirmation email (e.g. 466).'
                       }
                     </p>
+
+                    {/* Bold Browser Recommendation Notice */}
+                    <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="leading-snug font-bold">
+                        Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Verification Form */}
@@ -480,6 +488,14 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                     Your early access code is verified. Your secure download window is active for <strong>{formatCountdown(secondsRemaining)}</strong>. You can now download and install the APK installer on your Android device.
                   </p>
 
+                  {/* Bold Browser Recommendation Alert */}
+                  <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-xs sm:text-sm text-amber-950 flex items-start gap-3 shadow-xs">
+                    <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed font-bold">
+                      Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome for direct, seamless APK downloading and installation.
+                    </p>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-3 pt-2">
                     <button
@@ -571,10 +587,10 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
               <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">1</span>
-                  <h4 className="font-display text-sm font-bold text-slate-900">Verify & Download</h4>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Recommended Browser</h4>
                 </div>
-                <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                  Key in your access code above and tap <strong className="text-[#1A4F8A]">"Verify Code & Unlock APK"</strong>.
+                <p className="text-xs text-slate-700 pl-8 leading-relaxed font-bold">
+                  Please open and download this link in a different browser (such as Samsung Internet, Firefox, Brave, Opera, or Edge) instead of Google Chrome for direct downloading.
                 </p>
               </div>
 
@@ -582,10 +598,10 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
               <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-[#1A4F8A] text-white text-xs font-bold flex items-center justify-center">2</span>
-                  <h4 className="font-display text-sm font-bold text-slate-900">Allow Download</h4>
+                  <h4 className="font-display text-sm font-bold text-slate-900">Verify & Download</h4>
                 </div>
                 <p className="text-xs text-slate-600 pl-8 leading-relaxed font-normal">
-                  If Chrome prompts <em>"File might be harmful"</em>, tap <strong className="text-slate-900">Download anyway</strong> (standard Android notice for APKs).
+                  Key in your access code above and tap <strong className="text-[#1A4F8A]">"Verify Code & Unlock APK"</strong>. If prompted <em>"File might be harmful"</em>, tap <strong className="text-slate-900">Download anyway</strong> (standard Android notice).
                 </p>
               </div>
 
