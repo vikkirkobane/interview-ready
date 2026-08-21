@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sendWelcomeEmail } from './_lib/spaceship';
+import { sendWelcomeEmail } from './_lib/spaceship.js';
 
 interface ConfirmDownloadRequestBody {
   email?: string;
