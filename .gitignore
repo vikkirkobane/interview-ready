@@ -10,3 +10,6 @@ coverage/
 
 .vercel
 .env*
+
+# Local documentation (not for GitHub)
+docs/
