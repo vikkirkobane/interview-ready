@@ -18,7 +18,8 @@ interface AirtableRecord {
 
 const args = process.argv.slice(2);
 const envIdx = args.indexOf('--env-file');
-config({ path: envIdx !== -1 ? args[envIdx + 1] : '.env', override: true });
+// Shell-exported variables always win over file values (no override).
+config({ path: envIdx !== -1 ? args[envIdx + 1] : '.env', override: false });
 const DO_SEND = args.includes('--send');
 const flagValue = (name: string): string | undefined => {
   const i = args.indexOf(name);
