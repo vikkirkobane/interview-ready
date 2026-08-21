@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { sendWelcomeEmail } from './_lib/spaceship';
 
 interface ConfirmDownloadRequestBody {
   email?: string;
@@ -123,7 +124,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const formula = conditions.length > 1 ? `OR(${conditions.join(',')})` : (conditions[0] || '');
-      const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
+      // Deterministic ordering so duplicate records always resolve to the same one.
+      const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1&sort%5B0%5D%5Bfield%5D=${encodeURIComponent('Submitted At')}&sort%5B0%5D%5Bdirection%5D=asc`;
       
       const searchRes = await fetch(searchUrl, {
         headers: { 'Authorization': `Bearer ${apiKey}` },
@@ -174,6 +176,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         airtableUpdated = true;
       }
 
+      // Send one-time welcome email after a verified download (idempotent via
+      // the 'Welcome Sent' flag on the Airtable record). Never blocks or fails
+      // the download response. Note: two truly concurrent verifications can
+      // still race (at-least-once semantics); the flag makes re-sends rare.
+      const alreadyWelcomed = Boolean(matchedRecord.fields?.['Welcome Sent']);
+      let welcomeEmailSent = false;
+
+      if (airtableUpdated && !alreadyWelcomed && existingEmail) {
+        try {
+          const welcomeResult = await sendWelcomeEmail(String(existingEmail), existingSpot as number);
+          welcomeEmailSent = welcomeResult.sent;
+
+          if (welcomeResult.sent) {
+            try {
+              const flagRes = await fetch(patchUrl, {
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `Bearer ${apiKey}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  fields: { 'Welcome Sent': true },
+                  typecast: true,
+                }),
+              });
+              if (!flagRes.ok) {
+                const flagErr = await flagRes.json().catch(() => ({}));
+                console.error('[Confirm Download] Welcome Sent flag PATCH failed:', flagRes.status, flagErr);
+              }
+            } catch (flagError: any) {
+              console.error('[Confirm Download] Failed to set Welcome Sent flag:', flagError?.message || flagError);
+            }
+          } else if (welcomeResult.error) {
+            console.warn('[Confirm Download] Welcome email not sent:', welcomeResult.error);
+          }
+        } catch (welcomeError: any) {
+          console.error('[Confirm Download] Welcome email step threw unexpectedly:', welcomeError?.message || welcomeError);
+        }
+      }
+
       // Generate a secure, time-bounded session (15-minute validity window)
       const sessionDurationSeconds = 900;
       const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
@@ -187,6 +229,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         waitlistSpot: existingSpot,
         status: 'Downloaded',
         airtableUpdated,
+        welcomeEmailSent,
         sessionToken,
         sessionExpiresAt,
         sessionDurationSeconds,
