@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { sendWelcomeEmail, isValidRecipientEmail } from '../api/_lib/spaceship.ts';
 
 // One-time backfill: send the welcome email to every Airtable record already
@@ -9,6 +9,7 @@ import { sendWelcomeEmail, isValidRecipientEmail } from '../api/_lib/spaceship.t
 //   npx tsx scripts/welcome-backfill.ts --send     # real send (marks each record after success)
 //   npx tsx scripts/welcome-backfill.ts --send --limit 2   # test on the first 2 only
 //   npx tsx scripts/welcome-backfill.ts --send --delay 2000
+//   npx tsx scripts/welcome-backfill.ts --env-file .env.production
 
 interface AirtableRecord {
   id: string;
@@ -16,18 +17,28 @@ interface AirtableRecord {
 }
 
 const args = process.argv.slice(2);
+const envIdx = args.indexOf('--env-file');
+config({ path: envIdx !== -1 ? args[envIdx + 1] : '.env', override: true });
 const DO_SEND = args.includes('--send');
-const limitIdx = args.indexOf('--limit');
-const LIMIT = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : 0;
-const delayIdx = args.indexOf('--delay');
-const DELAY_MS = delayIdx !== -1 ? parseInt(args[delayIdx + 1], 10) : 1500;
+const flagValue = (name: string): string | undefined => {
+  const i = args.indexOf(name);
+  return i !== -1 ? args[i + 1] : undefined;
+};
+// CLI overrides beat env vars; Airtable accepts table IDs (tbl...) or names.
+const BASE_OVERRIDE = flagValue('--base-id');
+const TABLE_OVERRIDE = flagValue('--table-id');
+const LIMIT = (() => { const v = flagValue('--limit'); return v ? parseInt(v, 10) : 0; })();
+const DELAY_MS = (() => { const v = flagValue('--delay'); return v ? parseInt(v, 10) : 1500; })();
 
 function envClean(name: string): string {
   return (process.env[name] || '').trim().replace(/['"]/g, '');
 }
 
 async function fetchDownloadedRecords(apiKey: string, baseId: string, tableName: string): Promise<AirtableRecord[]> {
-  const formula = `AND({Status}='Downloaded', NOT({Welcome Sent}))`;
+  // Status-only formula: the 'Welcome Sent' field may not exist yet on first
+  // run (Airtable rejects formulas referencing unknown fields). Un-welcomed
+  // records are filtered client-side below.
+  const formula = `{Status}='Downloaded'`;
   const records: AirtableRecord[] = [];
   let offset: string | undefined;
 
@@ -48,7 +59,7 @@ async function fetchDownloadedRecords(apiKey: string, baseId: string, tableName:
     offset = data.offset;
   } while (offset);
 
-  return records;
+  return records.filter(r => !r.fields?.['Welcome Sent']);
 }
 
 async function markWelcomeSent(apiKey: string, baseId: string, tableName: string, recordId: string): Promise<boolean> {
@@ -72,8 +83,8 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 async function main() {
   const apiKey = envClean('AIRTABLE_API_KEY') || envClean('AIRTABLE_PAT');
-  const baseId = envClean('AIRTABLE_BASE_ID');
-  const tableName = envClean('AIRTABLE_TABLE_NAME') || 'Submissions';
+  const baseId = BASE_OVERRIDE || envClean('AIRTABLE_BASE_ID');
+  const tableName = TABLE_OVERRIDE || envClean('AIRTABLE_TABLE_NAME') || 'Submissions';
 
   if (!apiKey || !baseId) {
     console.error('Missing AIRTABLE_API_KEY / AIRTABLE_BASE_ID in .env — aborting.');

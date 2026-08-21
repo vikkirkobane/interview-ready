@@ -209,6 +209,21 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       color: #1E40AF;
       line-height: 1.55;
     }
+    .retry-card {
+      background-color: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 16px 0 0;
+      font-size: 13px;
+      color: #78350F;
+      line-height: 1.55;
+    }
+    .retry-card a {
+      color: #92400E;
+      font-weight: 700;
+      text-decoration: underline;
+    }
     .footer {
       background-color: #1A4F8A;
       padding: 24px 32px;
@@ -266,11 +281,15 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
         <div class="tip-card">
           <strong>Pro tip:</strong> Candidates who complete three mock interviews in their first week see the biggest improvement in delivery confidence.
         </div>
+
+        <div class="retry-card">
+          <strong>Download didn't complete?</strong> For a smoother download, open the link in a different browser &mdash; Samsung Internet, Firefox, Brave, Opera, or Edge instead of Chrome. <a href="https://appinterviewready.top/download" target="_blank" rel="noopener noreferrer">Retry your download here</a>.
+        </div>
       </div>
 
       <div class="footer">
         <p>&copy; 2026 Interview Ready. Built for ambitious professionals.</p>
-        <p>Questions? Reach us at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>Questions? Just reply to this email &mdash; we're at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
       </div>
     </div>
   </div>
@@ -311,11 +330,15 @@ export async function sendWelcomeEmail(
         '3. Tailor your resume with the ATS optimization engine.',
         '',
         'Web platform: https://appinterviewready.top',
-        'Support: info@appinterviewready.top',
+        'Download not completed? Try again in a different browser (Samsung Internet, Firefox, Brave, Opera, or Edge): https://appinterviewready.top/download',
+        'Support: reply to this email or write to info@appinterviewready.top',
         '',
         '- The Interview Ready Team',
       ].join('\n'),
       html: generateWelcomeEmailHtml(waitlistSpot),
+      replyTo: process.env.SUPPORT_REPLY_TO_EMAIL
+        ? stripHeaderInjection(process.env.SUPPORT_REPLY_TO_EMAIL)
+        : 'info@appinterviewready.top',
     });
 
     return { sent: true };
