@@ -250,6 +250,19 @@ onFilePicked: async (payload) => {
     );
   };
 
+  const handleResetChat = () => {
+    setMessages([
+      {
+        id: '1',
+        role: 'ai',
+        text: 'Hello! Paste a job application question here and I will help you craft the perfect answer tailored from your profile or resume.'
+      }
+    ]);
+    setInputText('');
+    setJdFileText('');
+    setJdFileName(null);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
       <KeyboardAvoidingView 
@@ -264,6 +277,16 @@ onFilePicked: async (payload) => {
           
           {/* Page Header */}
           <View style={styles.pageHeader}>
+            {messages.length > 1 && (
+              <Pressable
+                style={[styles.backBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                onPress={handleResetChat}
+                accessibilityRole="button"
+                accessibilityLabel="Reset chat"
+              >
+                <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+              </Pressable>
+            )}
             <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Ask AI</Text>
             <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>Chat with AI to answer application questions flawlessly.</Text>
           </View>
@@ -383,7 +406,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   pageHeader: {
-    marginBottom: Spacing.xl
+    marginBottom: Spacing.xl,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   pageTitle: {
     ...Typography.displayMd,

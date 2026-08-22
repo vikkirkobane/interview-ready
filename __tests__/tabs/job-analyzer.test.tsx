@@ -278,4 +278,25 @@ describe('Job Fit Analyzer — user stories', () => {
     });
     expect(screen.getByText('Link inaccessible. Paste text or attach file.')).toBeTruthy();
   });
+
+  it('renders the return arrow button when inputs are provided and clears them on press', async () => {
+    const screen = await renderScreen();
+    expect(screen.queryByLabelText('Clear inputs and start new analysis')).toBeNull();
+
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('Paste the full job listing here to start the AI gap analysis...'),
+      'Software developer needed.'
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Clear inputs and start new analysis')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Clear inputs and start new analysis'));
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Clear inputs and start new analysis')).toBeNull();
+      expect(screen.getByPlaceholderText('Paste the full job listing here to start the AI gap analysis...').props.value).toBe('');
+    });
+  });
 });

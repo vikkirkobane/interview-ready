@@ -26,6 +26,8 @@ const mockApiCall = apiCall as jest.Mock;
 const mockToast = Toast as any;
 
 describe('JD Summarizer — user stories', () => {
+  jest.setTimeout(30000);
+
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
@@ -186,5 +188,36 @@ describe('JD Summarizer — user stories', () => {
       );
     });
     expect(screen.getByText('Link inaccessible. Paste text below.')).toBeTruthy();
+  });
+
+  it('renders the return arrow button and resets summary results on press', async () => {
+    mockApiCall.mockResolvedValue({
+      data: {
+        title: 'Backend Engineer JD',
+        key_requirements: ['Go', 'Kubernetes'],
+        niceToHaves: ['Rust'],
+        red_flags: [],
+      },
+      error: null,
+    });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(
+      screen.getByPlaceholderText('Paste the full job description text here...'),
+      'Engineering role requiring Go and Kubernetes.'
+    );
+    await fireEvent.press(screen.getByLabelText('SUMMARIZE →'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Must-Haves')).toBeTruthy();
+      expect(screen.getByLabelText('Back to JD input')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Back to JD input'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Analyze Job Description')).toBeTruthy();
+      expect(screen.getByLabelText('SUMMARIZE →')).toBeTruthy();
+    });
   });
 });

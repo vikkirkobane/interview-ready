@@ -109,4 +109,20 @@ describe('Interview Feedback — user stories', () => {
     await fireEvent.press(screen.getByText('Practice Again'));
     expect(router.push).toHaveBeenCalledWith('/interviews');
   });
+
+  it('navigates back via the top return arrow button', async () => {
+    mockApiCall.mockImplementation(async (fn: string) => {
+      if (fn.includes('interviews-feedback')) {
+        return { data: { feedback: FEEDBACK }, error: null };
+      }
+      return { data: null, error: null };
+    });
+
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Back to interviews')).toBeTruthy();
+    });
+    await fireEvent.press(screen.getByLabelText('Back to interviews'));
+    expect(router.replace).toHaveBeenCalledWith('/(tabs)/interviews');
+  });
 });

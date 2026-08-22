@@ -616,7 +616,19 @@ export default function LinkedinOptimizerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
 <ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
-        <StepDots current={1} total={3} colors={colors} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
+          <Pressable
+            style={[s.backBtn, { marginRight: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+            onPress={() => setStep('prefill')}
+            accessibilityRole="button"
+            accessibilityLabel="Back to profile import"
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <View style={{ flex: 1, marginRight: 32 }}>
+            <StepDots current={1} total={3} colors={colors} />
+          </View>
+        </View>
         <Text style={[s.stepTitle, { color: colors.textPrimary }]}>Review & Complete Content</Text>
         <Text style={[s.stepSubtitle, { color: colors.textMuted }]}>
           We pre-filled from your profile. Add your actual LinkedIn headline and verify the rest.
@@ -728,7 +740,19 @@ export default function LinkedinOptimizerScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
 <ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
-        <StepDots current={2} total={3} colors={colors} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
+          <Pressable
+            style={[s.backBtn, { marginRight: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+            onPress={() => setStep('content')}
+            accessibilityRole="button"
+            accessibilityLabel="Back to content step"
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <View style={{ flex: 1, marginRight: 32 }}>
+            <StepDots current={2} total={3} colors={colors} />
+          </View>
+        </View>
         <Text style={[s.stepTitle, { color: colors.textPrimary }]}>Your SPIKE Differentiator</Text>
         <Text style={[s.stepSubtitle, { color: colors.textMuted }]}>
           Profiles with a SPIKE score 40% higher. This powers your headline, About, and differentiator sections.

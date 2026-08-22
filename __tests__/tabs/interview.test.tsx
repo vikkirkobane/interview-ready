@@ -235,4 +235,20 @@ describe('Live Mock Interview — user stories', () => {
       expect(router.push).toHaveBeenCalledWith('/(tabs)/pricing?reason=low_credits');
     });
   });
+
+  it('prompts to end session when back return arrow is pressed', async () => {
+    mockStartResponse();
+    const screen = await renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Back to interviews')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Back to interviews'));
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'End Session?',
+      'Are you sure you want to end this interview session?',
+      expect.any(Array)
+    );
+  });
 });

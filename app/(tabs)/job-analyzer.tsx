@@ -193,6 +193,21 @@ export default function JobFitScreen() {
     }
   };
 
+  const handleReset = () => {
+    setJdText('');
+    setJdUrl('');
+    setUrlError('');
+    setJdFileText('');
+    setJdFileName(null);
+    if (job_id) {
+      try {
+        router.setParams({ job_id: '' });
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
@@ -205,6 +220,16 @@ export default function JobFitScreen() {
           <View style={styles.leftColumn}>
             {/* Hero Section */}
             <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
+              {Boolean(job_id || jdText.length > 0 || jdUrl.length > 0 || jdFileName) && (
+                <Pressable
+                  style={[styles.backBtn, { backgroundColor: 'rgba(255,255,255,0.2)', borderColor: 'rgba(255,255,255,0.3)' }]}
+                  onPress={handleReset}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear inputs and start new analysis"
+                >
+                  <Ionicons name="arrow-back" size={20} color={colors.textInverse} />
+                </Pressable>
+              )}
               <Text style={[styles.heroTitle, { color: colors.textInverse }]}>Job Fit Analyzer</Text>
               <Text style={styles.heroDesc}>Benchmark your profile against specific roles to identify high-impact gaps.</Text>
               
@@ -394,6 +419,13 @@ const styles = StyleSheet.create({
     borderRadius: Radius.xl,
     padding: Spacing.xl,
     ...Shadow.card,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.md,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   heroTitle: {
     ...Typography.headingLg,

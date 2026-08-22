@@ -88,12 +88,25 @@ export default function JdSummaryScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (summaryData) {
+      setSummaryData(null);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       {/* Header - Minimalist */}
-      <View style={[styles.header, { backgroundColor: colors.bgPrimary }]}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn} accessibilityRole="button">
-          <Text style={[styles.navText, { color: colors.textSecondary }]}>← BACK</Text>
+      <View style={[styles.header, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
+        <Pressable
+          onPress={handleBack}
+          style={[styles.backBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+          accessibilityRole="button"
+          accessibilityLabel={summaryData ? "Back to JD input" : "Go back"}
+        >
+          <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>JD Summarizer</Text>
       </View>
@@ -253,8 +266,9 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     marginRight: Spacing.md,
-    padding: Spacing.xs,
-    marginLeft: -Spacing.xs,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   navText: {
     ...Typography.label,

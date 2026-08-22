@@ -169,12 +169,34 @@ export default function FeedbackScreen() {
   const strengths = feedbackData?.strengths || [];
   const improvements = feedbackData?.areas_for_improvement || [];
 
+  const handleBack = () => {
+    if (fromList === 'true') {
+      router.back();
+    } else {
+      router.replace('/(tabs)/interviews');
+    }
+  };
+
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
         contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl }]} 
         showsVerticalScrollIndicator={false}
       >
+        {/* Page Header */}
+        <View style={styles.pageHeader}>
+          <Pressable
+            style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Back to interviews"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Interview Feedback</Text>
+          <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>AI-powered evaluation and performance breakdown</Text>
+        </View>
+
         {/* Hero Section: Overall Score */}
         <Animated.View style={[styles.heroCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border, opacity: fadeAnim, transform: [{ translateY: slideAnim1 }] }]}>
           <View style={styles.heroScoreWrapper}>
@@ -424,6 +446,24 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 896, // 4xl
     gap: Spacing.xl,
+  },
+  pageHeader: {
+    marginBottom: Spacing.xs,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    ...Shadow.sm,
+  },
+  pageTitle: {
+    ...Typography.displayMd,
+    marginBottom: 4,
+  },
+  pageSubtitle: {
+    ...Typography.bodyMd,
   },
   heroCard: {
     borderRadius: Radius.xl,

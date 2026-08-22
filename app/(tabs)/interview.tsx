@@ -323,11 +323,21 @@ export default function InterviewScreen() {
         >
           {/* Live Interview Header */}
           <View style={styles.pageHeader}>
-            <View style={styles.pageHeaderTitleArea}>
-              <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{role}</Text>
-              <View style={styles.headerBadge}>
-                <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
-                <Text style={[styles.liveText, { color: colors.textMuted }]}>LIVE INTERVIEW SESSION</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: Spacing.sm }}>
+              <Pressable
+                style={[styles.backBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+                onPress={handleEndSession}
+                accessibilityRole="button"
+                accessibilityLabel="Back to interviews"
+              >
+                <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+              </Pressable>
+              <View style={styles.pageHeaderTitleArea}>
+                <Text style={[styles.pageTitle, { color: colors.textPrimary }]} numberOfLines={1}>{role}</Text>
+                <View style={styles.headerBadge}>
+                  <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+                  <Text style={[styles.liveText, { color: colors.textMuted }]}>LIVE INTERVIEW SESSION</Text>
+                </View>
               </View>
             </View>
             
@@ -467,9 +477,14 @@ const styles = StyleSheet.create({
   pageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: Spacing.xl,
     gap: Spacing.md,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   pageHeaderTitleArea: {
     flex: 1,

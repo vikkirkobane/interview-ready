@@ -228,4 +228,24 @@ describe('Ask AI — user stories', () => {
       expect(router.push).toHaveBeenCalledWith('/(tabs)/pricing?reason=low_credits');
     });
   });
+
+  it('renders the reset return arrow after messages are sent and resets chat on press', async () => {
+    mockApiCall.mockResolvedValue({ data: { answer: 'Highlight your leadership.' }, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText(/Ask a question/), 'How should I answer leadership questions?');
+    await fireEvent.press(screen.getByLabelText('Send question'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Highlight your leadership.')).toBeTruthy();
+      expect(screen.getByLabelText('Reset chat')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Reset chat'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Highlight your leadership.')).toBeNull();
+      expect(screen.getByText(GREETING)).toBeTruthy();
+    });
+  });
 });
