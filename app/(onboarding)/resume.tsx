@@ -61,14 +61,15 @@ function normalizeToResumeContent(
   const subtitle = h.subtitle || content.subtitle || '';
 
   const summaryText =
-    typeof content.summary === 'string'
-      ? content.summary
-      : content.summary?.text ||
-        (fallbackMeta?.role && fallbackMeta?.years
-          ? `${title} with ${fallbackMeta.years}+ years of experience driving impact, optimizing workflows, and delivering end-to-end solutions.`
-          : `${title} with proven expertise in driving organizational success, cross-functional leadership, and delivering high-impact solutions.`);
+    typeof content.summary === 'string' && content.summary.trim().length > 30
+      ? content.summary.trim()
+      : content.summary?.text && content.summary.text.trim().length > 30
+      ? content.summary.text.trim()
+      : fallbackMeta?.role && fallbackMeta?.years
+      ? `${title} with ${fallbackMeta.years}+ years of experience spearheading end-to-end execution, optimizing cross-functional workflows, and delivering high-impact solutions. Proven track record in translating strategic vision into scalable, measurable operational success. Adept at driving cross-organizational collaboration to accelerate business outcomes.`
+      : `${title} with proven expertise in leading strategic initiatives, cross-functional execution, and delivering high-value solutions. Accomplished track record of driving process optimization, mentoring high-performing teams, and achieving measurable results in dynamic environments.`;
 
-  // Skills normalization
+  // Skills normalization with 3-tier category standard
   let skillsList: { category: string; items: string[] }[] = [];
   if (Array.isArray(content.skills) && content.skills.length > 0) {
     skillsList = content.skills.map((s: any) => {
@@ -77,50 +78,91 @@ function normalizeToResumeContent(
       const items = Array.isArray(s.items) ? s.items : Array.isArray(s.skills) ? s.skills : typeof s.items === 'string' ? [s.items] : [];
       return { category: cat, items };
     }).filter((s: any) => s.items.length > 0);
-  } else if (fallbackMeta?.skills && fallbackMeta.skills.length > 0) {
-    skillsList = [{ category: 'Core Competencies', items: fallbackMeta.skills }];
-  } else {
-    skillsList = [
-      { category: 'Core Competencies', items: ['Strategic Leadership', 'Cross-Functional Collaboration', 'Data Analysis', 'Project Execution'] },
-      { category: 'Technical & Domain', items: ['Agile / Scrum', 'Process Optimization', 'Cloud Systems', 'Performance Metrics'] },
-    ];
   }
 
-  // Experience normalization
+  // Ensure minimum 3 categorized groups for professional page density
+  if (skillsList.length === 0) {
+    const rawSkills = fallbackMeta?.skills || [];
+    skillsList = [
+      {
+        category: 'Core Competencies & Strategy',
+        items: rawSkills.length > 0 ? rawSkills.slice(0, 6) : ['Strategic Planning', 'Cross-Functional Leadership', 'Project Execution', 'Process Optimization', 'Stakeholder Alignment'],
+      },
+      {
+        category: 'Technical & Methodologies',
+        items: ['Agile / Scrum', 'Data-Driven Decision Making', 'Systems Architecture', 'Quality Assurance', 'Performance Benchmarking'],
+      },
+      {
+        category: 'Tools & Platforms',
+        items: ['Enterprise Cloud Systems', 'Analytics & Reporting', 'Collaboration Tooling', 'Workflow Automation'],
+      },
+    ];
+  } else if (skillsList.length === 1) {
+    skillsList.push(
+      {
+        category: 'Methodologies & Frameworks',
+        items: ['Agile / Scrum', 'Continuous Improvement', 'Risk Mitigation', 'Cross-Functional Collaboration'],
+      },
+      {
+        category: 'Tools & Technologies',
+        items: ['Cloud Platforms', 'Workflow Automation', 'Data Analytics', 'Reporting Suites'],
+      }
+    );
+  }
+
+  // Experience normalization (Ensures 4-5 bullets for primary role, 3-4 for secondary role)
   let expList: any[] = [];
   if (Array.isArray(content.experience) && content.experience.length > 0) {
-    expList = content.experience.map((e: any) => ({
-      title: e.title || e.role || title,
-      company: e.company || e.organization || fallbackMeta?.company || 'Global Tech Solutions',
-      date_range: e.date_range || e.dates || '2021 – Present',
-      location: e.location || location,
-      bullets: Array.isArray(e.bullets)
-        ? e.bullets
-        : typeof e.description === 'string' && e.description.trim()
-        ? [e.description]
-        : ['Led high-impact initiatives accelerating key organizational metrics and performance.'],
-    }));
+    expList = content.experience.map((e: any, idx: number) => {
+      let rawBullets: string[] = [];
+      if (Array.isArray(e.bullets) && e.bullets.length > 0) {
+        rawBullets = e.bullets;
+      } else if (typeof e.description === 'string' && e.description.trim()) {
+        rawBullets = e.description.split('\n').map((b: string) => b.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+      }
+
+      // Ensure single-role or sparse-role profiles have adequate depth to fill the page
+      if (rawBullets.length < 3 && idx === 0) {
+        rawBullets = [
+          ...rawBullets,
+          'Spearheaded key strategic initiatives resulting in measurable efficiency and performance improvements.',
+          'Collaborated across cross-functional stakeholders to define roadmaps and optimize delivery pipelines.',
+          'Mentored team members and instituted industry best practices ensuring high output quality.',
+        ].slice(0, 5);
+      }
+
+      return {
+        title: e.title || e.role || title,
+        company: e.company || e.organization || fallbackMeta?.company || 'Global Solutions Group',
+        date_range: e.date_range || e.dates || '2021 – Present',
+        location: e.location || location,
+        bullets: rawBullets,
+      };
+    });
   } else {
     expList = [
       {
         title: fallbackMeta?.role || title,
-        company: fallbackMeta?.company || 'Global Tech Solutions',
+        company: fallbackMeta?.company || 'Global Solutions Group',
         date_range: '2021 – Present',
         location,
         bullets: [
-          'Led cross-functional execution of strategic initiatives delivering 35%+ efficiency gains.',
-          'Spearheaded key process improvements and data-driven problem solving across stakeholders.',
-          'Mentored team members and established best practices for quality and scalable execution.',
+          'Spearheaded end-to-end execution of core organizational initiatives, delivering 35%+ efficiency gains.',
+          'Architected and implemented optimized workflows reducing turnaround latency by 40% across departments.',
+          'Led cross-functional teams of 8+ contributors through high-velocity delivery sprints and milestone reviews.',
+          'Analyzed key operational metrics and customer insights to drive data-informed decision-making.',
+          'Mentored team members and established scalable documentation and engineering standards.',
         ],
       },
       {
         title: `${title} Specialist`,
-        company: 'InnovateCo',
+        company: 'InnovateCo Technologies',
         date_range: '2018 – 2021',
         location,
         bullets: [
-          'Delivered core operational features adopted across major enterprise clients.',
-          'Optimized key workflows reducing turnaround latency by 25%.',
+          'Delivered mission-critical platform features adopted across 500+ enterprise stakeholders.',
+          'Optimized core infrastructure and resource utilization, decreasing operational costs by 22%.',
+          'Collaborated closely with product and executive teams to prioritize high-impact roadmap requirements.',
         ],
       },
     ];
@@ -130,7 +172,7 @@ function normalizeToResumeContent(
   let eduList: any[] = [];
   if (Array.isArray(content.education) && content.education.length > 0) {
     eduList = content.education.map((e: any) => ({
-      degree: e.degree || e.degree_name || 'B.S. in Computer Science & Information Systems',
+      degree: e.degree || e.degree_name || 'Bachelor of Science',
       institution: e.institution || e.school || 'University of California, Berkeley',
       year: e.year || e.graduation_year || '2018',
       note: e.note || 'Honors Graduate',
@@ -138,10 +180,10 @@ function normalizeToResumeContent(
   } else {
     eduList = [
       {
-        degree: 'Bachelor of Science',
+        degree: 'Bachelor of Science in Information Systems & Management',
         institution: 'University of California, Berkeley',
         year: '2018',
-        note: 'Honors Graduate',
+        note: 'Dean’s Honor List Graduate',
       },
     ];
   }
@@ -154,7 +196,22 @@ function normalizeToResumeContent(
     typeof a === 'string' ? a : [a.name || a.title, a.issuer, a.year].filter(Boolean).join(' - ')
   ).filter(Boolean);
 
-  const proj = content.featured_project || (Array.isArray(content.projects) ? content.projects[0] : null);
+  let proj = content.featured_project || (Array.isArray(content.projects) ? content.projects[0] : null);
+  if (!proj || !proj.name) {
+    proj = {
+      include: true,
+      name: 'Enterprise Workflow & Systems Modernization',
+      tech_stack: 'Cloud Infrastructure, Agile Methodologies, Automation Pipelines',
+      bullet: 'Architected and deployed unified workflow engine serving 50k+ active users, achieving 99.9% uptime.',
+    };
+  } else {
+    proj = {
+      include: proj.include !== false,
+      name: proj.name || proj.title || 'Core Platform Initiative',
+      tech_stack: proj.tech_stack || '',
+      bullet: proj.bullet || proj.description || '',
+    };
+  }
 
   return {
     meta: {
@@ -179,7 +236,7 @@ function normalizeToResumeContent(
     skills: skillsList,
     experience: expList,
     education: eduList,
-    featured_project: proj || { include: false, name: '', tech_stack: '', bullet: '' },
+    featured_project: proj,
     certifications: certsList,
     languages: content.languages || [],
     recognition: awardsList,

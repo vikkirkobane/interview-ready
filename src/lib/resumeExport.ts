@@ -218,7 +218,7 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
         heading: HeadingLevel.HEADING_2,
         alignment: templateId === 'academic' ? AlignmentType.CENTER : AlignmentType.LEFT,
       }));
-      for (const exp of normalizedExp.slice(0, 5)) {
+      for (const exp of normalizedExp) {
         children.push(new Paragraph({
           children: [
             new TextRun({ text: exp.title, bold: true, size: 24 }),

@@ -101,63 +101,63 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     @page { size: A4 portrait; margin: 22pt 26pt; }
     @media screen {
-      body { padding: 32px 28px; max-width: 800px; margin: 0 auto; background: #fff; }
+      body { padding: 32px 28px; max-width: 820px; margin: 0 auto; background: #fff; }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 10px;
+      font-size: 10.2px;
       color: #111827;
       background: #ffffff;
-      line-height: 1.38;
+      line-height: 1.44;
       -webkit-print-color-adjust: exact;
     }
     .header-block {
-      margin-bottom: 4pt;
+      margin-bottom: 6pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .name {
-      font-size: 22px;
+      font-size: 23px;
       font-weight: 800;
       color: #111827;
       letter-spacing: -0.4px;
-      margin-bottom: 1.5pt;
+      margin-bottom: 2pt;
       line-height: 1.15;
     }
     .title {
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 700;
       color: #374151;
-      margin-bottom: 1.5pt;
+      margin-bottom: 2pt;
     }
     .subtitle {
-      font-size: 10px;
+      font-size: 10.2px;
       color: #4B5563;
-      margin-bottom: 2pt;
+      margin-bottom: 2.5pt;
     }
     .contact {
-      font-size: 9.5px;
+      font-size: 9.8px;
       color: #4B5563;
-      margin-top: 2pt;
-      margin-bottom: 2pt;
+      margin-top: 2.5pt;
+      margin-bottom: 2.5pt;
       font-weight: 500;
     }
     .section-header {
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 800;
       color: #111827;
       text-transform: uppercase;
       letter-spacing: 0.6px;
       border-bottom: 1.5px solid #111827;
-      margin-top: 7pt;
-      margin-bottom: 2.5pt;
-      padding-bottom: 1.5pt;
+      margin-top: 8.5pt;
+      margin-bottom: 3.5pt;
+      padding-bottom: 2pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .role-block {
-      margin-top: 4.5pt;
+      margin-top: 5.5pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
@@ -165,15 +165,15 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      line-height: 1.25;
+      line-height: 1.3;
     }
     .role-title {
-      font-size: 10.5px;
+      font-size: 10.8px;
       font-weight: 700;
       color: #111827;
     }
     .company {
-      font-size: 10.5px;
+      font-size: 10.8px;
       font-weight: 700;
       color: #111827;
     }
@@ -183,69 +183,70 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
       font-weight: 600;
     }
     .date {
-      font-size: 9.5px;
+      font-size: 9.8px;
       color: #6B7280;
       font-weight: 500;
     }
     .location {
-      font-size: 9px;
+      font-size: 9.2px;
       color: #6B7280;
-      margin-bottom: 1.5pt;
+      margin-bottom: 2pt;
     }
     ul {
-      margin-left: 12pt;
-      margin-top: 1.5pt;
+      margin-left: 13pt;
+      margin-top: 2pt;
     }
     li {
-      font-size: 9.8px;
+      font-size: 10.2px;
       color: #1F2937;
-      margin-bottom: 1.5pt;
-      line-height: 1.35;
+      margin-bottom: 2.5pt;
+      line-height: 1.42;
     }
     .skills-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 2pt;
+      margin-top: 2.5pt;
     }
     .skills-label {
-      font-size: 9.8px;
+      font-size: 10.2px;
       font-weight: 700;
       color: #111827;
-      width: 20%;
+      width: 22%;
       vertical-align: top;
-      padding: 1pt 6pt 1pt 0;
+      padding: 1.5pt 6pt 1.5pt 0;
     }
     .skills-value {
-      font-size: 9.8px;
+      font-size: 10.2px;
       color: #1F2937;
-      padding: 1pt 0;
-      line-height: 1.32;
+      padding: 1.5pt 0;
+      line-height: 1.4;
     }
     .tech-stack {
-      font-size: 9.5px;
+      font-size: 9.8px;
       color: #6B7280;
-      margin-bottom: 1.5pt;
+      margin-bottom: 2pt;
     }
     .edu-line {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 1.5pt;
+      margin-bottom: 2pt;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .edu-degree {
       font-weight: 700;
-      font-size: 10.5px;
+      font-size: 10.8px;
       color: #111827;
     }
     .edu-school {
-      font-size: 9.8px;
+      font-size: 10.2px;
       color: #4B5563;
     }
     .certs {
-      font-size: 9.8px;
+      font-size: 10.2px;
       color: #1F2937;
-      margin-top: 2pt;
+      margin-top: 3pt;
+      line-height: 1.4;
     }
     .certs-label {
       font-weight: 700;
@@ -289,7 +290,7 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   const rawSummary = typeof r.summary === 'string' ? r.summary : r.summary?.text || (r.summary as any)?.summary || '';
   const summary = shouldInclude('summary', !!rawSummary.trim()) ? `
     <div class="section-header">Summary</div>
-    <p style="font-size:9.8px;line-height:1.38;color:#1F2937;">${esc(rawSummary.trim())}</p>
+    <p style="font-size:10.2px;line-height:1.46;color:#1F2937;">${esc(rawSummary.trim())}</p>
   ` : '';
 
   const rawSkills = r.skills || [];
@@ -314,7 +315,7 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     </table>
   ` : '';
 
-  // 1-page experience budget optimizer
+  // Comprehensive experience renderer
   const rawExp = r.experience || [];
   const normalizedExp = rawExp.map((e: any) => {
     const title = e.title || e.role || e.position || '';
@@ -327,10 +328,8 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
 
   const experience = shouldInclude('experience', normalizedExp.length > 0) ? `
     <div class="section-header">Professional Experience</div>
-    ${normalizedExp.slice(0, 5).map((e: any, idx: number) => {
-      // 2-3 bullets for Primary & Secondary roles, 2 bullets for older roles to enforce 1-page fit
-      const bulletLimit = idx <= 1 ? 3 : 2;
-      const bullets = (e.bullets || []).slice(0, bulletLimit);
+    ${normalizedExp.map((e: any) => {
+      const bullets = Array.isArray(e.bullets) ? e.bullets : [];
 
       return `
         <div class="role-block">
