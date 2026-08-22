@@ -1867,22 +1867,21 @@ export default function ResumeBuilderScreen() {
   function renderPageHeader() {
     return (
       <View style={styles.pageHeader}>
+        {draft && (
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={handleStartOver}
+            accessibilityRole="button"
+            accessibilityLabel="Back to resume generator"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
         <View style={styles.pageHeaderTop}>
           <View style={{ flex: 1, paddingRight: 12 }}>
             <Text style={styles.pageTitle}>Resume Builder</Text>
             <Text style={styles.pageSubtitle}>Craft your professional story with AI precision.</Text>
           </View>
-          {draft && (
-            <TouchableOpacity 
-              style={styles.startOverHeaderBtn} 
-              onPress={handleStartOver}
-              accessibilityRole="button"
-              accessibilityLabel="Start over and create a new resume"
-            >
-              <Ionicons name="refresh-outline" size={15} color={colors.primary} />
-              <Text style={styles.startOverHeaderBtnText}>Start Over</Text>
-            </TouchableOpacity>
-          )}
         </View>
         {draft && (
           <View style={styles.modeToggleContainer}>
@@ -2131,22 +2130,15 @@ const makeStyles = (colors: any) => StyleSheet.create({
   pageTitle: { ...Typography.displayMd, color: colors.textPrimary, marginBottom: 4 },
   pageSubtitle: { ...Typography.bodyMd, color: colors.textMuted },
 
-  startOverHeaderBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    padding: 8,
+    borderRadius: Radius.full,
     backgroundColor: colors.bgPrimary,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
-    borderRadius: Radius.lg,
-    gap: 6,
     ...Shadow.sm,
-  },
-  startOverHeaderBtnText: {
-    ...Typography.bodySm,
-    color: colors.primary,
-    fontWeight: '600',
   },
 
   templatesBtn: {

@@ -364,14 +364,14 @@ describe('Resume Builder (new-resume) — user stories', () => {
 
     const screen = await renderScreen();
 
-    // Editor view should render with "Start Over" button in header and bottom
+    // Editor view should render with the top return arrow and bottom action CTA
     await waitFor(() => {
-      expect(screen.getByText('Start Over')).toBeTruthy();
+      expect(screen.getByLabelText('Back to resume generator')).toBeTruthy();
       expect(screen.getByText('Start Over & Create New Resume')).toBeTruthy();
     });
 
-    // Press the Header "Start Over" button
-    await fireEvent.press(screen.getByText('Start Over'));
+    // Press the Top Return Arrow button
+    await fireEvent.press(screen.getByLabelText('Back to resume generator'));
 
     // Should prompt confirmation alert
     expect(Alert.alert).toHaveBeenCalledWith(
