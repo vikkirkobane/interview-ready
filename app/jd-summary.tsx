@@ -286,7 +286,8 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     width: '100%',
-    minHeight: 200,
+    minHeight: 120,
+    maxHeight: 180,
     ...Typography.bodyMd,
   },
   loadingSection: {

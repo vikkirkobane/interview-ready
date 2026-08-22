@@ -78,11 +78,6 @@ export default function ProfileScreen() {
   const [eduStartDate, setEduStartDate] = useState('');
   const [eduEndDate, setEduEndDate] = useState('');
 
-  const handleSignOut = async () => {
-    await signOut();
-    router.replace('/(auth)/welcome');
-  };
-
   const handleDeleteAccount = async () => {
     const runDeletion = async () => {
       try {
@@ -673,7 +668,7 @@ export default function ProfileScreen() {
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Professional Summary</Text>
                 <TextInput
-                  style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, height: 100, textAlignVertical: 'top' }]}
+                  style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, minHeight: 100, maxHeight: 180, textAlignVertical: 'top' }]}
                   value={editSummary}
                   onChangeText={setEditSummary}
                   placeholder="A short summary of your background"
@@ -739,7 +734,7 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Description</Text>
-                <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, height: 100, textAlignVertical: 'top' }]} value={expDesc} onChangeText={setExpDesc} placeholder="What did you do?" placeholderTextColor={colors.textMuted} multiline />
+                <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary, minHeight: 100, maxHeight: 180, textAlignVertical: 'top' }]} value={expDesc} onChangeText={setExpDesc} placeholder="What did you do?" placeholderTextColor={colors.textMuted} multiline />
               </View>
 
               <Button title="Save Experience" onPress={handleSaveExperience} fullWidth />

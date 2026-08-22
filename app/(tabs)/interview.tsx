@@ -126,7 +126,6 @@ type Message = {
 export default function InterviewScreen() {
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
@@ -260,7 +259,6 @@ export default function InterviewScreen() {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
-          setInputText(extracted_text);
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
           throw error;

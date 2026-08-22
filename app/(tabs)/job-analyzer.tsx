@@ -463,7 +463,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   textArea: {
-    height: 160,
+    minHeight: 120,
+    maxHeight: 180,
     borderWidth: 1,
     borderRadius: Radius.lg,
     padding: Spacing.md,

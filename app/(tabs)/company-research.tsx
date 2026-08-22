@@ -611,7 +611,7 @@ const s = StyleSheet.create({
   fieldLabel:      { ...Typography.subtitle1, marginBottom: Spacing.xs },
   optional:        { ...Typography.bodySm, fontWeight: '400' },
   input:           { borderWidth: 1, borderRadius: Radius.md, padding: Spacing.md, ...Typography.bodyMd },
-  multiline:       { height: 100, textAlignVertical: 'top' },
+  multiline:       { minHeight: 100, maxHeight: 180, textAlignVertical: 'top' },
 
   // Loading
   loadingBox:      { alignItems: 'center', padding: Spacing.xl, gap: Spacing.sm },

@@ -2094,7 +2094,7 @@ const makeStyles = (colors: any) => StyleSheet.create({
   textArea: {
     backgroundColor: colors.bgSecondary, borderWidth: 1, borderColor: colors.border,
     borderRadius: Radius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
-    ...Typography.bodyMd, color: colors.textPrimary, minHeight: 100, textAlignVertical: 'top',
+    ...Typography.bodyMd, color: colors.textPrimary, minHeight: 100, maxHeight: 180, textAlignVertical: 'top',
   },
   textAreaReadonly: { backgroundColor: 'transparent', borderColor: 'transparent' },
 

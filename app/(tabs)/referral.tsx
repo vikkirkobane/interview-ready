@@ -346,6 +346,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minHeight: 48,
     borderWidth: 1,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,

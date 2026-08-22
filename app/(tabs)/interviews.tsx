@@ -200,7 +200,7 @@ export default function InterviewsLobbyScreen() {
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textPrimary, marginBottom: 8 }]}>Job Description (Optional if URL provided)</Text>
             <TextInput 
-              style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary, minHeight: 80 }]}
+              style={[styles.textInput, styles.textArea, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
               value={jobDescription}
               onChangeText={setJobDescription}
               placeholder="Or paste the target job description here to guide the interview..."
@@ -458,6 +458,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: 12,
     ...Typography.bodyLg,
+  },
+  textArea: {
+    minHeight: 120,
+    maxHeight: 180,
+    textAlignVertical: 'top',
   },
   rowGrid: {
     flexDirection: 'row',

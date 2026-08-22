@@ -491,7 +491,9 @@ const styles = StyleSheet.create({
     ...Typography.bodyMd,
   },
   inputArea: {
-    height: 120,
+    minHeight: 120,
+    maxHeight: 180,
+    textAlignVertical: 'top',
     borderWidth: 1,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,

@@ -186,7 +186,7 @@ describe('Document & Image Extraction Across Screens', () => {
   });
 
   describe('Ask AI Screen', () => {
-    it('populates prompt input upon file extraction if empty', async () => {
+    it('displays the file attachment badge upon file extraction while keeping prompt input clear for user questions', async () => {
       mockApiUpload.mockResolvedValue({
         data: { extracted_text: EXTRACTED_IMAGE_JD },
         error: null,
@@ -201,7 +201,7 @@ describe('Document & Image Extraction Across Screens', () => {
       });
 
       const input = screen.getByPlaceholderText('Ask a question...');
-      expect(input.props.value).toBe(EXTRACTED_IMAGE_JD);
+      expect(input.props.value).toBe('');
     });
   });
 });

@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 120,
-    maxHeight: 300,
+    maxHeight: 200,
     alignItems: 'flex-start',
     paddingVertical: 12,
   },
@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
   },
   textAreaInput: {
     minHeight: 96,
+    maxHeight: 176,
     ...Typography.bodyMd,
   },
   error: {

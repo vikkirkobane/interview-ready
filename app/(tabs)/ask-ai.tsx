@@ -174,9 +174,6 @@ onFilePicked: async (payload) => {
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
-          if (!inputText.trim()) {
-            setInputText(extracted_text);
-          }
         } catch (error: any) {
           Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
           throw error;
@@ -501,6 +498,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     minHeight: 52,
+    maxHeight: 120,
     backgroundColor: 'transparent',
     paddingTop: Platform.OS === 'ios' ? 14 : 10,
     paddingBottom: Platform.OS === 'ios' ? 14 : 10,

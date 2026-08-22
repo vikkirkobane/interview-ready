@@ -461,7 +461,8 @@ const styles = StyleSheet.create({
   },
   textArea: {
     width: '100%',
-    height: 256, // 64 * 4
+    minHeight: 140,
+    maxHeight: 200,
     padding: Spacing.lg,
     borderRadius: Radius.xl,
     borderWidth: 1.5,
