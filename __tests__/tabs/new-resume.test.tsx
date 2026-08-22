@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { waitFor, fireEvent, act } from '@testing-library/react-native';
 
 import { router } from 'expo-router';
@@ -56,6 +57,7 @@ describe('Resume Builder (new-resume) — user stories', () => {
     mockSupabase.__mockHelpers.reset();
     mockApiCall.mockReset();
     mockToast.show.mockClear();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     router.__resetMockRouter();
     const session = buildSession();
     mockLoggedInSession(mockSupabase, session);
@@ -335,5 +337,68 @@ describe('Resume Builder (new-resume) — user stories', () => {
       );
       expect(screen.getByDisplayValue('Strategic Product Leader with 8+ years scaling B2B platforms to $50M ARR.')).toBeTruthy();
     });
+  });
+
+  it('allows user to start over and generate a new resume from the editor view', async () => {
+    router.__setMockParams({ id: 'resume-456' });
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      {
+        id: 'resume-456',
+        user_id: 'test-user-id',
+        title: 'Full Stack Engineer Resume',
+        resume_contents: [
+          {
+            templateId: 'executive',
+            contact: { name: 'Jordan Dev', title: 'Senior Engineer', email: 'jordan@example.com' },
+            summary: 'Full stack developer with 5+ years experience.',
+            experience: [{ id: 'exp-1', title: 'Senior Engineer', company: 'Cloud Scale', bullets: ['Built distributed APIs'] }],
+            skills: [{ id: 'sk-1', category: 'Core', items: ['TypeScript', 'Node.js'] }],
+            education: [],
+            certifications: [],
+            awards: [],
+            sections_to_include: { summary: true, experience: true, skills: true },
+          },
+        ],
+      },
+    ];
+
+    const screen = await renderScreen();
+
+    // Editor view should render with "Start Over" button in header and bottom
+    await waitFor(() => {
+      expect(screen.getByText('Start Over')).toBeTruthy();
+      expect(screen.getByText('Start Over & Create New Resume')).toBeTruthy();
+    });
+
+    // Press the Header "Start Over" button
+    await fireEvent.press(screen.getByText('Start Over'));
+
+    // Should prompt confirmation alert
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Start Over?',
+      'Would you like to start over and generate a new resume? Any unsaved edits will be discarded.',
+      expect.any(Array)
+    );
+
+    const alertButtons = (Alert.alert as jest.Mock).mock.calls[0][2];
+    const confirmButton = alertButtons.find((btn: any) => btn.text === 'Start Over');
+    expect(confirmButton).toBeDefined();
+
+    // Trigger the confirmation action
+    await act(async () => {
+      confirmButton.onPress();
+      await flushPromises();
+    });
+
+    // Should return back to the initial resume creation form state
+    await waitFor(() => {
+      expect(screen.getByText('1. Target Job Description (Optional)')).toBeTruthy();
+      expect(screen.getByText('2. Choose a Template')).toBeTruthy();
+      expect(screen.getByText('Generate Resume')).toBeTruthy();
+    });
+
+    expect(mockToast.show).toHaveBeenCalledWith(
+      expect.objectContaining({ text1: 'Ready for new resume' })
+    );
   });
 });

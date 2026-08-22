@@ -417,6 +417,13 @@ export default function ResumeBuilderScreen() {
 
   const [draft, setDraft] = useState<DraftResume | null>(null);
   const generationChannelRef = useRef<any>(null);
+  const hasStartedOverRef = useRef(false);
+
+  useEffect(() => {
+    if (id) {
+      hasStartedOverRef.current = false;
+    }
+  }, [id]);
 
   useEffect(() => {
     return () => {
@@ -431,7 +438,7 @@ export default function ResumeBuilderScreen() {
 
   // Sync from remote when loaded
   React.useEffect(() => {
-    if (remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
+    if (id && !hasStartedOverRef.current && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
       const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
       setDraft({
         templateId: remoteResume.templateId || 'modern',
@@ -560,6 +567,40 @@ export default function ResumeBuilderScreen() {
               Toast.show({ type: 'error', text1: 'Delete Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to delete resume.') });
             }
           }
+        }
+      ]
+    );
+  };
+
+  // ── Start Over / Generate New Resume ───────────────────────────────────────
+  const resetToNewResume = () => {
+    hasStartedOverRef.current = true;
+    setDraft(null);
+    setAiGeneratedContent(null);
+    setJobDescription('');
+    setJobUrl('');
+    setJdFileText('');
+    setJdFileName(null);
+    setUrlError('');
+    try {
+      router.setParams({ id: '', template: '', fromList: '' });
+      router.replace('/new-resume' as any);
+    } catch {
+      // no-op
+    }
+    Toast.show({ type: 'info', text1: 'Ready for new resume', text2: 'Enter a job description or choose a template to begin.' });
+  };
+
+  const handleStartOver = () => {
+    Alert.alert(
+      "Start Over?",
+      "Would you like to start over and generate a new resume? Any unsaved edits will be discarded.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Start Over", 
+          style: "destructive",
+          onPress: resetToNewResume
         }
       ]
     );
@@ -926,7 +967,7 @@ export default function ResumeBuilderScreen() {
   };
 
   // ── Render: No draft yet → Form State ───────────────────────────────────
-  if (!id && !draft) {
+  if ((!id || hasStartedOverRef.current) && !draft) {
     return (
       <View style={styles.flex}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -1785,6 +1826,15 @@ export default function ResumeBuilderScreen() {
             <Ionicons name="download-outline" size={18} color={colors.primary} />
             <Text style={styles.exportBtnText}>Download</Text>
           </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.startOverBottomBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+            onPress={handleStartOver}
+            accessibilityRole="button"
+            accessibilityLabel="Start over and generate new resume"
+          >
+            <Ionicons name="refresh-outline" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+            <Text style={[styles.startOverBottomBtnText, { color: colors.textPrimary }]}>Start Over & Create New Resume</Text>
+          </TouchableOpacity>
           {id && fromList === 'true' && (
             <TouchableOpacity 
               style={[styles.exportBtn, { flex: 1, minWidth: '100%', borderColor: colors.error }]} 
@@ -1822,7 +1872,17 @@ export default function ResumeBuilderScreen() {
             <Text style={styles.pageTitle}>Resume Builder</Text>
             <Text style={styles.pageSubtitle}>Craft your professional story with AI precision.</Text>
           </View>
-
+          {draft && (
+            <TouchableOpacity 
+              style={styles.startOverHeaderBtn} 
+              onPress={handleStartOver}
+              accessibilityRole="button"
+              accessibilityLabel="Start over and create a new resume"
+            >
+              <Ionicons name="refresh-outline" size={15} color={colors.primary} />
+              <Text style={styles.startOverHeaderBtnText}>Start Over</Text>
+            </TouchableOpacity>
+          )}
         </View>
         {draft && (
           <View style={styles.modeToggleContainer}>
@@ -2071,6 +2131,24 @@ const makeStyles = (colors: any) => StyleSheet.create({
   pageTitle: { ...Typography.displayMd, color: colors.textPrimary, marginBottom: 4 },
   pageSubtitle: { ...Typography.bodyMd, color: colors.textMuted },
 
+  startOverHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bgPrimary,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 7,
+    borderRadius: Radius.lg,
+    gap: 6,
+    ...Shadow.sm,
+  },
+  startOverHeaderBtnText: {
+    ...Typography.bodySm,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+
   templatesBtn: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPrimary,
     borderWidth: 1, borderColor: colors.border, paddingHorizontal: Spacing.md,
@@ -2204,6 +2282,20 @@ const makeStyles = (colors: any) => StyleSheet.create({
     paddingHorizontal: Spacing.lg, borderRadius: Radius.full, gap: 8, backgroundColor: colors.bgPrimary,
   },
   exportBtnText: { ...Typography.headingMd, color: colors.primary },
+  startOverBottomBtn: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    marginTop: Spacing.sm,
+    ...Shadow.sm,
+  },
+  startOverBottomBtnText: {
+    ...Typography.headingMd,
+  },
   btnDisabled: { opacity: 0.45 },
 
   // Empty State
