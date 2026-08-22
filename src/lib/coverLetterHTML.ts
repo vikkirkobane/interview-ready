@@ -35,55 +35,55 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
   <title>${esc(candidateName || 'Cover Letter')}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    @page { size: A4 portrait; margin: 20mm 18mm; }
+    @page { size: A4 portrait; margin: 18mm 20mm 16mm 20mm; }
     @media screen {
-      body { padding: 36px 28px; max-width: 780px; margin: 0 auto; background: #f8fafc; }
-      .page { background: #ffffff; padding: 44px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
+      body { padding: 36px 28px; max-width: 800px; margin: 0 auto; background: #f8fafc; }
+      .page { background: #ffffff; padding: 44px 48px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0; }
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 13px;
+      font-size: 12.4px;
       color: #1e293b;
-      line-height: 1.65;
+      line-height: 1.62;
       -webkit-print-color-adjust: exact;
     }
     .page { width: 100%; }
     .name {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
-      color: #2563EB;
+      color: #1E3A8A;
       letter-spacing: -0.4px;
-      margin-bottom: 3px;
+      margin-bottom: 2px;
       line-height: 1.2;
     }
     .role {
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 600;
-      color: #475569;
-      margin-bottom: 6px;
+      color: #3B82F6;
+      margin-bottom: 4px;
     }
     .contact {
-      font-size: 11px;
+      font-size: 10.5px;
       color: #64748b;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-weight: 500;
     }
     .divider {
       border: none;
       border-top: 2px solid #2563EB;
-      margin: 10px 0 18px 0;
+      margin: 8px 0 16px 0;
     }
     .date {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #64748b;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       font-weight: 500;
     }
     .recip {
-      font-size: 12.5px;
-      line-height: 1.55;
-      margin-bottom: 20px;
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 16px;
       color: #334155;
     }
     .recip-name {
@@ -91,37 +91,39 @@ export function buildCoverLetterHTML(cl: CoverLetter): string {
       color: #0f172a;
     }
     .salutation {
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 700;
       color: #0f172a;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .para {
-      font-size: 12.8px;
-      margin-bottom: 14px;
+      font-size: 12.2px;
+      margin-bottom: 12px;
       white-space: pre-wrap;
       color: #334155;
-      line-height: 1.68;
+      line-height: 1.62;
+      text-align: justify;
+      text-justify: inter-word;
     }
     .signoff {
-      font-size: 13px;
+      font-size: 12.5px;
       color: #334155;
-      margin-top: 22px;
+      margin-top: 18px;
       break-inside: avoid;
       page-break-inside: avoid;
     }
     .signname {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
-      color: #2563EB;
+      color: #1E3A8A;
       margin-top: 4px;
     }
     .footer {
-      font-size: 10.5px;
+      font-size: 10px;
       color: #94a3b8;
-      margin-top: 26px;
+      margin-top: 22px;
       border-top: 1px solid #e2e8f0;
-      padding-top: 10px;
+      padding-top: 8px;
       text-align: center;
       break-inside: avoid;
       page-break-inside: avoid;
