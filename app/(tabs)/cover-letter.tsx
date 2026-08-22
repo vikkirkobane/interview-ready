@@ -53,13 +53,19 @@ export default function CoverLetterGeneratorScreen() {
   const deleteMutation = useDeleteCoverLetterMutation();
   const extractJd = useExtractJdMutation();
   const { data: pastCoverLetter } = useCoverLetterQuery(id as string);
+  const hasResetRef = React.useRef(false);
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
   const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
 
+  React.useEffect(() => {
+    if (id) {
+      hasResetRef.current = false;
+    }
+  }, [id]);
 
   React.useEffect(() => {
-    if (pastCoverLetter) {
+    if (pastCoverLetter && !hasResetRef.current) {
       // Parse title: format is "{company_name} - {job_title} Cover Letter"
       if (pastCoverLetter.title) {
         const titleParts = pastCoverLetter.title.split(' - ');
@@ -385,12 +391,37 @@ export default function CoverLetterGeneratorScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (fromList === 'true' && id) {
+      router.back();
+    } else {
+      hasResetRef.current = true;
+      setGeneratedLetter(null);
+      setCoverLetterObj(null);
+      try {
+        router.setParams({ id: '', fromList: '' });
+      } catch {
+        // ignore
+      }
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         
         {/* Page Header */}
         <View style={styles.pageHeader}>
+          {(generatedLetter || fromList === 'true') && !generating && (
+            <Pressable
+              style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+              onPress={handleBack}
+              accessibilityRole="button"
+              accessibilityLabel="Back to cover letter generator"
+            >
+              <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+            </Pressable>
+          )}
           <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Cover Letter</Text>
           <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>Generate a highly-tailored cover letter using AI.</Text>
         </View>
@@ -606,6 +637,14 @@ const styles = StyleSheet.create({
   },
   pageHeader: {
     marginBottom: Spacing.xl,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    ...Shadow.sm,
   },
   pageTitle: {
     ...Typography.displayMd,

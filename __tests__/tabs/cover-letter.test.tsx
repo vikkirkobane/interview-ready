@@ -297,4 +297,29 @@ describe('Cover Letter Generator — user stories', () => {
     });
     expect(screen.getByText('Link inaccessible. Paste text or attach file.')).toBeTruthy();
   });
+
+  it('renders the back return arrow when viewing a generated cover letter and navigates back to form', async () => {
+    mockApiCall.mockResolvedValue({ data: { cover_letter: LETTER }, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Acme Corp'), 'Acme');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Senior Software Engineer'), 'Engineer');
+    await fireEvent.changeText(screen.getByPlaceholderText('Or paste the full job description here...'), 'Building cloud services.');
+    await fireEvent.press(screen.getByText('Generate Cover Letter'));
+
+    // Should now show the generated cover letter and the return arrow
+    await waitFor(() => {
+      expect(screen.getByText('Your Cover Letter')).toBeTruthy();
+      expect(screen.getByLabelText('Back to cover letter generator')).toBeTruthy();
+    });
+
+    // Press the back return arrow
+    await fireEvent.press(screen.getByLabelText('Back to cover letter generator'));
+
+    // Should return back to the setup form
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('e.g. Acme Corp')).toBeTruthy();
+      expect(screen.getByText('Generate Cover Letter')).toBeTruthy();
+    });
+  });
 });
