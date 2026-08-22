@@ -55,7 +55,7 @@ const mockStorageFrom = supabase.storage.from as jest.Mock;
 /** Simulate what Android's fetch().blob() does: returns a blob typed 'text/plain' */
 function makeMangledBlob(): Blob {
   // Android mangling: blob type is 'text/plain' even for PDFs
-  return new Blob(['%PDF-fake-content'], { type: 'text/plain' });
+  return new Blob(['%PDF-fake-content'], { type: 'text/plain' } as any);
 }
 
 /** A properly-typed ArrayBuffer (no type property) */
@@ -157,7 +157,7 @@ describe('Resume upload — ArrayBuffer fix for Android MIME mangling', () => {
   // ── 4. Web path still uses Blob (File object) ────────────────────────────
 
   it('passes the web File blob directly on web — does not call arrayBuffer()', async () => {
-    const webBlob = new Blob(['%PDF-content'], { type: 'application/pdf' });
+    const webBlob = new Blob(['%PDF-content'], { type: 'application/pdf' } as any);
     const payload = buildPayload({ webFile: webBlob });
 
     const fetchSpy = jest.fn();

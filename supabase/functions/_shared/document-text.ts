@@ -1,3 +1,6 @@
+// Declare Deno for TypeScript type checking when imported in node/jest tests
+declare const Deno: any;
+
 /**
  * Safely convert a Uint8Array to Base64 without stack overflow on large files.
  */

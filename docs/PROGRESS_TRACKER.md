@@ -93,22 +93,22 @@
 ### Monetization & Rewards (Stories 16–18)
 - [x] **Story 16: Paystack Subscriptions** (`app/(tabs)/pricing.tsx`)
   - Monthly & Annual Pro plan checkout, currency switcher, WebView integration, and webhook validation.
-- [x] **Story 17: Viral Referral & Promo Codes** (`app/(tabs)/referral.tsx`, `app/(onboarding)/referral-code.tsx`)
-  - Shareable referral codes (10 credits), promo code redemptions (e.g. `LINKEDIN20` for 20 credits).
+- [x] **Story 17: Viral Referral & Tiered Promo Codes** (`app/(tabs)/referral.tsx`, `app/(onboarding)/referral-code.tsx`, `docs/PROMO_CODES_GUIDE.md`)
+  - Shareable peer referral codes (10 credits), tiered promo code matrix from 20 up to 150 credits across 4 tiers with 1-redemption-per-tier enforcement.
 - [x] **Story 18: AdMob Rewarded Ads** (`src/components/ads/`)
   - Rewarded video ads for earning extra free user credits.
 
 ### UI/UX Standards & Refinements
 - [x] **Bounded Expansion Inputs**: Standardized flexible `minHeight` / `maxHeight` constraints and internal scrolling on all multiline inputs across all tabs.
 - [x] **Attachment Shelf**: Clean document attachment badges on Ask AI and Mock Interview without polluting user prompt input fields.
-- [x] **Export System**: Unified PDF export generators for Resumes, Cover Letters, Interview Prep, Company Research, and LinkedIn optimizations.
+- [x] **Export System**: Unified PDF & DOCX export generators for Resumes, Cover Letters, Interview Prep, Company Research, and LinkedIn optimizations.
 
 ### Quality, Tooling & Diagnostics
 - [x] **Expo SDK 56 Alignment**: 0 package mismatches across all 11 Expo native modules.
 - [x] **Expo Doctor**: 21/22 checks passing (all dependency and configuration checks clean).
 - [x] **ESLint Linter**: 0 errors, 0 warnings.
 - [x] **Expo Prebuild**: Clean native directory generation for Android (`√ Finished prebuild`).
-- [x] **Jest Test Suite**: 47 test suites, 329 unit tests passing (100% pass rate).
+- [x] **Jest Test Suite**: 49 test suites, 352 unit tests passing (100% pass rate).
 
 ---
 

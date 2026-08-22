@@ -254,14 +254,23 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     ${templateCSS}
   `;
 
-  const h = r.header || ({} as any);
-  const candidateName = formatPersonName(h.name || '');
+  const shouldInclude = (section: keyof NonNullable<ResumeContent['sections_to_include']>, hasContent: boolean): boolean => {
+    if (!hasContent) return false;
+    if (!r.sections_to_include) return true;
+    return r.sections_to_include[section] !== false;
+  };
+
+  const h = r.header || (r as any).contact || ({} as any);
+  const rawName = h.name || (r as any).name || r.meta?.candidate_name || '';
+  const candidateName = formatPersonName(rawName) || 'Resume';
+  const candidateTitle = h.title || (r as any).title || r.meta?.profession || r.meta?.target_role || '';
+  const candidateSubtitle = h.subtitle || (r as any).subtitle || '';
   const contactParts = [
-    h.email,
-    h.phone,
-    h.linkedin,
-    h.portfolio,
-    h.location,
+    h.email || (r as any).email,
+    h.phone || (r as any).phone,
+    h.linkedin || (r as any).linkedin,
+    h.portfolio || (r as any).portfolio,
+    h.location || (r as any).location,
   ]
     .map(val => (val ? String(val).trim() : ''))
     .filter(Boolean);
@@ -269,23 +278,34 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   const header = `
     <div class="header-block">
       <div class="name">${esc(candidateName)}</div>
-      ${h.title ? `<div class="title">${esc(h.title)}</div>` : ''}
-      ${h.subtitle ? `<div class="subtitle">${esc(h.subtitle)}</div>` : ''}
+      ${candidateTitle ? `<div class="title">${esc(candidateTitle)}</div>` : ''}
+      ${candidateSubtitle ? `<div class="subtitle">${esc(candidateSubtitle)}</div>` : ''}
       ${contactParts.length > 0 ? `
         <div class="contact">${contactParts.map(esc).join(' &nbsp;•&nbsp; ')}</div>
       ` : ''}
     </div>
   `;
 
-  const summary = r.sections_to_include?.summary && r.summary?.text ? `
+  const rawSummary = typeof r.summary === 'string' ? r.summary : r.summary?.text || (r.summary as any)?.summary || '';
+  const summary = shouldInclude('summary', !!rawSummary.trim()) ? `
     <div class="section-header">Summary</div>
-    <p style="font-size:9.8px;line-height:1.38;color:#1F2937;">${esc(r.summary.text)}</p>
+    <p style="font-size:9.8px;line-height:1.38;color:#1F2937;">${esc(rawSummary.trim())}</p>
   ` : '';
 
-  const skills = r.sections_to_include?.skills && r.skills && r.skills.length > 0 ? `
+  const rawSkills = r.skills || [];
+  const normalizedSkills = rawSkills.map((s: any) => {
+    if (typeof s === 'string') {
+      return { category: 'Skills', items: [s] };
+    }
+    const cat = s.category || s.name || 'Skills';
+    const items = Array.isArray(s.items) ? s.items : Array.isArray(s.skills) ? s.skills : typeof s.items === 'string' ? [s.items] : [];
+    return { category: cat, items };
+  }).filter((s: any) => s.items.length > 0);
+
+  const skills = shouldInclude('skills', normalizedSkills.length > 0) ? `
     <div class="section-header">Skills & Competencies</div>
     <table class="skills-table">
-      ${r.skills.map((s: any) => `
+      ${normalizedSkills.map((s: any) => `
         <tr>
           <td class="skills-label">${esc(s.category)}:</td>
           <td class="skills-value">${(s.items || []).map(esc).join(' • ')}</td>
@@ -295,10 +315,19 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   ` : '';
 
   // 1-page experience budget optimizer
-  const experienceList = r.experience || [];
-  const experience = r.sections_to_include?.experience && experienceList.length > 0 ? `
+  const rawExp = r.experience || [];
+  const normalizedExp = rawExp.map((e: any) => {
+    const title = e.title || e.role || e.position || '';
+    const company = e.company || e.organization || e.employer || '';
+    const date_range = e.date_range || e.dates || e.year || e.duration || '';
+    const location = e.location || '';
+    const bullets = Array.isArray(e.bullets) ? e.bullets : typeof e.description === 'string' && e.description.trim() ? [e.description] : [];
+    return { title, company, date_range, location, bullets };
+  }).filter((e: any) => e.title || e.company || e.bullets.length > 0);
+
+  const experience = shouldInclude('experience', normalizedExp.length > 0) ? `
     <div class="section-header">Professional Experience</div>
-    ${experienceList.slice(0, 5).map((e: any, idx: number) => {
+    ${normalizedExp.slice(0, 5).map((e: any, idx: number) => {
       // 2-3 bullets for Primary & Secondary roles, 2 bullets for older roles to enforce 1-page fit
       const bulletLimit = idx <= 1 ? 3 : 2;
       const bullets = (e.bullets || []).slice(0, bulletLimit);
@@ -308,56 +337,86 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
           <div class="role-line">
             <span>
               <span class="role-title">${esc(e.title)}</span>
-              <span class="separator">•</span>
-              <span class="company">${esc(e.company)}</span>
+              ${e.company ? `<span class="separator">•</span><span class="company">${esc(e.company)}</span>` : ''}
             </span>
-            <span class="date">${esc(e.date_range)}</span>
+            ${e.date_range ? `<span class="date">${esc(e.date_range)}</span>` : ''}
           </div>
           ${e.location ? `<div class="location">${esc(e.location)}</div>` : ''}
-          <ul>${bullets.map((b: string) => `<li>${esc(b)}</li>`).join('')}</ul>
+          ${bullets.length > 0 ? `<ul>${bullets.map((b: string) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}
         </div>
       `;
     }).join('')}
   ` : '';
 
-  const project = r.sections_to_include?.featured_project && r.featured_project && r.featured_project.include ? `
+  const proj = r.featured_project || (Array.isArray((r as any).projects) && (r as any).projects[0]) || null;
+  const projHasContent = proj && (proj.name || proj.title);
+  const project = shouldInclude('featured_project', !!projHasContent && (proj.include !== false || !r.sections_to_include)) ? `
     <div class="section-header">Featured Project</div>
     <div class="role-block">
-      <div class="role-title">${esc(r.featured_project.name)}</div>
-      ${r.featured_project.tech_stack ? `<div class="tech-stack">${esc(r.featured_project.tech_stack)}</div>` : ''}
-      <ul><li>${esc(r.featured_project.bullet)}</li></ul>
+      <div class="role-title">${esc(proj.name || proj.title)}</div>
+      ${proj.tech_stack ? `<div class="tech-stack">${esc(proj.tech_stack)}</div>` : ''}
+      ${proj.bullet ? `<ul><li>${esc(proj.bullet)}</li></ul>` : ''}
     </div>
   ` : '';
 
-  const education = r.sections_to_include?.education && r.education && r.education.length > 0 ? `
-    <div class="section-header">Education & Certifications</div>
-    ${r.education.map((e: any) => `
+  const rawEdu = r.education || [];
+  const normalizedEdu = rawEdu.map((e: any) => ({
+    degree: e.degree || e.degree_name || e.title || '',
+    institution: e.institution || e.school || e.university || '',
+    year: e.year || e.graduation_year || e.date || '',
+    note: e.note || e.gpa || '',
+  })).filter((e: any) => e.degree || e.institution);
+
+  const rawCerts = r.certifications || [];
+  const normalizedCerts = rawCerts.map((c: any) => {
+    if (typeof c === 'string') return c;
+    return [c.name || c.title, c.issuer, c.year].filter(Boolean).join(' - ');
+  }).filter(Boolean);
+
+  const hasEdu = shouldInclude('education', normalizedEdu.length > 0);
+  const hasCerts = shouldInclude('certifications', normalizedCerts.length > 0);
+
+  const education = (hasEdu || hasCerts) ? `
+    <div class="section-header">${hasEdu && hasCerts ? 'Education & Certifications' : hasEdu ? 'Education' : 'Certifications'}</div>
+    ${hasEdu ? normalizedEdu.map((e: any) => `
       <div class="edu-line">
         <span class="edu-degree">${esc(e.degree)}</span>
-        <span class="date">${esc(e.year)}</span>
+        ${e.year ? `<span class="date">${esc(e.year)}</span>` : ''}
       </div>
       <div class="edu-school">${esc(e.institution)}${e.note ? ' • ' + esc(e.note) : ''}</div>
-    `).join('')}
-    ${r.certifications && r.certifications.length > 0 ? `
+    `).join('') : ''}
+    ${hasCerts && normalizedCerts.length > 0 ? `
       <div class="certs">
         <span class="certs-label">Certifications: </span>
-        ${r.certifications.map(esc).join(' • ')}
+        ${normalizedCerts.map(esc).join(' • ')}
       </div>
     ` : ''}
   ` : '';
 
-  const languages = r.sections_to_include?.languages && r.languages && r.languages.length > 0 ? `
+  const rawLang = r.languages || [];
+  const normalizedLang = rawLang.map((l: any) => {
+    if (typeof l === 'string') return l;
+    return `${l.language || l.name || ''}${l.proficiency ? ` (${l.proficiency})` : ''}`;
+  }).filter(Boolean);
+
+  const languages = shouldInclude('languages', normalizedLang.length > 0) ? `
     <div class="section-header">Languages</div>
-    <p style="font-size:9.8px;color:#1F2937;">${r.languages.map((l: any) => `${esc(l.language)} (${esc(l.proficiency)})`).join(' • ')}</p>
+    <p style="font-size:9.8px;color:#1F2937;">${normalizedLang.map(esc).join(' • ')}</p>
   ` : '';
 
-  const recognition = r.sections_to_include?.recognition && r.recognition && r.recognition.length > 0 ? `
+  const rawRec = r.recognition || (r as any).awards || [];
+  const normalizedRec = rawRec.map((item: any) => {
+    if (typeof item === 'string') return item;
+    return [item.name || item.title, item.issuer, item.year].filter(Boolean).join(' - ');
+  }).filter(Boolean);
+
+  const recognition = shouldInclude('recognition', normalizedRec.length > 0) ? `
     <div class="section-header">Recognition & Awards</div>
-    <ul>${r.recognition.map((item: string) => `<li>${esc(item)}</li>`).join('')}</ul>
+    <ul>${normalizedRec.map((item: string) => `<li>${esc(item)}</li>`).join('')}</ul>
   ` : '';
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>${esc(r.header?.name || 'Resume')}</title>
+    <title>${esc(candidateName)}</title>
     <style>${css}</style></head><body>
     ${header}${summary}${skills}${experience}${project}${education}${languages}${recognition}
   </body></html>`;

@@ -144,18 +144,29 @@ export default function DashboardScreen() {
         }
       >
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.bgPrimary, borderColor: colors.primary, borderWidth: 1 }]}>
+          <Pressable 
+            style={[
+              styles.statCard, 
+              { 
+                backgroundColor: colors.bgPrimary, 
+                borderColor: (!isPro && credits < 2) ? colors.warning : colors.primary, 
+                borderWidth: 1.5 
+              }
+            ]}
+            onPress={() => router.push('/(tabs)/pricing?reason=low_credits' as any)}
+          >
             <ShimmerEffect duration={4000} />
             <View style={styles.statHeader}>
-              <Ionicons name="flash" size={14} color={colors.primary} />
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>AI Credits</Text>
+              <Ionicons name="flash" size={14} color={(!isPro && credits < 2) ? colors.warning : colors.primary} />
+              <Text style={[styles.statLabel, { color: (!isPro && credits < 2) ? colors.warning : colors.textMuted }]}>
+                {(!isPro && credits < 2) ? 'Credits (Low)' : 'AI Credits'}
+              </Text>
             </View>
             <Text style={[styles.statValue, { color: colors.textPrimary }]}>{credits}</Text>
             <View style={[styles.progressBarBg, { backgroundColor: colors.bgMuted }]}>
-              <View style={[styles.progressBarFill, { width: `${Math.min(100, (credits / maxCredits) * 100)}%`, backgroundColor: colors.primary }]} />
+              <View style={[styles.progressBarFill, { width: `${Math.min(100, (credits / maxCredits) * 100)}%`, backgroundColor: (!isPro && credits < 2) ? colors.warning : colors.primary }]} />
             </View>
-
-          </View>
+          </Pressable>
 
           <View style={[styles.statCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
             <ShimmerEffect duration={4000} delay={1000} />

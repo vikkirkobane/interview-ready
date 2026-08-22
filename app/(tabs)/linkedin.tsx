@@ -24,13 +24,14 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { supabase } from '../../src/lib/supabase';
-import { useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import Toast from 'react-native-toast-message';
-import { handleApiError } from '../../src/lib/errorHandler';
+import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { exportLinkedInAnalysisPDF } from '../../src/lib/linkedinExport';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,9 +68,11 @@ const KW_COLOR: Record<string, string> = {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function LinkedinOptimizerScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile, updateProfile } = useProfileStore();
+  const { requireCredits } = useCreditGuard();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   // Detect LinkedIn OAuth user — must be computed BEFORE state that depends on it
@@ -212,6 +215,8 @@ export default function LinkedinOptimizerScreen() {
   };
 
   const handleAnalyze = async () => {
+    if (!requireCredits('LinkedIn Optimizer')) return;
+
     if (wizard.targetRoles.length === 0) {
       Toast.show({ type: 'error', text1: 'Add at least one target role' });
       return;
@@ -265,6 +270,8 @@ export default function LinkedinOptimizerScreen() {
   };
 
   const handleOptimizeSection = async (section: string) => {
+    if (!requireCredits('LinkedIn Optimizer')) return;
+
     setOptimizingSection(section);
     try {
       const targetRoles = wizard.targetRoles.length > 0
@@ -382,6 +389,8 @@ export default function LinkedinOptimizerScreen() {
   };
 
   const handleEngagementPlan = async () => {
+    if (!requireCredits('LinkedIn Optimizer')) return;
+
     try {
       const targetRoles = wizard.targetRoles.length > 0
         ? wizard.targetRoles
@@ -414,7 +423,7 @@ export default function LinkedinOptimizerScreen() {
         targetCompanies: wizard.targetCompanies,
       });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Export Failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export LinkedIn analysis.') });
     } finally {
       setIsDownloading(false);
     }
@@ -425,11 +434,11 @@ export default function LinkedinOptimizerScreen() {
     try {
       const { error } = await signInWithOAuth('linkedin_oidc');
       if (error) {
-        Toast.show({ type: 'error', text1: 'LinkedIn connection failed', text2: error });
+        Toast.show({ type: 'error', text1: 'LinkedIn connection failed', text2: getUserFriendlyErrorMessage(error, 'Please try again.') });
       }
       // OAuth redirects — session will update automatically via onAuthStateChange
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'LinkedIn connection failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'LinkedIn connection failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });
     } finally {
       setLiConnecting(false);
     }

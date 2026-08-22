@@ -39,7 +39,7 @@ describe('Login screen — user stories', () => {
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
-    router.__resetMockRouter();
+    (router as any).__resetMockRouter?.();
   });
 
   const renderScreen = () => renderWithProviders(<LoginScreen />);
@@ -123,7 +123,9 @@ describe('Login screen — user stories', () => {
     await fireEvent.press(screen.getByLabelText('Sign In'));
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid login credentials')).toBeTruthy();
+      expect(
+        screen.getByText('Incorrect email or password. Please try again.')
+      ).toBeTruthy();
     });
     expect(router.replace).not.toHaveBeenCalledWith('/(tabs)');
   });

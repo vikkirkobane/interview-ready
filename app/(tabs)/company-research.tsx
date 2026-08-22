@@ -22,9 +22,10 @@ import {
   CompanyResearchResult,
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { handleApiError } from '../../src/lib/errorHandler';
+import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { exportCompanyResearchPDF } from '../../src/lib/companyResearchExport';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ export default function CompanyResearchScreen() {
   const researchMutation = useCompanyResearchMutation();
   const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
+  const { requireCredits } = useCreditGuard();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
@@ -119,7 +121,7 @@ export default function CompanyResearchScreen() {
       setIsDownloading(true);
       await exportCompanyResearchPDF(result);
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Export Failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export company research report.') });
     } finally {
       setIsDownloading(false);
     }
@@ -138,6 +140,8 @@ export default function CompanyResearchScreen() {
   }, [id]);
 
   const handleResearch = async () => {
+    if (!requireCredits('Company Research')) return;
+
     const trimmed = companyUrl.trim();
     if (!trimmed) {
       Toast.show({ type: 'error', text1: 'Enter a company website URL' });

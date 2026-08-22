@@ -5,7 +5,9 @@ import { ScoreRing, Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useRouter } from 'expo-router';
 import { useDeleteAccountMutation, useUpdateProfileMutation, useParseResumeMutation } from '../../src/hooks/useApi';
-import { useFilePicker } from '../../src/hooks/useFilePicker';import Toast from 'react-native-toast-message';
+import { useFilePicker } from '../../src/hooks/useFilePicker';
+import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { supabase } from '../../src/lib/supabase';
 import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useNotificationStore } from '../../src/stores/notification-store';
@@ -86,7 +88,7 @@ export default function ProfileScreen() {
         await signOut();
         router.replace('/(auth)/welcome');
       } catch (error: any) {
-        Toast.show({ type: 'error', text1: 'Failed to delete account', text2: error.message });
+        Toast.show({ type: 'error', text1: 'Failed to delete account', text2: getUserFriendlyErrorMessage(error.message, 'Please try again later.') });
       }
     };
 
@@ -164,7 +166,7 @@ export default function ProfileScreen() {
         type: 'success',
       });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Update failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Update failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to update profile.') });
     }
   };
 
@@ -311,7 +313,7 @@ export default function ProfileScreen() {
 
           Toast.show({ type: 'success', text1: 'Resume Parsed!', text2: 'Your profile has been updated.' });
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or parsing failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or parsing failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
         }
       }
     });

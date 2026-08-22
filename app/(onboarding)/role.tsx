@@ -14,6 +14,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useUpdateProfileMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -91,7 +92,7 @@ export default function RoleScreen() {
       Toast.show({
         type: 'error',
         text1: 'Failed to save profile',
-        text2: error.message || 'Please check your connection and try again.',
+        text2: getUserFriendlyErrorMessage(error.message, 'Please check your connection and try again.'),
       });
     }
   };

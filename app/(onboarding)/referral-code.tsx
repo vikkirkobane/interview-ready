@@ -14,6 +14,7 @@ import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useReferral } from '../../src/hooks/useReferral';
 import { useProfileStore } from '../../src/stores/profile-store';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ReferralCodeScreen() {
@@ -79,7 +80,7 @@ export default function ReferralCodeScreen() {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: error.message || 'Failed to apply code.',
+        text2: getUserFriendlyErrorMessage(error.message, 'Failed to apply code. Please try again.'),
       });
     } finally {
       setIsApplying(false);
@@ -124,7 +125,7 @@ export default function ReferralCodeScreen() {
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {/* eslint-disable-next-line react/no-unescaped-entities */}
-            Enter a friend's referral code or a LinkedIn campaign promo code to get up to 20 free AI credits instantly.
+            Enter a friend's referral code or a campaign promo code to get up to 150 bonus AI credits instantly.
           </Text>
         </View>
 
@@ -171,7 +172,7 @@ export default function ReferralCodeScreen() {
                 <Ionicons name="pricetag-outline" size={18} color={colors.primary} />
               </View>
               <Text style={[styles.miniText, { color: colors.textMuted }]}>
-                Enter a referral code (10 credits) or promo code (20 credits)
+                Enter a referral code (10 credits) or promo code (up to 150 credits)
               </Text>
             </View>
             <View style={styles.miniStep}>

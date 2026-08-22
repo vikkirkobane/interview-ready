@@ -2,6 +2,7 @@ import { useState } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../lib/errorHandler';
 
 export interface FilePickerOptions {
   type: string[];
@@ -77,7 +78,7 @@ export function useFilePicker() {
       }
 
     } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Failed to process file', text2: error.message || 'Please check your file and try again.' });
+      Toast.show({ type: 'error', text1: 'Failed to process file', text2: getUserFriendlyErrorMessage(error.message, 'Please check your file and try again.') });
     } finally {
       setIsPicking(false);
     }

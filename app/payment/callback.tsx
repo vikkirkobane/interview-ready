@@ -12,6 +12,7 @@ import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { queryClient } from '../../src/lib/query-client';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 
 type PaymentStatus = 'verifying' | 'success' | 'failed' | 'error';
 
@@ -101,9 +102,7 @@ export default function PaymentCallbackScreen() {
       console.error('Payment verification error:', error);
       setStatus('error');
       setMessage(
-        error instanceof Error
-          ? error.message
-          : 'Failed to verify payment. Please contact support.'
+        getUserFriendlyErrorMessage(error, 'Failed to verify payment. Please contact support.')
       );
     }
   };

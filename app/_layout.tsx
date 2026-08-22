@@ -18,6 +18,7 @@ import { useNotificationStore } from '../src/stores/notification-store';
 import { useUIStore } from '../src/stores/ui-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
+import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { supabase } from '../src/lib/supabase';
 import {
   exchangeAuthCodeSafely,
@@ -36,6 +37,13 @@ if (!(Toast as any)._isPatched) {
   Toast.show = (params) => {
     const isError = params.type === 'error';
     const notificationsEnabled = useUIStore.getState().notificationsEnabled;
+
+    if (isError && params.text2) {
+      params = {
+        ...params,
+        text2: getUserFriendlyErrorMessage(params.text2),
+      };
+    }
 
     // Always display error alerts; only display info/success toasts if notifications are enabled
     if (isError || notificationsEnabled) {
@@ -402,7 +410,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
       <Ionicons name="alert-circle" size={64} color="#FF2A2A" style={styles.errorIcon} />
       <Text style={styles.errorTitle}>Something went wrong</Text>
       <Text style={styles.errorMessage}>
-        {error?.message || 'An unexpected error occurred while loading this view.'}
+        {getUserFriendlyErrorMessage(error?.message, 'An unexpected error occurred while loading this view. Please try again.')}
       </Text>
       <View style={styles.errorActions}>
         <Pressable style={styles.errorRetryBtn} onPress={retry}>

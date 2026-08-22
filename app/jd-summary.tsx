@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useJdSummaryMutation } from '../src/hooks/useApi';
 import { useAuthStore } from '../src/stores/auth-store';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { Skeleton } from '../src/components/ui/SkeletonLoader';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -80,7 +81,7 @@ export default function JdSummaryScreen() {
           visibilityTime: 4000,
         });
       } else {
-        Toast.show({ type: 'error', text1: 'Analysis Failed', text2: errMsg });
+        Toast.show({ type: 'error', text1: 'Analysis Failed', text2: getUserFriendlyErrorMessage(errMsg, 'Failed to analyze job description. Please try again.') });
       }
     } finally {
       setGenerating(false);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { queryClient as globalQueryClient } from '../lib/query-client';
 import { useProfileStore } from '../stores/profile-store';
+import { getUserFriendlyErrorMessage } from '../lib/errorHandler';
 
 async function syncCreditCaches() {
   try {
@@ -96,7 +97,7 @@ export function useReferral(): UseReferralReturn {
         referrals: result.data.referrals || [],
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = getUserFriendlyErrorMessage(err, 'Unable to fetch referral stats.');
       setError(errorMessage);
       console.error('Error fetching referral stats:', err);
     } finally {
@@ -226,7 +227,7 @@ export function useReferral(): UseReferralReturn {
         error: 'Invalid referral or promo code. Please check and try again.',
       };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      const errorMessage = getUserFriendlyErrorMessage(err, 'Failed to apply code. Please try again.');
       console.error('Error applying referral code:', err);
       return {
         success: false,

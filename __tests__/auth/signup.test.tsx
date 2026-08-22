@@ -39,7 +39,7 @@ describe('Signup screen — user stories', () => {
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
-    router.__resetMockRouter();
+    (router as any).__resetMockRouter?.();
   });
 
   const renderScreen = () => renderWithProviders(<SignupScreen />);
@@ -159,7 +159,9 @@ describe('Signup screen — user stories', () => {
     await fireEvent.press(screen.getByLabelText('Create Account'));
 
     await waitFor(() => {
-      expect(screen.getByText('User already registered')).toBeTruthy();
+      expect(
+        screen.getByText('An account with this email already exists. Try signing in instead.')
+      ).toBeTruthy();
     });
   });
 

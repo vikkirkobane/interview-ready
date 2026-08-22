@@ -6,6 +6,7 @@ import { Typography, Spacing, Radius, useTheme } from '../theme';
 import { useNotificationStore } from '../stores/notification-store';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../lib/errorHandler';
 
 declare const window: any;
 
@@ -59,7 +60,7 @@ export const IdentityManager: React.FC = () => {
       Toast.show({
         type: 'error',
         text1: 'Failed to load linked accounts',
-        text2: error.message || 'Please try again later'
+        text2: getUserFriendlyErrorMessage(error.message, 'Please try again later')
       });
     } finally {
       setLoading(false);
@@ -129,7 +130,7 @@ export const IdentityManager: React.FC = () => {
       Toast.show({
         type: 'error',
         text1: 'Failed to link account',
-        text2: error.message || 'Please try again later'
+        text2: getUserFriendlyErrorMessage(error.message, 'Please try again later')
       });
     } finally {
       setLinkingProviders(prev => ({ ...prev, [provider]: false }));
@@ -193,7 +194,7 @@ export const IdentityManager: React.FC = () => {
       Toast.show({
         type: 'error',
         text1: 'Failed to unlink account',
-        text2: error.message || 'Please try again later'
+        text2: getUserFriendlyErrorMessage(error.message, 'Please try again later')
       });
     }
   };

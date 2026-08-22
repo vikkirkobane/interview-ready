@@ -115,7 +115,7 @@ describe('Report & PDF Generation Test Suite', () => {
 
   describe('buildResumeHTML', () => {
     it('generates a 1-page optimized ATS resume with executive formatting and budget limits', () => {
-      const mockResume = {
+      const mockResume: any = {
         meta: {
           candidate_name: 'david miller',
           profession: 'Staff Software Engineer',
@@ -189,6 +189,7 @@ describe('Report & PDF Generation Test Suite', () => {
         languages: [
           { language: 'English', proficiency: 'Native' },
         ],
+        certifications: [],
       };
 
       const htmlExec = buildResumeHTML(mockResume, 'executive');

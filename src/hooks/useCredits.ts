@@ -37,6 +37,10 @@ export interface CreditTransaction {
 
 let activeBalancePromise: Promise<CreditBalance | null> | null = null;
 
+export function _resetCreditCache() {
+  activeBalancePromise = null;
+}
+
 export function useCredits() {
   const [balance, setBalance] = useState<CreditBalance | null>(null);
   const [loading, setLoading] = useState(true);

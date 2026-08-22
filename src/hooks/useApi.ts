@@ -171,25 +171,35 @@ export const useResumeQuery = (resumeId: string | null) => {
       // Map DB schema back to ResumeContent schema expected by buildResumeHTML
       const mappedContent = {
         meta: {
-          candidate_name: content.name || '',
-          profession: content.title || '',
+          candidate_name: content.contact?.name || content.name || '',
+          profession: content.contact?.title || content.title || data.title || '',
           target_role: data.title || '',
+          generated_at: data.created_at || new Date().toISOString(),
+          ats_keywords_used: [],
+          page_fit_estimate: 'comfortable' as const,
         },
-        header: content.contact || {
-          name: content.name || '',
-          title: content.title || '',
-          location: '',
-          email: '',
-          phone: '',
+        header: {
+          name: content.contact?.name || content.name || '',
+          title: content.contact?.title || content.title || data.title || '',
+          subtitle: content.contact?.subtitle || '',
+          location: content.contact?.location || '',
+          email: content.contact?.email || '',
+          phone: content.contact?.phone || '',
+          linkedin: content.contact?.linkedin || '',
+          portfolio: content.contact?.portfolio || '',
         },
         summary: { text: content.summary || '' },
         skills: content.skills || [],
         experience: content.experience || [],
         education: content.education || [],
-        featured_project: content.projects?.[0] || { include: false },
-        certifications: content.certifications || [],
+        featured_project: content.projects?.[0] || { include: false, name: '', tech_stack: '', bullet: '' },
+        certifications: (content.certifications || []).map((c: any) =>
+          typeof c === 'string' ? c : [c.name, c.issuer, c.year].filter(Boolean).join(' - ')
+        ),
         languages: content.languages || [],
-        recognition: content.awards || [],
+        recognition: (content.awards || []).map((a: any) =>
+          typeof a === 'string' ? a : [a.name, a.issuer, a.year].filter(Boolean).join(' - ')
+        ),
         sections_to_include: {
           summary: !!content.summary,
           skills: !!(content.skills && content.skills.length > 0),

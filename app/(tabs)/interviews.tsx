@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Card, Button, ScoreRing, FileAttachmentBadge } from '../../src/components/ui';
 
@@ -94,7 +95,7 @@ export default function InterviewsLobbyScreen() {
           setJdFileName(payload.fileName);
           setJobDescription(extracted_text);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },

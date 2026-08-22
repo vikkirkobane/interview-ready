@@ -26,8 +26,12 @@ export function createApiMock() {
 }
 
 export function createSupabaseMock(initialTables: Record<string, AnyRow[]> = {}) {
+  const defaultTables: Record<string, AnyRow[]> = {
+    users: [{ id: 'test-user-id', ai_credits: 10, plan: 'FREE' }],
+    ...initialTables,
+  };
   const tables: Record<string, AnyRow[]> = {};
-  Object.entries(initialTables).forEach(([name, rows]) => {
+  Object.entries(defaultTables).forEach(([name, rows]) => {
     tables[name] = JSON.parse(JSON.stringify(rows));
   });
 
@@ -244,7 +248,7 @@ export function createSupabaseMock(initialTables: Record<string, AnyRow[]> = {})
     rest: {},
   };
 
-  const initialTablesSnapshot = JSON.parse(JSON.stringify(initialTables));
+  const initialTablesSnapshot = JSON.parse(JSON.stringify(defaultTables));
 
   function reset() {
     supabase.from.mockClear();

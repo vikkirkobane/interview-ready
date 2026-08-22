@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, useTheme } from '../../src/theme';
 import { Button, Input } from '../../src/components/ui';
 import { supabase } from '../../src/lib/supabase';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ForgotPasswordScreen() {
@@ -42,7 +43,7 @@ export default function ForgotPasswordScreen() {
       });
 
       if (resetError) {
-        setError(resetError.message);
+        setError(getUserFriendlyErrorMessage(resetError.message, 'Failed to send reset link. Please try again.'));
       } else {
         setSuccess(true);
         Alert.alert(
@@ -57,7 +58,7 @@ export default function ForgotPasswordScreen() {
         );
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      setError(getUserFriendlyErrorMessage(err?.message, 'An error occurred. Please try again.'));
     } finally {
       setLoading(false);
     }

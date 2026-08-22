@@ -6,6 +6,7 @@ import { ScoreRing } from "../../src/components/ui";
 import { useAuthStore } from "../../src/stores/auth-store";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation, useDeleteJobApplicationMutation } from "../../src/hooks/useApi";
+import { getUserFriendlyErrorMessage } from "../../src/lib/errorHandler";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,7 +70,7 @@ export default function TrackerScreen() {
               await deleteMutation.mutateAsync(selectedApp.id);
               setSelectedApp(null);
             } catch (e: any) {
-              Alert.alert('Error', e.message);
+              Alert.alert('Error', getUserFriendlyErrorMessage(e.message, 'Failed to delete job application.'));
             }
           }
         }

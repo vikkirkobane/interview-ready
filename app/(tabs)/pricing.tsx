@@ -9,8 +9,10 @@ import { Pressable ,
   FlatList,
 } from 'react-native';
 import React, { useState, useMemo } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
+import { Ionicons } from '@expo/vector-icons';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { PricingCard, PricingPlan } from '../../src/components/features/payments/PricingCard';
 import { PaystackWebViewComponent, PaystackPaymentData } from '../../src/components/features/payments/PaystackWebView';
 import { Spacing, Typography, Radius } from '../../src/theme/tokens';
@@ -18,6 +20,7 @@ import { useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { COUNTRIES, Country, getPaymentMethods } from '../../src/constants/countries';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { useCredits } from '../../src/hooks/useCredits';
 import * as Linking from 'expo-linking';
 
 type PaymentMode = 'USD' | 'KES';
@@ -195,6 +198,9 @@ export default function PricingScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const { reason } = useLocalSearchParams<{ reason?: string }>();
+  const { balance } = useCredits();
+  const isLowCredits = reason === 'low_credits' || (!isPro && balance !== null && balance.balance < 2);
 
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -322,7 +328,7 @@ export default function PricingScreen() {
       Toast.show({
         type: 'error',
         text1: 'Payment Error',
-        text2: error instanceof Error ? error.message : 'Failed to initialize payment. Please try again.',
+        text2: getUserFriendlyErrorMessage(error, 'Failed to initialize payment. Please try again.'),
       });
     } finally {
       setLoading(false);
@@ -395,6 +401,20 @@ export default function PricingScreen() {
           Unlock unlimited AI-powered career tools and land your dream job faster
         </Text>
       </View>
+
+      {isLowCredits && (
+        <View style={styles.lowCreditBanner}>
+          <View style={styles.lowCreditBannerIcon}>
+            <Ionicons name="flash" size={22} color="#F59E0B" />
+          </View>
+          <View style={styles.lowCreditBannerContent}>
+            <Text style={styles.lowCreditBannerTitle}>Low Credits Warning</Text>
+            <Text style={styles.lowCreditBannerText}>
+              You have less than 2 AI credits remaining. Choose a subscription plan below to unlock unlimited AI generations, resume tailoring, and interview practice.
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Country Selector */}
       <View style={styles.countrySelector}>
@@ -559,6 +579,39 @@ const getStyles = (colors: any) => StyleSheet.create({
   header: {
     marginBottom: Spacing.xl,
     alignItems: 'center',
+  },
+  lowCreditBanner: {
+    flexDirection: 'row',
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+    borderWidth: 1.5,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    marginBottom: Spacing.xl,
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  lowCreditBannerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FDE68A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  lowCreditBannerContent: {
+    flex: 1,
+  },
+  lowCreditBannerTitle: {
+    ...Typography.subtitle1,
+    color: '#92400E',
+    marginBottom: 4,
+  },
+  lowCreditBannerText: {
+    ...Typography.bodySm,
+    color: '#B45309',
+    lineHeight: 18,
   },
   title: {
     ...Typography.displayLg,

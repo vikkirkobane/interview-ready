@@ -9,7 +9,7 @@ import { useProfileStore } from '../../src/stores/profile-store';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useAnalyzeJobMutation, useJobApplicationsListQuery, useJobApplicationQuery, useParseResumeMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { handleApiError, isRateLimitedError } from '../../src/lib/errorHandler';
+import { handleApiError, isRateLimitedError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
@@ -17,10 +17,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 import { FileAttachmentBadge } from '../../src/components/ui';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 
 
 export default function JobFitScreen() {
   const { user } = useAuthStore();
+  const { requireCredits } = useCreditGuard();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { profile, updateProfile } = useProfileStore();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -98,7 +100,7 @@ export default function JobFitScreen() {
           setJdFileName(payload.fileName);
           setJdText(extracted_text);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },
@@ -114,6 +116,8 @@ export default function JobFitScreen() {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const handleAnalyze = async () => {
+    if (!requireCredits('Job Analyzer')) return;
+
     setUrlError('');
 
     // Use text area (or fallback to JD file text)

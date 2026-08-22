@@ -6,7 +6,7 @@ import { Card, Button, FileAttachmentBadge } from '../../src/components/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCreateCoverLetterMutation, useCoverLetterQuery, useDeleteCoverLetterMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { handleApiError } from '../../src/lib/errorHandler';
+import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { supabase } from '../../src/lib/supabase';
@@ -22,6 +22,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 
 const TONES = ['Professional', 'Enthusiastic', 'Concise', 'Storytelling', 'Formal'];
 
@@ -30,6 +31,7 @@ export default function CoverLetterGeneratorScreen() {
   const { colors } = useTheme();
   const { addNotification } = useNotificationStore();
   const { user } = useAuthStore();
+  const { requireCredits } = useCreditGuard();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   const [selectedTone, setSelectedTone] = useState('Professional');
@@ -171,7 +173,7 @@ export default function CoverLetterGeneratorScreen() {
           setJdFileName(payload.fileName);
           setJobDescription(extracted_text);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },
@@ -185,6 +187,8 @@ export default function CoverLetterGeneratorScreen() {
   };
 
   const handleGenerate = async () => {
+    if (!requireCredits('Cover Letter')) return;
+
     setGenerating(true);
     setUrlError('');
 
@@ -304,7 +308,7 @@ export default function CoverLetterGeneratorScreen() {
               await deleteMutation.mutateAsync(id as string);
               router.back();
             } catch (e: any) {
-              Toast.show({ type: 'error', text1: 'Delete Failed', text2: e.message });
+              Toast.show({ type: 'error', text1: 'Delete Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to delete cover letter.') });
             }
           }
         }
@@ -369,7 +373,7 @@ export default function CoverLetterGeneratorScreen() {
       usePreviewStore.getState().setPreview('cover_letter', data, htmlString);
       router.push('/preview' as any);
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Preview generation failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Preview generation failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });
     }
   };
 

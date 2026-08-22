@@ -13,6 +13,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { signInWithGoogle, initializeGoogleSignIn, signOutFromGoogle } from '../lib/social-auth';
 import { exchangeAuthCodeSafely } from '../lib/auth-code-exchange';
+import { getUserFriendlyErrorMessage } from '../lib/errorHandler';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -143,7 +144,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ session: data.session, user: data.session.user });
     }
 
-    return { error: error?.message ?? null };
+    return { error: error ? getUserFriendlyErrorMessage(error.message) : null };
   },
 
   signIn: async (email, password) => {
@@ -160,7 +161,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ session: data.session, user: data.session.user });
     }
 
-    return { error: error?.message ?? null };
+    return { error: error ? getUserFriendlyErrorMessage(error.message) : null };
   },
 
   signInWithOAuth: async (provider) => {
@@ -187,7 +188,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) {
         set({ pendingOAuthCallback: false });
-        return { error: error.message };
+        return { error: getUserFriendlyErrorMessage(error.message) };
       }
 
       if (data?.url) {
@@ -208,7 +209,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (res.type === 'cancel') {
           clearTimeout(oauthTimeoutId);
           set({ pendingOAuthCallback: false });
-          return { error: 'Authentication canceled.' };
+          return { error: 'Sign-in was cancelled. Please try again.' };
         }
 
         // ─── iOS success path ────────────────────────────────────────────────
@@ -252,10 +253,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       set({ pendingOAuthCallback: false });
-      return { error: 'No URL returned from Supabase.' };
+      return { error: 'Unable to start sign-in. Please try again.' };
     } catch (err: any) {
       set({ pendingOAuthCallback: false });
-      return { error: err.message };
+      return { error: getUserFriendlyErrorMessage(err.message) };
     }
   },
 
@@ -333,7 +334,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) {
         console.error('Error linking identity:', error);
         set({ pendingOAuthCallback: false });
-        return { error: error.message };
+        return { error: getUserFriendlyErrorMessage(error.message) };
       }
 
       if (data?.url) {
@@ -353,7 +354,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (res.type === 'cancel') {
           clearTimeout(linkTimeoutId);
           set({ pendingOAuthCallback: false });
-          return { error: 'Authentication canceled.' };
+          return { error: 'Sign-in was cancelled. Please try again.' };
         }
 
         // ─── iOS success path ──────────────────────────────────────────────
@@ -371,7 +372,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 console.warn('[Identity] exchangeCodeForSession error:', sessionError.message);
                 clearTimeout(linkTimeoutId);
                 set({ pendingOAuthCallback: false });
-                return { error: sessionError.message };
+                return { error: getUserFriendlyErrorMessage(sessionError.message) };
               }
               if (sessionData) {
                 clearTimeout(linkTimeoutId);
@@ -396,11 +397,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       set({ pendingOAuthCallback: false });
-      return { error: 'No URL returned from Supabase.' };
+      return { error: 'Unable to start account linking. Please try again.' };
     } catch (err: any) {
       console.error('Error linking identity:', err);
       set({ pendingOAuthCallback: false });
-      return { error: err.message || 'Failed to link identity' };
+      return { error: getUserFriendlyErrorMessage(err.message, 'Failed to link account') };
     }
   },
 
@@ -410,13 +411,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) {
         console.error('Error unlinking identity:', error);
-        return { error: error.message };
+        return { error: getUserFriendlyErrorMessage(error.message) };
       }
 
       return { error: null };
     } catch (err: any) {
       console.error('Error unlinking identity:', err);
-      return { error: err.message };
+      return { error: getUserFriendlyErrorMessage(err.message) };
     }
   },
 

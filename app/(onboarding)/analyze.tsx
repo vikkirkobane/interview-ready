@@ -14,7 +14,7 @@ import { ScoreRing, FileAttachmentBadge } from '../../src/components/ui';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAnalyzeJobMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { isRateLimitedError } from '../../src/lib/errorHandler';
+import { isRateLimitedError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
 import { supabase } from '../../src/lib/supabase';
@@ -77,7 +77,7 @@ export default function AnalyzeScreen() {
         Toast.show({
           type: 'error',
           text1: 'Analysis Failed',
-          text2: error.message || 'Please check your connection and try again.',
+          text2: getUserFriendlyErrorMessage(error.message, 'Please check your connection and try again.'),
         });
       }
     }
@@ -126,7 +126,7 @@ export default function AnalyzeScreen() {
           setJdText(extracted_text);
           useOnboardingStore.getState().setJdText(extracted_text);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },

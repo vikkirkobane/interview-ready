@@ -8,11 +8,13 @@ import { useUIStore } from '../../src/stores/ui-store';
 import { useNavigationStore } from '../../src/stores/navigation-store';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { _resetCodeExchangeCache } from '../../src/lib/auth-code-exchange';
+import { _resetCreditCache } from '../../src/hooks/useCredits';
 import type { Session } from '@supabase/supabase-js';
 
 /** Reset every zustand store back to a clean, signed-out, not-onboarded state. */
 export function resetAllStores() {
   _resetCodeExchangeCache();
+  _resetCreditCache();
   useAuthStore.setState({
     session: null,
     user: null,

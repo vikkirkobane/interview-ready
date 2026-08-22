@@ -1,122 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Platform, Animated, Easing, KeyboardAvoidingView, ActivityIndicator, Alert, Keyboard } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, Platform, KeyboardAvoidingView, ActivityIndicator, Alert, Keyboard } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
+import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useStartInterviewMutation, useInterviewMessageMutation, useExtractJdMutation } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { supabase } from '../../src/lib/supabase';
 import { fetchFileArrayBuffer } from '../../src/lib/api';
 import Toast from 'react-native-toast-message';
-
-
-import { handleApiError } from '../../src/lib/errorHandler';
+import * as Clipboard from 'expo-clipboard';
+import { handleApiError, isInsufficientCreditsError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Markdown from 'react-native-markdown-display';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
-import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 import { FileAttachmentBadge } from '../../src/components/ui';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 
-
-const TypingIndicator = ({ colors }: { colors: any }) => {
-  const [dot1] = useState(() => new Animated.Value(0));
-  const [dot2] = useState(() => new Animated.Value(0));
-  const [dot3] = useState(() => new Animated.Value(0));
-  const reducedMotion = useReducedMotion();
-
-  useEffect(() => {
-    if (reducedMotion) {
-      dot1.setValue(1);
-      dot2.setValue(1);
-      dot3.setValue(1);
-      return;
-    }
-    const anim1 = Animated.loop(
-      Animated.sequence([
-        Animated.timing(dot1, {
-          toValue: 1,
-          duration: 400,
-          delay: 0,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(dot1, {
-          toValue: 0,
-          duration: 400,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.delay(400)
-      ])
-    );
-    const anim2 = Animated.loop(
-      Animated.sequence([
-        Animated.timing(dot2, {
-          toValue: 1,
-          duration: 400,
-          delay: 200,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(dot2, {
-          toValue: 0,
-          duration: 400,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.delay(400)
-      ])
-    );
-    const anim3 = Animated.loop(
-      Animated.sequence([
-        Animated.timing(dot3, {
-          toValue: 1,
-          duration: 400,
-          delay: 400,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(dot3, {
-          toValue: 0,
-          duration: 400,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.delay(400)
-      ])
-    );
-    anim1.start();
-    anim2.start();
-    anim3.start();
-
-    return () => {
-      anim1.stop();
-      anim2.stop();
-      anim3.stop();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reducedMotion]);
-
-  return (
-    <View style={styles.messageRowLeft}>
-      <View style={styles.messageMetaLeft}>
-        <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
-          <MaterialCommunityIcons name="robot" size={12} color={colors.primary} />
-        </View>
-        <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Analyzing Response...</Text>
-      </View>
-      <View style={[styles.typingBubble, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-        <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot1 }] }]} />
-        <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot2 }] }]} />
-        <Animated.View style={[styles.typingDot, { backgroundColor: colors.primary, transform: [{ scale: dot3 }] }]} />
-      </View>
-    </View>
-  );
-};
-
-// Mock Message Data
 type Message = {
   id: string;
   role: 'ai' | 'user';
@@ -126,10 +27,15 @@ type Message = {
 export default function InterviewScreen() {
   const router = useRouter();
   const { role = 'General', type = 'Behavioral', difficulty = 'Intermediate', jobDescription = '', jobUrl = '' } = useLocalSearchParams();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { user } = useAuthStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
-  const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
+
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 72;
+  const tabBarBottomOffset = insets.bottom > 0 ? insets.bottom + 8 : 16;
+  const bottomNavPadding = tabBarHeight + tabBarBottomOffset + (!isPro ? 70 : 0);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
@@ -137,24 +43,24 @@ export default function InterviewScreen() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [jdFileText, setJdFileText] = useState('');
   const [jdFileName, setJdFileName] = useState<string | null>(null);
-  const [isFocused, setIsFocused] = useState(false);
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const messageCounter = useRef(0);
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
+    const showSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       () => setKeyboardVisible(true)
     );
-    const keyboardDidHideListener = Keyboard.addListener(
+    const hideSubscription = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       () => setKeyboardVisible(false)
     );
 
     return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
+      showSubscription.remove();
+      hideSubscription.remove();
     };
   }, []);
 
@@ -164,10 +70,12 @@ export default function InterviewScreen() {
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
   const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const { requireCredits } = useCreditGuard();
 
   useEffect(() => {
     // Start interview session when screen mounts
     const startInterview = async () => {
+      if (!requireCredits('Mock Interview')) return;
       try {
         const payload: any = {
           role: role as string,
@@ -219,6 +127,14 @@ export default function InterviewScreen() {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
+  const copyToClipboard = (text: string) => {
+    Clipboard.setStringAsync(text);
+    Toast.show({
+      type: 'success',
+      text1: 'Copied to clipboard',
+    });
+  };
+
   const { pickFile, isPicking: isJdFilePicking } = useFilePicker();
   const extractJdLoading = isJdFilePicking || extractJd.isPending;
 
@@ -231,15 +147,12 @@ export default function InterviewScreen() {
         Toast.show({ type: 'info', text1: 'Uploading File...', text2: 'Saving your file to secure storage.' });
         try {
           const fileName = payload.fileName;
-          const { user } = useAuthStore.getState();
-          const userId = user?.id;
+          const { user: currentUser } = useAuthStore.getState();
+          const userId = currentUser?.id;
           if (!userId) {
             throw new Error('User not authenticated');
           }
           const storagePath = `jd-uploads/${userId}/${Date.now()}-${fileName}`;
-          // Use ArrayBuffer on mobile — Android's fetch().blob() returns type='text/plain'
-          // which causes "Unsupported FormDataPart implementation" in Supabase Storage.
-          // ArrayBuffer bypasses blob type inference; contentType option controls MIME.
           let uploadBody: Blob | ArrayBuffer;
           if (payload.webFile) {
             uploadBody = payload.webFile;
@@ -255,12 +168,12 @@ export default function InterviewScreen() {
               upsert: false
             });
           if (uploadError) throw uploadError;
-          // Proceed with original extraction
+
           const { extracted_text } = await extractJd.mutateAsync(payload);
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },
@@ -273,13 +186,12 @@ export default function InterviewScreen() {
     setJdFileName(null);
   };
 
-  const messageCounter = useRef(0);
-
   const handleSend = async () => {
     if (!inputText.trim() || !sessionId) return;
+    if (!requireCredits('Mock Interview')) return;
 
     messageCounter.current += 1;
-    const newMsg: Message = { id: `msg-${messageCounter.current}-${Date.now()}`, role: 'user', text: inputText };
+    const newMsg: Message = { id: `msg-${messageCounter.current}-${Date.now()}`, role: 'user', text: inputText.trim() };
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
     setIsTyping(true);
@@ -304,7 +216,12 @@ export default function InterviewScreen() {
         resetInterstitialCount();
       }
     } catch (e: any) {
-      handleApiError(e.message, { fallbackTitle: 'Message Failed' });
+      if (isInsufficientCreditsError(e.message)) {
+        setMessages(prev => prev.slice(0, -1));
+        handleApiError(e.message);
+      } else {
+        handleApiError(e.message, { fallbackTitle: 'Message Failed' });
+      }
     } finally {
       setIsTyping(false);
     }
@@ -329,190 +246,201 @@ export default function InterviewScreen() {
     }
   };
 
-  return (
-    <View style={[styles.flex, { backgroundColor: colors.bgPrimary }]}>
-      <KeyboardAvoidingView 
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-      {/* Background Auras */}
-      <View style={[styles.auraTopLeft, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
-      <View style={[styles.auraBottomRight, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
-
-      {/* Chat Canvas */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.chatScroller}
-        contentContainerStyle={styles.chatContent}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Page Header */}
-        <View style={styles.pageHeader}>
-          <View style={styles.pageHeaderTitleArea}>
-            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{role}</Text>
-            <View style={styles.headerBadge}>
-              <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
-              <Text style={[styles.liveText, { color: colors.textMuted }]}>LIVE INTERVIEW SESSION</Text>
-            </View>
+  const renderMessage = (msg: Message) => {
+    const isUser = msg.role === 'user';
+    return (
+      <View key={msg.id} style={[styles.messageWrapper, isUser ? styles.messageWrapperUser : styles.messageWrapperAi]}>
+        {!isUser && (
+          <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
+            <MaterialCommunityIcons name="robot" size={16} color="#fff" />
           </View>
-          
-          <View style={styles.headerActions}>
-            <View style={styles.timerContainer}>
-              <Text style={[styles.timerText, { color: colors.primary }]}>{formatTime(seconds)}</Text>
-              <Text style={[styles.timerLabel, { color: colors.textMuted }]}>DURATION</Text>
-            </View>
-            <Pressable style={[styles.endSessionBtn, { backgroundColor: colors.errorLight }]} onPress={handleEndSession}>
-              <Text style={[styles.endSessionText, { color: colors.error }]}>END SESSION</Text>
-            </Pressable>
+        )}
+        <View style={[styles.messageContainer, isUser ? styles.messageContainerUser : styles.messageContainerAi]}>
+          <View style={[
+            styles.messageBubble, 
+            isUser ? [styles.messageBubbleUser, { backgroundColor: colors.primary }] 
+                   : [styles.messageBubbleAi, { backgroundColor: colors.bgCard, borderColor: colors.border }]
+          ]}>
+            {isUser ? (
+              <Text style={[styles.messageText, styles.messageTextUser]}>{msg.text}</Text>
+            ) : (
+              <Markdown style={{
+                body: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
+                code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
+                code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
+                heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
+                heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
+                heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
+                paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs, lineHeight: 22 },
+                list_item: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
+                link: { color: colors.primary, textDecorationLine: 'underline' },
+                strong: { fontWeight: '700' },
+              }}>
+                {msg.text}
+              </Markdown>
+            )}
           </View>
+          <Pressable 
+            onPress={() => copyToClipboard(msg.text)} 
+            style={[
+              styles.copyActionBtn,
+              { 
+                alignSelf: isUser ? 'flex-end' : 'flex-start',
+                marginLeft: isUser ? 0 : 8,
+                marginRight: isUser ? 8 : 0,
+              }
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Copy message"
+          >
+            <Ionicons name="copy-outline" size={13} color={colors.textMuted} />
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 3 }}>Copy</Text>
+          </Pressable>
         </View>
-
-        {messages.map((msg) => {
-          const isAi = msg.role === 'ai';
-          return (
-            <View key={msg.id} style={isAi ? styles.messageRowLeft : styles.messageRowRight}>
-              
-              {/* Meta Row */}
-              <View style={isAi ? styles.messageMetaLeft : styles.messageMetaRight}>
-                {isAi ? (
-                  <>
-                    <View style={[styles.botIconWrapper, { backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }]}>
-                      <MaterialCommunityIcons name="robot" size={12} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.metaLabel, { color: colors.textMuted }]}>Interview AI</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={[styles.metaLabel, { color: colors.textMuted }]}>You</Text>
-                    <View style={[styles.userIconWrapper, { backgroundColor: colors.primary }]}>
-                      <Ionicons name="person" size={12} color="#fff" />
-                    </View>
-                  </>
-                )}
-              </View>
-
-              {/* Bubble */}
-              <View style={[styles.bubble, isAi ? [styles.bubbleLeft, { backgroundColor: colors.bgCard, borderColor: colors.border }] : [styles.bubbleRight, { backgroundColor: colors.primary }]]}>
-                {isAi ? (
-                  <Markdown style={{
-                    body: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
-                    code_inline: { backgroundColor: colors.bgSecondary, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, ...Typography.bodySm },
-                    code_block: { backgroundColor: colors.bgSecondary, padding: 12, borderRadius: 8, ...Typography.bodySm },
-                    heading1: { ...Typography.headingLg, color: colors.textPrimary, marginVertical: Spacing.sm },
-                    heading2: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.sm },
-                    heading3: { ...Typography.headingMd, color: colors.textPrimary, marginVertical: Spacing.xs },
-                    paragraph: { ...Typography.bodyMd, color: colors.textPrimary, marginVertical: Spacing.xs, lineHeight: 22 },
-                    list_item: { ...Typography.bodyMd, color: colors.textPrimary, lineHeight: 22 },
-                    link: { color: colors.primary, textDecorationLine: 'underline' },
-                    strong: { fontWeight: '700' },
-                  }}>
-                    {msg.text}
-                  </Markdown>
-                ) : (
-                  <Text style={[styles.bubbleText, styles.bubbleTextRight, { color: '#fff' }]}>
-                    {msg.text}
-                  </Text>
-                )}
-              </View>
-
-            </View>
-          );
-        })}
-
-        {isTyping && <TypingIndicator colors={colors} />}
-        </ScrollView>
-
-      {/* Bottom Input Area */}
-      <View style={[
-        styles.inputArea, 
-        { 
-          backgroundColor: isDark ? colors.bgPrimary : '#FFFFFF', 
-          borderTopColor: colors.border,
-          paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.md) : Spacing.sm, 
-        }
-      ]}>
-        <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: isDark ? colors.bgCard : '#F8FAFC',
-                  borderColor: isFocused ? colors.primary : (isDark ? '#334155' : '#CBD5E1'),
-                  color: colors.textPrimary,
-                }
-              ]}
-              placeholder="Type your response..."
-              placeholderTextColor={colors.textMuted}
-              value={inputText}
-              onChangeText={setInputText}
-              onSubmitEditing={handleSend}
-              returnKeyType="send"
-              multiline={true}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              accessibilityLabel="Type your response"
-            />
-            <Pressable
-              style={[
-                styles.sendBtn,
-                {
-                  backgroundColor: inputText.trim() ? colors.primary : (isDark ? '#334155' : '#E2E8F0'),
-                  opacity: isTyping ? 0.6 : 1,
-                }
-              ]}
-              onPress={handleSend}
-              disabled={isTyping || !inputText.trim()}
-              accessibilityLabel="Send response"
-              accessibilityRole="button"
-            >
-              <Ionicons
-                name="send"
-                size={16}
-                color={inputText.trim() ? '#FFFFFF' : colors.textMuted}
-                style={{ transform: [{ translateX: 1 }] }}
-              />
-            </Pressable>
+        {isUser && (
+          <View style={[styles.avatarUser, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <Ionicons name="person" size={14} color={colors.primary} />
           </View>
+        )}
+      </View>
+    );
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 90}
+      >
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.chatArea} 
+          contentContainerStyle={[styles.chatContent, { paddingBottom: Spacing.xl }]}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Live Interview Header */}
+          <View style={styles.pageHeader}>
+            <View style={styles.pageHeaderTitleArea}>
+              <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>{role}</Text>
+              <View style={styles.headerBadge}>
+                <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
+                <Text style={[styles.liveText, { color: colors.textMuted }]}>LIVE INTERVIEW SESSION</Text>
+              </View>
+            </View>
+            
+            <View style={styles.headerActions}>
+              <View style={styles.timerContainer}>
+                <Text style={[styles.timerText, { color: colors.primary }]}>{formatTime(seconds)}</Text>
+                <Text style={[styles.timerLabel, { color: colors.textMuted }]}>DURATION</Text>
+              </View>
+              <Pressable 
+                style={[styles.endSessionBtn, { backgroundColor: colors.errorLight }]} 
+                onPress={handleEndSession}
+                accessibilityRole="button"
+                accessibilityLabel="End Session"
+              >
+                <Text style={[styles.endSessionText, { color: colors.error }]}>END SESSION</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {messages.map(renderMessage)}
           
-          <View style={styles.inputActions}>
+          {isTyping && (
+            <View style={[styles.messageWrapper, styles.messageWrapperAi]}>
+              <View style={[styles.avatarAi, { backgroundColor: colors.primary }]}>
+                <MaterialCommunityIcons name="robot" size={16} color="#fff" />
+              </View>
+              <View style={[styles.messageBubble, styles.messageBubbleAi, { minWidth: 64, backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                <ActivityIndicator size="small" color={colors.primary} />
+              </View>
+            </View>
+          )}
+        </ScrollView>
+        
+        {/* Input Area */}
+        <View style={[
+          styles.inputArea, 
+          { 
+            backgroundColor: 'transparent', 
+            borderTopColor: 'transparent',
+            paddingBottom: keyboardVisible ? (Platform.OS === 'ios' ? Spacing.sm : Spacing.lg) : 0, 
+          }
+        ]}>
+          {(jdFileName || extractJdLoading) ? (
+            <View style={[styles.attachmentShelf, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                <Ionicons name="document-attach-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                <Text style={[styles.attachmentShelfLabel, { color: colors.textPrimary }]}>Attached JD:</Text>
+              </View>
+              <FileAttachmentBadge
+                fileName={jdFileName}
+                isLoading={extractJdLoading}
+                loadingText="Extracting file text..."
+                onRemove={handleRemoveAttachedJd}
+              />
+            </View>
+          ) : null}
+
+          <View style={styles.inputRow}>
             <Pressable
-              style={[styles.attachBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
+              style={[
+                styles.attachBtn,
+                {
+                  backgroundColor: jdFileName ? `${colors.primary}15` : colors.bgCard,
+                  borderColor: jdFileName ? colors.primary : colors.border,
+                },
+                extractJdLoading && { opacity: 0.5 }
+              ]}
               onPress={handleAttachJdFile}
               disabled={extractJdLoading}
-              accessibilityLabel="Attach job description document"
+              accessibilityLabel={jdFileName ? 'Replace attached document' : 'Attach job description document'}
               accessibilityRole="button"
             >
               {extractJdLoading ? (
                 <ActivityIndicator size="small" color={colors.primary} />
               ) : (
-                <>
-                  <Ionicons name="attach" size={16} color={colors.primary} style={{ marginRight: 4 }} />
-                  <Text style={[styles.attachBtnText, { color: colors.textPrimary }]}>
-                    {jdFileName ? 'Replace JD' : 'Attach JD'}
-                  </Text>
-                </>
+                <Ionicons
+                  name={jdFileName ? 'document-text' : 'attach'}
+                  size={20}
+                  color={colors.primary}
+                />
               )}
             </Pressable>
-
-            {/* Attached File Info Badge */}
-            {(jdFileName || extractJdLoading) ? (
-              <FileAttachmentBadge
-                fileName={jdFileName}
-                isLoading={extractJdLoading}
-                loadingText="Extracting file..."
-                onRemove={handleRemoveAttachedJd}
-                style={{ marginLeft: Spacing.xs }}
+            <View style={[styles.textInputContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+              <TextInput
+                style={[styles.textInput, { color: colors.textPrimary }]}
+                placeholder="Type your response..."
+                placeholderTextColor={colors.textMuted}
+                value={inputText}
+                onChangeText={setInputText}
+                onSubmitEditing={handleSend}
+                returnKeyType="send"
+                multiline
+                accessibilityLabel="Type your response"
               />
-            ) : null}
+            </View>
+            <Pressable
+              style={[
+                styles.sendBtn,
+                { backgroundColor: colors.primary },
+                ((!inputText.trim() && !jdFileText.trim()) || isTyping) && { opacity: 0.4 }
+              ]}
+              onPress={handleSend}
+              disabled={(!inputText.trim() && !jdFileText.trim()) || isTyping}
+              accessibilityLabel="Send response"
+              accessibilityRole="button"
+            >
+              <Ionicons name="send" size={18} color="#fff" style={{ transform: [{ translateX: 2 }] }} />
+            </Pressable>
           </View>
+          <Text style={[styles.supportedFormatsText, { color: colors.textMuted }]}>
+            PDF, DOCX, PNG, JPG (Max 5MB) • POWERED BY INTERVIEWREADY AI
+          </Text>
         </View>
-        <Text style={[styles.poweredByText, { color: colors.textMuted }]}>POWERED BY INTERVIEWREADY AI</Text>
-      </View>
-
       </KeyboardAvoidingView>
 
       {!keyboardVisible && (
@@ -523,24 +451,18 @@ export default function InterviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: {
+  container: {
     flex: 1,
   },
-  auraTopLeft: {
-    position: 'absolute',
-    top: '-10%',
-    left: '-10%',
-    width: '60%',
-    height: '40%',
-    borderRadius: 9999,
+  chatArea: {
+    flex: 1,
   },
-  auraBottomRight: {
-    position: 'absolute',
-    bottom: '-10%',
-    right: '-10%',
-    width: '60%',
-    height: '40%',
-    borderRadius: 9999,
+  chatContent: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+    maxWidth: 768,
+    alignSelf: 'center',
+    width: '100%',
   },
   pageHeader: {
     flexDirection: 'row',
@@ -551,10 +473,6 @@ const styles = StyleSheet.create({
   },
   pageHeaderTitleArea: {
     flex: 1,
-  },
-  headerActions: {
-    alignItems: 'flex-end',
-    gap: Spacing.xs,
   },
   pageTitle: {
     ...Typography.displayMd,
@@ -576,7 +494,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
   },
-
+  headerActions: {
+    alignItems: 'flex-end',
+    gap: Spacing.xs,
+  },
   timerContainer: {
     alignItems: 'flex-end',
   },
@@ -600,178 +521,145 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  chatScroller: {
-    flex: 1,
-  },
-  chatContent: {
-    padding: Spacing.lg,
-    paddingBottom: 40,
-    gap: Spacing.xl,
-    maxWidth: 768,
-    alignSelf: 'center',
+  messageWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: Spacing.md,
     width: '100%',
   },
-  messageRowLeft: {
-    alignSelf: 'flex-start',
-    maxWidth: '85%',
-    alignItems: 'flex-start',
+  messageWrapperUser: {
+    justifyContent: 'flex-end',
   },
-  messageRowRight: {
-    alignSelf: 'flex-end',
+  messageWrapperAi: {
+    justifyContent: 'flex-start',
+  },
+  messageContainer: {
+    flexShrink: 1,
     maxWidth: '85%',
+  },
+  messageContainerUser: {
     alignItems: 'flex-end',
   },
-  messageMetaLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
+  messageContainerAi: {
+    alignItems: 'flex-start',
   },
-  messageMetaRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-    marginBottom: 6,
-  },
-  metaLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  botIconWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  avatarAi: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
   },
-  userIconWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  avatarUser: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 8,
   },
-  bubble: {
+  messageBubble: {
     minWidth: '45%',
     maxWidth: '100%',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 4,
-    borderRadius: 16,
-    ...Shadow.sm,
+    borderRadius: Radius.lg + 4,
   },
-  bubbleLeft: {
-    borderWidth: 1,
+  messageBubbleAi: {
     borderBottomLeftRadius: 4,
-  },
-  bubbleRight: {
-    borderBottomRightRadius: 4,
-    ...Shadow.card,
-  },
-  bubbleText: {
-    ...Typography.bodyMd,
-    lineHeight: 22,
-  },
-  bubbleTextLeft: {
-  },
-  bubbleTextRight: {
-  },
-  typingBubble: {
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     borderWidth: 1,
     alignSelf: 'flex-start',
   },
-  typingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  messageBubbleUser: {
+    borderBottomRightRadius: 4,
+    alignSelf: 'flex-end',
+  },
+  messageText: {
+    ...Typography.bodyMd,
+    lineHeight: 22,
+  },
+  messageTextUser: {
+    color: '#ffffff',
+  },
+  copyActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    opacity: 0.6,
   },
   inputArea: {
-    paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.sm + 2,
+    padding: Spacing.md,
     borderTopWidth: 1,
   },
-  inputContainer: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    gap: Spacing.xs,
-    maxWidth: 768,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  micBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputWrapper: {
-    flex: 1,
-    position: 'relative',
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    gap: Spacing.sm,
+    maxWidth: 768,
     width: '100%',
+    alignSelf: 'center',
+  },
+  textInputContainer: {
+    flex: 1,
+    minHeight: 52,
+    maxHeight: 120,
+    borderRadius: 26,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.lg,
+    overflow: 'hidden',
+    justifyContent: 'center',
   },
   textInput: {
     flex: 1,
-    minHeight: 56,
-    maxHeight: 140,
-    borderWidth: 1.5,
-    borderRadius: Radius.xl,
-    paddingHorizontal: Spacing.md,
-    paddingLeft: Spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 14 : 12,
-    paddingBottom: Platform.OS === 'ios' ? 14 : 12,
-    paddingRight: 52,
-    fontSize: 16,
-    lineHeight: 22,
-    fontWeight: '500',
-    textAlignVertical: 'top',
-    ...Shadow.sm,
+    minHeight: 52,
+    maxHeight: 120,
+    backgroundColor: 'transparent',
+    paddingTop: Platform.OS === 'ios' ? 14 : 10,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 10,
+    textAlignVertical: 'center',
+    ...Typography.bodyLg,
   },
   sendBtn: {
-    position: 'absolute',
-    right: 8,
-    bottom: 8,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadow.sm,
-  },
-  poweredByText: {
-    fontSize: 9,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: Spacing.sm,
-    letterSpacing: 1,
-  },
-  inputActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: Spacing.xs,
-    paddingHorizontal: Spacing.xs,
-    marginTop: Spacing.xs,
   },
   attachBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.md,
-    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 1,
   },
-  attachBtnText: {
-    ...Typography.bodySm,
+  attachmentShelf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.sm,
+    maxWidth: 768,
+    width: '100%',
+    alignSelf: 'center',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  attachmentShelfLabel: {
+    ...Typography.label,
     fontWeight: '600',
+    marginRight: Spacing.xs,
+  },
+  supportedFormatsText: {
+    ...Typography.caption,
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 6,
   },
 });

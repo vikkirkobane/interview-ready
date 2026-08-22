@@ -33,9 +33,15 @@ The referral system allows users to invite friends and earn credits. Both the re
 
 ### Rewards Structure
 
-| Action | Referrer Gets | Referred User Gets |
-|--------|---------------|-------------------|
-| Successful Referral | 10 credits | 10 credits |
+| Action / Category | Referrer Gets | Referred User Gets | Notes |
+|---|---|---|---|
+| **Peer Referral Code** | 10 credits | 10 credits | Mutual reward for inviting a friend |
+| **Tier 1 Promo Code** (20–35 credits) | — | 20–35 credits | Welcome & Community (`WELCOME20`, `LINKEDIN20`, `EMAIL25`, etc.) |
+| **Tier 2 Promo Code** (40–60 credits) | — | 40–60 credits | Growth & Fast-Track (`FASTTRACK40`, `WELCOME50`, `BOOST60`, etc.) |
+| **Tier 3 Promo Code** (75–100 credits) | — | 75–100 credits | VIP & Milestone (`SUMMER75`, `VIP80`, `LAUNCH100`, etc.) |
+| **Tier 4 Promo Code** (120–150 credits) | — | 120–150 credits | Executive & Partners (`EXCLUSIVE120`, `ULTIMATE150`, etc.) |
+
+> **Note on Promo Codes**: Users can redeem **at most 1 promo code per tier** across their account lifetime. Full operations, email templates, and SQL guide are documented in [`docs/PROMO_CODES_GUIDE.md`](./PROMO_CODES_GUIDE.md).
 
 ---
 

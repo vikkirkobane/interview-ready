@@ -19,6 +19,7 @@ import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation, useInterv
 import { useAuthStore } from '../../src/stores/auth-store';
 import { exportInterviewReportPDF } from '../../src/lib/interviewExport';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Image } from 'expo-image';
@@ -129,7 +130,7 @@ export default function FeedbackScreen() {
               await deleteMutation.mutateAsync(actualSessionId as string);
               router.back();
             } catch (e: any) {
-              Alert.alert('Error', e.message);
+              Alert.alert('Error', getUserFriendlyErrorMessage(e.message, 'Failed to delete mock interview.'));
             }
           }
         }
@@ -151,7 +152,7 @@ export default function FeedbackScreen() {
       });
       Toast.show({ type: 'success', text1: 'Report Downloaded', text2: 'Your interview report PDF has been generated.' });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Download Failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Download Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to generate interview report.') });
     } finally {
       setDownloading(false);
     }

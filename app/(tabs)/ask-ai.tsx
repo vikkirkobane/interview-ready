@@ -7,18 +7,20 @@ import Markdown from 'react-native-markdown-display';
 import Toast from 'react-native-toast-message';
 import { useFilePicker } from '../../src/hooks/useFilePicker';import * as Clipboard from 'expo-clipboard';
 import { useAuthStore } from '../../src/stores/auth-store';
-import { handleApiError, isInsufficientCreditsError } from '../../src/lib/errorHandler';
+import { handleApiError, isInsufficientCreditsError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../src/lib/supabase';
 import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { FileAttachmentBadge } from '../../src/components/ui';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 
 
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
 export default function AskAIScreen() {
   const { colors } = useTheme();
+  const { requireCredits } = useCreditGuard();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -77,6 +79,8 @@ export default function AskAIScreen() {
       return;
     }
 
+    if (!requireCredits('Ask AI')) return;
+
     // If user pasted a link, inform them to paste only application questions or job descriptions directly.
     const urlRegex = /(https?:\/\/[^\s]+|www\.[a-zA-Z0-9-]+\.[^\s]+)/i;
     if (urlRegex.test(question)) {
@@ -124,7 +128,7 @@ export default function AskAIScreen() {
       } else {
         setMessages(prev => [
           ...prev,
-          { id: (Date.now() + 1).toString(), role: 'ai', text: `Sorry, I failed to generate an answer. Error: ${error.message}` }
+          { id: (Date.now() + 1).toString(), role: 'ai', text: `Sorry, I couldn't generate an answer right now. ${getUserFriendlyErrorMessage(error.message, 'Please try asking again in a moment.')}` }
         ]);
       }
     } finally {
@@ -175,7 +179,7 @@ onFilePicked: async (payload) => {
           setJdFileText(extracted_text);
           setJdFileName(payload.fileName);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },

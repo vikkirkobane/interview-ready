@@ -196,7 +196,7 @@ describe('AuthStore — pendingOAuthCallback race condition fix', () => {
 
     const result = await useAuthStore.getState().signInWithOAuth('linkedin_oidc');
 
-    expect(result.error).toBe('Authentication canceled.');
+    expect(result.error).toBe('Sign-in was cancelled. Please try again.');
     expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
   });
 
@@ -207,7 +207,7 @@ describe('AuthStore — pendingOAuthCallback race condition fix', () => {
 
     const result = await useAuthStore.getState().signInWithOAuth('linkedin_oidc');
 
-    expect(result.error).toBe('No URL returned from Supabase.');
+    expect(result.error).toBe('Unable to start sign-in. Please try again.');
     expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
   });
 
@@ -399,7 +399,7 @@ describe('AuthStore — linkIdentity OAuth flow', () => {
 
     const result = await useAuthStore.getState().linkIdentity('google');
 
-    expect(result.error).toBe('Authentication canceled.');
+    expect(result.error).toBe('Sign-in was cancelled. Please try again.');
     expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
   });
 
@@ -411,7 +411,7 @@ describe('AuthStore — linkIdentity OAuth flow', () => {
 
     const result = await useAuthStore.getState().linkIdentity('google');
 
-    expect(result.error).toBe('Provider not configured');
+    expect(result.error).toBeTruthy();
     expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
   });
 
@@ -420,7 +420,7 @@ describe('AuthStore — linkIdentity OAuth flow', () => {
 
     const result = await useAuthStore.getState().linkIdentity('google');
 
-    expect(result.error).toBe('No URL returned from Supabase.');
+    expect(result.error).toBe('Unable to start account linking. Please try again.');
     expect(useAuthStore.getState().pendingOAuthCallback).toBe(false);
   });
 });

@@ -9,6 +9,7 @@ import { usePreviewStore } from '../src/store/previewStore';
 import { exportResumePDF, exportResumeDOCX } from '../src/lib/resumeExport';
 import { exportCoverLetterPDF, exportCoverLetterDOCX } from '../src/lib/coverLetterExport';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { Button, AdBanner } from '../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/stores/auth-store';
@@ -47,7 +48,7 @@ export default function PreviewScreen() {
         await exportCoverLetterPDF(documentData);
       }
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Export Failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export PDF.') });
     }
   };
 
@@ -59,7 +60,7 @@ export default function PreviewScreen() {
         await exportCoverLetterDOCX(documentData);
       }
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Export Failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export DOCX.') });
     }
   };
 

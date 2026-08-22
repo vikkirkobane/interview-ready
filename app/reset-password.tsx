@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, useTheme } from '../src/theme';
 import { Button, Input } from '../src/components/ui';
 import { supabase } from '../src/lib/supabase';
+import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 
 /**
@@ -91,14 +92,14 @@ export default function ResetPasswordScreen() {
         if (updateError.message.includes('session')) {
           setError('Reset link has expired. Please request a new one from the login screen.');
         } else {
-          setError(updateError.message);
+          setError(getUserFriendlyErrorMessage(updateError.message, 'Failed to update password. Please try again.'));
         }
         return;
       }
 
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      setError(getUserFriendlyErrorMessage(err?.message, 'An error occurred. Please try again.'));
     } finally {
       setLoading(false);
     }

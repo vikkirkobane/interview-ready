@@ -127,6 +127,40 @@ describe('Promo Code Credit Assignment & Validation Suite', () => {
     expect(res.creditsGranted).toBe(50);
   });
 
+  it('successfully applies maximum-tier promo codes (e.g. ULTIMATE150 for 150 credits)', async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
+      if (url.includes('referral-apply')) {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              is_promo: true,
+              credits_granted: 150,
+              promo_code: 'ULTIMATE150',
+              message: 'Success! Promo code applied! You received 150 bonus credits!',
+            },
+          }),
+        };
+      }
+      return {
+        ok: true,
+        json: async () => ({ data: {} }),
+      };
+    });
+
+    await renderHookInstance();
+
+    let res: any;
+    await act(async () => {
+      res = await hookApi.applyReferralCode('ULTIMATE150');
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.isPromo).toBe(true);
+    expect(res.creditsGranted).toBe(150);
+  });
+
   it('falls back to direct apply_promo_code RPC when Edge Function is unavailable', async () => {
     (global.fetch as jest.Mock).mockImplementation(async () => {
       throw new Error('Edge function offline');
@@ -166,14 +200,14 @@ describe('Promo Code Credit Assignment & Validation Suite', () => {
     });
   });
 
-  it('rejects already redeemed promo codes with a clear error', async () => {
+  it('rejects a second promo code from the same tier', async () => {
     (global.fetch as jest.Mock).mockImplementation(async (url: string) => {
       if (url.includes('referral-apply')) {
         return {
           ok: false,
           json: async () => ({
             success: false,
-            error: 'You have already redeemed a promotional code.',
+            error: 'You have already redeemed a promotional code from this tier (TIER_1). Each promo tier can only be redeemed once per account.',
           }),
         };
       }
@@ -184,11 +218,44 @@ describe('Promo Code Credit Assignment & Validation Suite', () => {
 
     let res: any;
     await act(async () => {
-      res = await hookApi.applyReferralCode('LINKEDIN20');
+      res = await hookApi.applyReferralCode('WELCOME20');
     });
 
     expect(res.success).toBe(false);
-    expect(res.error).toBe('You have already redeemed a promotional code.');
+    expect(res.error).toContain('already redeemed a promotional code from this tier');
+  });
+
+  it('allows redeeming promo codes across different tiers (e.g. Tier 1 then Tier 4)', async () => {
+    (global.fetch as jest.Mock).mockImplementation(async (url: string, opts: any) => {
+      const body = JSON.parse(opts.body);
+      if (body.referralCode === 'ULTIMATE150') {
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            data: {
+              is_promo: true,
+              tier: 'TIER_4',
+              credits_granted: 150,
+              promo_code: 'ULTIMATE150',
+              message: 'Success! Promo code applied! You received 150 bonus credits!',
+            },
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({ data: {} }) };
+    });
+
+    await renderHookInstance();
+
+    let res: any;
+    await act(async () => {
+      res = await hookApi.applyReferralCode('ULTIMATE150');
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.isPromo).toBe(true);
+    expect(res.creditsGranted).toBe(150);
   });
 
   it('rejects invalid or non-existent promo codes', async () => {

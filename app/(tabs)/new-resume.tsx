@@ -17,7 +17,7 @@ import {
   useExtractJdMutation, useParseResumeMutation
 } from '../../src/hooks/useApi';
 import Toast from 'react-native-toast-message';
-import { handleApiError } from '../../src/lib/errorHandler';
+import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
@@ -27,6 +27,7 @@ import { useUIStore } from '../../src/stores/ui-store';
 import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
+import { useCreditGuard } from '../../src/lib/creditGuard';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Header {
@@ -246,6 +247,7 @@ export default function ResumeBuilderScreen() {
 
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
   const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
+  const { requireCredits } = useCreditGuard();
   const generationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleGenerate = async () => {
@@ -253,6 +255,7 @@ export default function ResumeBuilderScreen() {
       Toast.show({ type: 'error', text1: 'Please select a template.' });
       return;
     }
+    if (!requireCredits('Resume Generation')) return;
     try {
       Toast.show({ type: 'info', text1: 'Generating resume...', text2: 'This may take up to 30 seconds' });
       setIsGenerating(true);
@@ -460,20 +463,21 @@ export default function ResumeBuilderScreen() {
       Toast.show({ type: 'success', text1: 'Resume saved!' });
       addNotification({ title: 'Resume Saved', description: 'Your resume has been saved to the cloud.', type: 'success' });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Save failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Save failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to save resume.') });
     }
   };
 
   // ── AI Rewrite Summary ────────────────────────────────────────────────────
   const handleAIRewrite = async () => {
     if (!draft?.summary) return;
+    if (!requireCredits('AI Rewrite')) return;
     try {
       Toast.show({ type: 'info', text1: 'AI is polishing your summary...' });
       const res = await rewriteMutation.mutateAsync({ text: draft.summary, section_type: 'summary' });
       setDraft(prev => prev ? { ...prev, summary: res.rewritten } : prev);
       Toast.show({ type: 'success', text1: 'Summary improved!' });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'AI rewrite failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'AI rewrite failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });
     }
   };
 
@@ -482,13 +486,14 @@ export default function ResumeBuilderScreen() {
        Toast.show({ type: 'error', text1: 'Nothing to rewrite.' });
        return;
     }
+    if (!requireCredits('AI Rewrite')) return;
     try {
       Toast.show({ type: 'info', text1: 'AI is polishing...' });
       const res = await rewriteMutation.mutateAsync({ text, section_type: sectionType });
       onUpdate(res.rewritten);
       Toast.show({ type: 'success', text1: 'Polished!' });
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'AI rewrite failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'AI rewrite failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });
     }
   };
 
@@ -521,7 +526,7 @@ export default function ResumeBuilderScreen() {
       usePreviewStore.getState().setPreview('resume', data, htmlString, draft.templateId);
       router.push('/preview' as any);
     } catch (e: any) {
-      Toast.show({ type: 'error', text1: 'Preview generation failed', text2: e.message });
+      Toast.show({ type: 'error', text1: 'Preview generation failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });
     }
   };
 
@@ -541,7 +546,7 @@ export default function ResumeBuilderScreen() {
               await deleteMutation.mutateAsync(id as string);
               router.back();
             } catch (e: any) {
-              Toast.show({ type: 'error', text1: 'Delete Failed', text2: e.message });
+              Toast.show({ type: 'error', text1: 'Delete Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to delete resume.') });
             }
           }
         }
@@ -603,7 +608,7 @@ export default function ResumeBuilderScreen() {
 
       setIsExportModalVisible(false);
     } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Export Failed', text2: error.message });
+      Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(error.message, 'Failed to export resume.') });
     } finally {
       setIsExporting(false);
     }
@@ -713,7 +718,7 @@ export default function ResumeBuilderScreen() {
             text2: 'Review and fill in any remaining details.',
           });
         } catch (err: any) {
-          Toast.show({ type: 'error', text1: 'Import failed', text2: err.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Import failed', text2: getUserFriendlyErrorMessage(err.message, 'Please try again.') });
         } finally {
           setIsImportingResume(false);
         }
@@ -762,7 +767,7 @@ export default function ResumeBuilderScreen() {
           setJdFileName(payload.fileName);
           setJobDescription(extracted_text);
         } catch (error: any) {
-          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: error.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload or extraction failed', text2: getUserFriendlyErrorMessage(error.message, 'Please try again.') });
           throw error;
         }
       },
@@ -1955,12 +1960,12 @@ export default function ResumeBuilderScreen() {
                         supabase.removeChannel(channel);
                       })
                       .on('broadcast', { event: 'generation_failed' }, (payload) => {
-                        Toast.show({ type: 'error', text1: 'AI Generation Failed', text2: payload.payload.error });
+                        Toast.show({ type: 'error', text1: 'AI Generation Failed', text2: getUserFriendlyErrorMessage(payload?.payload?.error, 'Please try again.') });
                         supabase.removeChannel(channel);
                       });
                     channel.subscribe();
                   } catch (e: any) {
-                    Toast.show({ type: 'error', text1: 'Request Failed', text2: e.message });
+                    Toast.show({ type: 'error', text1: 'Request Failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });
                   }
                 }}
               >

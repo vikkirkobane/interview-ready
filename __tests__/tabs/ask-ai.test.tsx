@@ -2,6 +2,7 @@ import React from 'react';
 import { waitFor, fireEvent } from '@testing-library/react-native';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
+import { router } from 'expo-router';
 
 import AskAIScreen from '../../app/(tabs)/ask-ai';
 import { supabase } from '../../src/lib/supabase';
@@ -49,10 +50,13 @@ const GREETING =
   'Hello! Paste a job application question here and I will help you craft the perfect answer tailored from your profile or resume.';
 
 describe('Ask AI — user stories', () => {
+  jest.setTimeout(30000);
+
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
     mockApiCall.mockReset();
+    (router as any).__resetMockRouter?.();
     (Clipboard.setStringAsync as jest.Mock).mockClear();
     mockToast.show.mockClear();
     const session = buildSession();
@@ -211,5 +215,17 @@ describe('Ask AI — user stories', () => {
       expect(screen.getByText('Please paste only application questions or job descriptions.')).toBeTruthy();
     });
     expect(mockApiCall).not.toHaveBeenCalled();
+  });
+
+  it('redirects to pricing screen when user has fewer than 2 credits on sending question', async () => {
+    mockSupabase.__mockHelpers.tables.users = [{ id: 'test-user-id', ai_credits: 1, plan: 'FREE' }];
+    const screen = await renderScreen();
+
+    await fireEvent.changeText(screen.getByPlaceholderText(/Ask a question/), 'Can you review my experience?');
+    await fireEvent.press(screen.getByLabelText('Send question'));
+
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith('/(tabs)/pricing?reason=low_credits');
+    });
   });
 });

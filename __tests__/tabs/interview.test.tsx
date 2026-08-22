@@ -40,16 +40,22 @@ jest.mock('../../src/hooks/useFilePicker', () => ({
   }),
 }));
 
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-toast-message';
+
 const mockSupabase = supabase as any;
 const mockApiCall = apiCall as jest.Mock;
 const mockApiUpload = (require('../../src/lib/api') as any).apiUploadFile as jest.Mock;
+const mockToast = Toast as any;
 
 describe('Live Mock Interview — user stories', () => {
+  jest.setTimeout(30000);
+
   beforeEach(() => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
     mockApiCall.mockReset();
-    router.__resetMockRouter();
+    (router as any).__resetMockRouter?.();
     const session = buildSession();
     mockLoggedInSession(mockSupabase, session);
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -180,6 +186,53 @@ describe('Live Mock Interview — user stories', () => {
     await fireEvent.press(screen.getByLabelText('Remove file attachment'));
     await waitFor(() => {
       expect(screen.queryByText('interview_jd.pdf')).toBeNull();
+    });
+  });
+
+  it('copies interview message to clipboard and sends message via send button', async () => {
+    mockStartResponse();
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByText('Tell me about yourself.')).toBeTruthy();
+    });
+
+    // Test Copy button
+    const copyButtons = screen.getAllByText('Copy');
+    expect(copyButtons.length).toBeGreaterThan(0);
+    await fireEvent.press(copyButtons[0]);
+    await waitFor(() => {
+      expect(Clipboard.setStringAsync).toHaveBeenCalledWith('Tell me about yourself.');
+    });
+
+    // Test Send button click
+    await fireEvent.changeText(screen.getByPlaceholderText('Type your response...'), 'I have 5 years of fullstack experience.');
+    await fireEvent.press(screen.getByLabelText('Send response'));
+
+    await waitFor(() => {
+      expect(screen.getByText('I have 5 years of fullstack experience.')).toBeTruthy();
+      expect(screen.getByText('Great — let us dig deeper.')).toBeTruthy();
+    });
+    expect(mockApiCall).toHaveBeenCalledWith(
+      'interviews-message',
+      'POST',
+      expect.objectContaining({ interview_id: 's1', content: 'I have 5 years of fullstack experience.' })
+    );
+  });
+
+  it('redirects to pricing screen when user has fewer than 2 credits on sending response', async () => {
+    mockSupabase.__mockHelpers.tables.users = [{ id: 'test-user-id', ai_credits: 1, plan: 'FREE' }];
+    mockStartResponse();
+    const screen = await renderScreen();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Type your response...')).toBeTruthy();
+    });
+
+    await fireEvent.changeText(screen.getByPlaceholderText('Type your response...'), 'Hello interview');
+    await fireEvent.press(screen.getByLabelText('Send response'));
+
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith('/(tabs)/pricing?reason=low_credits');
     });
   });
 });

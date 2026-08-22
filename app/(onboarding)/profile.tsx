@@ -17,6 +17,7 @@ import { supabase } from '../../src/lib/supabase';
 import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
 import Toast from 'react-native-toast-message';
+import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 
 const SUGGESTED_SKILLS = [
@@ -110,7 +111,7 @@ export default function ProfileScreen() {
           
           Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
         } catch (uploadError: any) {
-          Toast.show({ type: 'error', text1: 'Upload failed', text2: uploadError.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Upload failed', text2: getUserFriendlyErrorMessage(uploadError.message, 'Please try again.') });
           return; // Exit if upload fails
         }
         
@@ -132,7 +133,7 @@ export default function ProfileScreen() {
             text2: 'Form fields have been auto-filled.',
           });
         } catch (parseError: any) {
-          Toast.show({ type: 'error', text1: 'Parsing failed', text2: parseError.message || 'Please try again.' });
+          Toast.show({ type: 'error', text1: 'Parsing failed', text2: getUserFriendlyErrorMessage(parseError.message, 'Please try again.') });
         }
       }
     });
@@ -161,7 +162,7 @@ export default function ProfileScreen() {
       Toast.show({
         type: 'error',
         text1: 'Failed to save profile',
-        text2: error.message || 'Please check your connection.',
+        text2: getUserFriendlyErrorMessage(error.message, 'Please check your connection and try again.'),
       });
     }
   };
