@@ -61,7 +61,7 @@ describe('Diverse Resume Sizes & Job Descriptions Test Suite', () => {
     resetAllStores();
     mockSupabase.__mockHelpers.reset();
     mockApiCall.mockReset();
-    router.__resetMockRouter();
+    (router as any).__resetMockRouter?.();
     const session = buildSession();
     mockLoggedInSession(mockSupabase, session);
   });
@@ -582,6 +582,8 @@ describe('Diverse Resume Sizes & Job Descriptions Test Suite', () => {
           subtitle: 'Cloud Infrastructure & SRE',
           email: 'david.kim@cloud.io',
           phone: '+1 (555) 888-9999',
+          linkedin: 'linkedin.com/in/davidkim',
+          portfolio: 'github.com/davidkim',
           location: 'San Jose, CA',
         },
         summary: {
@@ -623,6 +625,8 @@ describe('Diverse Resume Sizes & Job Descriptions Test Suite', () => {
           featured_project: true,
           education: true,
           certifications: true,
+          languages: false,
+          recognition: false,
         },
       };
 
