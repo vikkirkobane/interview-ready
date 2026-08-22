@@ -416,14 +416,14 @@ export default function ResumeBuilderScreen() {
   const { profile } = useProfileStore();
 
   const [draft, setDraft] = useState<DraftResume | null>(null);
+  const [hasStartedOver, setHasStartedOver] = useState(false);
+  const [prevId, setPrevId] = useState(id);
   const generationChannelRef = useRef<any>(null);
-  const hasStartedOverRef = useRef(false);
 
-  useEffect(() => {
-    if (id) {
-      hasStartedOverRef.current = false;
-    }
-  }, [id]);
+  if (id !== prevId) {
+    setPrevId(id);
+    setHasStartedOver(false);
+  }
 
   useEffect(() => {
     return () => {
@@ -438,7 +438,7 @@ export default function ResumeBuilderScreen() {
 
   // Sync from remote when loaded
   React.useEffect(() => {
-    if (id && !hasStartedOverRef.current && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
+    if (id && !hasStartedOver && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
       const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
       setDraft({
         templateId: remoteResume.templateId || 'modern',
@@ -574,7 +574,7 @@ export default function ResumeBuilderScreen() {
 
   // ── Start Over / Generate New Resume ───────────────────────────────────────
   const resetToNewResume = () => {
-    hasStartedOverRef.current = true;
+    setHasStartedOver(true);
     setDraft(null);
     setAiGeneratedContent(null);
     setJobDescription('');
@@ -967,7 +967,7 @@ export default function ResumeBuilderScreen() {
   };
 
   // ── Render: No draft yet → Form State ───────────────────────────────────
-  if ((!id || hasStartedOverRef.current) && !draft) {
+  if ((!id || hasStartedOver) && !draft) {
     return (
       <View style={styles.flex}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">

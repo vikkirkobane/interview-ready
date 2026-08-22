@@ -24,7 +24,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { supabase } from '../../src/lib/supabase';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import Toast from 'react-native-toast-message';
 import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
@@ -68,7 +68,6 @@ const KW_COLOR: Record<string, string> = {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function LinkedinOptimizerScreen() {
-  const router = useRouter();
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile, updateProfile } = useProfileStore();
