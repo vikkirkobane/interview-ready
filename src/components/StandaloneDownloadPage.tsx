@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Linkedin
 } from 'lucide-react';
+import { track } from '@vercel/analytics';
 
 interface StandaloneDownloadPageProps {
   onBack?: () => void;
@@ -151,6 +152,9 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
     }
 
     setDownloadStarted(true);
+    try {
+      track('apk_download_initiated', { version: 'v2.0.0' });
+    } catch (_) {}
     const link = document.createElement('a');
     link.href = GITHUB_APK_DOWNLOAD_URL;
     link.setAttribute('download', 'interview-ready-v2.0.0.apk');
@@ -226,6 +230,9 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
       setSecondsRemaining(durationSeconds);
       setIsSessionExpired(false);
       setVerificationSuccessMsg(data.message || 'Access code verified! 15-minute download session activated.');
+      try {
+        track('access_code_verified', { spot: data.waitlistSpot || cleanCode });
+      } catch (_) {}
 
       // Start actual APK download
       triggerApkFileDownload();
@@ -461,6 +468,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       href="https://www.linkedin.com/company/interview-ready-app"
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => { try { track('linkedin_follow_clicked', { source: 'download_page_locked' }); } catch (_) {} }}
                       className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold rounded-xl transition-all active:scale-95 shadow-2xs hover:shadow-xs cursor-pointer"
                       title="Follow Interview Ready on LinkedIn"
                     >
@@ -593,6 +601,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       href="https://www.linkedin.com/company/interview-ready-app"
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => { try { track('linkedin_follow_clicked', { source: 'download_page_unlocked' }); } catch (_) {} }}
                       className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold rounded-xl transition-all active:scale-95 shadow-2xs hover:shadow-xs cursor-pointer"
                       title="Follow Interview Ready on LinkedIn"
                     >

@@ -7,6 +7,7 @@ import StandaloneDownloadPage from './components/StandaloneDownloadPage';
 import { GoogleSheetsManager } from './components/GoogleSheetsManager';
 import { EmailSubmission, appendSubmissionsToSheet } from './lib/googleSheets';
 import { getAccessToken } from './lib/firebase';
+import { track } from '@vercel/analytics';
 import { 
   CheckCircle, 
   FileText, 
@@ -287,6 +288,9 @@ export default function App() {
   // Run simulator when selecting a different tab
   useEffect(() => {
     runSimulatorOptimization(activeDemo);
+    try {
+      track('demo_tab_changed', { profession: activeDemo.profession });
+    } catch (_) {}
   }, [activeDemo]);
 
   // Handle Waitlist Form submission with live Spaceship SMTP email dispatch
@@ -314,6 +318,9 @@ export default function App() {
     const spot = Math.floor(Math.random() * 200) + 400;
     setWaitlistNumber(spot);
     setWaitlistSubmitted(true);
+    try {
+      track('waitlist_submitted', { spot, source: 'homepage' });
+    } catch (_) {}
     
     const newSub: EmailSubmission = {
       id: Date.now().toString(),
