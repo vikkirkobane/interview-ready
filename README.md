@@ -8,7 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Android APK](https://img.shields.io/badge/Android%20APK-v1.0.0--beta-3DDC84?style=flat-square&logo=android&logoColor=white)](https://appinterviewready.top/download)
+[![Android APK](https://img.shields.io/badge/Android%20APK-v2.0.0--beta-3DDC84?style=flat-square&logo=android&logoColor=white)](https://appinterviewready.top/download)
 [![License](https://img.shields.io/badge/License-Proprietary-1A4F8A?style=flat-square)](LICENSE)
 
 <br />
@@ -28,7 +28,7 @@
 - 🎯 **ATS Resume & Cover Letter Engine** – Tailors bullet points with high-impact metrics and industry-specific keywords tested against top Applicant Tracking Systems.
 - 🎙️ **Voice AI Mock Interviews** – Conduct dynamic oral interview simulations with speech recognition, question branching, and instant confidence and pacing breakdowns.
 - 📊 **Multidimensional AI Scoring** – Real-time feedback covering answer structure (STAR method), delivery clarity, and recruiter alignment.
-- 📱 **Official Android Mobile App (`v1.0.0-beta`)** – Native mobile experience featuring offline question banks, flashcards, and practice sessions.
+- 📱 **Official Android Mobile App (`v2.0.0-beta`)** – Native mobile experience featuring offline question banks, flashcards, and practice sessions.
 - 🔒 **Gated Early-Access Download Portal** – Secure 15-minute time-bounded download sessions protected by email verification, Airtable synchronization, and Spaceship SMTP dispatch.
 
 ---
@@ -41,7 +41,7 @@ graph TD
     B -->|AI Generation & Scoring| C[Google Gemini 2.0 / @google/genai]
     B -->|Waitlist & Lead Sync| D[Airtable API / Google Sheets]
     B -->|Transactional Invites| E[Spaceship SMTP / Nodemailer]
-    B -->|Gated Binary Delivery| F[Public Downloads / interview-ready-v1.0.0.apk]
+    B -->|Gated Binary Delivery| F[Public Downloads / interview-ready-v2.0.0.apk]
 ```
 
 ### Frontend
@@ -68,7 +68,7 @@ interview-ready/
 │   └── subscribe.ts                   # Waitlist signup & Spaceship SMTP email dispatch
 ├── public/                            # Static web assets & release packages
 │   ├── downloads/
-│   │   └── interview-ready-v1.0.0.apk # Official Android APK release package (119.5 MB)
+│   │   └── interview-ready-v2.0.0.apk # Official Android APK release package (119.5 MB)
 │   ├── logo.png                       # Primary brand wordmark and emblem
 │   └── logo-white.png                 # Inverted brand logo
 ├── src/                               # Application source code
@@ -151,7 +151,7 @@ The server will start at [http://localhost:3000](http://localhost:3000) with ful
 | `POST` | `/api/subscribe` | Registers new waitlist subscriber, triggers Spaceship SMTP email with custom spot #, logs to Airtable | Rate limit (8/min), Honeypot trap, RFC 5322 validation |
 | `POST` | `/api/confirm-download` | Verifies access code in Airtable, marks record as `Downloaded`, unlocks 15-minute session token | Rate limit (12/min), Formula injection sanitizer |
 | `GET` | `/api/health` | Service health status check | Public |
-| `GET` | `/downloads/:file` | Serves static Android release packages (e.g. `interview-ready-v1.0.0.apk`) | Public / Gated UI |
+| `GET` | `/downloads/:file` | Serves static Android release packages (e.g. `interview-ready-v2.0.0.apk`) | Public / Gated UI |
 
 ---
 

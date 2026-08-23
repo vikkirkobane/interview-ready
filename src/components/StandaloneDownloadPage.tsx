@@ -32,7 +32,7 @@ const SESSION_DURATION_SECONDS = 15 * 60; // 900 seconds
 const SESSION_STORAGE_KEY = 'interview_ready_download_session';
 
 // Official GitHub Release CDN direct download link
-const GITHUB_APK_DOWNLOAD_URL = 'https://github.com/vikkirkobane/interview-ready/releases/download/v1.0.0/interview-ready-v1.0.0.apk';
+const GITHUB_APK_DOWNLOAD_URL = 'https://github.com/vikkirkobane/interview-ready/releases/download/v2.0.0/interview-ready-v2.0.0.apk';
 
 export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPageProps) {
   const [inputCode, setInputCode] = useState<string>('');
@@ -152,7 +152,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
     setDownloadStarted(true);
     const link = document.createElement('a');
     link.href = GITHUB_APK_DOWNLOAD_URL;
-    link.setAttribute('download', 'interview-ready-v1.0.0.apk');
+    link.setAttribute('download', 'interview-ready-v2.0.0.apk');
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     document.body.appendChild(link);
@@ -303,7 +303,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
           {/* Status Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[#1A4F8A] text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-[#0EA5E9]" />
-            <span>Official Android APK • v1.0.0 Beta</span>
+            <span>Official Android APK • v2.0.0 Beta</span>
           </div>
 
           {/* Main Title */}
@@ -485,7 +485,7 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                     </span>
 
                     <span className="text-xs text-slate-500 font-mono font-medium hidden sm:inline">
-                      v1.0.0-beta • ~114 MB
+                      v2.0.0-beta • ~114 MB
                     </span>
                   </div>
 

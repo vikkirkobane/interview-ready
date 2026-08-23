@@ -13,3 +13,6 @@ coverage/
 
 # Local documentation (not for GitHub)
 docs/
+
+# Raw app screenshots contain personal data - never push
+demo/assets/

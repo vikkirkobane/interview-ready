@@ -308,7 +308,7 @@ async function startServer() {
   // Serve static APK download file or fallback redirect to GitHub Releases
   app.use('/downloads', express.static(path.join(process.cwd(), 'public', 'downloads')));
   app.get('/downloads/:file?', (req, res) => {
-    res.redirect(302, 'https://github.com/vikkirkobane/interview-ready/releases/download/v1.0.0/interview-ready-v1.0.0.apk');
+    res.redirect(302, 'https://github.com/vikkirkobane/interview-ready/releases/download/v2.0.0/interview-ready-v2.0.0.apk');
   });
 
   // Vite SSR / middleware integration for development mode

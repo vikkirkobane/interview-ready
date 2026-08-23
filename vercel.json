@@ -2,7 +2,7 @@
   "redirects": [
     {
       "source": "/downloads/(.*)",
-      "destination": "https://github.com/vikkirkobane/interview-ready/releases/download/v1.0.0/interview-ready-v1.0.0.apk",
+      "destination": "https://github.com/vikkirkobane/interview-ready/releases/download/v2.0.0/interview-ready-v2.0.0.apk",
       "permanent": false
     }
   ],
