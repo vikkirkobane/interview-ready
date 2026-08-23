@@ -62,44 +62,41 @@ function safeSpotDisplay(waitlistSpot?: number | string): string {
   return digits ? `#${digits}` : '';
 }
 
+// Welcome email, reviewed by content + design agents (Aug 2026):
+// table-based skeleton for Outlook, solid bg fallback behind gradients,
+// #0369A1 step numbers for contrast, ASCII punctuation only, every claim traced
+// to verified product facts. Plain-text version kept in parity with HTML.
 export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string {
   const spotDisplay = safeSpotDisplay(waitlistSpot);
+  const spotPhrase = spotDisplay ? ` (waitlist spot ${spotDisplay})` : '';
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Welcome to Interview Ready</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 0;
       background-color: #F9FAFB;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Sora', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: #0D1117;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
-    .wrapper {
-      width: 100%;
-      background-color: #F9FAFB;
-      padding: 32px 16px;
-      box-sizing: border-box;
-    }
-    .container {
-      max-width: 580px;
-      margin: 0 auto;
-      background-color: #FFFFFF;
-      border-radius: 16px;
+    .preheader {
+      display: none;
+      max-height: 0;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(13, 17, 23, 0.08);
-      border: 1px solid #E5E7EB;
+      mso-hide: all;
     }
     .header {
-      background: linear-gradient(135deg, #1A4F8A 0%, #123761 100%);
+      background-color: #1A4F8A;
+      background-image: linear-gradient(135deg, #1A4F8A 0%, #123761 100%);
       padding: 40px 32px 32px;
       text-align: center;
     }
@@ -107,9 +104,8 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       display: inline-block;
       background: #EFF6FF;
       color: #1A4F8A;
-      font-family: 'Sora', 'Inter', Arial, sans-serif;
       font-weight: 800;
-      font-size: 10px;
+      font-size: 11px;
       letter-spacing: 1.6px;
       text-transform: uppercase;
       padding: 5px 14px;
@@ -118,7 +114,6 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
     }
     .header h1 {
       margin: 0;
-      font-family: 'Sora', 'Inter', Arial, sans-serif;
       font-size: 27px;
       font-weight: 800;
       color: #FFFFFF;
@@ -140,7 +135,6 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       color: #0D1117;
       margin: 0 0 14px;
       font-weight: 700;
-      font-family: 'Sora', 'Inter', Arial, sans-serif;
     }
     .lead-text {
       font-size: 14px;
@@ -156,7 +150,6 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       margin: 0 0 26px;
     }
     .steps-title {
-      font-family: 'Sora', 'Inter', Arial, sans-serif;
       font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
@@ -164,25 +157,24 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       color: #0D1117;
       margin: 0 0 14px;
     }
-    .step-row {
-      display: table;
+    .step-table {
       width: 100%;
+      border-collapse: collapse;
       margin-bottom: 12px;
     }
     .step-num {
-      display: table-cell;
       width: 26px;
       font-weight: 800;
       font-size: 13px;
-      color: #0EA5E9;
+      color: #0369A1;
+      vertical-align: top;
     }
     .step-desc {
-      display: table-cell;
       font-size: 13px;
       color: #4B5563;
       line-height: 1.5;
     }
-    .btn-container {
+    .btn-row {
       text-align: center;
       margin: 28px 0;
     }
@@ -190,14 +182,12 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       display: inline-block;
       background-color: #1A4F8A;
       color: #FFFFFF !important;
-      font-family: 'Sora', 'Inter', Arial, sans-serif;
       font-weight: 700;
       font-size: 14px;
       letter-spacing: 0.3px;
       text-decoration: none;
       padding: 14px 30px;
       border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(26, 79, 138, 0.35);
     }
     .tip-card {
       background-color: #EFF6FF;
@@ -209,18 +199,14 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
       color: #1E40AF;
       line-height: 1.55;
     }
-    .retry-card {
-      background-color: #FEF3C7;
-      border: 1px solid #FCD34D;
-      border-radius: 12px;
-      padding: 14px 16px;
-      margin: 16px 0 0;
+    .retry-text {
       font-size: 13px;
-      color: #78350F;
+      color: #4B5563;
       line-height: 1.55;
+      margin: 20px 0 0;
     }
-    .retry-card a {
-      color: #92400E;
+    .retry-text a {
+      color: #1A4F8A;
       font-weight: 700;
       text-decoration: underline;
     }
@@ -237,62 +223,82 @@ export function generateWelcomeEmailHtml(waitlistSpot?: number | string): string
     }
     .footer a {
       color: #7DD3FC;
-      text-decoration: none;
+      text-decoration: underline;
     }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="container">
-      <div class="header">
-        <span class="logo-badge">Interview Ready</span>
-        <h1>Welcome Aboard!</h1>
-        <p>Your app is installed &mdash; your interview prep starts now.</p>
-      </div>
+<body bgcolor="#F9FAFB">
+  <div class="preheader">Your early-access spot is confirmed. Run your first mock interview today.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F9FAFB">
+    <tr>
+      <td align="center" style="padding: 32px 16px;">
+        <table role="presentation" width="580" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; border: 1px solid #E5E7EB;">
+          <tr>
+            <td class="header" bgcolor="#1A4F8A">
+              <span class="logo-badge">Interview Ready</span>
+              <h1>Welcome Aboard!</h1>
+              <p>Your download is verified, and your prep starts today.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="content" bgcolor="#FFFFFF">
+              <p class="greeting">Hello,</p>
+              <p class="lead-text">
+                Thank you for downloading Interview Ready${spotPhrase}. You now have the full AI-powered toolkit in your hands: ATS-optimized resumes, mock interviews, and flashcards.
+              </p>
 
-      <div class="content">
-        <p class="greeting">Hello,</p>
-        <p class="lead-text">
-          Thank you for downloading Interview Ready${spotDisplay ? ` (early-access member ${spotDisplay})` : ''}. You now have the full AI-powered toolkit in your hands: ATS-optimized resumes, voice-driven mock interviews, and targeted flashcards.
-        </p>
+              <div class="steps-card">
+                <div class="steps-title">Get Started in 3 Steps:</div>
+                <table role="presentation" class="step-table" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="step-num">1.</td>
+                    <td class="step-desc"><strong>Install the app:</strong> open the downloaded APK on your Android device and tap Install.</td>
+                  </tr>
+                </table>
+                <table role="presentation" class="step-table" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td class="step-num">2.</td>
+                    <td class="step-desc"><strong>Run your first mock interview:</strong> the AI scores your structure, clarity, and delivery instantly.</td>
+                  </tr>
+                </table>
+                <table role="presentation" class="step-table" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 0;">
+                  <tr>
+                    <td class="step-num">3.</td>
+                    <td class="step-desc"><strong>Tailor your resume:</strong> paste any job description and let the ATS engine optimize your bullets.</td>
+                  </tr>
+                </table>
+              </div>
 
-        <div class="steps-card">
-          <div class="steps-title">Get Started in 3 Steps:</div>
-          <div class="step-row">
-            <div class="step-num">1.</div>
-            <div class="step-desc"><strong>Install the app</strong> &mdash; open the downloaded APK on your Android device and tap Install.</div>
-          </div>
-          <div class="step-row">
-            <div class="step-num">2.</div>
-            <div class="step-desc"><strong>Run your first mock interview</strong> &mdash; the AI scores your structure, clarity, and delivery in real time.</div>
-          </div>
-          <div class="step-row">
-            <div class="step-num">3.</div>
-            <div class="step-desc"><strong>Tailor your resume</strong> &mdash; paste any job description and let the ATS engine optimize your bullets.</div>
-          </div>
-        </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 28px auto;">
+                <tr>
+                  <td bgcolor="#1A4F8A" style="border-radius: 12px;">
+                    <a href="https://appinterviewready.top" class="btn-primary" target="_blank" rel="noopener noreferrer">
+                      Open the Web Platform
+                    </a>
+                  </td>
+                </tr>
+              </table>
 
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn-primary" target="_blank" rel="noopener noreferrer">
-            Open the Web Platform
-          </a>
-        </div>
+              <div class="tip-card">
+                <strong>Pro tip:</strong> If Android blocks the install, open Settings &gt; Apps &gt; Special access &gt; Install unknown apps and allow the browser you downloaded with. Reopen the APK and tap Install. If you see "File might be harmful," choose Download anyway; it is the standard notice for apps installed outside the Play Store.
+              </div>
 
-        <div class="tip-card">
-          <strong>Pro tip:</strong> Candidates who complete three mock interviews in their first week see the biggest improvement in delivery confidence.
-        </div>
-
-        <div class="retry-card">
-          <strong>Download didn't complete?</strong> For a smoother download, open the link in a different browser &mdash; Samsung Internet, Firefox, Brave, Opera, or Edge instead of Chrome. <a href="https://appinterviewready.top/download" target="_blank" rel="noopener noreferrer">Retry your download here</a>.
-        </div>
-      </div>
-
-      <div class="footer">
-        <p>&copy; 2026 Interview Ready. Built for ambitious professionals.</p>
-        <p>Questions? Just reply to this email &mdash; we're at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
-      </div>
-    </div>
-  </div>
+              <p class="retry-text">
+                <strong>Download didn't complete?</strong> For a smoother download, open the link in a different browser such as Samsung Internet, Firefox, Brave, Opera, or Edge instead of Chrome. <a href="https://appinterviewready.top/download" target="_blank" rel="noopener noreferrer">Retry your download here</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="footer" bgcolor="#1A4F8A">
+              <p>&copy; 2026 Interview Ready. Built for ambitious professionals.</p>
+              <p>Questions? Just reply to this email, or write to <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+              <p style="margin-top: 10px;"><a href="https://www.linkedin.com/company/interview-ready-app" target="_blank" rel="noopener noreferrer">Follow us on LinkedIn</a></p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `.trim();
@@ -320,18 +326,21 @@ export async function sendWelcomeEmail(
     await transporter.sendMail({
       from: fromAddress,
       to: cleanEmail,
-      subject: 'Welcome to Interview Ready - Your Prep Starts Now!',
+      subject: `You're in! Welcome to Interview Ready`,
       text: [
         'Hello,',
         '',
-        `Thank you for downloading Interview Ready${safeSpotDisplay(waitlistSpot) ? ` (early-access member ${safeSpotDisplay(waitlistSpot)})` : ''}. Your AI-powered career toolkit is ready:`,
-        '1. Open the Interview Ready app on your Android device.',
-        '2. Run your first voice-driven mock interview.',
+        `Thank you for downloading Interview Ready${safeSpotDisplay(waitlistSpot) ? ` (waitlist spot ${safeSpotDisplay(waitlistSpot)})` : ''}. Your AI-powered career toolkit is ready:`,
+        '1. Install the app: open the downloaded APK on your Android device and tap Install.',
+        '2. Run your first mock interview; the AI scores your structure, clarity, and delivery instantly.',
         '3. Tailor your resume with the ATS optimization engine.',
         '',
+        'Pro tip: if Android blocks the install, open Settings > Apps > Special access > Install unknown apps and allow the browser you downloaded with, then reopen the APK and tap Install. See "File might be harmful"? Choose Download anyway; it is the standard notice for apps installed outside the Play Store.',
+        '',
         'Web platform: https://appinterviewready.top',
-        'Download not completed? Try again in a different browser (Samsung Internet, Firefox, Brave, Opera, or Edge): https://appinterviewready.top/download',
+        "Download didn't complete? Try again in a different browser (Samsung Internet, Firefox, Brave, Opera, or Edge): https://appinterviewready.top/download",
         'Support: reply to this email or write to info@appinterviewready.top',
+        'Follow us on LinkedIn: https://www.linkedin.com/company/interview-ready-app',
         '',
         '- The Interview Ready Team',
       ].join('\n'),

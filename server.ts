@@ -4,11 +4,12 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import nodemailer from 'nodemailer';
 import { generateEmailHtml } from './api/subscribe';
-import { 
-  validateAndSanitizeEmail, 
-  checkRateLimit, 
-  sanitizeFormulaValue, 
-  stripHeaderInjection 
+import confirmDownloadHandler from './api/confirm-download';
+import {
+  validateAndSanitizeEmail,
+  checkRateLimit,
+  sanitizeFormulaValue,
+  stripHeaderInjection
 } from './src/lib/security';
 
 // Load environment variables from .env
@@ -182,126 +183,23 @@ async function startServer() {
   });
 
   // Gated Download Confirmation & Airtable Status Update Route
-  app.post('/api/confirm-download', async (req, res) => {
-    // 1. IP Rate Limiter
-    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
-    const rateLimit = checkRateLimit(clientIp, 12, 60000);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({
-        success: false,
-        verified: false,
-        error: `Too many verification attempts. Please try again in ${rateLimit.retryAfterSec} seconds.`,
-      });
-    }
-
+  // Delegates to the canonical Vercel serverless handler (api/confirm-download.ts)
+  // so local dev always matches production, including the welcome email step.
+  app.all('/api/confirm-download', async (req, res) => {
+    const vercelRes = {
+      setHeader: (name: string, value: string) => res.setHeader(name, value),
+      status: (code: number) => ({
+        json: (payload: unknown) => res.status(code).json(payload),
+        end: () => res.status(code).end(),
+      }),
+    };
     try {
-      const { email, waitlistSpot, code } = req.body || {};
-      const rawCode = (code || waitlistSpot || '').toString().trim();
-      const cleanSpotStr = rawCode.replace(/[^0-9]/g, '');
-      const numericSpot = parseInt(cleanSpotStr, 10);
-      
-      let sanitizedEmail = '';
-      if (email && typeof email === 'string' && email.trim().length > 0) {
-        const check = validateAndSanitizeEmail(email);
-        if (check.isValid) sanitizedEmail = check.email;
-      }
-
-      if (!cleanSpotStr && !sanitizedEmail) {
-        return res.status(400).json({
-          success: false,
-          verified: false,
-          error: 'Please enter your Waitlist Access Code or email address.',
-        });
-      }
-
-      const apiKey = (process.env.AIRTABLE_API_KEY || process.env.AIRTABLE_PAT || '').trim().replace(/['"]/g, '');
-      const baseId = (process.env.AIRTABLE_BASE_ID || '').trim().replace(/['"]/g, '');
-      const tableName = (process.env.AIRTABLE_TABLE_NAME || 'Submissions').trim().replace(/['"]/g, '');
-
-      if (apiKey && baseId) {
-        const conditions: string[] = [];
-        if (sanitizedEmail) {
-          conditions.push(`LOWER({Email})='${sanitizeFormulaValue(sanitizedEmail)}'`);
-        }
-        if (!isNaN(numericSpot)) {
-          conditions.push(`{Waitlist Spot}=${numericSpot}`);
-          conditions.push(`{Waitlist Spot}='${numericSpot}'`);
-          conditions.push(`{Waitlist Spot}='#${numericSpot}'`);
-        }
-
-        const formula = conditions.length > 1 ? `OR(${conditions.join(',')})` : (conditions[0] || '');
-
-        const searchUrl = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`;
-        const searchRes = await fetch(searchUrl, {
-          headers: { 'Authorization': `Bearer ${apiKey}` },
-        });
-
-        if (searchRes.ok) {
-          const searchData = await searchRes.json();
-          const records = searchData.records || [];
-
-          if (records.length === 0) {
-            return res.status(404).json({
-              success: false,
-              verified: false,
-              error: 'No registered waitlist entry was found for this code. Please join the waitlist on the homepage first.',
-            });
-          }
-
-          const matchedRecord = records[0];
-          const recordId = matchedRecord.id;
-
-          await fetch(`https://api.airtable.com/v0/${baseId}/${encodeURIComponent(tableName)}/${recordId}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              fields: {
-                'Status': 'Downloaded',
-              },
-              typecast: true,
-            }),
-          });
-
-          const sessionDurationSeconds = 900;
-          const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
-          const sessionToken = `ir_sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-
-          return res.status(200).json({
-            success: true,
-            verified: true,
-            email: matchedRecord.fields?.Email,
-            waitlistSpot: matchedRecord.fields?.['Waitlist Spot'] || numericSpot,
-            status: 'Downloaded',
-            airtableUpdated: true,
-            sessionToken,
-            sessionExpiresAt,
-            sessionDurationSeconds,
-            message: 'Access code verified! APK download unlocked.',
-          });
-        }
-      }
-
-      const sessionDurationSeconds = 900;
-      const sessionExpiresAt = new Date(Date.now() + sessionDurationSeconds * 1000).toISOString();
-      const sessionToken = `ir_sess_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-
-      return res.status(200).json({
-        success: true,
-        verified: true,
-        waitlistSpot: numericSpot || 466,
-        status: 'Downloaded',
-        airtableUpdated: false,
-        sessionToken,
-        sessionExpiresAt,
-        sessionDurationSeconds,
-        message: 'Access code verified locally.',
-      });
+      await confirmDownloadHandler(req as any, vercelRes as any);
     } catch (err: any) {
-      console.error('[Local Server] /api/confirm-download error:', err);
-      return res.status(500).json({ error: 'Server error processing request.' });
+      console.error('[Local Server] /api/confirm-download error:', err?.message || err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Server error processing request.' });
+      }
     }
   });
 
