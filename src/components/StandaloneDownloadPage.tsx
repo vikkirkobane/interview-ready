@@ -20,7 +20,8 @@ import {
   Clock, 
   FileCheck,
   Timer,
-  RefreshCw
+  RefreshCw,
+  Linkedin
 } from 'lucide-react';
 
 interface StandaloneDownloadPageProps {
@@ -456,6 +457,16 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#1A4F8A]" />}
                       <span>{copiedLink ? 'Link Copied!' : 'Copy Download Page Link'}</span>
                     </button>
+                    <a
+                      href="https://www.linkedin.com/company/interview-ready-app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold rounded-xl transition-all active:scale-95 shadow-2xs hover:shadow-xs cursor-pointer"
+                      title="Follow Interview Ready on LinkedIn"
+                    >
+                      <Linkedin className="w-3.5 h-3.5 fill-current" />
+                      <span>Follow on LinkedIn</span>
+                    </a>
                   </div>
                 </div>
 
@@ -578,6 +589,16 @@ export default function StandaloneDownloadPage({ onBack }: StandaloneDownloadPag
                       {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#1A4F8A]" />}
                       <span>{copiedLink ? 'Link Copied!' : 'Copy Download Page Link'}</span>
                     </button>
+                    <a
+                      href="https://www.linkedin.com/company/interview-ready-app"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-bold rounded-xl transition-all active:scale-95 shadow-2xs hover:shadow-xs cursor-pointer"
+                      title="Follow Interview Ready on LinkedIn"
+                    >
+                      <Linkedin className="w-3.5 h-3.5 fill-current" />
+                      <span>Follow on LinkedIn</span>
+                    </a>
                   </div>
                 </div>
 
