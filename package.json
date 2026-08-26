@@ -7,6 +7,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "serve:web": "node scripts/serve-web.js",
+    "build:web": "expo export --platform web",
     "lint": "expo lint",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "build:android": "eas build -p android --profile preview",
