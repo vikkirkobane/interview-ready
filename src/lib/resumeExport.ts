@@ -1,8 +1,9 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } from 'docx';
 import { ResumeContent } from '../types/schemas';
 import { buildResumeHTML } from './resumeHTML';
-import { buildFileName, renameToCache, formatPersonName } from './exportUtils';
+import { buildFileName, renameToCache, formatPersonName, downloadBlob } from './exportUtils';
 
 declare let window: any;
 
@@ -107,8 +108,6 @@ export async function exportResumePDF(resume: ResumeContent, templateId?: string
 
 export async function exportResumeDOCX(resume: ResumeContent, templateId?: string): Promise<void> {
   try {
-    const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, Packer } = await import('docx');
-
     const shouldInclude = (section: keyof NonNullable<ResumeContent['sections_to_include']>, hasContent: boolean): boolean => {
       if (!hasContent) return false;
       if (!resume.sections_to_include) return true;
@@ -338,7 +337,6 @@ export async function exportResumeDOCX(resume: ResumeContent, templateId?: strin
 
     if (Platform.OS === 'web') {
       const blob = await Packer.toBlob(doc);
-      const { downloadBlob } = await import('./exportUtils');
       downloadBlob(blob, filename);
     } else {
       // Native DOCX export — write to a temporary path using expo-file-system

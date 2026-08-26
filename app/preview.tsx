@@ -13,6 +13,7 @@ import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { Button, AdBanner } from '../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/stores/auth-store';
+import { useNotificationStore } from '../src/stores/notification-store';
 
 export default function PreviewScreen() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function PreviewScreen() {
   const insets = useSafeAreaInsets();
   const { documentType, documentData, htmlPreview, templateId, clearPreview } = usePreviewStore();
   const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
 
   if (!documentType || !documentData || !htmlPreview) {
@@ -47,6 +49,12 @@ export default function PreviewScreen() {
       } else {
         await exportCoverLetterPDF(documentData);
       }
+      Toast.show({ type: 'success', text1: 'PDF Downloaded!', text2: 'Check your downloads folder' });
+      addNotification({
+        title: `${documentType === 'resume' ? 'Resume' : 'Cover Letter'} Downloaded`,
+        description: 'Your document has been exported as PDF',
+        type: 'success',
+      });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export PDF.') });
     }
@@ -59,6 +67,12 @@ export default function PreviewScreen() {
       } else {
         await exportCoverLetterDOCX(documentData);
       }
+      Toast.show({ type: 'success', text1: 'DOCX Downloaded!', text2: 'Check your downloads folder' });
+      addNotification({
+        title: `${documentType === 'resume' ? 'Resume' : 'Cover Letter'} Downloaded`,
+        description: 'Your document has been exported as DOCX',
+        type: 'success',
+      });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export DOCX.') });
     }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, TouchableOpacity } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, FileAttachmentBadge } from '../../src/components/ui';
 
@@ -16,6 +16,7 @@ import * as Linking from 'expo-linking';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildCoverLetterHTML } from '../../src/lib/coverLetterHTML';
+import { exportCoverLetterPDF, exportCoverLetterDOCX } from '../../src/lib/coverLetterExport';
 import { formatPersonName } from '../../src/lib/exportUtils';
 import { CoverLetter } from '../../src/types/schemas';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -38,6 +39,8 @@ export default function CoverLetterGeneratorScreen() {
   const [generating, setGenerating] = useState(false);
   const [generatedLetter, setGeneratedLetter] = useState<string | null>(null);
   const [coverLetterObj, setCoverLetterObj] = useState<CoverLetter | null>(null);
+  const [isExportModalVisible, setIsExportModalVisible] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   const [urlError, setUrlError] = useState('');
@@ -383,6 +386,35 @@ export default function CoverLetterGeneratorScreen() {
     }
   };
 
+  const handleExport = async (format: 'pdf' | 'docx') => {
+    const data = getExportData();
+    if (!data) return;
+    setIsExporting(true);
+    setIsExportModalVisible(false);
+    try {
+      if (format === 'pdf') {
+        await exportCoverLetterPDF(data);
+        Toast.show({ type: 'success', text1: 'PDF Downloaded!', text2: 'Check your downloads folder' });
+      } else {
+        await exportCoverLetterDOCX(data);
+        Toast.show({ type: 'success', text1: 'DOCX Downloaded!', text2: 'Check your downloads folder' });
+      }
+      addNotification({
+        title: 'Cover Letter Downloaded',
+        description: `Your cover letter has been exported as ${format.toUpperCase()}`,
+        type: 'success',
+      });
+    } catch (e: any) {
+      Toast.show({
+        type: 'error',
+        text1: 'Export Failed',
+        text2: getUserFriendlyErrorMessage(e.message, `Failed to export ${format.toUpperCase()}.`),
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleEmail = async () => {
     if (generatedLetter) {
       const subject = encodeURIComponent(`Cover Letter - ${selectedTone}`);
@@ -569,11 +601,29 @@ export default function CoverLetterGeneratorScreen() {
             <View style={styles.resultToolbar}>
               <Text style={[styles.resultLabel, { color: colors.textPrimary }]}>Your Cover Letter</Text>
               <View style={styles.actionRow}>
-                <Pressable style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={handleCopy}>
+                <Pressable 
+                  style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} 
+                  onPress={handleCopy}
+                  accessibilityRole="button"
+                  accessibilityLabel="Copy cover letter"
+                >
                   <Ionicons name="copy-outline" size={18} color={colors.primary} />
                 </Pressable>
-                <Pressable style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={handlePreview}>
+                <Pressable 
+                  style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} 
+                  onPress={handlePreview}
+                  accessibilityRole="button"
+                  accessibilityLabel="Preview cover letter"
+                >
                   <Ionicons name="eye-outline" size={18} color={colors.primary} />
+                </Pressable>
+                <Pressable 
+                  style={[styles.iconBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]} 
+                  onPress={() => setIsExportModalVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Download cover letter"
+                >
+                  <Ionicons name="download-outline" size={18} color={colors.primary} />
                 </Pressable>
               </View>
             </View>
@@ -595,10 +645,18 @@ export default function CoverLetterGeneratorScreen() {
                 style={styles.flex1}
               />
               <Button 
-                title="Email Letter" 
+                title="Download" 
                 variant="primary" 
-                onPress={handleEmail}
+                onPress={() => setIsExportModalVisible(true)} 
                 style={styles.flex1}
+                icon={<Ionicons name="download-outline" size={18} color="#fff" />}
+              />
+              <Button 
+                title="Email Letter" 
+                variant="outline" 
+                onPress={handleEmail} 
+                style={styles.flex1}
+                icon={<Ionicons name="mail-outline" size={18} color={colors.primary} />}
               />
             </View>
             {id && fromList === 'true' && (
@@ -617,8 +675,67 @@ export default function CoverLetterGeneratorScreen() {
         </ScrollView>
 
         <View style={{ height: bottomNavPadding }} />
+
+        {renderExportModal()}
     </View>
   );
+
+  function renderExportModal() {
+    return (
+      <Modal visible={isExportModalVisible} animationType="slide" transparent onRequestClose={() => setIsExportModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Download Cover Letter</Text>
+              <TouchableOpacity onPress={() => setIsExportModalVisible(false)} style={styles.modalCloseBtn} accessibilityRole="button" accessibilityLabel="Close download modal">
+                <Ionicons name="close" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>Choose your preferred format</Text>
+
+            <View style={styles.exportOptions}>
+              {/* PDF Option */}
+              <TouchableOpacity
+                style={[styles.exportOptionCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+                onPress={() => handleExport('pdf')}
+                disabled={isExporting}
+                accessibilityRole="button"
+                accessibilityLabel="Download PDF cover letter"
+              >
+                <View style={[styles.exportOptionIcon, { backgroundColor: `${colors.primary}18` }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+                </View>
+                <Text style={[styles.exportOptionTitle, { color: colors.textPrimary }]}>PDF</Text>
+                <Text style={[styles.exportOptionDesc, { color: colors.textMuted }]}>
+                  Universal format, ready for print & job applications
+                </Text>
+                {isExporting && <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 8 }} />}
+              </TouchableOpacity>
+
+              {/* DOCX Option */}
+              <TouchableOpacity
+                style={[styles.exportOptionCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+                onPress={() => handleExport('docx')}
+                disabled={isExporting}
+                accessibilityRole="button"
+                accessibilityLabel="Download DOCX cover letter"
+              >
+                <View style={[styles.exportOptionIcon, { backgroundColor: `${colors.primary}18` }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+                </View>
+                <Text style={[styles.exportOptionTitle, { color: colors.textPrimary }]}>DOCX</Text>
+                <Text style={[styles.exportOptionDesc, { color: colors.textMuted }]}>
+                  Editable format, perfect for Word & custom edits
+                </Text>
+                {isExporting && <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 8 }} />}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -809,5 +926,71 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     ...Typography.headingMd,
     color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
+    padding: Spacing.xl,
+    paddingBottom: Spacing.xxl,
+    borderTopWidth: 1,
+    ...Shadow.card,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: Spacing.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  modalTitle: {
+    ...Typography.headingLg,
+  },
+  modalCloseBtn: {
+    padding: 6,
+    borderRadius: Radius.full,
+  },
+  modalSubtitle: {
+    ...Typography.bodySm,
+    marginBottom: Spacing.lg,
+  },
+  exportOptions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  exportOptionCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    alignItems: 'center',
+    ...Shadow.sm,
+  },
+  exportOptionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  exportOptionTitle: {
+    ...Typography.headingMd,
+    marginBottom: 2,
+  },
+  exportOptionDesc: {
+    ...Typography.caption,
+    textAlign: 'center',
+    lineHeight: 14,
   },
 });

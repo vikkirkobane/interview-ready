@@ -17,6 +17,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { ScoreRing } from '../../src/components/ui';
 import { useInterviewFeedbackMutation, useDeleteMockInterviewMutation, useInterviewQuery } from '../../src/hooks/useApi';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { useNotificationStore } from '../../src/stores/notification-store';
 import { exportInterviewReportPDF } from '../../src/lib/interviewExport';
 import Toast from 'react-native-toast-message';
 import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
@@ -33,6 +34,7 @@ export default function FeedbackScreen() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { colors, isDark } = useTheme();
   const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
   
@@ -151,6 +153,11 @@ export default function FeedbackScreen() {
         company: interviewRecord?.company || '',
       });
       Toast.show({ type: 'success', text1: 'Report Downloaded', text2: 'Your interview report PDF has been generated.' });
+      addNotification({
+        title: 'Interview Report Downloaded',
+        description: 'Your interview feedback report has been exported as PDF',
+        type: 'success',
+      });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Download Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to generate interview report.') });
     } finally {
@@ -369,6 +376,8 @@ export default function FeedbackScreen() {
             style={[styles.secondaryBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
             onPress={handleDownloadReport}
             disabled={downloading}
+            accessibilityRole="button"
+            accessibilityLabel="Download interview feedback report"
           >
             {downloading ? (
               <ActivityIndicator size="small" color={colors.textPrimary} />

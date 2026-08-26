@@ -120,6 +120,12 @@ export default function CompanyResearchScreen() {
     try {
       setIsDownloading(true);
       await exportCompanyResearchPDF(result);
+      Toast.show({ type: 'success', text1: 'Report Downloaded!', text2: 'Your company intelligence PDF has been exported.' });
+      addNotification({
+        title: 'Company Report Downloaded',
+        description: `Research report for ${result.company_name || 'Company'} exported as PDF`,
+        type: 'success',
+      });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export company research report.') });
     } finally {
@@ -298,6 +304,8 @@ export default function CompanyResearchScreen() {
           onPress={handleDownload}
           disabled={isDownloading}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel="Download company research report"
         >
           {isDownloading ? (
             <ActivityIndicator size="small" color="#0ea5e9" />
@@ -573,6 +581,8 @@ export default function CompanyResearchScreen() {
           style={[s.downloadBtn, { backgroundColor: '#0ea5e9' }, isDownloading && { opacity: 0.6 }]}
           onPress={handleDownload}
           disabled={isDownloading}
+          accessibilityRole="button"
+          accessibilityLabel="Download company research report"
         >
           {isDownloading ? (
             <ActivityIndicator size="small" color="#fff" />

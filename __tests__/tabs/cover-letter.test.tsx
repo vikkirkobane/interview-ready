@@ -11,6 +11,14 @@ import { renderWithProviders } from '../helpers/render';
 import { resetAllStores, mockLoggedInSession } from '../helpers/stores';
 import { buildSession } from '../helpers/supabase';
 
+import { exportCoverLetterPDF, exportCoverLetterDOCX } from '../../src/lib/coverLetterExport';
+import { usePreviewStore } from '../../src/store/previewStore';
+
+jest.mock('../../src/lib/coverLetterExport', () => ({
+  exportCoverLetterPDF: jest.fn(async () => {}),
+  exportCoverLetterDOCX: jest.fn(async () => {}),
+}));
+
 jest.mock('../../src/lib/supabase', () => {
   const helper = require('../helpers/supabase');
   const mock = helper.createSupabaseMock();
@@ -320,6 +328,93 @@ describe('Cover Letter Generator — user stories', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText('e.g. Acme Corp')).toBeTruthy();
       expect(screen.getByText('Generate Cover Letter')).toBeTruthy();
+    });
+  });
+
+  it('navigates to preview screen when clicking preview button', async () => {
+    mockApiCall.mockResolvedValue({ data: { cover_letter: LETTER }, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Acme Corp'), 'Acme');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Senior Software Engineer'), 'Engineer');
+    await fireEvent.changeText(screen.getByPlaceholderText('Or paste the full job description here...'), 'Building cloud services.');
+    await fireEvent.press(screen.getByText('Generate Cover Letter'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Preview cover letter')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Preview cover letter'));
+
+    expect(usePreviewStore.getState().documentType).toBe('cover_letter');
+    expect(router.push).toHaveBeenCalledWith('/preview');
+  });
+
+  it('exports cover letter as PDF when clicking download PDF option', async () => {
+    mockApiCall.mockResolvedValue({ data: { cover_letter: LETTER }, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Acme Corp'), 'Acme');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Senior Software Engineer'), 'Engineer');
+    await fireEvent.changeText(screen.getByPlaceholderText('Or paste the full job description here...'), 'Building cloud services.');
+    await fireEvent.press(screen.getByText('Generate Cover Letter'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download cover letter')).toBeTruthy();
+    });
+
+    // Open Download Modal
+    await fireEvent.press(screen.getByLabelText('Download cover letter'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download PDF cover letter')).toBeTruthy();
+    });
+
+    // Click PDF download option
+    await fireEvent.press(screen.getByLabelText('Download PDF cover letter'));
+
+    await waitFor(() => {
+      expect(exportCoverLetterPDF).toHaveBeenCalledWith(
+        expect.objectContaining({
+          salutation: 'Dear Hiring Manager,',
+        })
+      );
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'PDF Downloaded!' })
+      );
+    });
+  });
+
+  it('exports cover letter as DOCX when clicking download DOCX option', async () => {
+    mockApiCall.mockResolvedValue({ data: { cover_letter: LETTER }, error: null });
+
+    const screen = await renderScreen();
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Acme Corp'), 'Acme');
+    await fireEvent.changeText(screen.getByPlaceholderText('e.g. Senior Software Engineer'), 'Engineer');
+    await fireEvent.changeText(screen.getByPlaceholderText('Or paste the full job description here...'), 'Building cloud services.');
+    await fireEvent.press(screen.getByText('Generate Cover Letter'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download cover letter')).toBeTruthy();
+    });
+
+    // Open Download Modal
+    await fireEvent.press(screen.getByLabelText('Download cover letter'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download DOCX cover letter')).toBeTruthy();
+    });
+
+    // Click DOCX download option
+    await fireEvent.press(screen.getByLabelText('Download DOCX cover letter'));
+
+    await waitFor(() => {
+      expect(exportCoverLetterDOCX).toHaveBeenCalledWith(
+        expect.objectContaining({
+          salutation: 'Dear Hiring Manager,',
+        })
+      );
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'DOCX Downloaded!' })
+      );
     });
   });
 });

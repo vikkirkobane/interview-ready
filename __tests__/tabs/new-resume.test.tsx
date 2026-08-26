@@ -8,9 +8,17 @@ import Toast from 'react-native-toast-message';
 import NewResumeScreen from '../../app/(tabs)/new-resume';
 import { supabase } from '../../src/lib/supabase';
 import { apiCall } from '../../src/lib/api';
+import { exportResumePDF, exportResumeDOCX } from '../../src/lib/resumeExport';
+import { usePreviewStore } from '../../src/store/previewStore';
+import { useNotificationStore } from '../../src/stores/notification-store';
 import { renderWithProviders, flushPromises } from '../helpers/render';
 import { resetAllStores, mockLoggedInSession } from '../helpers/stores';
 import { buildSession } from '../helpers/supabase';
+
+jest.mock('../../src/lib/resumeExport', () => ({
+  exportResumePDF: jest.fn(async () => {}),
+  exportResumeDOCX: jest.fn(async () => {}),
+}));
 
 jest.mock('../../src/lib/supabase', () => {
   const helper = require('../helpers/supabase');
@@ -400,5 +408,142 @@ describe('Resume Builder (new-resume) — user stories', () => {
     expect(mockToast.show).toHaveBeenCalledWith(
       expect.objectContaining({ text1: 'Ready for new resume' })
     );
+  });
+
+  it('navigates to preview screen with resume data and templateId when preview button is clicked', async () => {
+    router.__setMockParams({ id: 'resume-preview-test' });
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      {
+        id: 'resume-preview-test',
+        user_id: 'test-user-id',
+        title: 'Executive Resume',
+        resume_contents: [
+          {
+            templateId: 'minimal',
+            header: { name: 'Morgan Taylor', title: 'Director of Engineering', email: 'morgan@example.com' },
+            summary: 'Experienced engineering leader.',
+            experience: [{ id: 'exp-1', title: 'Director', company: 'TechCorp', bullets: ['Led 50+ engineers'] }],
+            skills: [{ id: 'sk-1', category: 'Leadership', items: ['Management', 'Architecture'] }],
+            education: [{ id: 'edu-1', degree: 'B.S. CS', institution: 'MIT', year: '2015' }],
+            certifications: [{ id: 'cert-1', name: 'PMP', issuer: 'PMI', year: '2020' }],
+            awards: [],
+            sections_to_include: { summary: true, experience: true, skills: true, education: true, certifications: true },
+          },
+        ],
+      },
+    ];
+
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Preview resume')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByLabelText('Preview resume'));
+
+    expect(usePreviewStore.getState().documentType).toBe('resume');
+    expect(usePreviewStore.getState().templateId).toBe('minimal');
+    expect(router.push).toHaveBeenCalledWith('/preview');
+  });
+
+  it('exports resume as PDF when clicking download PDF option at the resume screen', async () => {
+    router.__setMockParams({ id: 'resume-export-pdf' });
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      {
+        id: 'resume-export-pdf',
+        user_id: 'test-user-id',
+        title: 'Software Engineer Resume',
+        resume_contents: [
+          {
+            templateId: 'executive',
+            header: { name: 'Alex Johnson', title: 'Software Engineer', email: 'alex@example.com' },
+            summary: 'Full stack engineer with strong TypeScript skills.',
+            experience: [{ id: 'exp-1', title: 'Engineer', company: 'Startup', bullets: ['Built mobile apps'] }],
+            skills: [{ id: 'sk-1', category: 'Tech', items: ['React Native', 'TypeScript'] }],
+            education: [],
+            certifications: [],
+            awards: [],
+            sections_to_include: { summary: true, experience: true, skills: true },
+          },
+        ],
+      },
+    ];
+
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download resume')).toBeTruthy();
+    });
+
+    // Open Download Modal
+    await fireEvent.press(screen.getByLabelText('Download resume'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download PDF resume')).toBeTruthy();
+    });
+
+    // Click PDF download option
+    await fireEvent.press(screen.getByLabelText('Download PDF resume'));
+
+    await waitFor(() => {
+      expect(exportResumePDF).toHaveBeenCalledWith(
+        expect.objectContaining({
+          header: expect.objectContaining({ name: 'Alex Johnson' }),
+          summary: { text: 'Full stack engineer with strong TypeScript skills.' },
+        }),
+        'executive'
+      );
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'PDF Downloaded!' })
+      );
+    });
+  });
+
+  it('exports resume as DOCX when clicking download DOCX option at the resume screen', async () => {
+    router.__setMockParams({ id: 'resume-export-docx' });
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      {
+        id: 'resume-export-docx',
+        user_id: 'test-user-id',
+        title: 'DevOps Resume',
+        resume_contents: [
+          {
+            templateId: 'tech-stack',
+            header: { name: 'Sam Rivera', title: 'DevOps Engineer', email: 'sam@example.com' },
+            summary: 'DevOps professional automating cloud infrastructure.',
+            experience: [{ id: 'exp-1', title: 'Cloud Engineer', company: 'InfraCo', bullets: ['Maintained k8s'] }],
+            skills: [{ id: 'sk-1', category: 'Cloud', items: ['AWS', 'Kubernetes'] }],
+            education: [],
+            certifications: [],
+            awards: [],
+            sections_to_include: { summary: true, experience: true, skills: true },
+          },
+        ],
+      },
+    ];
+
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download resume')).toBeTruthy();
+    });
+
+    // Open Download Modal
+    await fireEvent.press(screen.getByLabelText('Download resume'));
+    await waitFor(() => {
+      expect(screen.getByLabelText('Download DOCX resume')).toBeTruthy();
+    });
+
+    // Click DOCX download option
+    await fireEvent.press(screen.getByLabelText('Download DOCX resume'));
+
+    await waitFor(() => {
+      expect(exportResumeDOCX).toHaveBeenCalledWith(
+        expect.objectContaining({
+          header: expect.objectContaining({ name: 'Sam Rivera' }),
+          summary: { text: 'DevOps professional automating cloud infrastructure.' },
+        }),
+        'tech-stack'
+      );
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'DOCX Downloaded!' })
+      );
+    });
   });
 });

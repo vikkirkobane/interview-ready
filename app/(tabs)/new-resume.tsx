@@ -21,6 +21,7 @@ import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/error
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { usePreviewStore } from '../../src/store/previewStore';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
+import { exportResumePDF, exportResumeDOCX } from '../../src/lib/resumeExport';
 import { supabase } from '../../src/lib/supabase';
 import { fetchFileArrayBuffer } from '../../src/lib/api';
 import { useUIStore } from '../../src/stores/ui-store';
@@ -441,7 +442,7 @@ export default function ResumeBuilderScreen() {
     if (id && !hasStartedOver && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
       const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
       setDraft({
-        templateId: remoteResume.templateId || 'modern',
+        templateId: remoteResume.templateId || 'executive',
         header: remoteResume.header || remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
         summary: summaryText,
         experience: (remoteResume.experience || []).map((e: any) => ({ ...e, id: e.id || uid(), bullets: e.bullets || [] })),
@@ -515,30 +516,37 @@ export default function ResumeBuilderScreen() {
     }
   };
 
+  // ── Prepared Resume Data ──────────────────────────────────────────────────
+  const getPreparedResumeData = () => {
+    if (!draft) return null;
+    return {
+      header: draft.header,
+      summary: typeof draft.summary === 'string' ? { text: draft.summary } : draft.summary,
+      experience: draft.experience || [],
+      skills: draft.skills || [],
+      education: draft.education || [],
+      featured_project: draft.featuredProject || (draft as any).featured_project,
+      certifications: (draft.certifications || []).map(c => typeof c === 'string' ? c : [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
+      recognition: (draft.awards || (draft as any).recognition || []).map(a => typeof a === 'string' ? a : [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
+      sections_to_include: {
+        summary: draft.sections_to_include?.summary !== false && !!(typeof draft.summary === 'string' ? draft.summary : draft.summary?.text),
+        skills: draft.sections_to_include?.skills !== false && (draft.skills || []).length > 0,
+        experience: draft.sections_to_include?.experience !== false && (draft.experience || []).length > 0,
+        featured_project: draft.sections_to_include?.featured_project !== false && !!(draft.featuredProject?.include || (draft as any).featured_project?.include),
+        education: draft.sections_to_include?.education !== false && (draft.education || []).length > 0,
+        certifications: draft.sections_to_include?.certifications !== false && (draft.certifications || []).length > 0,
+        languages: false,
+        recognition: draft.sections_to_include?.recognition !== false && (draft.awards || (draft as any).recognition || []).length > 0,
+      }
+    };
+  };
+
   // ── Preview ────────────────────────────────────────────────────────────────
   const handlePreview = () => {
     if (!draft) return;
     try {
-      const data: any = {
-        header: draft.header,
-        summary: { text: draft.summary },
-        experience: draft.experience,
-        skills: draft.skills,
-        education: draft.education,
-        featured_project: draft.featuredProject,
-        certifications: draft.certifications.map(c => [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
-        recognition: draft.awards.map(a => [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
-        sections_to_include: {
-          summary: draft.sections_to_include?.summary !== false && !!draft.summary,
-          skills: draft.sections_to_include?.skills !== false && draft.skills.length > 0,
-          experience: draft.sections_to_include?.experience !== false && draft.experience.length > 0,
-          featured_project: draft.sections_to_include?.featured_project !== false && !!draft.featuredProject?.include,
-          education: draft.sections_to_include?.education !== false && draft.education.length > 0,
-          certifications: draft.sections_to_include?.certifications !== false && draft.certifications.length > 0,
-          languages: false,
-          recognition: draft.sections_to_include?.recognition !== false && draft.awards.length > 0,
-        }
-      };
+      const data = getPreparedResumeData();
+      if (!data) return;
       
       const htmlString = buildResumeHTML(data, draft.templateId);
       usePreviewStore.getState().setPreview('resume', data, htmlString, draft.templateId);
@@ -611,39 +619,17 @@ export default function ResumeBuilderScreen() {
     if (!draft) return;
     
     setIsExporting(true);
+    setIsExportModalVisible(false);
     
     try {
-      // First save the resume
+      // Best-effort auto-save in background without blocking download
       if (id) {
-        await updateMutation.mutateAsync({ id: id as string, resume_contents: [draft] });
+        updateMutation.mutate({ id: id as string, resume_contents: [draft] });
       }
 
-      // Prepare resume data for export
-      const resumeData: any = {
-        header: draft.header,
-        summary: { text: draft.summary },
-        experience: draft.experience,
-        skills: draft.skills,
-        education: draft.education,
-        featured_project: draft.featuredProject,
-        certifications: draft.certifications.map(c => [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
-        recognition: draft.awards.map(a => [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
-        sections_to_include: {
-          summary: draft.sections_to_include?.summary !== false && !!draft.summary,
-          skills: draft.sections_to_include?.skills !== false && draft.skills.length > 0,
-          experience: draft.sections_to_include?.experience !== false && draft.experience.length > 0,
-          featured_project: draft.sections_to_include?.featured_project !== false && !!draft.featuredProject?.include,
-          education: draft.sections_to_include?.education !== false && draft.education.length > 0,
-          certifications: draft.sections_to_include?.certifications !== false && draft.certifications.length > 0,
-          languages: false,
-          recognition: draft.sections_to_include?.recognition !== false && draft.awards.length > 0,
-        }
-      };
+      const resumeData = getPreparedResumeData();
+      if (!resumeData) return;
 
-      // Dynamic import of export functions
-      const { exportResumePDF, exportResumeDOCX } = await import('../../src/lib/resumeExport');
-
-      // Export based on format
       if (format === 'pdf') {
         await exportResumePDF(resumeData, draft.templateId);
         Toast.show({ type: 'success', text1: 'PDF Downloaded!', text2: 'Check your downloads folder' });
@@ -657,10 +643,12 @@ export default function ResumeBuilderScreen() {
         description: `Your resume has been exported as ${format.toUpperCase()}`,
         type: 'success',
       });
-
-      setIsExportModalVisible(false);
     } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(error.message, 'Failed to export resume.') });
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Export Failed', 
+        text2: getUserFriendlyErrorMessage(error.message, `Failed to export ${format.toUpperCase()}.`) 
+      });
     } finally {
       setIsExporting(false);
     }
@@ -1814,7 +1802,12 @@ export default function ResumeBuilderScreen() {
               : <Text style={styles.primaryBtnText}>Save</Text>
             }
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.exportBtn, { flex: 1, minWidth: '45%' }]} onPress={handlePreview}>
+          <TouchableOpacity 
+            style={[styles.exportBtn, { flex: 1, minWidth: '45%' }]} 
+            onPress={handlePreview}
+            accessibilityRole="button"
+            accessibilityLabel="Preview resume"
+          >
             <Ionicons name="person-outline" size={18} color={colors.primary} />
             <Text style={styles.exportBtnText}>Preview</Text>
           </TouchableOpacity>
@@ -1822,6 +1815,8 @@ export default function ResumeBuilderScreen() {
             style={[styles.exportBtn, { flex: 1, minWidth: '45%' }]} 
             onPress={() => setIsExportModalVisible(true)}
             disabled={!draft || updateMutation.isPending}
+            accessibilityRole="button"
+            accessibilityLabel="Download resume"
           >
             <Ionicons name="download-outline" size={18} color={colors.primary} />
             <Text style={styles.exportBtnText}>Download</Text>
@@ -2069,6 +2064,8 @@ export default function ResumeBuilderScreen() {
                 style={styles.exportOptionCard}
                 onPress={() => handleExport('pdf')}
                 disabled={isExporting}
+                accessibilityRole="button"
+                accessibilityLabel="Download PDF resume"
               >
                 <View style={styles.exportOptionIcon}>
                   <Ionicons name="document-text-outline" size={18} color={colors.primary} />
@@ -2085,6 +2082,8 @@ export default function ResumeBuilderScreen() {
                 style={styles.exportOptionCard}
                 onPress={() => handleExport('docx')}
                 disabled={isExporting}
+                accessibilityRole="button"
+                accessibilityLabel="Download DOCX resume"
               >
                 <View style={styles.exportOptionIcon}>
                   <Ionicons name="document-text-outline" size={18} color={colors.primary} />

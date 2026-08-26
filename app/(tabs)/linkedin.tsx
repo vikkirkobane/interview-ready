@@ -421,6 +421,12 @@ export default function LinkedinOptimizerScreen() {
         targetRoles: wizard.targetRoles,
         targetCompanies: wizard.targetCompanies,
       });
+      Toast.show({ type: 'success', text1: 'Report Downloaded!', text2: 'Your LinkedIn optimization PDF has been exported.' });
+      addNotification({
+        title: 'LinkedIn Report Downloaded',
+        description: 'Your LinkedIn optimization report has been exported as PDF',
+        type: 'success',
+      });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Export Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to export LinkedIn analysis.') });
     } finally {
@@ -820,6 +826,8 @@ export default function LinkedinOptimizerScreen() {
           disabled={isDownloading}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           style={{ padding: Spacing.xs }}
+          accessibilityRole="button"
+          accessibilityLabel="Download LinkedIn optimization report"
         >
           {isDownloading ? (
             <ActivityIndicator size="small" color="#0A66C2" />
@@ -1049,6 +1057,8 @@ export default function LinkedinOptimizerScreen() {
           style={[s.downloadBtn, { backgroundColor: '#0A66C2' }, isDownloading && { opacity: 0.6 }]}
           onPress={handleDownload}
           disabled={isDownloading}
+          accessibilityRole="button"
+          accessibilityLabel="Download LinkedIn optimization report"
         >
           {isDownloading ? (
             <ActivityIndicator size="small" color="#fff" />

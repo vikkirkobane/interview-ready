@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { exportRoadmapPDF } from '../../src/lib/roadmapExport';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/auth-store';
+import { useNotificationStore } from '../../src/stores/notification-store';
 import Toast from 'react-native-toast-message';
 import { handleApiError } from '../../src/lib/errorHandler';
 
@@ -21,6 +22,7 @@ export default function JobMatchResultsScreen() {
   const { isDesktop } = useBreakpoint();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
@@ -79,6 +81,11 @@ export default function JobMatchResultsScreen() {
         company: jobApplication?.company || '',
       });
       Toast.show({ type: 'success', text1: 'Roadmap Downloaded', text2: 'Your personalized skill roadmap has been downloaded.' });
+      addNotification({
+        title: 'Roadmap Downloaded',
+        description: 'Your personalized skill roadmap has been exported as PDF',
+        type: 'success',
+      });
     } catch (e: any) {
       handleApiError(e.message, { fallbackTitle: 'Failed to generate roadmap' });
     } finally {
@@ -217,6 +224,8 @@ export default function JobMatchResultsScreen() {
                   style={[styles.roadmapBtn, { backgroundColor: colors.bgPrimary }]}
                   onPress={handleDownloadRoadmap}
                   disabled={isDownloading}
+                  accessibilityRole="button"
+                  accessibilityLabel="Download personalized skill roadmap"
                 >
                   {isDownloading ? (
                     <ActivityIndicator size="small" color={colors.primary} />

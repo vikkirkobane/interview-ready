@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Document, Paragraph, TextRun, AlignmentType, Packer } from 'docx';
 import { CoverLetter } from '../types/schemas';
 import { buildCoverLetterHTML } from './coverLetterHTML';
 import { buildFileName, renameToCache, downloadBlob } from './exportUtils';
@@ -54,7 +55,6 @@ export async function exportCoverLetterPDF(cl: CoverLetter): Promise<void> {
 
 export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
   try {
-    const { Document, Paragraph, TextRun, AlignmentType, Packer } = await import('docx');
     const h = cl.header;
     const p = cl.paragraphs;
     const children: any[] = [];
@@ -107,8 +107,14 @@ export async function exportCoverLetterDOCX(cl: CoverLetter): Promise<void> {
     addPara(p.closing?.text);
 
     // Sign off
-    children.push(new Paragraph({ children: [new TextRun({ text: cl.sign_off.closing_phrase, size: 22 })] }));
-    children.push(new Paragraph({ children: [new TextRun({ text: cl.sign_off.name, bold: true, size: 22 })] }));
+    if (cl.sign_off) {
+      if (cl.sign_off.closing_phrase) {
+        children.push(new Paragraph({ children: [new TextRun({ text: cl.sign_off.closing_phrase, size: 22 })] }));
+      }
+      if (cl.sign_off.name) {
+        children.push(new Paragraph({ children: [new TextRun({ text: cl.sign_off.name, bold: true, size: 22 })] }));
+      }
+    }
 
     const doc = new Document({ sections: [{ properties: {}, children }] });
     const filename = buildFileName(h.candidate_name, 'Cover_Letter', 'docx');
