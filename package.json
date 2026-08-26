@@ -11,6 +11,10 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "build:android": "eas build -p android --profile preview",
     "build:android:prod": "eas build -p android --profile production",
+    "build:ios": "eas build -p ios --profile preview",
+    "build:ios:device": "eas build -p ios --profile preview:device",
+    "build:ios:prod": "eas build -p ios --profile production",
+    "build:all": "eas build -p all --profile preview",
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
