@@ -12,8 +12,7 @@
       "bundleIdentifier": "com.interviewready.app",
       "buildNumber": "2",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -26,7 +25,10 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/icon_padded.png",
+      "backgroundColor": "#0a0f1d",
+      "themeColor": "#1a3a5c"
     },
     "plugins": [
       "expo-router",
@@ -48,8 +50,7 @@
         "react-native-google-mobile-ads",
         {
           "androidAppId": "ca-app-pub-9822168149949485~6162462516",
-          "iosAppId": "ca-app-pub-9822168149949485~6162462516",
-          "userTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you."
+          "iosAppId": "ca-app-pub-9822168149949485~6162462516"
         }
       ],
       [
@@ -59,9 +60,6 @@
             "buildFeatures": {
               "buildConfig": true
             }
-          },
-          "ios": {
-            "deploymentTarget": "16.4"
           }
         }
       ],

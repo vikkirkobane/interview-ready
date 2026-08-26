@@ -18,6 +18,7 @@ import { useNotificationStore } from '../src/stores/notification-store';
 import { useUIStore } from '../src/stores/ui-store';
 import { useAppVersion } from '../src/hooks/useAppVersion';
 import { ForceUpdateScreen } from '../src/components/features/ForceUpdateScreen';
+import { PWAInstallBanner } from '../src/components/features/PWAInstallBanner';
 import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { supabase } from '../src/lib/supabase';
 import {
@@ -27,7 +28,7 @@ import {
   hasInFlightExchange,
   waitForAnyInFlightExchange,
 } from '../src/lib/auth-code-exchange';
-import mobileAds from 'react-native-google-mobile-ads';
+import { initMobileAds } from '../src/lib/mobileAdsService';
 
 // Prevent native splash screen from hiding until fonts and auth state are loaded
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -155,7 +156,7 @@ export default function RootLayout() {
     }).catch(() => {
       initialize();
     });
-    mobileAds().initialize();
+    initMobileAds();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -391,6 +392,7 @@ export default function RootLayout() {
           <Stack.Screen name="payment/callback" options={{ headerShown: false }} />
           <Stack.Screen name="preview" options={{ presentation: 'modal' }} />
         </Stack>
+        <PWAInstallBanner />
         <Toast config={toastConfig} />
       </QueryClientProvider>
     </GestureHandlerRootView>
