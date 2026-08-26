@@ -173,6 +173,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ pendingOAuthCallback: true });
 
+      if (Platform.OS === 'web') {
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const { error: webOAuthError } = await supabase.auth.signInWithOAuth({
+          provider,
+          options: {
+            redirectTo: origin ? `${origin}/auth/callback` : undefined,
+          },
+        });
+        if (webOAuthError) {
+          set({ pendingOAuthCallback: false });
+          return { error: getUserFriendlyErrorMessage(webOAuthError.message) };
+        }
+        return { error: null };
+      }
+
       const redirectTo = makeRedirectUri({
         scheme: 'interviewready',
         path: 'auth/callback',

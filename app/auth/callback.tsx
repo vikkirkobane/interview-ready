@@ -1,17 +1,18 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useTheme, Typography, Spacing } from '../../src/theme';
+import { supabase } from '../../src/lib/supabase';
+import { exchangeAuthCodeSafely } from '../../src/lib/auth-code-exchange';
 
 /**
  * OAuth callback screen — shown while the deep-link code exchange is in progress.
  *
  * Flow:
- *  1. Supabase redirects to interviewready://auth/callback?code=...
- *  2. The Linking listener in _layout.tsx is the SOLE handler that calls
- *     exchangeCodeForSession(code). This is critical — PKCE state is single-use
- *     and calling exchangeCodeForSession twice causes "OAuth state not found".
+ *  1. Supabase redirects to interviewready://auth/callback?code=... (or web URL)
+ *  2. The Linking listener in _layout.tsx (native) or web effect calls
+ *     exchangeCodeForSession(code).
  *  3. Supabase's onAuthStateChange fires and sets session in auth-store.
  *  4. This screen watches the session field and navigates once it's populated.
  *  5. Final fallback: 15s timeout → back to welcome (covers genuine failures).
@@ -20,6 +21,28 @@ export default function AuthCallbackScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const session = useAuthStore((s) => s.session);
+
+  // On Web, exchange code or retrieve session directly from URL
+  useEffect(() => {
+    async function handleWebCallback() {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const code = searchParams.get('code');
+        if (code) {
+          try {
+            await exchangeAuthCodeSafely(code);
+          } catch (err) {
+            console.warn('[AuthCallback Web] Error exchanging code:', err);
+          }
+        }
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (currentSession) {
+          useAuthStore.setState({ session: currentSession, user: currentSession.user });
+        }
+      }
+    }
+    handleWebCallback();
+  }, []);
 
   // Navigate as soon as the session lands in the store.
   useEffect(() => {
