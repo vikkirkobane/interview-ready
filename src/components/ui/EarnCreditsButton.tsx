@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useRewardedAd } from '../../lib/useRewardedAd';
 import { useAuthStore } from '../../stores/auth-store';
-import { supabase } from '../../lib/supabase';
+import { supabase, supabaseUrl } from '../../lib/supabase';
 import { useTheme, Spacing, Radius, Typography } from '../../theme';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +20,7 @@ export function EarnCreditsButton() {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/credits-grant`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/credits-grant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

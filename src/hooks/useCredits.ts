@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl } from '../lib/supabase';
 
 export interface CreditBalance {
   balance: number;
@@ -100,7 +100,7 @@ export function useCredits() {
     }
 
     const response = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/credits-check`,
+      `${supabaseUrl}/functions/v1/credits-check`,
       {
         method: 'POST',
         headers: {
@@ -136,7 +136,7 @@ export function useCredits() {
     }
 
     const response = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/credits-deduct`,
+      `${supabaseUrl}/functions/v1/credits-deduct`,
       {
         method: 'POST',
         headers: {

@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, supabaseUrl } from './supabase';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -51,7 +51,7 @@ export async function apiCall<T = any>(
     }
 
     const response = await fetch(
-      `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
+      `${supabaseUrl}/functions/v1/${functionName}`,
       {
         method,
         headers,
@@ -195,7 +195,7 @@ export async function apiUploadFile<T = any>(
       }
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`,
+        `${supabaseUrl}/functions/v1/${functionName}`,
         {
           method: 'POST',
           headers: {
@@ -222,7 +222,7 @@ export async function apiUploadFile<T = any>(
         return { data: null, error: 'File not found or empty' };
       }
 
-      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/${functionName}`;
+      const url = `${supabaseUrl}/functions/v1/${functionName}`;
       let uploadUri = fileUri;
       let cachedPath: string | null = null;
 

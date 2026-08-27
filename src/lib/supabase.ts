@@ -33,10 +33,13 @@ if (!globalThis.crypto.subtle) {
  *   EXPO_PUBLIC_SUPABASE_ANON_KEY
  */
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const fallbackUrl = 'https://rdxcvqcxgvdgvxvfkhlr.supabase.co';
+const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeGN2cWN4Z3ZkZ3Z4dmZraGxyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTk1MDMsImV4cCI6MjA5NzUzNTUwM30.DlX5eiLs0jnMRu0T89mKYWv_XjzBwwiqufJJyTr7XhM';
 
-if (__DEV__ && (!supabaseUrl || !supabaseAnonKey)) {
+export const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || fallbackUrl;
+export const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || fallbackKey;
+
+if (__DEV__ && (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY)) {
   console.warn(
     '[Supabase] Missing env vars! Create a .env file with:\n' +
     '  EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co\n' +

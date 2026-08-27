@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseUrl } from '../lib/supabase';
 import { queryClient as globalQueryClient } from '../lib/query-client';
 import { useProfileStore } from '../stores/profile-store';
 import { getUserFriendlyErrorMessage } from '../lib/errorHandler';
@@ -62,7 +62,7 @@ export function useReferral(): UseReferralReturn {
       }
 
       const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/referral-stats`,
+        `${supabaseUrl}/functions/v1/referral-stats`,
         {
           method: 'POST',
           headers: {
@@ -124,7 +124,7 @@ export function useReferral(): UseReferralReturn {
       // 1. Attempt Edge Function first
       try {
         const response = await fetch(
-          `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/referral-apply`,
+          `${supabaseUrl}/functions/v1/referral-apply`,
           {
             method: 'POST',
             headers: {
