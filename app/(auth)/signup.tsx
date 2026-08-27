@@ -7,6 +7,7 @@ import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
+import { triggerWelcomeEmail } from '../../src/lib/emailNotificationService';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -64,6 +65,9 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
+      // Trigger rich welcome email in background
+      triggerWelcomeEmail(trimmedEmail).catch(() => {});
+
       // If email confirmation is required, no session is returned yet — the
       // user must verify their email before signing in.
       const hasSession = !!useAuthStore.getState().session;

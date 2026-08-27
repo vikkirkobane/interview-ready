@@ -38,8 +38,16 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
 
     try {
+      const origin = typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : 'https://appinterviewready.top';
+
+      const redirectTo = Platform.OS === 'web'
+        ? `${origin}/reset-password`
+        : 'interviewready://reset-password';
+
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
-        redirectTo: 'interviewready://reset-password',
+        redirectTo,
       });
 
       if (resetError) {

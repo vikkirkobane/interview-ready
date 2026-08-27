@@ -17,10 +17,11 @@ import { supabase } from '../src/lib/supabase';
 import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
 
+import { exchangeAuthCodeSafely } from '../src/lib/auth-code-exchange';
+
 /**
  * Password Reset Screen
- * Handles the deep link from the reset email: interviewready://reset-password?token=...&type=recovery
- * The Supabase email template sends a link with a recovery token/hash.
+ * Handles the recovery link: interviewready://reset-password (native) or /reset-password (web)
  */
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -38,14 +39,17 @@ export default function ResetPasswordScreen() {
   useEffect(() => {
     async function verifySession() {
       try {
-        // Supabase sets the session via the deep link hash params automatically
-        // when detectSessionInUrl is true. Since we have it false, we check for
-        // an existing session that was set by the deep link handler in _layout.tsx
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const searchParams = new URLSearchParams(window.location.search);
+          const code = searchParams.get('code');
+          if (code) {
+            await exchangeAuthCodeSafely(code);
+          }
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          // Try to get session from the URL hash (Supabase sends #access_token=...&type=recovery)
-          // The deep link handler should have already processed this
-          setError('Invalid or expired reset link. Please request a new one.');
+          setError('Invalid or expired reset link. Please request a new one from the login screen.');
         }
       } catch {
         setError('Failed to verify reset link.');

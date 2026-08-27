@@ -5,6 +5,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useTheme, Typography, Spacing } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { exchangeAuthCodeSafely } from '../../src/lib/auth-code-exchange';
+import { triggerWelcomeEmail } from '../../src/lib/emailNotificationService';
 
 /**
  * OAuth callback screen — shown while the deep-link code exchange is in progress.
@@ -48,6 +49,12 @@ export default function AuthCallbackScreen() {
   useEffect(() => {
     if (session) {
       console.log('[AuthCallback] Session detected, checking onboarding status...');
+      const email = session.user?.email;
+      const name = session.user?.user_metadata?.full_name || session.user?.user_metadata?.first_name;
+      if (email) {
+        triggerWelcomeEmail(email, name).catch(() => {});
+      }
+
       const isCompleted = session.user?.user_metadata?.onboarding_completed;
       if (isCompleted) {
         console.log('[AuthCallback] Onboarding complete — navigating to tabs');
