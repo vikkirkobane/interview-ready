@@ -112,6 +112,24 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
   ],
   KES: [
     {
+      id: 'kes_starter_20',
+      planCode: 'PLN_uv701tt6jdcw916',
+      name: 'Starter Credit Pack',
+      price: 50,
+      currency: 'KES',
+      interval: 'MONTHLY',
+      customIntervalText: ' (20 Credits)',
+      badge: 'QUICK APPLICATION PACK',
+      features: [
+        '20 AI Credits (instant top-up)',
+        'Full Resume Generation & Tailoring',
+        'Cover Letter Generator',
+        'Job Match & ATS Scoring',
+        'Mock Interview practice',
+        'Pay with M-Pesa or Card',
+      ],
+    },
+    {
       id: '1',
       planCode: 'PLN_7l2u2vr9r7844sz',
       name: 'Premium',
@@ -317,7 +335,11 @@ export default function PricingScreen() {
         metadata: {
           user_id: session.user.id,
           plan_code: selectedPlan.planCode,
-          plan_type: selectedPlan.name.includes('Plus') ? 'PREMIUM_PLUS' : 'PREMIUM',
+          plan_type: selectedPlan.name.includes('Plus')
+            ? 'PREMIUM_PLUS'
+            : selectedPlan.planCode === 'PLN_uv701tt6jdcw916'
+            ? 'FREE'
+            : 'PREMIUM',
           plan_interval: selectedPlan.interval,
         },
       };
@@ -522,7 +544,7 @@ export default function PricingScreen() {
                       <ActivityIndicator color={colors.textInverse} />
                     ) : (
                       <Text style={styles.subscribeButtonText}>
-                        Subscribe to {plan.name}
+                        {plan.planCode === 'PLN_uv701tt6jdcw916' ? 'Buy 20 Credits for KES 50' : `Subscribe to ${plan.name}`}
                       </Text>
                     )}
                   </Pressable>

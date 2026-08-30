@@ -9,10 +9,12 @@ export interface PricingPlan {
   name: string;
   price: number;
   currency: string;
-  interval: 'MONTHLY' | 'YEARLY';
+  interval: 'MONTHLY' | 'YEARLY' | 'PACK';
+  customIntervalText?: string;
   features: string[];
   isPopular?: boolean;
   savings?: string;
+  badge?: string;
 }
 
 interface PricingCardProps {
@@ -38,7 +40,15 @@ export const PricingCard: React.FC<PricingCardProps> = ({
     return `${currency} ${price.toLocaleString()}`;
   };
 
-  const intervalText = plan.interval === 'MONTHLY' ? '/month' : '/year';
+  const intervalText = plan.customIntervalText !== undefined
+    ? plan.customIntervalText
+    : plan.interval === 'MONTHLY'
+    ? '/month'
+    : plan.interval === 'YEARLY'
+    ? '/year'
+    : '';
+
+  const badgeText = plan.badge || (plan.isPopular ? 'MOST POPULAR' : null);
 
   return (
     <Pressable
@@ -51,9 +61,9 @@ export const PricingCard: React.FC<PricingCardProps> = ({
       disabled={disabled}
       
     >
-      {plan.isPopular && (
-        <View style={styles.popularBadge}>
-          <Text style={styles.popularText}>MOST POPULAR</Text>
+      {badgeText && (
+        <View style={[styles.popularBadge, plan.badge ? { backgroundColor: colors.primary } : null]}>
+          <Text style={styles.popularText}>{badgeText}</Text>
         </View>
       )}
 

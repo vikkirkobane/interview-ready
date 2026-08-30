@@ -35,13 +35,21 @@ describe('Pricing — user stories', () => {
     expect(screen.getAllByText('Premium Plus').length).toBeGreaterThan(0);
   });
 
-  it('selects a plan and shows the subscribe action', async () => {
+  it('selects a plan and shows the action button', async () => {
     const screen = await renderScreen();
     const selectButtons = screen.getAllByText('Select Plan');
+    // Select first plan (Starter Credit Pack)
     await fireEvent.press(selectButtons[0]);
 
     await waitFor(() => {
-      expect(screen.getByText(/Subscribe to/)).toBeTruthy();
+      expect(screen.getByText('Buy 20 Credits for KES 50')).toBeTruthy();
+    });
+
+    // Select second plan (Premium Monthly)
+    await fireEvent.press(selectButtons[1]);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Subscribe to Premium/)).toBeTruthy();
     });
   });
 
@@ -53,5 +61,12 @@ describe('Pricing — user stories', () => {
     await waitFor(() => {
       expect(screen.getByText('Selected')).toBeTruthy();
     });
+  });
+
+  it('displays the 50 KES Starter Credit Pack by default in Kenya', async () => {
+    const screen = await renderScreen();
+    expect(screen.getByText('Starter Credit Pack')).toBeTruthy();
+    expect(screen.getByText('QUICK APPLICATION PACK')).toBeTruthy();
+    expect(screen.getByText('KES 50')).toBeTruthy();
   });
 });
