@@ -112,6 +112,10 @@ export function SideMenu() {
     { name: 'Onboarding',      path: '/(onboarding)/role',        icon: 'compass-outline',        iconActive: 'compass',         lib: 'ion' },
     { name: 'Billing',         path: '/(tabs)/pricing',           icon: 'card-outline',           iconActive: 'card',            lib: 'ion' },
     { name: 'Referral',        path: '/(tabs)/referral',          icon: 'gift-outline',           iconActive: 'gift',            lib: 'ion' },
+    { name: 'About Us',        path: '/about',                    icon: 'information-circle-outline', iconActive: 'information-circle', lib: 'ion' },
+    { name: 'Contact Us',      path: '/contact',                  icon: 'headset-outline',        iconActive: 'headset',         lib: 'ion' },
+    { name: 'Privacy Policy',  path: '/privacy',                  icon: 'shield-checkmark-outline', iconActive: 'shield-checkmark', lib: 'ion' },
+    { name: 'Terms of Service',path: '/terms',                    icon: 'document-outline',       iconActive: 'document',        lib: 'ion' },
   ];
 
   const renderIcon = (item: typeof menuItems[0], isActive: boolean) => {

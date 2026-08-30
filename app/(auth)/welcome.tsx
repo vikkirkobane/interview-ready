@@ -181,14 +181,14 @@ export default function WelcomeScreen() {
             By continuing, you agree to our{' '}
             <Text
               style={{ color: colors.primary, fontWeight: '600' }}
-              onPress={() => Linking.openURL('https://appinterviewready.top/terms')}
+              onPress={() => router.push('/terms' as any)}
             >
               Terms of Service
             </Text>{' '}
             and{' '}
             <Text
               style={{ color: colors.primary, fontWeight: '600' }}
-              onPress={() => Linking.openURL('https://appinterviewready.top/privacy')}
+              onPress={() => router.push('/privacy' as any)}
             >
               Privacy Policy
             </Text>

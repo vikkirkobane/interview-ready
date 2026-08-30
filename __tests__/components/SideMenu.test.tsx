@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 import { SideMenu } from '../../src/components/ui/SideMenu';
 import { renderWithProviders } from '../helpers/render';
 import { resetAllStores, mockLoggedInSession } from '../helpers/stores';
@@ -31,31 +31,31 @@ describe('SideMenu', () => {
     useNavigationStore.setState({ isMenuOpen: true });
   });
 
-  const renderComponent = () => renderWithProviders(<SideMenu />);
-
   it('renders all menu items when opened', async () => {
-    const screen = await renderComponent();
-    await waitFor(() => {
-      expect(screen.getByText('Interview Ready')).toBeTruthy();
-      expect(screen.getByText('Alex Smith')).toBeTruthy();
-      expect(screen.getByText('Home')).toBeTruthy();
-      expect(screen.getByText('Job Match')).toBeTruthy();
-      expect(screen.getByText('Build Resume')).toBeTruthy();
-      expect(screen.getByText('Cover Letters')).toBeTruthy();
-      expect(screen.getByText('Mock Interview')).toBeTruthy();
-      expect(screen.getByText('Ask AI')).toBeTruthy();
-      expect(screen.getByText('Tracker')).toBeTruthy();
-      expect(screen.getByText('Company Research')).toBeTruthy();
-      expect(screen.getByText('LinkedIn')).toBeTruthy();
-      expect(screen.getByText('Onboarding')).toBeTruthy();
-      expect(screen.getByText('Billing')).toBeTruthy();
-      expect(screen.getByText('Referral')).toBeTruthy();
-      expect(screen.getByText('Log Out')).toBeTruthy();
-    });
+    const screen = await renderWithProviders(<SideMenu />);
+    expect(screen.getByText('Interview Ready')).toBeTruthy();
+    expect(screen.getByText('Alex Smith')).toBeTruthy();
+    expect(screen.getByText('Home')).toBeTruthy();
+    expect(screen.getByText('Job Match')).toBeTruthy();
+    expect(screen.getByText('Build Resume')).toBeTruthy();
+    expect(screen.getByText('Cover Letters')).toBeTruthy();
+    expect(screen.getByText('Mock Interview')).toBeTruthy();
+    expect(screen.getByText('Ask AI')).toBeTruthy();
+    expect(screen.getByText('Tracker')).toBeTruthy();
+    expect(screen.getByText('Company Research')).toBeTruthy();
+    expect(screen.getByText('LinkedIn')).toBeTruthy();
+    expect(screen.getByText('Onboarding')).toBeTruthy();
+    expect(screen.getByText('Billing')).toBeTruthy();
+    expect(screen.getByText('Referral')).toBeTruthy();
+    expect(screen.getByText('About Us')).toBeTruthy();
+    expect(screen.getByText('Contact Us')).toBeTruthy();
+    expect(screen.getByText('Privacy Policy')).toBeTruthy();
+    expect(screen.getByText('Terms of Service')).toBeTruthy();
+    expect(screen.getByText('Log Out')).toBeTruthy();
   });
 
   it('allows closing the menu', async () => {
-    const screen = await renderComponent();
+    const screen = await renderWithProviders(<SideMenu />);
     const closeBtn = screen.getByLabelText('Close menu');
     expect(closeBtn).toBeTruthy();
     fireEvent.press(closeBtn);

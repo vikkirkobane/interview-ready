@@ -218,14 +218,14 @@ export default function SignupScreen() {
             By creating an account, you agree to our{' '}
             <Text
               style={[styles.footerLink, { color: colors.primary }]}
-              onPress={() => Linking.openURL('https://appinterviewready.top/terms')}
+              onPress={() => router.push('/terms' as any)}
             >
               Terms of Service
             </Text>{' '}
             and{' '}
             <Text
               style={[styles.footerLink, { color: colors.primary }]}
-              onPress={() => Linking.openURL('https://appinterviewready.top/privacy')}
+              onPress={() => router.push('/privacy' as any)}
             >
               Privacy Policy
             </Text>

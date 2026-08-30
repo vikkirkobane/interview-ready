@@ -99,6 +99,14 @@ function AuthGuard() {
     // Non-grouped auth/callback route (app/auth/callback.tsx → /auth/callback)
     if (firstSegment === 'auth' && secondSegment === 'callback') return;
 
+    // Allow public informational and compliance pages without authentication
+    const isPublicRoute =
+      firstSegment === 'privacy' ||
+      firstSegment === 'terms' ||
+      firstSegment === 'about' ||
+      firstSegment === 'contact';
+    if (isPublicRoute) return;
+
     // CRITICAL: Don't redirect to welcome if an OAuth deep link is still
     // being processed. The code exchange is async and may not have completed yet.
     if (pendingOAuthCallback) {
@@ -391,6 +399,10 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="payment/callback" options={{ headerShown: false }} />
           <Stack.Screen name="preview" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="privacy" options={{ headerShown: false }} />
+          <Stack.Screen name="terms" options={{ headerShown: false }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="contact" options={{ headerShown: false }} />
         </Stack>
         <PWAInstallBanner />
         <Toast config={toastConfig} />
