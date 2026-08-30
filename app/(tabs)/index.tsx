@@ -9,7 +9,7 @@ import { Pressable ,
 } from 'react-native';
 import React, { useState } from 'react';
 
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -30,14 +30,21 @@ export default function DashboardScreen() {
   const { unreadCount } = useNotificationStore();
   const [refreshing, setRefreshing] = useState(false);
   const { colors, isDark } = useTheme();
-  const { balance, refreshBalance } = useCredits();
+  const { balance, plan, isPro: creditIsPro, refreshBalance } = useCredits();
 
-  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  // Automatically refresh live balance and profile whenever home screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshBalance();
+      fetchProfile();
+    }, [refreshBalance, fetchProfile])
+  );
+
+  const isPro = creditIsPro || user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro' || plan === 'PREMIUM' || plan === 'PREMIUM_PLUS';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
   const userName = user?.user_metadata?.first_name || 'Alex';
   const credits = balance?.balance ?? 0;
-  const plan = balance?.plan || 'FREE';
   
   let maxCredits = 10;
   if (plan === 'PREMIUM') maxCredits = 150;

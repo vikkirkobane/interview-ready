@@ -1,13 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { supabase, supabaseUrl } from '../lib/supabase';
+import { useCreditStore, CreditBalance } from '../stores/credit-store';
 
-export interface CreditBalance {
-  balance: number;
-  totalEarned: number;
-  totalUsed: number;
-  expiresAt: string | null;
-  plan: string;
-}
+export type { CreditBalance };
 
 export interface CreditCheckResult {
   hasEnough: boolean;
@@ -35,61 +30,24 @@ export interface CreditTransaction {
   createdAt: string;
 }
 
-let activeBalancePromise: Promise<CreditBalance | null> | null = null;
-
 export function _resetCreditCache() {
-  activeBalancePromise = null;
+  useCreditStore.getState().fetchBalance(true);
 }
 
 export function useCredits() {
-  const [balance, setBalance] = useState<CreditBalance | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const balance = useCreditStore((state) => state.balance);
+  const loading = useCreditStore((state) => state.loading);
+  const error = useCreditStore((state) => state.error);
+  const fetchBalance = useCreditStore((state) => state.fetchBalance);
+  const initRealtime = useCreditStore((state) => state.initRealtime);
 
-  // Fetch current credit balance with in-flight promise deduplication
-  const fetchBalance = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
-      
-      if (!userId) {
-        throw new Error('Not authenticated');
-      }
-
-      if (!activeBalancePromise) {
-        activeBalancePromise = (async () => {
-          const { data, error: fetchError } = await supabase
-            .from('users')
-            .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at, plan')
-            .eq('id', userId)
-            .single();
-
-          if (fetchError) throw fetchError;
-
-          return {
-            balance: data.ai_credits || 0,
-            totalEarned: data.total_credits_earned || 0,
-            totalUsed: data.total_credits_used || 0,
-            expiresAt: data.credits_expire_at,
-            plan: data.plan || 'FREE',
-          };
-        })().finally(() => {
-          activeBalancePromise = null;
-        });
-      }
-
-      const balanceData = await activeBalancePromise;
-      if (balanceData) {
-        setBalance(balanceData);
-      }
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch balance');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(() => {
+    fetchBalance();
+    const cleanupRealtime = initRealtime();
+    return () => {
+      cleanupRealtime();
+    };
+  }, [fetchBalance, initRealtime]);
 
   // Check if user has enough credits for a feature
   const checkCredits = useCallback(async (feature: string): Promise<CreditCheckResult> => {
@@ -161,8 +119,8 @@ export function useCredits() {
       throw new Error(result.error || 'Failed to deduct credits');
     }
 
-    // Refresh balance after deduction
-    await fetchBalance();
+    // Refresh global balance store after deduction
+    await fetchBalance(true);
 
     return {
       success: true,
@@ -180,110 +138,44 @@ export function useCredits() {
       throw new Error('Not authenticated');
     }
 
-    const { data, error: fetchError } = await supabase
+    const { data, error: txError } = await supabase
       .from('credit_transactions')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (fetchError) throw fetchError;
+    if (txError) {
+      throw txError;
+    }
 
-    return data.map(tx => ({
-      id: tx.id,
-      amount: tx.amount,
-      balanceBefore: tx.balance_before,
-      balanceAfter: tx.balance_after,
-      transactionType: tx.transaction_type,
-      feature: tx.feature,
-      featureCost: tx.feature_cost,
-      metadata: tx.metadata,
-      createdAt: tx.created_at,
+    return (data || []).map((item: any) => ({
+      id: item.id,
+      amount: item.amount,
+      balanceBefore: item.balance_before,
+      balanceAfter: item.balance_after,
+      transactionType: item.transaction_type,
+      feature: item.feature,
+      featureCost: item.feature_cost,
+      metadata: item.metadata || {},
+      createdAt: item.created_at,
     }));
   }, []);
 
-  // Get credit pricing for all features
+  // Get pricing plans
   const getPricing = useCallback(async () => {
-    const { data, error: fetchError } = await supabase
-      .from('credit_pricing')
+    const { data, error: pricingError } = await supabase
+      .from('paystack_plans')
       .select('*')
       .eq('is_active', true)
-      .order('category', { ascending: true });
+      .order('amount', { ascending: true });
 
-    if (fetchError) throw fetchError;
+    if (pricingError) {
+      throw pricingError;
+    }
 
     return data;
   }, []);
-
-  // Initial fetch
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchBalance();
-  }, [fetchBalance]);
-
-  // Subscribe to credit balance changes
-  useEffect(() => {
-    let channel: any = null;
-    let isMounted = true;
-
-    const setupSubscription = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!isMounted || !user) return;
-
-      channel = supabase
-        .channel(`credit-and-plan-changes-${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'credit_transactions',
-            filter: `user_id=eq.${user.id}`,
-          },
-          () => {
-            _resetCreditCache();
-            fetchBalance();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'users',
-            filter: `id=eq.${user.id}`,
-          },
-          () => {
-            _resetCreditCache();
-            fetchBalance();
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'subscriptions',
-            filter: `user_id=eq.${user.id}`,
-          },
-          () => {
-            _resetCreditCache();
-            fetchBalance();
-          }
-        );
-      channel.subscribe();
-    };
-
-    setupSubscription();
-
-    return () => {
-      isMounted = false;
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [fetchBalance]);
 
   const plan = balance?.plan || 'FREE';
   const isPro = plan === 'PREMIUM' || plan === 'PREMIUM_PLUS';
@@ -298,6 +190,6 @@ export function useCredits() {
     deductCredits,
     getTransactions,
     getPricing,
-    refreshBalance: fetchBalance,
+    refreshBalance: () => fetchBalance(true),
   };
 }
