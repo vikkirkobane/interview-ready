@@ -54,6 +54,8 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
         }
 
         try {
+          let hasTriggeredSuccess = false;
+
           const handler = window.PaystackPop.setup({
             key: paymentData.publicKey,
             email: paymentData.email,
@@ -64,11 +66,14 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
             metadata: paymentData.metadata || {},
             callback: (response: any) => {
               console.log('[Paystack Web] Payment success:', response);
-              onSuccess(response);
+              hasTriggeredSuccess = true;
+              onSuccess(response || { reference: paymentData.reference });
             },
             onClose: () => {
-              console.log('[Paystack Web] Payment modal closed');
-              onCancel();
+              console.log('[Paystack Web] Payment modal closed. hasTriggeredSuccess:', hasTriggeredSuccess);
+              if (!hasTriggeredSuccess) {
+                onCancel();
+              }
             },
           });
 

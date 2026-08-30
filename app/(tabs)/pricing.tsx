@@ -358,38 +358,70 @@ export default function PricingScreen() {
   };
 
   const handlePaystackSuccess = async (transactionRef: any) => {
+    const ref = transactionRef?.reference || transactionRef?.transaction || transactionRef?.trxref || paystackPaymentData?.reference;
     setShowPaystackWebView(false);
     setPaystackPaymentData(null);
     
-    // Navigate to callback with reference for verification
-    router.push({
-      pathname: '/payment/callback' as any,
-      params: { reference: transactionRef.reference || transactionRef.transaction },
-    });
+    if (ref) {
+      router.push({
+        pathname: '/payment/callback' as any,
+        params: { reference: ref },
+      });
+    }
   };
 
   const handlePaystackCancel = async () => {
-    // Mark the pending transaction as abandoned
-    if (paystackPaymentData?.reference) {
+    const currentRef = paystackPaymentData?.reference;
+    setShowPaystackWebView(false);
+    setPaystackPaymentData(null);
+
+    if (currentRef) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Check with backend if the payment was actually approved (e.g. M-Pesa push completed on phone)
+          const verifyRes = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/payments-verify`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+              apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+            },
+            body: JSON.stringify({ reference: currentRef }),
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.success && verifyData.data?.status === 'success') {
+            router.push({
+              pathname: '/payment/callback' as any,
+              params: { reference: currentRef },
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Payment verify on close note:', err);
+      }
+
       await supabase
         .from('payment_transactions')
         .update({ status: 'abandoned' })
-        .eq('reference', paystackPaymentData.reference);
+        .eq('reference', currentRef);
     }
-    setShowPaystackWebView(false);
-    setPaystackPaymentData(null);
-    Toast.show({ type: 'info', text1: 'Payment Cancelled', text2: 'No charge was made.' });
+
+    Toast.show({ type: 'info', text1: 'Payment Cancelled', text2: 'No charge was confirmed.' });
   };
 
   const handlePaystackError = async (error: any) => {
-    if (paystackPaymentData?.reference) {
+    const currentRef = paystackPaymentData?.reference;
+    setShowPaystackWebView(false);
+    setPaystackPaymentData(null);
+
+    if (currentRef) {
       await supabase
         .from('payment_transactions')
         .update({ status: 'failed' })
-        .eq('reference', paystackPaymentData.reference);
+        .eq('reference', currentRef);
     }
-    setShowPaystackWebView(false);
-    setPaystackPaymentData(null);
     Toast.show({ type: 'error', text1: 'Payment Failed', text2: 'Please try again or use a different card.' });
   };
 

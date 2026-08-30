@@ -1,10 +1,5 @@
-import { Pressable ,
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
-import React, { useEffect, useState } from 'react';
+import { Pressable, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Colors, Spacing, Typography } from '../../src/theme/tokens';
@@ -12,6 +7,7 @@ import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { queryClient } from '../../src/lib/query-client';
+import { _resetCreditCache } from '../../src/hooks/useCredits';
 import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 
 type PaymentStatus = 'verifying' | 'success' | 'failed' | 'error';
@@ -23,15 +19,14 @@ export default function PaymentCallbackScreen() {
   const { setSession } = useAuthStore();
 
   const [status, setStatus] = useState<PaymentStatus>('verifying');
-  const [message, setMessage] = useState('Verifying your payment...');
+  const [message, setMessage] = useState('Verifying your payment with Paystack...');
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const attemptsRef = useRef(0);
 
   useEffect(() => {
     if (reference) {
-      // eslint-disable-next-line react-hooks/immutability
       verifyPayment(reference);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStatus('error');
       setMessage('Invalid payment reference');
     }
@@ -40,7 +35,6 @@ export default function PaymentCallbackScreen() {
 
   const verifyPayment = async (ref: string) => {
     try {
-      // Get auth token
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -59,6 +53,7 @@ export default function PaymentCallbackScreen() {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.access_token}`,
+            apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
           },
           body: JSON.stringify({ reference: ref }),
         }
@@ -70,8 +65,22 @@ export default function PaymentCallbackScreen() {
         throw new Error(data.error || 'Payment verification failed');
       }
 
-      if (data.success && data.data.status === 'success') {
-        // Force session refresh so isPro and credit balance update in the auth store
+      const txStatus = data.data?.status;
+
+      // Handle in-progress M-Pesa processing
+      if (txStatus === 'pending' || txStatus === 'processing' || txStatus === 'ongoing') {
+        attemptsRef.current += 1;
+        if (attemptsRef.current <= 5) {
+          setMessage(`Confirming transaction with M-Pesa / Paystack (attempt ${attemptsRef.current}/5)...`);
+          setTimeout(() => verifyPayment(ref), 3000);
+          return;
+        }
+      }
+
+      if (data.success && txStatus === 'success') {
+        // Reset cache and refresh session
+        _resetCreditCache();
+
         const { data: refreshData } = await supabase.auth.refreshSession();
         if (refreshData?.session) {
           setSession(refreshData.session);
@@ -80,21 +89,22 @@ export default function PaymentCallbackScreen() {
         // Invalidate queries & fetch updated profile to reflect changes everywhere immediately
         queryClient.invalidateQueries({ queryKey: ['credits'] });
         queryClient.invalidateQueries({ queryKey: ['profile'] });
-        useProfileStore.getState().fetchProfile().catch(() => {});
+        queryClient.invalidateQueries({ queryKey: ['user'] });
+        await useProfileStore.getState().fetchProfile().catch(() => {});
 
         setStatus('success');
-        setMessage('Payment successful! Your subscription is now active.');
+        setMessage('Payment successful! Your credits and subscription have been updated.');
         setPaymentDetails(data.data);
 
         Toast.show({
           type: 'success',
-          text1: '🎉 Subscription Activated!',
-          text2: `Your credits have been updated. Welcome to Pro!`,
+          text1: '🎉 Payment Confirmed!',
+          text2: 'Your account balance has been updated.',
         });
       } else {
         setStatus('failed');
         setMessage(
-          data.data.gateway_response || 'Payment was not successful. Please try again.'
+          data.data?.gateway_response || 'Payment was not completed. Please try again.'
         );
         setPaymentDetails(data.data);
       }

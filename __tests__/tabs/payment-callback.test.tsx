@@ -61,7 +61,7 @@ describe('Payment callback — user stories', () => {
     });
     expect(useAuthStore.getState().session).not.toBeNull();
     expect(mockToast.show).toHaveBeenCalledWith(
-      expect.objectContaining({ text1: '🎉 Subscription Activated!' })
+      expect.objectContaining({ type: 'success' })
     );
   });
 

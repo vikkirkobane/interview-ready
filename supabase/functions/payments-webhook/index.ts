@@ -79,28 +79,63 @@ serve(async (req) => {
         try {
           const { data: txData } = await supabase
             .from('payment_transactions')
-            .select('user_id, users(email, first_name)')
+            .select('user_id, metadata, users(email, first_name)')
             .eq('reference', reference)
             .single();
 
-          if (txData?.users?.email) {
+          const planCode = txData?.metadata?.plan_code || data.metadata?.plan_code || data.plan?.plan_code;
+          const targetUserId = txData?.user_id || data.metadata?.user_id;
+
+          if (planCode && targetUserId) {
+            const currentPeriodStart = new Date();
+            const currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+            const { data: subscriptionId, error: subRpcErr } = await supabase.rpc(
+              'upsert_paystack_subscription',
+              {
+                p_user_id: targetUserId,
+                p_subscription_code: data.subscription_code || `SUB_${reference}`,
+                p_customer_code: data.customer?.customer_code || 'CUST_DIRECT',
+                p_plan_code: planCode,
+                p_authorization_code: data.authorization?.authorization_code || 'AUTH_DIRECT',
+                p_status: 'ACTIVE',
+                p_current_period_start: currentPeriodStart.toISOString(),
+                p_current_period_end: currentPeriodEnd.toISOString(),
+              }
+            );
+
+            if (subRpcErr) {
+              console.error('Failed to grant credits/subscription on charge.success:', subRpcErr);
+            } else {
+              console.log(`Granted credits/subscription on charge.success: ${reference}, subId: ${subscriptionId}`);
+              if (subscriptionId) {
+                await supabase
+                  .from('payment_transactions')
+                  .update({ subscription_id: subscriptionId })
+                  .eq('reference', reference);
+              }
+            }
+          }
+
+          const recipientEmail = txData?.users?.email || data.customer?.email;
+          if (recipientEmail) {
             await sendEmail({
-              to: txData.users.email,
+              to: recipientEmail,
               templateKey: 'payment_success',
               templateVariables: {
-                user_name: txData.users.first_name || 'Customer',
+                user_name: txData?.users?.first_name || data.customer?.first_name || 'Customer',
                 transaction_id: reference,
                 amount: (data.amount / 100).toString(),
                 currency: data.currency,
-                plan_name: data.metadata?.plan_name || 'Interview Ready Subscription',
+                plan_name: txData?.metadata?.plan_name || data.metadata?.plan_name || 'Interview Ready Subscription',
               },
               emailType: 'payment_success',
               supabaseClient: supabase,
             });
-            console.log(`Sent payment_success email to ${txData.users.email}`);
+            console.log(`Sent payment_success email to ${recipientEmail}`);
           }
-        } catch (emailErr) {
-          console.error('Failed to send payment email:', emailErr);
+        } catch (postPayErr) {
+          console.error('Failed to process post-payment credit/email:', postPayErr);
         }
         break;
       }
