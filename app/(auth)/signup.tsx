@@ -2,7 +2,7 @@ import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Pl
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Typography, Spacing, useTheme } from '../../src/theme';
+import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +22,7 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successNotice, setSuccessNotice] = useState('');
 
   // Route as soon as a session lands — covers OAuth flows (LinkedIn/Google)
   // where the session is delivered asynchronously via deep-link callback.

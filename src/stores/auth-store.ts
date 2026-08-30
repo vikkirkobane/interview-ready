@@ -180,7 +180,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ pendingOAuthCallback: true });
 
       if (Platform.OS === 'web') {
-        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const origin = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+          ? (globalThis as any).location.origin
+          : 'https://appinterviewready.top';
         const { error: webOAuthError } = await supabase.auth.signInWithOAuth({
           provider,
           options: {
