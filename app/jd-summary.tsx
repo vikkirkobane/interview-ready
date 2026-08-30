@@ -286,6 +286,9 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxl,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   setupSection: {
     marginTop: Spacing.lg,

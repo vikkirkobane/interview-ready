@@ -256,6 +256,9 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   mutedBannerTitle: {
     ...Typography.subtitle2,
@@ -280,6 +283,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   notificationCard: {
     flexDirection: 'row',

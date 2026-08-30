@@ -3,7 +3,7 @@
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
-    "lib": ["ESNext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["jest", "node"],
     "jsx": "react-jsx",
     "module": "ESNext",

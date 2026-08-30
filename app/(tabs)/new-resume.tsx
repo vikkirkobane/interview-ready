@@ -29,6 +29,7 @@ import { useInterstitialAd } from '../../src/lib/useInterstitialAd';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFilePicker } from '../../src/hooks/useFilePicker';
 import { useCreditGuard } from '../../src/lib/creditGuard';
+import { ResumeContent } from '../../src/types/schemas';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Header {
@@ -517,19 +518,35 @@ export default function ResumeBuilderScreen() {
   };
 
   // ── Prepared Resume Data ──────────────────────────────────────────────────
-  const getPreparedResumeData = () => {
+  const getPreparedResumeData = (): ResumeContent | null => {
     if (!draft) return null;
+    const summaryText = typeof draft.summary === 'string' ? draft.summary : ((draft.summary as any)?.text || '');
     return {
-      header: draft.header,
-      summary: typeof draft.summary === 'string' ? { text: draft.summary } : draft.summary,
-      experience: draft.experience || [],
+      header: {
+        name: draft.header?.name || '',
+        title: draft.header?.title || '',
+        email: draft.header?.email || '',
+        phone: draft.header?.phone || '',
+        location: draft.header?.location || '',
+        linkedin: draft.header?.linkedin || '',
+        portfolio: draft.header?.portfolio || '',
+        subtitle: draft.header?.subtitle || '',
+      },
+      summary: { text: summaryText },
+      experience: (draft.experience || []).map(e => ({
+        title: e.title || '',
+        company: e.company || '',
+        date_range: e.date_range || '',
+        location: e.location || '',
+        bullets: e.bullets || [],
+      })),
       skills: draft.skills || [],
       education: draft.education || [],
       featured_project: draft.featuredProject || (draft as any).featured_project,
       certifications: (draft.certifications || []).map(c => typeof c === 'string' ? c : [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
       recognition: (draft.awards || (draft as any).recognition || []).map(a => typeof a === 'string' ? a : [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
       sections_to_include: {
-        summary: draft.sections_to_include?.summary !== false && !!(typeof draft.summary === 'string' ? draft.summary : draft.summary?.text),
+        summary: draft.sections_to_include?.summary !== false && !!summaryText,
         skills: draft.sections_to_include?.skills !== false && (draft.skills || []).length > 0,
         experience: draft.sections_to_include?.experience !== false && (draft.experience || []).length > 0,
         featured_project: draft.sections_to_include?.featured_project !== false && !!(draft.featuredProject?.include || (draft as any).featured_project?.include),

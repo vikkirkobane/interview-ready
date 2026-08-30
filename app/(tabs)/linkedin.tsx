@@ -1157,7 +1157,7 @@ function CtaCard({ label, description, loading, onPress, colors }: any) {
 
 const s = StyleSheet.create({
   screen:          { flex: 1 },
-  content:         { padding: Spacing.lg, paddingBottom: Spacing.xl },
+  content:         { padding: Spacing.lg, paddingBottom: Spacing.xl, maxWidth: 800, width: '100%', alignSelf: 'center' },
   pageHeader:      { alignItems: 'center', marginBottom: Spacing.xl, marginTop: Spacing.md },
   liIcon:          { width: 64, height: 64, borderRadius: Radius.full, justifyContent: 'center', alignItems: 'center', marginBottom: Spacing.md },
   pageTitle:       { ...Typography.headingLg, marginBottom: Spacing.xs, textAlign: 'center' },
@@ -1208,7 +1208,7 @@ const s = StyleSheet.create({
   tab:             { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md },
   tabActive:       { borderBottomColor: '#0A66C2', borderBottomWidth: 2 },
   tabLabel:        { ...Typography.bodySm },
-  resultsContent:  { padding: Spacing.lg, paddingBottom: Spacing.xl },
+  resultsContent:  { padding: Spacing.lg, paddingBottom: Spacing.xl, maxWidth: 800, width: '100%', alignSelf: 'center' },
   gap:             { gap: Spacing.lg },
   overallCard:     { alignItems: 'center', padding: Spacing.xl, borderRadius: Radius.lg, borderWidth: 1 },
   overallLabel:    { ...Typography.headingMd, marginTop: Spacing.lg, marginBottom: Spacing.xs },

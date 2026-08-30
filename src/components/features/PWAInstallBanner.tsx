@@ -136,7 +136,7 @@ export function PWAInstallBanner() {
           ],
         },
       ]}
-      accessibilityRole="region"
+      accessibilityRole="summary"
       accessibilityLabel="Install App Banner"
     >
       <View style={styles.contentRow}>

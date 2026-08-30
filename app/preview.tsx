@@ -152,12 +152,18 @@ const styles = StyleSheet.create({
     ...Shadow.md,
     borderRadius: Radius.md,
     overflow: 'hidden',
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center',
   },
   footer: {
     flexDirection: 'row',
     padding: Spacing.lg,
     borderTopWidth: 1,
     gap: Spacing.md,
+    maxWidth: 900,
+    width: '100%',
+    alignSelf: 'center',
   },
   flex1: {
     flex: 1,

@@ -607,7 +607,7 @@ export default function CompanyResearchScreen() {
 
 const s = StyleSheet.create({
   screen:          { flex: 1 },
-  content:         { padding: Spacing.lg, paddingBottom: Spacing.xl },
+  content:         { padding: Spacing.lg, paddingBottom: Spacing.xl, maxWidth: 800, width: '100%', alignSelf: 'center' },
 
   // Hero
   hero:            { alignItems: 'center', marginBottom: Spacing.xl, marginTop: Spacing.md },
@@ -647,7 +647,7 @@ const s = StyleSheet.create({
   tabActive:       { borderBottomColor: '#0ea5e9', borderBottomWidth: 2 },
   tabLabel:        { ...Typography.bodySm },
 
-  resultsContent:  { padding: Spacing.lg, paddingBottom: Spacing.xl },
+  resultsContent:  { padding: Spacing.lg, paddingBottom: Spacing.xl, maxWidth: 800, width: '100%', alignSelf: 'center' },
   gap:             { gap: Spacing.lg },
 
   // Cards

@@ -165,6 +165,9 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xl,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   sectionDesc: {
     ...Typography.bodyMd,

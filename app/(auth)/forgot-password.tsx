@@ -38,8 +38,8 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
 
     try {
-      const origin = typeof window !== 'undefined' && window?.location?.origin
-        ? window.location.origin
+      const origin = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+        ? (globalThis as any).location.origin
         : 'https://appinterviewready.top';
 
       const redirectTo = Platform.OS === 'web'

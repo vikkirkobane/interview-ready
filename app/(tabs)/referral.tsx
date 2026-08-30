@@ -259,6 +259,9 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xl,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   heroSection: {
     alignItems: 'center',

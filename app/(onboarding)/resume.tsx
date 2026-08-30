@@ -582,7 +582,7 @@ export default function ResumeGenScreen() {
                       style={{ width: '100%', height: '100%', backgroundColor: '#ffffff' }}
                       scalesPageToFit={true}
                       scrollEnabled={true}
-                      showsVerticalScrollIndicator={Platform.OS === 'web'}
+                      showsVerticalScrollIndicator={false}
                       originWhitelist={['*']}
                     />
                   )

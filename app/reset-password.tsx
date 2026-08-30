@@ -39,8 +39,8 @@ export default function ResetPasswordScreen() {
   useEffect(() => {
     async function verifySession() {
       try {
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          const searchParams = new URLSearchParams(window.location.search);
+        if (Platform.OS === 'web' && typeof globalThis !== 'undefined' && (globalThis as any).location) {
+          const searchParams = new URLSearchParams((globalThis as any).location.search || '');
           const code = searchParams.get('code');
           if (code) {
             await exchangeAuthCodeSafely(code);
