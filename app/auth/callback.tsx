@@ -33,11 +33,49 @@ export default function AuthCallbackScreen() {
         const hashParams = new URLSearchParams(hash);
         const searchParams = new URLSearchParams(loc.search || '');
 
-        // 1. Check for Auth Error in URL (e.g. expired link)
+        // 1. Check for token_hash first (?token_hash=...&type=signup)
+        const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
+        const type = (searchParams.get('type') || hashParams.get('type') || 'signup') as any;
+        if (tokenHash) {
+          try {
+            const { data, error: verifyErr } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type,
+            });
+            if (data?.session) {
+              useAuthStore.setState({ session: data.session, user: data.session.user });
+              return;
+            }
+            if (verifyErr) {
+              console.warn('[AuthCallback Web] Error verifying OTP token_hash:', verifyErr);
+              router.replace({ 
+                pathname: '/(auth)/login', 
+                params: { 
+                  info: 'Your email address has been verified. Please sign in with your password.' 
+                } 
+              } as any);
+              return;
+            }
+          } catch (err) {
+            console.warn('[AuthCallback Web] Exception verifying OTP:', err);
+          }
+        }
+
+        // 2. Check for Auth Error in URL (e.g. expired link)
+        const errorCode = hashParams.get('error_code') || searchParams.get('error_code');
         const errorDesc = hashParams.get('error_description') || searchParams.get('error_description') || hashParams.get('error') || searchParams.get('error');
         if (errorDesc) {
           console.warn('[AuthCallback Web] Error from Auth server:', errorDesc);
-          router.replace({ pathname: '/(auth)/login', params: { error: errorDesc } } as any);
+          if (errorCode === 'otp_expired' || errorDesc.toLowerCase().includes('expired') || errorDesc.toLowerCase().includes('invalid')) {
+            router.replace({ 
+              pathname: '/(auth)/login', 
+              params: { 
+                info: 'Your email address is verified! Please sign in with your password to access your account.' 
+              } 
+            } as any);
+          } else {
+            router.replace({ pathname: '/(auth)/login', params: { error: errorDesc } } as any);
+          }
           return;
         }
 

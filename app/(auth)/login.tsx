@@ -11,7 +11,7 @@ import * as Linking from 'expo-linking';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ error?: string }>();
+  const params = useLocalSearchParams<{ error?: string; info?: string }>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { signIn, loading, session, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
@@ -20,6 +20,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(params.error ? decodeURIComponent(params.error) : '');
+  const [infoMessage, setInfoMessage] = useState(params.info ? decodeURIComponent(params.info) : '');
 
   // Route as soon as a session lands — covers OAuth flows (LinkedIn/Google)
   // where the session is delivered asynchronously via deep-link callback.
@@ -138,7 +139,15 @@ export default function LoginScreen() {
             }
           />
 
-          {error ? <Text style={[{ color: colors.error }]}>{error}</Text> : null}
+          {infoMessage ? (
+            <View style={{ backgroundColor: '#eff6ff', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#bfdbfe', marginBottom: 12 }}>
+              <Text style={{ color: '#1e40af', fontSize: 13, lineHeight: 18, textAlign: 'center', fontWeight: '500' }}>
+                {infoMessage}
+              </Text>
+            </View>
+          ) : null}
+
+          {error ? <Text style={[{ color: colors.error, marginBottom: 8 }]}>{error}</Text> : null}
 
           <Button
             title='Sign In'

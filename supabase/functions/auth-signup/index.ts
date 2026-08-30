@@ -62,12 +62,21 @@ serve(async (req: any) => {
       );
     }
 
-    let actionLink = linkData?.properties?.action_link || redirectTo;
-    // Strict domain hygiene: Replace supabase.co domain with our own /verify-email proxy
-    // (Jellyfish flags free cloud subdomains like supabase.co/vercel.app in emails sent from custom domains)
-    actionLink = actionLink
-      .replace('https://rdxcvqcxgvdgvxvfkhlr.supabase.co/auth/v1/verify', 'https://appinterviewready.top/verify-email')
-      .replace(/redirect_to=[^&]+/g, 'redirect_to=https%3A%2F%2Fappinterviewready.top%2Fauth%2Fcallback');
+    let actionLink = '';
+    const tokenHash = linkData?.properties?.hashed_token;
+    const verificationType = linkData?.properties?.verification_type || 'signup';
+
+    if (tokenHash) {
+      // Client-side verification URL: immune to email scanners / pre-fetch bots
+      // The browser JS executes verifyOtp upon user opening the page
+      actionLink = `https://appinterviewready.top/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=${encodeURIComponent(verificationType)}`;
+    } else if (linkData?.properties?.action_link) {
+      actionLink = linkData.properties.action_link
+        .replace('https://rdxcvqcxgvdgvxvfkhlr.supabase.co/auth/v1/verify', 'https://appinterviewready.top/verify-email')
+        .replace(/redirect_to=[^&]+/g, 'redirect_to=https%3A%2F%2Fappinterviewready.top%2Fauth%2Fcallback');
+    } else {
+      actionLink = redirectTo;
+    }
     const displayName = firstName || 'there';
 
     // 2. Sync to Airtable in background
