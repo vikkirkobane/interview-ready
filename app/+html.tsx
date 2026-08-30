@@ -41,6 +41,14 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="apple-touch-icon" sizes="192x192" href="/apple-touch-icon.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/icon_padded.png" />
 
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3023396295642660"
+          crossOrigin="anonymous"
+        />
+        <meta name="google-adsense-account" content="ca-pub-3023396295642660" />
+
         {/* Reset web styles for native feel */}
         <ScrollViewStyleReset />
 
@@ -66,6 +74,25 @@ export default function Root({ children }: PropsWithChildren) {
                 padding-bottom: env(safe-area-inset-bottom);
                 padding-left: env(safe-area-inset-left);
                 padding-right: env(safe-area-inset-right);
+              }
+              /* Modern, subtle scrollbars for web / desktop */
+              * {
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+              }
+              ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+              }
+              ::-webkit-scrollbar-track {
+                background: transparent;
+              }
+              ::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+              }
+              ::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.4);
               }
             `,
           }}

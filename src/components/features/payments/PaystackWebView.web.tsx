@@ -81,7 +81,7 @@ export const PaystackWebViewComponent: React.FC<PaystackWebViewProps> = ({
 
       if (window.PaystackPop) {
         triggerPopup();
-      } else {
+      } else if (typeof document !== 'undefined') {
         // Load Paystack Inline script dynamically
         const existingScript = document.getElementById('paystack-inline-js');
         if (existingScript) {

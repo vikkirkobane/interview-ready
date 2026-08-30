@@ -239,7 +239,7 @@ export async function sendEmailNotification(options: SendEmailOptions): Promise<
 export async function triggerWelcomeEmail(userEmail: string, userName?: string): Promise<boolean> {
   if (!userEmail) return false;
 
-  const appUrl = typeof window !== 'undefined' && window.location.origin
+  const appUrl = typeof window !== 'undefined' && window?.location?.origin
     ? window.location.origin
     : 'https://appinterviewready.top';
 

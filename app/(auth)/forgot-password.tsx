@@ -38,7 +38,7 @@ export default function ForgotPasswordScreen() {
     setLoading(true);
 
     try {
-      const origin = typeof window !== 'undefined' && window.location.origin
+      const origin = typeof window !== 'undefined' && window?.location?.origin
         ? window.location.origin
         : 'https://appinterviewready.top';
 

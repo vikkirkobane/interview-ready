@@ -50,7 +50,7 @@ if (__DEV__ && (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLI
 
 const ExpoSecureStoreAdapter = {
   getItem: (key: string) => {
-    if (Platform.OS === 'web') {
+    if (Platform?.OS === 'web') {
       try {
         const ls = (globalThis as any).localStorage;
         if (!ls) return Promise.resolve(null);
@@ -60,22 +60,24 @@ const ExpoSecureStoreAdapter = {
     return SecureStore.getItemAsync(key);
   },
   setItem: (key: string, value: string) => {
-    if (Platform.OS === 'web') {
+    if (Platform?.OS === 'web') {
       try {
         const ls = (globalThis as any).localStorage;
-        if (ls) ls.setItem(key, value);
-      } catch {}
-      return Promise.resolve();
+        if (!ls) return Promise.resolve();
+        ls.setItem(key, value);
+        return Promise.resolve();
+      } catch { return Promise.resolve(); }
     }
     return SecureStore.setItemAsync(key, value);
   },
   removeItem: (key: string) => {
-    if (Platform.OS === 'web') {
+    if (Platform?.OS === 'web') {
       try {
         const ls = (globalThis as any).localStorage;
-        if (ls) ls.removeItem(key);
-      } catch {}
-      return Promise.resolve();
+        if (!ls) return Promise.resolve();
+        ls.removeItem(key);
+        return Promise.resolve();
+      } catch { return Promise.resolve(); }
     }
     return SecureStore.deleteItemAsync(key);
   },

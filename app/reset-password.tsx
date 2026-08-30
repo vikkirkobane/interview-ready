@@ -49,7 +49,7 @@ export default function ResetPasswordScreen() {
 
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          setError('Invalid or expired reset link. Please request a new one from the login screen.');
+          setError('Invalid or expired reset link. Please request a new one.');
         }
       } catch {
         setError('Failed to verify reset link.');

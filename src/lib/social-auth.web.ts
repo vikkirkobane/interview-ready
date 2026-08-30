@@ -9,8 +9,10 @@ export function initializeGoogleSignIn() {
 
 export async function signInWithGoogle(): Promise<{ error: string | null }> {
   try {
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const redirectTo = origin ? `${origin}/auth/callback` : undefined;
+    const origin = (typeof window !== 'undefined' && window?.location?.origin)
+      ? window.location.origin
+      : 'https://appinterviewready.top';
+    const redirectTo = `${origin}/auth/callback`;
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
