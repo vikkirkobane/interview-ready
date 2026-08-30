@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useUIStore } from '../../src/stores/ui-store';
 import { useProfileStore } from '../../src/stores/profile-store';
+import { useCredits } from '../../src/hooks/useCredits';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import Toast from 'react-native-toast-message';
@@ -23,6 +24,7 @@ export default function SettingsScreen() {
   const { user } = useAuthStore();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { profile } = useProfileStore();
+  const { balance, plan, isPro, loading: creditsLoading } = useCredits();
 
   const signOut = () => useAuthStore.getState().signOut();
 
@@ -39,12 +41,11 @@ export default function SettingsScreen() {
 
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=ffffff&size=128`;
 
-  const userPlan = user?.user_metadata?.plan || user?.user_metadata?.subscription || 'free';
-  const planDisplayName = userPlan === 'PREMIUM_PLUS' || userPlan === 'premium_plus'
+  const planDisplayName = plan === 'PREMIUM_PLUS'
     ? 'Premium Plus'
-    : userPlan === 'PREMIUM' || userPlan === 'premium' || userPlan === 'pro'
+    : plan === 'PREMIUM'
       ? 'Premium'
-      : 'Free';
+      : 'Free Tier';
 
   const handleLogout = async () => {
     if (Platform.OS === 'web') {
@@ -103,23 +104,44 @@ export default function SettingsScreen() {
         />
       </View>
 
-      {/* Subscription */}
-      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Subscription</Text>
+      {/* Subscription & Credits */}
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Subscription & AI Credits</Text>
       <Card style={[styles.settingsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
         <View style={styles.planHeader}>
           <View>
-            <Text style={[styles.planTitle, { color: colors.textSecondary }]}>Current Plan</Text>
+            <Text style={[styles.planTitle, { color: colors.textSecondary }]}>Current Membership</Text>
             <Text style={[styles.planName, { color: colors.textPrimary }]}>{planDisplayName}</Text>
           </View>
-          <Badge text="Active" variant="success" />
+          <Badge 
+            text={isPro ? (plan === 'PREMIUM_PLUS' ? 'Active VIP' : 'Active Pro') : 'Free Plan'} 
+            variant={isPro ? 'success' : 'default'} 
+          />
         </View>
 
-        <Button 
-          title="Upgrade to Pro" 
-          variant="primary" 
-          style={{ marginTop: Spacing.md }}
-          onPress={() => router.push('/(tabs)/pricing' as any)}
-        />
+        <View style={[styles.creditsBox, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}>
+          <View style={styles.creditsRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="flash" size={20} color="#F59E0B" />
+              <Text style={[styles.creditsLabel, { color: colors.textPrimary }]}>AI Credits Remaining</Text>
+            </View>
+            <Text style={[styles.creditsCount, { color: colors.primary }]}>
+              {creditsLoading ? '...' : (balance?.balance ?? 10)}
+            </Text>
+          </View>
+          <Text style={[styles.creditsSubtext, { color: colors.textMuted }]}>
+            {isPro 
+              ? 'Active Pro benefits: Unlimited resume scoring, tailored cover letters, and live interview coaching.' 
+              : 'Used for AI resume scoring, job match analysis, and interview questions.'}
+          </Text>
+        </View>
+
+        <View style={{ padding: Spacing.lg, paddingTop: Spacing.sm }}>
+          <Button 
+            title={isPro ? "Manage Plan & Top Up Credits" : "Upgrade Plan / Buy Credits"} 
+            variant="primary" 
+            onPress={() => router.push('/(tabs)/pricing' as any)}
+          />
+        </View>
       </Card>
 
       {/* Preferences */}
@@ -291,6 +313,31 @@ const styles = StyleSheet.create({
   planName: {
     ...Typography.subtitle1,
     marginTop: 2,
+  },
+  creditsBox: {
+    marginHorizontal: Spacing.lg,
+    marginVertical: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+  },
+  creditsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
+  },
+  creditsLabel: {
+    ...Typography.bodyMd,
+    fontWeight: '600',
+  },
+  creditsCount: {
+    ...Typography.headingMd,
+    fontWeight: '700',
+  },
+  creditsSubtext: {
+    ...Typography.caption,
+    lineHeight: 18,
   },
   settingRow: {
     flexDirection: 'row',

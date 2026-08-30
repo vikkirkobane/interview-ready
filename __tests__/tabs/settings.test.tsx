@@ -37,7 +37,7 @@ describe('Settings — user stories', () => {
 
   it('shows the user profile and current plan', async () => {
     const screen = await renderScreen();
-    expect(screen.getByText('Current Plan')).toBeTruthy();
+    expect(screen.getByText('Current Membership')).toBeTruthy();
     expect(screen.getByText('Edit Profile')).toBeTruthy();
   });
 
@@ -47,9 +47,10 @@ describe('Settings — user stories', () => {
     expect(router.push).toHaveBeenCalledWith('/(tabs)/profile');
   });
 
-  it('navigates to the pricing screen to upgrade', async () => {
+  it('navigates to the pricing screen to upgrade or manage', async () => {
     const screen = await renderScreen();
-    await fireEvent.press(screen.getByLabelText('Upgrade to Pro'));
+    const upgradeBtn = screen.getByText(/Upgrade Plan|Manage Plan/);
+    await fireEvent.press(upgradeBtn);
     expect(router.push).toHaveBeenCalledWith('/(tabs)/pricing');
   });
 

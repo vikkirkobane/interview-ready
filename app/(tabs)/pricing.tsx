@@ -217,9 +217,9 @@ const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
 export default function PricingScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
+  const { balance, isPro: creditIsPro, plan } = useCredits();
+  const isPro = creditIsPro || user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro' || plan === 'PREMIUM' || plan === 'PREMIUM_PLUS';
   const { reason } = useLocalSearchParams<{ reason?: string }>();
-  const { balance } = useCredits();
   const isLowCredits = reason === 'low_credits' || (!isPro && balance !== null && balance.balance < 2);
 
   const { colors } = useTheme();

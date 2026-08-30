@@ -232,7 +232,7 @@ export function useCredits() {
       if (!isMounted || !user) return;
 
       channel = supabase
-        .channel(`credit-changes-${user.id}`)
+        .channel(`credit-and-plan-changes-${user.id}`)
         .on(
           'postgres_changes',
           {
@@ -242,7 +242,33 @@ export function useCredits() {
             filter: `user_id=eq.${user.id}`,
           },
           () => {
-            // Refresh balance when transactions change
+            _resetCreditCache();
+            fetchBalance();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'users',
+            filter: `id=eq.${user.id}`,
+          },
+          () => {
+            _resetCreditCache();
+            fetchBalance();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subscriptions',
+            filter: `user_id=eq.${user.id}`,
+          },
+          () => {
+            _resetCreditCache();
             fetchBalance();
           }
         );
@@ -259,10 +285,15 @@ export function useCredits() {
     };
   }, [fetchBalance]);
 
+  const plan = balance?.plan || 'FREE';
+  const isPro = plan === 'PREMIUM' || plan === 'PREMIUM_PLUS';
+
   return {
     balance,
     loading,
     error,
+    plan,
+    isPro,
     checkCredits,
     deductCredits,
     getTransactions,
