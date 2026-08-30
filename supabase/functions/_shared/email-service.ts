@@ -171,10 +171,6 @@ async function sendSpaceshipSmtp({
     messageBody += `Date: ${dateHeader}\r\n`;
     messageBody += `Message-ID: ${messageId}\r\n`;
     messageBody += `MIME-Version: 1.0\r\n`;
-    messageBody += `X-Mailer: InterviewReady/2.0 (Transactional)\r\n`;
-    messageBody += `List-Unsubscribe: <mailto:info@appinterviewready.top?subject=unsubscribe>, <https://appinterviewready.top/notifications>\r\n`;
-    messageBody += `List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n`;
-    messageBody += `Organization: Interview Ready\r\n`;
 
     if (html && text) {
       messageBody += `Content-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n`;
