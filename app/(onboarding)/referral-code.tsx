@@ -26,11 +26,19 @@ export default function ReferralCodeScreen() {
   const { applyReferralCode } = useReferral();
   const { referralCode: deepLinkCode, clearReferralCode } = useOnboardingStore();
 
-  // Pre-fill from deep link if available
+  // Pre-fill from deep link or web URL search params (?ref=... or ?code=...)
   React.useEffect(() => {
-    if (deepLinkCode && !code) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCode(deepLinkCode);
+    let prefillCode = deepLinkCode;
+    if (!prefillCode && Platform.OS === 'web' && typeof globalThis !== 'undefined' && (globalThis as any).location?.search) {
+      try {
+        const params = new URLSearchParams((globalThis as any).location.search);
+        prefillCode = params.get('ref') || params.get('code') || '';
+      } catch {
+        // ignore
+      }
+    }
+    if (prefillCode && !code) {
+      setCode(prefillCode.toUpperCase());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkCode]);

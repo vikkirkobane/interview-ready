@@ -18,27 +18,62 @@ export default function ReferralScreen() {
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
   const bottomNavPadding = useSafeAreaInsets().bottom + 72 + (!isPro ? 65 : 0);
 
+  const getInviteUrl = () => {
+    const origin = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+      ? (globalThis as any).location.origin
+      : 'https://appinterviewready.top';
+    return `${origin}/signup?ref=${stats?.referralCode || ''}`;
+  };
+
   const handleCopyCode = async () => {
     if (!stats?.referralCode) return;
     
     await Clipboard.setStringAsync(stats.referralCode);
     Toast.show({
       type: 'success',
-      text1: 'Copied!',
-      text2: 'Referral code copied to clipboard.',
+      text1: 'Code Copied! 📋',
+      text2: `Referral code ${stats.referralCode} copied to clipboard.`,
+    });
+  };
+
+  const handleCopyLink = async () => {
+    if (!stats?.referralCode) return;
+
+    const url = getInviteUrl();
+    await Clipboard.setStringAsync(url);
+    Toast.show({
+      type: 'success',
+      text1: 'Invite Link Copied! 🔗',
+      text2: 'Share with friends to give & get 10 free AI credits.',
     });
   };
 
   const handleShare = async () => {
     if (!stats?.referralCode) return;
     
+    const inviteUrl = getInviteUrl();
+    const shareMessage = `🚀 Join me on Interview Ready and get 10 free AI credits to optimize your resume and ace mock interviews!\n\nSign up with my invite link: ${inviteUrl}\n\nOr use referral code: ${stats.referralCode}`;
+
+    try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && (navigator as any).share) {
+        await (navigator as any).share({
+          title: 'Join Interview Ready • 10 Free AI Credits',
+          text: shareMessage,
+          url: inviteUrl,
+        });
+        return;
+      }
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
+    }
+
     try {
       await Share.share({
-        message: `Join Interview Ready and get 10 free AI credits! Use my code: ${stats.referralCode}\n\nOpen the app to apply: interviewready://referral?code=${stats.referralCode}\n\nDownload: https://interviewready.app`,
+        message: shareMessage,
         title: 'Join Interview Ready',
       });
-    } catch (error) {
-      console.error('Error sharing:', error);
+    } catch {
+      await handleCopyLink();
     }
   };
 
@@ -95,13 +130,25 @@ export default function ReferralScreen() {
           </View>
         </View>
 
-        <Button 
-          title="Share Invite Link"
-          onPress={handleShare}
-          fullWidth
-          style={{ marginBottom: Spacing.xl }}
-          disabled={!stats?.referralCode}
-        />
+        <View style={{ flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl }}>
+          <View style={{ flex: 1 }}>
+            <Button 
+              title="Share Invite Link"
+              onPress={handleShare}
+              fullWidth
+              disabled={!stats?.referralCode}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button 
+              title="Copy Link"
+              variant="outline"
+              onPress={handleCopyLink}
+              fullWidth
+              disabled={!stats?.referralCode}
+            />
+          </View>
+        </View>
 
         {stats && stats.totalReferrals > 0 && (
           <View style={[styles.statsCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
