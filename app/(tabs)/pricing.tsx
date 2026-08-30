@@ -25,9 +25,13 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useCredits } from '../../src/hooks/useCredits';
 import * as Linking from 'expo-linking';
 
-type PaymentMode = 'USD' | 'KES';
+export type PaymentMode = 'USD' | 'KES';
 
-const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
+export function toSmallestUnit(price: number, _currency?: string) {
+  return Math.round(price * 100);
+}
+
+export const PRICING_PLANS: Record<PaymentMode, PricingPlan[]> = {
   USD: [
     {
       id: '1',
