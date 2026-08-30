@@ -320,10 +320,8 @@ export default function PricingScreen() {
         ? ['mobile_money', 'card']
         : ['card'];
 
-      // Convert amount to smallest currency unit
-      const amount = selectedPlan.currency === 'KES'
-        ? selectedPlan.price
-        : Math.round(selectedPlan.price * 100);
+      // Convert amount to Paystack smallest currency unit (cents / kobo)
+      const amount = Math.round(selectedPlan.price * 100);
 
       // Open Paystack WebView with the reference created server-side
       const paymentData: PaystackPaymentData = {

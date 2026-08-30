@@ -114,58 +114,64 @@ serve(async (req) => {
       console.error('Failed to update transaction:', updateTxError);
     }
 
-    // If payment successful, create/update subscription
+    // If payment successful, create/update subscription or grant credits
     if (paymentData.status === 'success') {
-      const planCode = txData.metadata?.plan_code;
+      const planCode = txData.metadata?.plan_code || paymentData.metadata?.plan_code;
       
-      if (planCode && paymentData.authorization) {
-        try {
-          // Create subscription with Paystack
-          const subscriptionResponse = await paystack.createSubscription({
-            customer: paymentData.customer.customer_code,
-            plan: planCode,
-            authorization: paymentData.authorization.authorization_code,
-          });
+      if (planCode) {
+        let subscriptionCode = `SUB_${reference}`;
+        let authorizationCode = paymentData.authorization?.authorization_code || 'AUTH_NONE';
+        let currentPeriodStart = new Date();
+        let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-          if (subscriptionResponse.status) {
-            const subData = subscriptionResponse.data;
-            
-            // Calculate period dates
-            const currentPeriodStart = new Date();
-            const currentPeriodEnd = new Date(subData.next_payment_date);
+        if (paymentData.authorization?.authorization_code) {
+          try {
+            // Attempt to create recurring subscription with Paystack if card authorization is present
+            const subscriptionResponse = await paystack.createSubscription({
+              customer: paymentData.customer.customer_code,
+              plan: planCode,
+              authorization: paymentData.authorization.authorization_code,
+            });
 
-            // Use the database function to create/update subscription
-            const { data: subscriptionId, error: subError } = await supabase.rpc(
-              'upsert_paystack_subscription',
-              {
-                p_user_id: user.id,
-                p_subscription_code: subData.subscription_code,
-                p_customer_code: paymentData.customer.customer_code,
-                p_plan_code: planCode,
-                p_authorization_code: paymentData.authorization.authorization_code,
-                p_status: 'ACTIVE',
-                p_current_period_start: currentPeriodStart.toISOString(),
-                p_current_period_end: currentPeriodEnd.toISOString(),
+            if (subscriptionResponse.status && subscriptionResponse.data) {
+              const subData = subscriptionResponse.data;
+              subscriptionCode = subData.subscription_code || subscriptionCode;
+              if (subData.next_payment_date) {
+                currentPeriodEnd = new Date(subData.next_payment_date);
               }
-            );
-
-            if (subError) {
-              console.error('Failed to create subscription:', subError);
-            } else {
-              // upsert_paystack_subscription already sets ai_credits + credit_balance
-              // per plan tier (PREMIUM=150, PREMIUM_PLUS=400) — no extra update needed.
-
-              // Update transaction with subscription_id
-              await supabase
-                .from('payment_transactions')
-                .update({ subscription_id: subscriptionId })
-                .eq('reference', reference);
             }
+          } catch (subError) {
+            console.warn('Paystack recurring subscription note:', subError);
           }
-        } catch (subError) {
-          console.error('Subscription creation error:', subError);
-          // Don't fail the payment verification if subscription creation fails
-          // We can retry later or handle manually
+        }
+
+        try {
+          // Always invoke database function to grant plan tier / credit top-up
+          const { data: subscriptionId, error: subError } = await supabase.rpc(
+            'upsert_paystack_subscription',
+            {
+              p_user_id: user.id,
+              p_subscription_code: subscriptionCode,
+              p_customer_code: paymentData.customer?.customer_code || 'CUST_DIRECT',
+              p_plan_code: planCode,
+              p_authorization_code: authorizationCode,
+              p_status: 'ACTIVE',
+              p_current_period_start: currentPeriodStart.toISOString(),
+              p_current_period_end: currentPeriodEnd.toISOString(),
+            }
+          );
+
+          if (subError) {
+            console.error('Failed to create subscription in database:', subError);
+          } else {
+            // Update transaction with subscription_id
+            await supabase
+              .from('payment_transactions')
+              .update({ subscription_id: subscriptionId })
+              .eq('reference', reference);
+          }
+        } catch (dbErr) {
+          console.error('Database subscription upsert error:', dbErr);
         }
       }
 
@@ -189,7 +195,7 @@ serve(async (req) => {
         data: {
           status: paymentData.status,
           reference: paymentData.reference,
-          amount: paymentData.currency === 'NGN' ? paymentData.amount / 100 : paymentData.amount, // Only NGN uses kobo sub-units
+          amount: paymentData.amount / 100, // All Paystack currencies use subunits (cents/kobo)
           currency: paymentData.currency,
           paid_at: paymentData.paid_at,
           gateway_response: paymentData.gateway_response,

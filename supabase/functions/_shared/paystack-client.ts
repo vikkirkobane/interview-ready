@@ -294,14 +294,9 @@ export class PaystackClient {
 
   /**
    * Convert amount to Paystack's smallest currency unit.
-   * USD/NGN/GHS/ZAR: multiply by 100 (cents/kobo/pesewas)
-   * KES/RWF: already in smallest unit — no conversion needed
+   * All Paystack currencies (KES, USD, NGN, GHS, ZAR) use subunits (cents/kobo/pesewas) multiplied by 100.
    */
-  static toSmallestUnit(amount: number, currency: string): number {
-    const noConversionCurrencies = ['KES', 'RWF'];
-    if (noConversionCurrencies.includes(currency.toUpperCase())) {
-      return Math.round(amount);
-    }
+  static toSmallestUnit(amount: number, _currency?: string): number {
     return Math.round(amount * 100);
   }
 
