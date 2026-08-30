@@ -322,9 +322,6 @@ export async function sendEmail({
     .header h1 { font-size: 22px; font-weight: 700; margin: 0; color: #ffffff; }
     .body { padding: 28px 24px; }
     .body p { font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 16px 0; }
-    .features-box { background-color: #f8fafc; border-radius: 8px; padding: 16px 20px; border: 1px solid #edf2f7; margin: 20px 0; }
-    .feature-item { margin-bottom: 10px; font-size: 14px; color: #334155; }
-    .feature-item:last-child { margin-bottom: 0; }
     .btn-container { text-align: center; margin: 28px 0; }
     .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 30px; border-radius: 6px; display: inline-block; }
     .footer { padding: 20px 24px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; line-height: 1.5; text-align: center; }
@@ -339,28 +336,23 @@ export async function sendEmail({
       </div>
       <div class="body">
         <p>Hello {{first_name}},</p>
-        <p>Welcome to <strong>Interview Ready</strong>! We are excited to help you accelerate your job search, optimize your resume, and ace your interviews.</p>
-        <div class="features-box">
-          <div class="feature-item"><strong>AI Job Analyzer:</strong> Match your resume against any job description.</div>
-          <div class="feature-item"><strong>Tailored Resumes:</strong> Create ATS-friendly resumes in seconds.</div>
-          <div class="feature-item"><strong>Mock Interviews:</strong> Practice real questions tailored to your role.</div>
-        </div>
+        <p>Welcome to <strong>Interview Ready</strong>. Your account is active and ready to use.</p>
         <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Get Started Now</a>
+          <a href="https://appinterviewready.top" class="btn">Access Your Account</a>
         </div>
-        <p>If you have any questions or need assistance, simply reply to this email at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
+        <p>If you have any questions, reply directly to this email at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
         <p>Best regards,<br>The Interview Ready Team</p>
       </div>
       <div class="footer">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a></p>
-        <p>To manage email preferences or unsubscribe, <a href="mailto:info@appinterviewready.top?subject=unsubscribe">click here to unsubscribe</a>.</p>
+        <p>To unsubscribe, reply with subject: unsubscribe.</p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
 </body>
 </html>`;
-        templateText = `Hello {{first_name}},\n\nWelcome to Interview Ready! We are excited to help you accelerate your job search, optimize your resume, and ace your interviews.\n\n- AI Job Analyzer: Match your resume against any job description.\n- Tailored Resumes: Create ATS-friendly resumes in seconds.\n- Mock Interviews: Practice real questions tailored to your role.\n\nGet Started Now: https://appinterviewready.top\n\nIf you have any questions or need assistance, simply reply to this email at info@appinterviewready.top.\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top\nTo manage email preferences or unsubscribe, reply with unsubscribe.`;
+        templateText = `Hello {{first_name}},\n\nWelcome to Interview Ready. Your account is active and ready to use.\n\nAccess Your Account: https://appinterviewready.top\n\nIf you have any questions, reply directly to info@appinterviewready.top.\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top\nTo unsubscribe, reply with subject: unsubscribe.`;
       }
     }
 
