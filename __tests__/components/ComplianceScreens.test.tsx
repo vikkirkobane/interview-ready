@@ -49,4 +49,21 @@ describe('Compliance & Public Informational Pages', () => {
     expect(screen.getByPlaceholderText('e.g. alex@example.com')).toBeTruthy();
     expect(screen.getByPlaceholderText('How can we help you?')).toBeTruthy();
   });
+
+  it('submits contact form successfully', async () => {
+    const screen = await renderWithProviders(<ContactScreen />);
+    const nameInput = screen.getByPlaceholderText('e.g. Alex Smith');
+    const emailInput = screen.getByPlaceholderText('e.g. alex@example.com');
+    const messageInput = screen.getByPlaceholderText('How can we help you?');
+    const submitBtn = screen.getByTestId('submit-contact-btn');
+
+    await fireEvent.changeText(nameInput, 'Jane Doe');
+    await fireEvent.changeText(emailInput, 'jane@example.com');
+    await fireEvent.changeText(messageInput, 'I need help with my subscription.');
+    await fireEvent.press(submitBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Message Sent!')).toBeTruthy();
+    });
+  });
 });
