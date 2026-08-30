@@ -47,18 +47,21 @@ export const useCreditStore = create<CreditStoreState>((set, get) => ({
         activeFetchPromise = (async () => {
           const { data, error: fetchError } = await supabase
             .from('users')
-            .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at, plan')
+            .select('ai_credits, total_credits_earned, total_credits_used, credits_expire_at, plan, plan_expires_at')
             .eq('id', userId)
             .single();
 
           if (fetchError) throw fetchError;
 
+          const isPlanExpired = data.plan_expires_at && new Date(data.plan_expires_at).getTime() < Date.now();
+          const effectivePlan = isPlanExpired ? 'FREE' : (data.plan || 'FREE');
+
           return {
             balance: data.ai_credits || 0,
             totalEarned: data.total_credits_earned || 0,
             totalUsed: data.total_credits_used || 0,
-            expiresAt: data.credits_expire_at,
-            plan: data.plan || 'FREE',
+            expiresAt: data.credits_expire_at || data.plan_expires_at,
+            plan: effectivePlan,
           };
         })().finally(() => {
           activeFetchPromise = null;
