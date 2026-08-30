@@ -81,7 +81,11 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: colors.bgSecondary }]} 
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={Platform.OS === 'web'}
+    >
       
       {/* Profile Section */}
       <View style={styles.profileSection}>

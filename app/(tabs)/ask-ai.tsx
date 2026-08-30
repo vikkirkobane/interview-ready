@@ -273,6 +273,7 @@ onFilePicked: async (payload) => {
         <ScrollView 
           style={styles.chatArea} 
           contentContainerStyle={[styles.chatContent, { paddingBottom: Spacing.xl }]}
+          showsVerticalScrollIndicator={Platform.OS === 'web'}
         >
           
           {/* Page Header */}

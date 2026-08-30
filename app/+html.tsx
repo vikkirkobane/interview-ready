@@ -75,24 +75,26 @@ export default function Root({ children }: PropsWithChildren) {
                 padding-left: env(safe-area-inset-left);
                 padding-right: env(safe-area-inset-right);
               }
-              /* Modern, subtle scrollbars for web / desktop */
+              /* Modern, distinct scrollbars for web / desktop */
               * {
-                scrollbar-width: thin;
-                scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+                scrollbar-width: thin !important;
+                scrollbar-color: rgba(51, 119, 255, 0.45) rgba(255, 255, 255, 0.04);
               }
               ::-webkit-scrollbar {
-                width: 6px;
-                height: 6px;
+                width: 8px !important;
+                height: 8px !important;
+                display: block !important;
               }
               ::-webkit-scrollbar-track {
-                background: transparent;
+                background: rgba(255, 255, 255, 0.04) !important;
+                border-radius: 4px;
               }
               ::-webkit-scrollbar-thumb {
-                background: rgba(255, 255, 255, 0.2);
+                background: rgba(51, 119, 255, 0.45) !important;
                 border-radius: 4px;
               }
               ::-webkit-scrollbar-thumb:hover {
-                background: rgba(255, 255, 255, 0.4);
+                background: rgba(51, 119, 255, 0.8) !important;
               }
             `,
           }}

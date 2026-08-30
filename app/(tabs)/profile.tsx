@@ -420,7 +420,7 @@ export default function ProfileScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgPrimary }]}>
       <ScrollView 
         contentContainerStyle={styles.container} 
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         <View style={styles.bioSection}>
           <View style={styles.avatarWrapper}>
@@ -626,7 +626,7 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
             
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web'}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>First Name</Text>
                 <TextInput
@@ -707,7 +707,7 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
             
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web'}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>Company</Text>
                 <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} value={expCompany} onChangeText={setExpCompany} placeholder="E.g. Google" placeholderTextColor={colors.textMuted} />
@@ -762,7 +762,7 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
             
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web'}>
               <Text style={[styles.label, { color: colors.textPrimary, fontSize: 16, marginTop: Spacing.md }]}>Technical Skills</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: Spacing.md }}>
                 {editingTechSkills.map((s, i) => (
@@ -818,7 +818,7 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
             
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web'}>
               <View style={styles.formGroup}>
                 <Text style={[styles.label, { color: colors.textPrimary }]}>School / University</Text>
                 <TextInput style={[styles.input, { borderColor: colors.border, color: colors.textPrimary }]} value={eduSchool} onChangeText={setEduSchool} placeholder="E.g. Stanford University" placeholderTextColor={colors.textMuted} />

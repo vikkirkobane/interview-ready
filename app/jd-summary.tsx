@@ -1,6 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect, useRef } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, Animated } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, Animated, Platform } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Typography, Spacing, Radius, useTheme, Animations } from '../src/theme';
 import { Card, Button, AdBanner } from '../src/components/ui';
@@ -111,7 +110,11 @@ export default function JdSummaryScreen() {
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>JD Summarizer</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
+      >
         
         {!summaryData && !generating && (
           <Animated.View style={styles.setupSection}>

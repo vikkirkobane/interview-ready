@@ -188,7 +188,7 @@ export default function FeedbackScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
         contentContainerStyle={[styles.content, { paddingBottom: Spacing.xl }]} 
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         {/* Page Header */}
         <View style={styles.pageHeader}>

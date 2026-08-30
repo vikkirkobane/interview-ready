@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator, Share, TextInput } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, ActivityIndicator, Share, TextInput, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -74,7 +74,7 @@ export default function ReferralScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.heroSection}>
           <View style={[styles.heroIconBox, { backgroundColor: `${colors.primary}1A` }]}>
             <Ionicons name="gift" size={40} color={colors.primary} />

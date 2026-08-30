@@ -512,7 +512,7 @@ export default function ResumeGenScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgPrimary }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         
         {!isDone ? (
           // Generating State
@@ -582,7 +582,7 @@ export default function ResumeGenScreen() {
                       style={{ width: '100%', height: '100%', backgroundColor: '#ffffff' }}
                       scalesPageToFit={true}
                       scrollEnabled={true}
-                      showsVerticalScrollIndicator={false}
+                      showsVerticalScrollIndicator={Platform.OS === 'web'}
                       originWhitelist={['*']}
                     />
                   )

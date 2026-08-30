@@ -5,6 +5,7 @@ import { Pressable ,
   ScrollView,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 
@@ -179,6 +180,7 @@ export default function CompanyResearchScreen() {
 <ScrollView
         style={[s.screen, { backgroundColor: colors.bgSecondary }]}
         contentContainerStyle={s.content}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
         keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
@@ -336,7 +338,7 @@ export default function CompanyResearchScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.resultsContent}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.resultsContent} showsVerticalScrollIndicator={Platform.OS === 'web'}>
 
         {/* ── OVERVIEW ── */}
         {activeTab === 'overview' && (

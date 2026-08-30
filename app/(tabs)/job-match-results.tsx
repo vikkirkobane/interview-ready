@@ -116,7 +116,7 @@ export default function JobMatchResultsScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
         contentContainerStyle={[styles.container, { paddingBottom: Spacing.xl + insets.bottom }]} 
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         <Pressable style={styles.backBtn} onPress={() => router.replace('/(tabs)/job-analyzer')}>
           <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />

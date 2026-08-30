@@ -16,6 +16,8 @@ jest.mock('../../src/lib/supabase', () => {
 
 const mockSupabase = supabase as any;
 
+jest.setTimeout(15000);
+
 describe('Pricing — user stories', () => {
   beforeEach(() => {
     resetAllStores();

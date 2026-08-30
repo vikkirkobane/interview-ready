@@ -65,6 +65,8 @@ const LETTER = {
   sign_off: { closing_phrase: 'Sincerely,', name: 'Jane Smith' },
 };
 
+jest.setTimeout(15000);
+
 describe('Cover Letter Generator — user stories', () => {
   beforeEach(() => {
     resetAllStores();

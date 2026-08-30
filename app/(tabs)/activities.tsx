@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
 import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { useRouter } from 'expo-router';
@@ -18,7 +18,7 @@ export default function AllActivitiesScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>All Recent Activity</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>

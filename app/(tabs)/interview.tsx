@@ -318,7 +318,7 @@ export default function InterviewScreen() {
           style={styles.chatArea} 
           contentContainerStyle={[styles.chatContent, { paddingBottom: Spacing.xl }]}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={Platform.OS === 'web'}
           keyboardShouldPersistTaps="handled"
         >
           {/* Live Interview Header */}

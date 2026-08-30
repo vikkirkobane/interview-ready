@@ -4,6 +4,7 @@ import { Pressable ,
   StyleSheet,
   Animated,
   ScrollView,
+  Platform,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 
@@ -93,7 +94,7 @@ export default function WelcomeScreen() {
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 60 }]}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         <Animated.View 
           style={[

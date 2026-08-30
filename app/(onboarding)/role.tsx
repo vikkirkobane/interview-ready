@@ -113,7 +113,7 @@ export default function RoleScreen() {
       <View style={[styles.ambientTopRight, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
       <View style={[styles.ambientBottomLeft, { backgroundColor: `${colors.primary}0D` }]} pointerEvents="none" />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         
         {/* Progress Indicator */}
         <View style={styles.progressContainer}>

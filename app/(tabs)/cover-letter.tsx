@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, TouchableOpacity } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Modal, TouchableOpacity, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, FileAttachmentBadge } from '../../src/components/ui';
 
@@ -440,7 +440,11 @@ export default function CoverLetterGeneratorScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
+      >
         
         {/* Page Header */}
         <View style={styles.pageHeader}>

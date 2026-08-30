@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -212,7 +212,7 @@ export default function JobFitScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
         contentContainerStyle={styles.container} 
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.mainGrid}>

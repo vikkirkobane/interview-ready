@@ -112,6 +112,7 @@ export default function SignupScreen() {
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
         keyboardShouldPersistTaps='handled'
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         <Pressable
           onPress={() => router.back()}

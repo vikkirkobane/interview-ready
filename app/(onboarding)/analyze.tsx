@@ -5,6 +5,7 @@ import { Pressable ,
   ScrollView,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -147,7 +148,7 @@ export default function AnalyzeScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         
         {/* Progress Indicator */}
         <View style={styles.progressContainer}>

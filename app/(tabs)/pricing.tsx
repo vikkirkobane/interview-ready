@@ -7,6 +7,7 @@ import { Pressable ,
   Modal,
   TextInput,
   FlatList,
+  Platform,
 } from 'react-native';
 import React, { useState, useMemo } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -394,7 +395,11 @@ export default function PricingScreen() {
   ), [selectedCountry.code, handleCountrySelect]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={Platform.OS === 'web'}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Choose Your Plan</Text>
         <Text style={styles.subtitle}>

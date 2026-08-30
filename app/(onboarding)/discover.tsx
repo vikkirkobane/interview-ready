@@ -67,7 +67,7 @@ export default function DiscoverScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView 
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxl }]} 
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         {/* Progress Indicator */}
         <View style={styles.progressContainer}>

@@ -169,7 +169,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>      
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         
         {/* Progress Indicator */}  
         <View style={styles.progressContainer}>

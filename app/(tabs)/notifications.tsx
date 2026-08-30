@@ -1,7 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useEffect, useMemo } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Pressable,  View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, Animated, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useRouter } from 'expo-router';
 import { useNotificationStore, AppNotification } from '../../src/stores/notification-store';
@@ -159,7 +157,7 @@ export default function NotificationsScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomNavPadding }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomNavPadding }]} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         {displayNotifications.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="checkmark-done" size={48} color={colors.textMuted} style={{ marginBottom: Spacing.lg }} />

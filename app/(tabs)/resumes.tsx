@@ -60,7 +60,7 @@ export default function ResumesScreen() {
 
       <ScrollView
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         <Text style={[styles.sectionDesc, { color: colors.textMuted }]}>
           Tailor a specific resume for each application to maximize your ATS match score.

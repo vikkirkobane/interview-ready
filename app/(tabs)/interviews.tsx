@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Pressable,  View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import Toast from 'react-native-toast-message';
 import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
@@ -150,7 +150,11 @@ export default function InterviewsLobbyScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
+      >
         
         {/* Page Header */}
         <View style={styles.pageHeader}>

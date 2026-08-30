@@ -149,6 +149,7 @@ export default function ResetPasswordScreen() {
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 16 }]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
         {/* Header */}
         <Pressable

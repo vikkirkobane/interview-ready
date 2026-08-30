@@ -6,8 +6,9 @@ import {
   ScrollView,
   ActivityIndicator,
   TextInput,
- // eslint-disable-next-line @typescript-eslint/no-unused-vars
- Pressable,  Modal } from 'react-native';
+  Platform,
+  Pressable,
+  Modal } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Card, Button, ScoreRing } from '../../src/components/ui';
@@ -453,7 +454,7 @@ export default function LinkedinOptimizerScreen() {
   if (showLinkedInPrompt) {
     return (
       <View style={[s.screen, { backgroundColor: colors.bgSecondary }]}>
-        <ScrollView contentContainerStyle={s.content}>
+        <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
           {/* Header */}
           <View style={s.pageHeader}>
             <View style={[s.liIcon, { backgroundColor: '#0A66C2' }]}>
@@ -525,7 +526,7 @@ export default function LinkedinOptimizerScreen() {
     const hasProfileData = wizard.targetRoles.length > 0 || wizard.experience.some(e => e.title);
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
-<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
+<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         {/* Header */}
         <View style={s.pageHeader}>
           <View style={[s.liIcon, { backgroundColor: colors.bgPrimary }]}>
@@ -620,7 +621,7 @@ export default function LinkedinOptimizerScreen() {
   if (step === 'content') {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
-<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
+<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
           <Pressable
             style={[s.backBtn, { marginRight: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
@@ -744,7 +745,7 @@ export default function LinkedinOptimizerScreen() {
   if (step === 'spike') {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bgSecondary }}>
-<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content}>
+<ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md }}>
           <Pressable
             style={[s.backBtn, { marginRight: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
@@ -861,7 +862,7 @@ export default function LinkedinOptimizerScreen() {
         ))}
       </ScrollView>
 
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.resultsContent}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={s.resultsContent} showsVerticalScrollIndicator={Platform.OS === 'web'}>
 
         {/* OVERVIEW */}
         {activeTab === 'overview' && (

@@ -958,7 +958,7 @@ export default function ResumeBuilderScreen() {
   if ((!id || hasStartedOver) && !draft) {
     return (
       <View style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'} keyboardShouldPersistTaps="handled">
           {renderPageHeader()}
           
           <View style={styles.sectionCard}>
@@ -1110,7 +1110,7 @@ export default function ResumeBuilderScreen() {
   // ── Render: Editor ────────────────────────────────────────────────────────
   return (
     <View style={styles.flex}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'} keyboardShouldPersistTaps="handled">
         {renderPageHeader()}
 
         {/* Personal Info */}
@@ -1908,7 +1908,7 @@ export default function ResumeBuilderScreen() {
             </View>
             <Text style={styles.modalSubtitle}>Select an ATS-optimized layout for your resume.</Text>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.templateGrid}>
+            <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web'} contentContainerStyle={styles.templateGrid}>
               {TEMPLATES.map(tmpl => (
                 <TouchableOpacity
                   key={tmpl.id}

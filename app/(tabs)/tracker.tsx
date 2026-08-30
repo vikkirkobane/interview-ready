@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Pressable,  View, Text, StyleSheet, ScrollView, Dimensions, Modal, TextInput, ActivityIndicator, Alert } from "react-native";
+import { Pressable, View, Text, StyleSheet, ScrollView, Dimensions, Modal, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { Typography, Spacing, Radius, Shadow, useTheme } from "../../src/theme";
 import { ScoreRing } from "../../src/components/ui";
 import { useAuthStore } from "../../src/stores/auth-store";
@@ -331,7 +331,7 @@ export default function TrackerScreen() {
                   </View>
 
                   {/* Column Cards */}
-                  <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.columnCardsList}>
+                  <ScrollView showsVerticalScrollIndicator={Platform.OS === 'web'} contentContainerStyle={styles.columnCardsList}>
                     {columnApps.map((app: any) => renderCard(app, column.color))}
                   </ScrollView>
 
