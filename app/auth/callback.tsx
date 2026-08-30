@@ -107,23 +107,6 @@ export default function AuthCallbackScreen() {
           }
         }
 
-        // 4. Check for token_hash (?token_hash=...&type=signup)
-        const tokenHash = searchParams.get('token_hash');
-        const type = (searchParams.get('type') || 'signup') as any;
-        if (tokenHash) {
-          try {
-            const { data } = await supabase.auth.verifyOtp({
-              token_hash: tokenHash,
-              type,
-            });
-            if (data?.session) {
-              useAuthStore.setState({ session: data.session, user: data.session.user });
-              return;
-            }
-          } catch (err) {
-            console.warn('[AuthCallback Web] Error verifying OTP:', err);
-          }
-        }
 
         // 5. Final fallback: check current active session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
