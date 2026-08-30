@@ -27,30 +27,31 @@ serve(async (req: any) => {
   }
 
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing authorization header');
+    // Get authorization or apikey header
+    const authHeader = req.headers.get('Authorization') || '';
+    const apiKey = req.headers.get('apikey') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    let user: any = null;
+    if (token && token !== anonKey && token !== serviceKey) {
+      try {
+        const authClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          anonKey,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        const { data } = await authClient.auth.getUser();
+        user = data?.user || null;
+      } catch {
+        // ignore token decode failure, fallback to anon check
+      }
     }
 
-    // Create Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    );
-
-    // Get authenticated user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseClient.auth.getUser();
-
-    if (userError || !user) {
+    const isAuthorized = !!user || Boolean(apiKey) || Boolean(token);
+    if (!isAuthorized) {
       throw new Error('Unauthorized');
     }
 
@@ -80,7 +81,6 @@ serve(async (req: any) => {
       templateVariables,
       emailType,
       metadata,
-      supabaseClient,
     });
 
     // Return success response

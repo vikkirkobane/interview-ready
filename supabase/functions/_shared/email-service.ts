@@ -213,40 +213,159 @@ export async function sendEmail({
   let emailText = text;
   let emailSubject = subject;
 
-  // If template key provided, fetch and render template
+  // If template key provided, fetch from DB with built-in VIP fallbacks
   if (templateKey) {
-    const { data: template, error: templateError } = await supabase
-      .from('email_templates')
-      .select('*')
-      .eq('template_key', templateKey)
-      .eq('is_active', true)
-      .single();
+    let templateHtml: string | null = null;
+    let templateText: string | null = null;
+    let templateSubj: string | null = null;
 
-    if (templateError || !template) {
-      throw new Error(`Template not found: ${templateKey}`);
+    try {
+      const { data: template, error: templateError } = await supabase
+        .from('email_templates')
+        .select('*')
+        .eq('template_key', templateKey)
+        .eq('is_active', true)
+        .single();
+
+      if (!templateError && template) {
+        templateHtml = template.html_body;
+        templateText = template.text_body;
+        templateSubj = template.subject;
+      }
+    } catch {
+      // ignore db error, proceed to fallback
     }
 
-    // Replace template variables
-    emailHtml = template.html_body;
-    emailText = template.text_body;
+    // Built-in VIP template fallback if not in DB
+    if (!templateHtml) {
+      if (templateKey === 'waitlist_confirmation') {
+        templateSubj = "You're on the VIP Waitlist! 🚀 - Interview Ready";
+        templateHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; }
+    .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .header-logo { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
+    .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
+    .body { padding: 36px 32px; }
+    .badge { display: inline-block; background-color: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 9999px; margin-bottom: 20px; border: 1px solid #dbeafe; }
+    h2 { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0; }
+    p { font-size: 15px; line-height: 1.6; color: #475569; margin: 0 0 16px 0; }
+    .features-box { background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #edf2f7; margin: 24px 0; }
+    .feature-item { margin-bottom: 12px; font-size: 14px; color: #334155; }
+    .feature-item:last-child { margin-bottom: 0; }
+    .btn-container { text-align: center; margin: 32px 0 16px 0; }
+    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28); }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h1 class="header-logo">Interview Ready</h1>
+        <div class="header-tagline">Land Your Next Job Faster</div>
+      </div>
+      <div class="body">
+        <div class="badge">🚀 WAITLIST SPOT #{{queue_position}}</div>
+        <h2>Hi {{first_name}},</h2>
+        <p>You're officially on the priority waitlist for <strong>Interview Ready</strong>! You will be among the first to experience our next-generation AI career preparation tools.</p>
+        <div class="features-box">
+          <div class="feature-item">⚡ <strong>Priority Access:</strong> Instant notification when your tier unlocks.</div>
+          <div class="feature-item">🎁 <strong>Bonus Credits:</strong> 10 free AI credits reserved for your account.</div>
+          <div class="feature-item">📄 <strong>ATS Resume Scanner:</strong> Instant feedback on job match scores.</div>
+        </div>
+        <div class="btn-container">
+          <a href="https://appinterviewready.top" class="btn">Explore Platform Preview</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p>Interview Ready • <a href="https://appinterviewready.top/#faq">FAQ</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>© 2026 Interview Ready. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+        templateText = "Hi {{first_name}},\n\nYou are on the VIP waitlist for Interview Ready!\n\nQueue Position: #{{queue_position}}\nBonus Credits: 10 AI Credits Reserved\n\nVisit: https://appinterviewready.top\nSupport: info@appinterviewready.top\n\nInterview Ready Team";
+      } else if (templateKey === 'welcome') {
+        templateSubj = "Welcome to Interview Ready, {{first_name}}! 🚀";
+        templateHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; }
+    .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
+    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .header-logo { font-size: 26px; font-weight: 800; margin: 0; color: #ffffff; }
+    .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
+    .body { padding: 36px 32px; }
+    .badge { display: inline-block; background-color: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 9999px; margin-bottom: 20px; border: 1px solid #dbeafe; }
+    h2 { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0; }
+    p { font-size: 15px; line-height: 1.6; color: #475569; margin: 0 0 16px 0; }
+    .features-box { background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #edf2f7; margin: 24px 0; }
+    .feature-item { margin-bottom: 12px; font-size: 14px; color: #334155; }
+    .feature-item:last-child { margin-bottom: 0; }
+    .btn-container { text-align: center; margin: 32px 0 16px 0; }
+    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28); }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h1 class="header-logo">Interview Ready</h1>
+        <div class="header-tagline">Land Your Next Job Faster</div>
+      </div>
+      <div class="body">
+        <div class="badge">🎁 WELCOME BONUS: 10 FREE AI CREDITS</div>
+        <h2>Hello {{first_name}},</h2>
+        <p>Welcome to <strong>Interview Ready</strong>! We are thrilled to help you accelerate your job search, craft ATS-beating resumes, and ace your upcoming interviews.</p>
+        <div class="features-box">
+          <div class="feature-item">⚡ <strong>AI Job Analyzer:</strong> Match your profile against any job description.</div>
+          <div class="feature-item">📄 <strong>Tailored Resumes:</strong> Stand out to hiring managers in seconds.</div>
+          <div class="feature-item">🎯 <strong>Mock Interviews:</strong> Practice real questions tailored to your target role.</div>
+        </div>
+        <div class="btn-container">
+          <a href="https://appinterviewready.top" class="btn">Get Started Now</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p>Interview Ready • <a href="https://appinterviewready.top/#faq">Help Center & FAQ</a> • <a href="https://appinterviewready.top/privacy">Privacy Policy</a></p>
+        <p>© 2026 Interview Ready. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+        templateText = "Hello {{first_name}},\n\nWelcome to Interview Ready! We are thrilled to help you accelerate your job search.\n\nYou have 10 free credits in your account.\n\nStart now: https://appinterviewready.top\n\nNeed help? Visit: https://appinterviewready.top/#faq\n\nInterview Ready Team";
+      }
+    }
+
+    emailHtml = templateHtml || emailHtml;
+    emailText = templateText || emailText;
+    if (!emailSubject && templateSubj) {
+      emailSubject = templateSubj;
+    }
 
     if (templateVariables) {
       Object.entries(templateVariables).forEach(([key, value]) => {
         const regex = new RegExp(`{{${key}}}`, 'g');
         emailHtml = emailHtml?.replace(regex, value);
         emailText = emailText?.replace(regex, value);
+        emailSubject = emailSubject?.replace(regex, value);
       });
-    }
-
-    // Use template subject if not explicitly given
-    if (!emailSubject && template.subject) {
-      emailSubject = template.subject;
-      if (templateVariables) {
-        Object.entries(templateVariables).forEach(([key, value]) => {
-          const regex = new RegExp(`{{${key}}}`, 'g');
-          emailSubject = emailSubject?.replace(regex, value);
-        });
-      }
     }
   }
 

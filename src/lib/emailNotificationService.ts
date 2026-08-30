@@ -20,6 +20,7 @@ export function generateEmailHtmlTemplate({
   preheader,
   title,
   subtitle,
+  badgeText,
   userName = 'there',
   bodyContent,
   ctaText,
@@ -29,6 +30,7 @@ export function generateEmailHtmlTemplate({
   preheader: string;
   title: string;
   subtitle: string;
+  badgeText?: string;
   userName?: string;
   bodyContent: string;
   ctaText?: string;
@@ -36,6 +38,7 @@ export function generateEmailHtmlTemplate({
   proTip?: string;
 }): string {
   const currentYear = new Date().getFullYear();
+  const directWebUrl = ctaUrl || 'https://appinterviewready.top';
 
   return `
 <!DOCTYPE html>
@@ -50,148 +53,163 @@ export function generateEmailHtmlTemplate({
     body {
       margin: 0;
       padding: 0;
-      background-color: #F9FAFB;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      color: #0D1117;
+      background-color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1E293B;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
-    .preheader {
-      display: none !important;
-      visibility: hidden;
-      mso-hide: all;
-      font-size: 1px;
-      line-height: 1px;
-      max-height: 0;
-      max-width: 0;
-      opacity: 0;
+    .wrapper {
+      width: 100%;
+      background-color: #F8FAFC;
+      padding: 32px 16px;
+    }
+    .card {
+      max-width: 580px;
+      margin: 0 auto;
+      background-color: #FFFFFF;
+      border-radius: 16px;
       overflow: hidden;
+      border: 1px solid #E2E8F0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     }
     .header {
-      background-color: #1A4F8A;
-      background-image: linear-gradient(135deg, #1A4F8A 0%, #123761 100%);
-      padding: 36px 28px;
+      background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+      padding: 36px 32px;
       text-align: center;
-    }
-    .logo-badge {
-      display: inline-block;
-      background: #EFF6FF;
-      color: #1A4F8A;
-      font-weight: 800;
-      font-size: 11px;
-      letter-spacing: 1.6px;
-      text-transform: uppercase;
-      padding: 5px 14px;
-      border-radius: 999px;
-      margin-bottom: 14px;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 800;
       color: #FFFFFF;
-      letter-spacing: -0.5px;
     }
-    .header p {
-      margin: 8px 0 0;
-      font-size: 14px;
+    .header-logo {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin: 0;
+      color: #FFFFFF;
+    }
+    .header-tagline {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.9;
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
       color: #DBEAFE;
     }
-    .content {
-      padding: 32px 28px;
+    .body {
+      padding: 36px 32px;
     }
-    .greeting {
-      font-size: 16px;
+    .badge {
+      display: inline-block;
+      background-color: #EFF6FF;
+      color: #1D4ED8;
       font-weight: 700;
-      color: #111827;
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      margin-bottom: 20px;
+      border: 1px solid #DBEAFE;
+    }
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0F172A;
+      margin: 0 0 16px 0;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #475569;
+      margin: 0 0 16px 0;
+    }
+    .features-box {
+      background-color: #F8FAFC;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #EDF2F7;
+      margin: 24px 0;
+    }
+    .feature-item {
       margin-bottom: 12px;
+      font-size: 14px;
+      color: #334155;
+    }
+    .feature-item:last-child {
+      margin-bottom: 0;
     }
     .btn-container {
       text-align: center;
-      margin: 28px 0;
+      margin: 32px 0 16px 0;
     }
-    .btn-primary {
-      display: inline-block;
-      background-color: #1A4F8A;
+    .btn {
+      background: #2563EB;
       color: #FFFFFF !important;
+      font-size: 15px;
       font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.3px;
       text-decoration: none;
-      padding: 13px 28px;
-      border-radius: 10px;
+      padding: 14px 36px;
+      border-radius: 9999px;
+      display: inline-block;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
     }
     .tip-card {
       background-color: #EFF6FF;
       border: 1px solid #BFDBFE;
-      border-radius: 10px;
-      padding: 14px 16px;
+      border-radius: 12px;
+      padding: 16px 18px;
       margin: 20px 0 0;
       font-size: 13px;
       color: #1E40AF;
       line-height: 1.5;
     }
     .footer {
-      background-color: #1A4F8A;
-      padding: 24px 28px;
+      padding: 24px 32px;
+      background-color: #F8FAFC;
+      border-top: 1px solid #F1F5F9;
       text-align: center;
-      border-top: 1px solid #123761;
-    }
-    .footer p {
-      margin: 4px 0;
       font-size: 12px;
-      color: #DBEAFE;
+      color: #94A3B8;
+      line-height: 1.5;
     }
     .footer a {
-      color: #7DD3FC;
-      text-decoration: underline;
+      color: #2563EB;
+      text-decoration: none;
+      font-weight: 600;
     }
   </style>
 </head>
-<body bgcolor="#F9FAFB">
-  <div class="preheader">${preheader}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F9FAFB">
-    <tr>
-      <td align="center" style="padding: 24px 12px;">
-        <table role="presentation" width="580" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; width: 100%; background-color: #FFFFFF; border-radius: 14px; overflow: hidden; border: 1px solid #E5E7EB;">
-          <tr>
-            <td class="header" bgcolor="#1A4F8A">
-              <span class="logo-badge">Interview Ready</span>
-              <h1>${title}</h1>
-              <p>${subtitle}</p>
-            </td>
-          </tr>
-          <tr>
-            <td class="content" bgcolor="#FFFFFF">
-              <p class="greeting">Hello ${userName},</p>
-              ${bodyContent}
+<body>
+  ${preheader ? `<div style="display:none;font-size:1px;color:#333333;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</div>` : ''}
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h1 class="header-logo">Interview Ready</h1>
+        <div class="header-tagline">Land Your Next Job Faster</div>
+      </div>
+      <div class="body">
+        ${badgeText ? `<div class="badge">${badgeText}</div>` : ''}
+        <h2>Hello ${userName},</h2>
+        ${bodyContent}
 
-              ${ctaText && ctaUrl ? `
-              <div class="btn-container">
-                <a href="${ctaUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">
-                  ${ctaText}
-                </a>
-              </div>
-              ` : ''}
+        ${ctaText ? `
+        <div class="btn-container">
+          <a href="${directWebUrl}" class="btn" target="_blank" rel="noopener noreferrer">
+            ${ctaText}
+          </a>
+        </div>
+        ` : ''}
 
-              ${proTip ? `
-              <div class="tip-card">
-                <strong>Pro Tip:</strong> ${proTip}
-              </div>
-              ` : ''}
-            </td>
-          </tr>
-          <tr>
-            <td class="footer" bgcolor="#1A4F8A">
-              <p>&copy; ${currentYear} Interview Ready. Built for ambitious professionals.</p>
-              <p>Questions? Reply to this email or write to <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
-              <p style="margin-top: 8px;"><a href="https://www.linkedin.com/company/interview-ready-app" target="_blank" rel="noopener noreferrer">Follow us on LinkedIn</a></p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+        ${proTip ? `
+        <div class="tip-card">
+          <strong>💡 Pro Tip:</strong> ${proTip}
+        </div>
+        ` : ''}
+      </div>
+      <div class="footer">
+        <p>Interview Ready Web App • <a href="https://appinterviewready.top">appinterviewready.top</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>© ${currentYear} Interview Ready. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
   `.trim();
@@ -248,23 +266,24 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
     preheader: 'Your AI career toolkit is ready. Run your first mock interview today.',
     title: 'Welcome Aboard!',
     subtitle: 'Your journey to landing your dream job begins today.',
+    badgeText: '🎁 WELCOME BONUS: 10 FREE AI CREDITS',
     userName: userName || 'there',
     bodyContent: `
-      <p style="font-size: 14px; color: #4B5563; line-height: 1.6;">
+      <p style="font-size: 15px; color: #475569; line-height: 1.6;">
         Thank you for joining <strong>Interview Ready</strong>. You now have instant access to our complete AI-powered career platform:
       </p>
-      <div style="background-color: #F3F4F6; border-radius: 10px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #1F2937;">3 Quick Steps to Get Started:</p>
-        <ol style="margin: 0; padding-left: 20px; font-size: 13px; color: #4B5563; line-height: 1.6;">
-          <li><strong>Tailor Your Resume:</strong> Paste any job description to get instant ATS scores and bullet-point optimizations.</li>
-          <li><strong>Practice Mock Interviews:</strong> Experience real-time audio & text interview coaching tailored to your target job.</li>
+      <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #EDF2F7; margin: 20px 0;">
+        <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">3 Quick Steps to Get Started:</p>
+        <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.6;">
+          <li style="margin-bottom: 6px;"><strong>Tailor Your Resume:</strong> Paste any job description to get instant ATS scores and bullet-point optimizations.</li>
+          <li style="margin-bottom: 6px;"><strong>Practice Mock Interviews:</strong> Experience real-time audio & text interview coaching tailored to your target job.</li>
           <li><strong>Optimize LinkedIn:</strong> Transform your headline and about section into a high-visibility recruiter magnet.</li>
         </ol>
       </div>
     `,
-    ctaText: 'Launch Interview Ready',
+    ctaText: 'Launch Web App',
     ctaUrl: `${appUrl}/login`,
-    proTip: 'On iPhone or Android, you can add Interview Ready directly to your Home Screen from the browser menu for a seamless native app experience!',
+    proTip: 'You can access the full platform directly from your browser at appinterviewready.top on any laptop, tablet, or smartphone.',
   });
 
   const text = [
@@ -275,7 +294,7 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
     '2. Practice realistic AI mock interviews.',
     '3. Optimize your LinkedIn profile for recruiter visibility.',
     '',
-    `Access the app: ${appUrl}/login`,
+    `Access Web Platform: ${appUrl}/login`,
     'Support: info@appinterviewready.top',
     '',
     '- The Interview Ready Team',
@@ -311,23 +330,24 @@ export async function triggerWaitlistConfirmationEmail(
     preheader: "You're officially on the VIP waitlist for Interview Ready!",
     title: 'Waitlist Confirmed 🚀',
     subtitle: `Queue Position: #${queuePosition} • 10 Bonus AI Credits Reserved`,
+    badgeText: `🚀 WAITLIST SPOT #${queuePosition}`,
     userName: userName || 'there',
     bodyContent: `
-      <p style="font-size: 14px; color: #4B5563; line-height: 1.6;">
+      <p style="font-size: 15px; color: #475569; line-height: 1.6;">
         You have secured your spot on the priority access waitlist for <strong>Interview Ready</strong>.
       </p>
-      <div style="background-color: #F3F4F6; border-radius: 10px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #1F2937;">What You Get on Day 1:</p>
-        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #4B5563; line-height: 1.6;">
-          <li><strong>10 Free AI Credits:</strong> Reserved and waiting in your account.</li>
-          <li><strong>Instant ATS Scans:</strong> Real-time resume keyword matching.</li>
-          <li><strong>Priority Support:</strong> Direct coaching assistance.</li>
+      <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #EDF2F7; margin: 20px 0;">
+        <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">What You Get on Day 1:</p>
+        <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.6;">
+          <li style="margin-bottom: 6px;"><strong>10 Free AI Credits:</strong> Reserved and waiting in your account.</li>
+          <li style="margin-bottom: 6px;"><strong>Instant ATS Scans:</strong> Real-time resume keyword matching.</li>
+          <li><strong>Priority Support:</strong> Direct coaching assistance via info@appinterviewready.top.</li>
         </ul>
       </div>
     `,
-    ctaText: 'Visit Interview Ready',
+    ctaText: 'Visit Web Platform',
     ctaUrl: appUrl,
-    proTip: 'Keep an eye on your inbox—we unlock new cohort access every week!',
+    proTip: 'Interview Ready is a high-performance web app accessible on any browser at appinterviewready.top.',
   });
 
   const text = [
@@ -342,7 +362,7 @@ export async function triggerWaitlistConfirmationEmail(
     '- The Interview Ready Team',
   ].join('\n');
 
-  // Sync to Airtable table (tbl0y0reK4q7PvA1t) in background
+  // Sync to Airtable table (Submissions) in background
   syncUserToAirtable({
     email: userEmail,
     name: userName,
