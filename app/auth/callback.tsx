@@ -24,11 +24,42 @@ export default function AuthCallbackScreen() {
   const { colors } = useTheme();
   const session = useAuthStore((s) => s.session);
 
-  // On Web, exchange code or retrieve session directly from URL
+  // On Web, exchange code or retrieve session directly from URL (hash or query params)
   useEffect(() => {
     async function handleWebCallback() {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        const searchParams = new URLSearchParams(window.location.search);
+      if (Platform.OS === 'web' && typeof globalThis !== 'undefined' && (globalThis as any).location) {
+        const loc = (globalThis as any).location;
+        const hash = loc.hash ? loc.hash.substring(1) : '';
+        const hashParams = new URLSearchParams(hash);
+        const searchParams = new URLSearchParams(loc.search || '');
+
+        // 1. Check for Auth Error in URL (e.g. expired link)
+        const errorDesc = hashParams.get('error_description') || searchParams.get('error_description') || hashParams.get('error') || searchParams.get('error');
+        if (errorDesc) {
+          console.warn('[AuthCallback Web] Error from Auth server:', errorDesc);
+          router.replace({ pathname: '/(auth)/login', params: { error: errorDesc } } as any);
+          return;
+        }
+
+        // 2. Check for hash tokens (#access_token=...&refresh_token=...)
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        if (accessToken && refreshToken) {
+          try {
+            const { data } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (data?.session) {
+              useAuthStore.setState({ session: data.session, user: data.session.user });
+              return;
+            }
+          } catch (err) {
+            console.warn('[AuthCallback Web] Error setting session from hash:', err);
+          }
+        }
+
+        // 3. Check for PKCE search code (?code=...)
         const code = searchParams.get('code');
         if (code) {
           try {
@@ -37,6 +68,26 @@ export default function AuthCallbackScreen() {
             console.warn('[AuthCallback Web] Error exchanging code:', err);
           }
         }
+
+        // 4. Check for token_hash (?token_hash=...&type=signup)
+        const tokenHash = searchParams.get('token_hash');
+        const type = (searchParams.get('type') || 'signup') as any;
+        if (tokenHash) {
+          try {
+            const { data } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type,
+            });
+            if (data?.session) {
+              useAuthStore.setState({ session: data.session, user: data.session.user });
+              return;
+            }
+          } catch (err) {
+            console.warn('[AuthCallback Web] Error verifying OTP:', err);
+          }
+        }
+
+        // 5. Final fallback: check current active session
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         if (currentSession) {
           useAuthStore.setState({ session: currentSession, user: currentSession.user });
