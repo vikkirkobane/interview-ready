@@ -60,7 +60,7 @@ export async function sendEmailDirectly(params: SendEmailParams): Promise<{ succ
 
 /**
  * Hook for sending emails and managing email operations
- * Uses Resend API via Supabase Edge Function
+ * Uses Spaceship SMTP via Supabase Edge Function
  */
 export function useEmail(): UseEmailReturn {
   const [isSending, setIsSending] = useState(false);

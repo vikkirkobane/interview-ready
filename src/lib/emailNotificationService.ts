@@ -217,7 +217,7 @@ export function generateEmailHtmlTemplate({
 }
 
 /**
- * Deliver an email via Supabase Edge Function 'email-send' (Resend)
+ * Deliver an email via Supabase Edge Function 'email-send' (Spaceship SMTP)
  */
 export async function sendEmailNotification(options: SendEmailOptions): Promise<{ success: boolean; error?: string }> {
   try {

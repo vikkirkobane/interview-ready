@@ -458,53 +458,15 @@ export async function sendEmail({
   } catch (smtpErr: any) {
     console.error('[Spaceship Email Error]:', smtpErr);
 
-    // Fallback: If Resend API key is still present during transition, try fallback
-    const resendApiKey = Deno.env.get('RESEND_API_KEY');
-    if (resendApiKey) {
-      try {
-        const resendResponse = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: fromEmail,
-            to: [to],
-            subject: emailSubject,
-            html: emailHtml,
-            text: emailText,
-          }),
-        });
-
-        if (resendResponse.ok) {
-          const resendData = await resendResponse.json();
-          if (logId) {
-            await supabase.rpc('update_email_status', {
-              p_log_id: logId,
-              p_status: 'sent',
-            });
-          }
-          return {
-            success: true,
-            message_id: resendData.id,
-            log_id: logId,
-          };
-        }
-      } catch (fallbackErr) {
-        console.warn('Fallback delivery also failed:', fallbackErr);
-      }
-    }
-
     // Update log with failure
     if (logId) {
       await supabase.rpc('update_email_status', {
         p_log_id: logId,
         p_status: 'failed',
-        p_error_message: smtpErr?.message || 'Failed to send email via Spaceship',
+        p_error_message: smtpErr?.message || 'Failed to send email via Spaceship SMTP',
       });
     }
 
-    throw new Error(smtpErr?.message || 'Failed to send email via Spaceship');
+    throw new Error(smtpErr?.message || 'Failed to send email via Spaceship SMTP');
   }
 }
