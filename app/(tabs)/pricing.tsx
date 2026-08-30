@@ -18,6 +18,7 @@ import { PricingCard, PricingPlan } from '../../src/components/features/payments
 import { PaystackWebViewComponent, PaystackPaymentData } from '../../src/components/features/payments/PaystackWebView';
 import { Spacing, Typography, Radius } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme';
+import { CountryFlag } from '../../src/components/ui';
 import { supabase } from '../../src/lib/supabase';
 import { COUNTRIES, Country, getPaymentMethods } from '../../src/constants/countries';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -402,7 +403,9 @@ export default function PricingScreen() {
       ]}
       onPress={() => handleCountrySelect(item)}
     >
-      <Text style={styles.countryItemFlag}>{item.flag}</Text>
+      <View style={styles.countryItemFlagWrapper}>
+        <CountryFlag countryCode={item.code} fallbackEmoji={item.flag} size={28} />
+      </View>
       <View style={styles.countryItemInfo}>
         <Text style={styles.countryItemName}>{item.name}</Text>
         <Text style={styles.countryItemCurrency}>
@@ -450,7 +453,9 @@ export default function PricingScreen() {
           style={styles.countryButton}
           onPress={() => setShowCountryPicker(true)}
         >
-          <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
+          <View style={styles.countryFlagWrapper}>
+            <CountryFlag countryCode={selectedCountry.code} fallbackEmoji={selectedCountry.flag} size={36} />
+          </View>
           <View style={styles.countryInfo}>
             <Text style={styles.countryName}>{selectedCountry.name}</Text>
             <Text style={styles.countryCurrency}>
@@ -675,9 +680,10 @@ const getStyles = (colors: any) => StyleSheet.create({
     borderColor: colors.border,
     marginBottom: Spacing.lg,
   },
-  countryFlag: {
-    fontSize: 32,
+  countryFlagWrapper: {
     marginRight: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   countryInfo: {
     flex: 1,
@@ -754,9 +760,10 @@ const getStyles = (colors: any) => StyleSheet.create({
   countryItemSelected: {
     backgroundColor: colors.violetLight,
   },
-  countryItemFlag: {
-    fontSize: 28,
+  countryItemFlagWrapper: {
     marginRight: Spacing.md,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   countryItemInfo: {
     flex: 1,

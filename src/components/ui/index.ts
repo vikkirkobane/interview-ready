@@ -16,5 +16,6 @@ export { CreditBadge } from './CreditBadge';
 export { CreditCostBadge } from './CreditCostBadge';
 export { EarnCreditsButton } from './EarnCreditsButton';
 export { FileAttachmentBadge } from './FileAttachmentBadge';
+export { CountryFlag } from './CountryFlag';
 
 
