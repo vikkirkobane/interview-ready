@@ -20,21 +20,17 @@ interface CreditStoreState {
 
 let activeFetchPromise: Promise<CreditBalance | null> | null = null;
 let realtimeChannel: any = null;
+let isRealtimeInitialized = false;
 
 export const useCreditStore = create<CreditStoreState>((set, get) => ({
   balance: null,
-  loading: true,
+  loading: false,
   error: null,
 
   setBalance: (balance) => set({ balance, loading: false }),
 
   fetchBalance: async (force = false) => {
     try {
-      if (force) {
-        activeFetchPromise = null;
-      }
-
-      set({ loading: true });
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id;
 
@@ -43,7 +39,11 @@ export const useCreditStore = create<CreditStoreState>((set, get) => ({
         return;
       }
 
-      if (!activeFetchPromise || force) {
+      if (force) {
+        activeFetchPromise = null;
+      }
+
+      if (!activeFetchPromise) {
         activeFetchPromise = (async () => {
           const { data, error: fetchError } = await supabase
             .from('users')
@@ -76,6 +76,10 @@ export const useCreditStore = create<CreditStoreState>((set, get) => ({
   },
 
   initRealtime: () => {
+    if (isRealtimeInitialized && realtimeChannel) {
+      return () => {};
+    }
+
     let isSubscribed = true;
 
     const setup = async () => {
@@ -107,6 +111,7 @@ export const useCreditStore = create<CreditStoreState>((set, get) => ({
         );
 
       realtimeChannel.subscribe();
+      isRealtimeInitialized = true;
     };
 
     setup();
@@ -116,6 +121,7 @@ export const useCreditStore = create<CreditStoreState>((set, get) => ({
       if (realtimeChannel) {
         supabase.removeChannel(realtimeChannel);
         realtimeChannel = null;
+        isRealtimeInitialized = false;
       }
     };
   },

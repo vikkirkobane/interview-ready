@@ -47,7 +47,12 @@ export function useCredits() {
     return () => {
       cleanupRealtime();
     };
-  }, [fetchBalance, initRealtime]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const refreshBalance = useCallback(() => {
+    return fetchBalance(true);
+  }, [fetchBalance]);
 
   // Check if user has enough credits for a feature
   const checkCredits = useCallback(async (feature: string): Promise<CreditCheckResult> => {
@@ -190,6 +195,6 @@ export function useCredits() {
     deductCredits,
     getTransactions,
     getPricing,
-    refreshBalance: () => fetchBalance(true),
+    refreshBalance,
   };
 }

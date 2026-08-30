@@ -36,8 +36,9 @@ export default function DashboardScreen() {
   useFocusEffect(
     React.useCallback(() => {
       refreshBalance();
-      fetchProfile();
-    }, [refreshBalance, fetchProfile])
+      fetchProfile().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
   );
 
   const isPro = creditIsPro || user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro' || plan === 'PREMIUM' || plan === 'PREMIUM_PLUS';
