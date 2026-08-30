@@ -39,6 +39,7 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     setError('');
+    setSuccessNotice('');
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password || !confirmPassword) {
@@ -76,7 +77,7 @@ export default function SignupScreen() {
       if (hasSession) {
         router.replace('/(onboarding)/referral-code' as any);
       } else {
-        setError('Account created. Check your email to confirm your account, then sign in.');
+        setSuccessNotice('Account created successfully! Please check your email to confirm your account, then sign in.');
       }
     }
   };
@@ -188,6 +189,18 @@ export default function SignupScreen() {
           />
 
           {error ? <Text style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
+          {successNotice ? (
+            <View style={[styles.successBox, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC' }]}>
+              <Ionicons name="mail-unread-outline" size={24} color="#15803D" style={{ marginRight: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: '#15803D', fontWeight: '700', fontSize: 14, marginBottom: 4 }}>Check your inbox</Text>
+                <Text style={{ color: '#166534', fontSize: 13, lineHeight: 18 }}>{successNotice}</Text>
+                <Pressable onPress={() => router.push('/(auth)/login')} style={{ marginTop: 8 }}>
+                  <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 13 }}>Go to Sign In →</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
 
           <Button
             title='Create Account'
@@ -287,6 +300,14 @@ const styles = StyleSheet.create({
   error: {
     ...Typography.bodySm,
     marginBottom: Spacing.sm,
+  },
+  successBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    marginBottom: Spacing.md,
   },
   divider: {
     flexDirection: 'row',

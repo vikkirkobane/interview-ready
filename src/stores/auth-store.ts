@@ -127,10 +127,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email, password, firstName = '', lastName = '') => {
     set({ loading: true });
 
+    const origin = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+      ? (globalThis as any).location.origin
+      : 'https://appinterviewready.top';
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${origin}/auth/callback`,
         data: {
           first_name: firstName,
           last_name: lastName,
