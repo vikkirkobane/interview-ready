@@ -206,6 +206,7 @@ export function generateEmailHtmlTemplate({
       </div>
       <div class="footer">
         <p>Interview Ready Web App • <a href="https://appinterviewready.top">appinterviewready.top</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p style="font-size: 11px; color: #94A3B8; margin-top: 8px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>© ${currentYear} Interview Ready. All rights reserved.</p>
       </div>
     </div>
@@ -373,7 +374,7 @@ export async function triggerWaitlistConfirmationEmail(
 
   const res = await sendEmailNotification({
     to: userEmail,
-    subject: `You're on the VIP Waitlist! 🚀 - Interview Ready`,
+    subject: `Waitlist Confirmed: Your Interview Ready Access Details`,
     html,
     text,
     emailType: 'general',

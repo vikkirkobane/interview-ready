@@ -139,7 +139,7 @@ describe('Email Notification Service', () => {
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/functions/v1/email-send'),
         expect.objectContaining({
-          body: expect.stringContaining('VIP Waitlist'),
+          body: expect.stringContaining('Waitlist Confirmed'),
         })
       );
     });

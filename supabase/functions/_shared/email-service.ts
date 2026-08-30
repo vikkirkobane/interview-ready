@@ -139,18 +139,42 @@ async function sendSpaceshipSmtp({
       throw new Error(`DATA initiation failed: ${dataResp}`);
     }
 
-    // Generate Message-ID
+    // Generate RFC 2822 & RFC 2047 compliant headers
     const messageId = `<${Date.now()}.${Math.random().toString(36).substring(2, 9)}@appinterviewready.top>`;
     const dateHeader = new Date().toUTCString();
     const boundary = `----=_Part_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+    const encodeMimeHeader = (val: string): string => {
+      if (/^[\x20-\x7E]*$/.test(val)) return val;
+      const utf8Bytes = new TextEncoder().encode(val);
+      let bin = '';
+      for (let i = 0; i < utf8Bytes.length; i++) {
+        bin += String.fromCharCode(utf8Bytes[i]);
+      }
+      return `=?UTF-8?B?${btoa(bin)}?=`;
+    };
+
+    let encodedFrom = from;
+    if (from.includes('<') && from.includes('>')) {
+      const match = from.match(/^(.*?)\s*<([^>]+)>$/);
+      if (match) {
+        const displayName = match[1].trim();
+        const emailAddr = match[2].trim();
+        encodedFrom = `"${displayName.replace(/"/g, '')}" <${emailAddr}>`;
+      }
+    }
+
     let messageBody = '';
-    messageBody += `From: ${from}\r\n`;
+    messageBody += `From: ${encodedFrom}\r\n`;
     messageBody += `To: ${to}\r\n`;
-    messageBody += `Subject: ${subject}\r\n`;
+    messageBody += `Subject: ${encodeMimeHeader(subject)}\r\n`;
     messageBody += `Date: ${dateHeader}\r\n`;
     messageBody += `Message-ID: ${messageId}\r\n`;
     messageBody += `MIME-Version: 1.0\r\n`;
+    messageBody += `X-Mailer: InterviewReady/2.0 (Transactional)\r\n`;
+    messageBody += `List-Unsubscribe: <mailto:info@appinterviewready.top?subject=unsubscribe>, <https://appinterviewready.top/notifications>\r\n`;
+    messageBody += `List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n`;
+    messageBody += `Organization: Interview Ready\r\n`;
 
     if (html && text) {
       messageBody += `Content-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n`;
@@ -239,7 +263,7 @@ export async function sendEmail({
     // Built-in VIP template fallback if not in DB
     if (!templateHtml) {
       if (templateKey === 'waitlist_confirmation') {
-        templateSubj = "You're on the VIP Waitlist! 🚀 - Interview Ready";
+        templateSubj = "Waitlist Confirmed: Your Interview Ready Access Details";
         templateHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -286,16 +310,17 @@ export async function sendEmail({
         </div>
       </div>
       <div class="footer">
-        <p>Interview Ready • <a href="https://appinterviewready.top/#faq">FAQ</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>Interview Ready • <a href="https://appinterviewready.top">appinterviewready.top</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p style="font-size: 11px; color: #94a3b8; margin-top: 12px;">You received this transactional email regarding your waitlist confirmation. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>© 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
 </body>
 </html>`;
-        templateText = "Hi {{first_name}},\n\nYou are on the VIP waitlist for Interview Ready!\n\nQueue Position: #{{queue_position}}\nBonus Credits: 10 AI Credits Reserved\n\nVisit: https://appinterviewready.top\nSupport: info@appinterviewready.top\n\nInterview Ready Team";
+        templateText = "Hi {{first_name}},\n\nYou are on the waitlist for Interview Ready!\n\nQueue Position: #{{queue_position}}\nBonus Credits: 10 AI Credits Reserved\n\nVisit: https://appinterviewready.top\nSupport: info@appinterviewready.top\n\nInterview Ready Team";
       } else if (templateKey === 'welcome') {
-        templateSubj = "Welcome to Interview Ready, {{first_name}}! 🚀";
+        templateSubj = "Welcome to Interview Ready, {{first_name}}";
         templateHtml = `<!DOCTYPE html>
 <html>
 <head>
