@@ -8,6 +8,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { triggerWelcomeEmail } from '../../src/lib/emailNotificationService';
+import { syncUserToAirtable } from '../../src/lib/airtableService';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -65,7 +66,8 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
-      // Trigger rich welcome email in background
+      // Sync candidate email to Airtable & trigger rich welcome email in background
+      syncUserToAirtable({ email: trimmedEmail, status: 'Confirmed' }).catch(() => {});
       triggerWelcomeEmail(trimmedEmail).catch(() => {});
 
       // If email confirmation is required, no session is returned yet — the
@@ -85,7 +87,15 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError);
     } else {
-      const isCompleted = useAuthStore.getState().user?.user_metadata?.onboarding_completed;
+      const activeUser = useAuthStore.getState().user;
+      if (activeUser?.email) {
+        syncUserToAirtable({ 
+          email: activeUser.email, 
+          name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name,
+          status: 'Confirmed' 
+        }).catch(() => {});
+      }
+      const isCompleted = activeUser?.user_metadata?.onboarding_completed;
       if (isCompleted) {
         router.replace('/(tabs)');
       } else {
@@ -99,6 +109,15 @@ export default function SignupScreen() {
     const { error: authError } = await signInWithLinkedInIdToken();
     if (authError && !authError.toLowerCase().includes('cancel')) {
       setError(authError);
+    } else {
+      const activeUser = useAuthStore.getState().user;
+      if (activeUser?.email) {
+        syncUserToAirtable({ 
+          email: activeUser.email, 
+          name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name,
+          status: 'Confirmed' 
+        }).catch(() => {});
+      }
     }
     // Routing is handled by the session-watcher effect above (OAuth delivers
     // the session asynchronously, either inline on iOS or via deep link on Android).

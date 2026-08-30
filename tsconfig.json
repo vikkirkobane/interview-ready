@@ -1,10 +1,10 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
     "target": "ESNext",
     "lib": ["ESNext"],
     "types": ["jest", "node"],
-
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -24,6 +24,5 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["supabase/**", "interview-ready/**", "dist/**", "node_modules/**", "_dev/**", "android/**"],
-  "extends": "expo/tsconfig.base"
+  "exclude": ["supabase/**", "supabase/functions/**", "interview-ready/**", "dist/**", "node_modules/**", "_dev/**", "android/**"]
 }

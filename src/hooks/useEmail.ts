@@ -249,6 +249,29 @@ export const EmailHelpers = {
   },
 
   /**
+   * Send VIP Waitlist Confirmation email
+   */
+  sendWaitlistConfirmation: async (params: {
+    to: string;
+    userName: string;
+    queuePosition?: number;
+  }) => {
+    return sendEmailDirectly({
+      to: params.to,
+      subject: "You're on the VIP Waitlist! 🚀 - Interview Ready",
+      templateKey: 'waitlist_confirmation',
+      templateVariables: {
+        user_name: params.userName,
+        first_name: params.userName,
+        queue_position: (params.queuePosition || 100).toString(),
+        app_url: 'https://appinterviewready.top',
+      },
+      emailType: 'waitlist_confirmation',
+      metadata: { queue_position: params.queuePosition || 100 },
+    });
+  },
+
+  /**
    * Send custom email
    */
   sendCustom: async (params: {

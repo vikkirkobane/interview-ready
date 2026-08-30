@@ -1,4 +1,5 @@
 import { supabase, supabaseUrl } from './supabase';
+import { syncUserToAirtable } from './airtableService';
 
 /**
  * Interface for email delivery options
@@ -239,8 +240,8 @@ export async function sendEmailNotification(options: SendEmailOptions): Promise<
 export async function triggerWelcomeEmail(userEmail: string, userName?: string): Promise<boolean> {
   if (!userEmail) return false;
 
-  const appUrl = typeof window !== 'undefined' && window?.location?.origin
-    ? window.location.origin
+  const appUrl = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+    ? (globalThis as any).location.origin
     : 'https://appinterviewready.top';
 
   const html = generateEmailHtmlTemplate({
@@ -287,6 +288,76 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
     text,
     emailType: 'welcome',
     metadata: { source: 'client_welcome_dispatch' },
+  });
+
+  return res.success;
+}
+
+/**
+ * Send VIP Waitlist Confirmation Email via Spaceship
+ */
+export async function triggerWaitlistConfirmationEmail(
+  userEmail: string,
+  userName?: string,
+  queuePosition: number = 100
+): Promise<boolean> {
+  if (!userEmail) return false;
+
+  const appUrl = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+    ? (globalThis as any).location.origin
+    : 'https://appinterviewready.top';
+
+  const html = generateEmailHtmlTemplate({
+    preheader: "You're officially on the VIP waitlist for Interview Ready!",
+    title: 'Waitlist Confirmed 🚀',
+    subtitle: `Queue Position: #${queuePosition} • 10 Bonus AI Credits Reserved`,
+    userName: userName || 'there',
+    bodyContent: `
+      <p style="font-size: 14px; color: #4B5563; line-height: 1.6;">
+        You have secured your spot on the priority access waitlist for <strong>Interview Ready</strong>.
+      </p>
+      <div style="background-color: #F3F4F6; border-radius: 10px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #1F2937;">What You Get on Day 1:</p>
+        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #4B5563; line-height: 1.6;">
+          <li><strong>10 Free AI Credits:</strong> Reserved and waiting in your account.</li>
+          <li><strong>Instant ATS Scans:</strong> Real-time resume keyword matching.</li>
+          <li><strong>Priority Support:</strong> Direct coaching assistance.</li>
+        </ul>
+      </div>
+    `,
+    ctaText: 'Visit Interview Ready',
+    ctaUrl: appUrl,
+    proTip: 'Keep an eye on your inbox—we unlock new cohort access every week!',
+  });
+
+  const text = [
+    `Hello ${userName || 'there'},`,
+    '',
+    `You are on the VIP waitlist for Interview Ready (Queue Position: #${queuePosition})!`,
+    'We have reserved 10 bonus AI credits for your account.',
+    '',
+    `Visit: ${appUrl}`,
+    'Support: info@appinterviewready.top',
+    '',
+    '- The Interview Ready Team',
+  ].join('\n');
+
+  // Sync to Airtable table (tbl0y0reK4q7PvA1t) in background
+  syncUserToAirtable({
+    email: userEmail,
+    name: userName,
+    status: 'Confirmed',
+    waitlistSpot: queuePosition,
+    sendConfirmationEmail: false, // already dispatched below
+  }).catch(() => {});
+
+  const res = await sendEmailNotification({
+    to: userEmail,
+    subject: `You're on the VIP Waitlist! 🚀 - Interview Ready`,
+    html,
+    text,
+    emailType: 'general',
+    metadata: { source: 'waitlist_signup', queue_position: queuePosition },
   });
 
   return res.success;

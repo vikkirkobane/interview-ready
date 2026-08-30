@@ -1,4 +1,22 @@
-import { triggerWelcomeEmail, generateEmailHtmlTemplate, sendEmailNotification } from '../../src/lib/emailNotificationService';
+import { 
+  triggerWelcomeEmail, 
+  generateEmailHtmlTemplate, 
+  sendEmailNotification,
+  triggerWaitlistConfirmationEmail,
+} from '../../src/lib/emailNotificationService';
+
+jest.mock('../../src/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: jest.fn().mockResolvedValue({ data: { session: null } }),
+    },
+  },
+  supabaseUrl: 'https://test-project.supabase.co',
+}));
+
+jest.mock('../../src/lib/airtableService', () => ({
+  syncUserToAirtable: jest.fn().mockResolvedValue({ success: true }),
+}));
 
 global.fetch = jest.fn() as any;
 
@@ -101,6 +119,29 @@ describe('Email Notification Service', () => {
 
       const result = await triggerWelcomeEmail('candidate@example.com', 'Sarah');
       expect(result).toBe(true);
+    });
+  });
+
+  describe('triggerWaitlistConfirmationEmail', () => {
+    it('returns false if email is missing', async () => {
+      const result = await triggerWaitlistConfirmationEmail('');
+      expect(result).toBe(false);
+    });
+
+    it('dispatches waitlist confirmation email with queue position', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+      const result = await triggerWaitlistConfirmationEmail('waitlist@example.com', 'David', 42);
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/functions/v1/email-send'),
+        expect.objectContaining({
+          body: expect.stringContaining('VIP Waitlist'),
+        })
+      );
     });
   });
 });

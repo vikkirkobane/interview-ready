@@ -102,7 +102,9 @@ Follow these step-by-step actions to launch the web app live in production:
 | `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | Your Google Web Client ID (`...apps.googleusercontent.com`) |
 | `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` | Your Google Android Client ID |
 | `DASHSCOPE_API_KEY` | Qwen / DashScope AI API Key |
-| `RESEND_API_KEY` | Resend email API Key |
+| `SPACESHIP_SMTP_USER` | Spaceship Spacemail mailbox (`info@appinterviewready.top`) |
+| `SPACESHIP_SMTP_PASSWORD` | Spaceship Spacemail password |
+| `SPACESHIP_SMTP_HOST` | Spaceship SMTP host (`mail.spacemail.com` on port 465) |
 | `OCR_SPACE_API_KEY` | OCR Space API Key |
 | `SGAI_API_KEY` | SGAI API Key |
 
