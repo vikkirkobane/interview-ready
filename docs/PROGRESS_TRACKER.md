@@ -98,12 +98,19 @@
 - [x] **Story 18: AdMob Rewarded Ads** (`src/components/ads/`)
   - Rewarded video ads for earning extra free user credits.
 
-### UI/UX Standards & Refinements
+### UI/UX Standards, Design System & Responsive Alignment
+- [x] **Universal Design System & Theme Tokens**: Standardized `useTheme()` tokens across 100% of screens (tabs, supporting pages, modals, onboarding, auth).
+- [x] **Mobile Responsiveness & Container Centering**: Enforced standard responsive container bounds (`maxWidth: 800`, `width: '100%'`, `alignSelf: 'center'`) across all tabs (`pricing`, `company-research`, `linkedin`, `resumes`, `settings`, `referral`, `notifications`, `tracker`), supporting pages (`about`, `contact`, `privacy`, `terms`, `billing-history`, `preview`, `payment/callback`), and onboarding screens.
 - [x] **Bounded Expansion Inputs**: Standardized flexible `minHeight` / `maxHeight` constraints and internal scrolling on all multiline inputs across all tabs.
 - [x] **Attachment Shelf**: Clean document attachment badges on Ask AI and Mock Interview without polluting user prompt input fields.
 - [x] **Export System**: Unified PDF & DOCX export generators for Resumes, Cover Letters, Interview Prep, Company Research, and LinkedIn optimizations.
 
+### Transactional Email & Deliverability
+- [x] **Spaceship SMTP & Edge Functions**: Custom SMTP transport using `mail.spacemail.com` with TLS port 465 for transactional delivery (welcome emails, verification, password resets).
+- [x] **Scanner-Resilient Email Verification**: Implemented client-side OTP verification (`auth/callback?token_hash=...`) preventing automated mail scanners from invalidating single-use links.
+
 ### Quality, Tooling & Diagnostics
+- [x] **TypeScript Compiler**: Full compilation clean with `npx tsc --noEmit` (0 errors across entire workspace).
 - [x] **Expo SDK 56 Alignment**: 0 package mismatches across all 11 Expo native modules.
 - [x] **Expo Doctor**: 21/22 checks passing (all dependency and configuration checks clean).
 - [x] **ESLint Linter**: 0 errors, 0 warnings.
@@ -116,4 +123,4 @@
 
 **Overall Project Status:** 🟢 100% Complete & Production Ready  
 **Zero Blocking Issues**  
-**All 18 User Stories Implemented & Verified**
+**All 18 User Stories & Supporting Pages Fully Implemented, Styled, and Verified**
