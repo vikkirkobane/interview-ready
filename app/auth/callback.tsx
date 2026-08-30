@@ -6,6 +6,7 @@ import { useTheme, Typography, Spacing } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { exchangeAuthCodeSafely } from '../../src/lib/auth-code-exchange';
 import { triggerWelcomeEmail } from '../../src/lib/emailNotificationService';
+import { syncUserToAirtable } from '../../src/lib/airtableService';
 
 /**
  * OAuth callback screen — shown while the deep-link code exchange is in progress.
@@ -52,6 +53,7 @@ export default function AuthCallbackScreen() {
       const email = session.user?.email;
       const name = session.user?.user_metadata?.full_name || session.user?.user_metadata?.first_name;
       if (email) {
+        syncUserToAirtable({ email, name, status: 'Confirmed' }).catch(() => {});
         triggerWelcomeEmail(email, name).catch(() => {});
       }
 
