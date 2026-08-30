@@ -64,6 +64,14 @@
   ],
   "rewrites": [
     {
+      "source": "/verify-email",
+      "destination": "https://rdxcvqcxgvdgvxvfkhlr.supabase.co/auth/v1/verify"
+    },
+    {
+      "source": "/verify-email/:path*",
+      "destination": "https://rdxcvqcxgvdgvxvfkhlr.supabase.co/auth/v1/verify"
+    },
+    {
       "source": "/assets/:match*",
       "destination": "/assets/:match*"
     },

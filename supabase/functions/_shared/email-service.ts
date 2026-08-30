@@ -259,7 +259,7 @@ export async function sendEmail({
     // Built-in VIP template fallback if not in DB
     if (!templateHtml) {
       if (templateKey === 'waitlist_confirmation') {
-        templateSubj = "Interview Ready: Your Priority Waitlist Confirmation";
+        templateSubj = "Interview Ready: Waitlist Confirmation";
         templateHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -273,11 +273,9 @@ export async function sendEmail({
     .header h1 { font-size: 22px; font-weight: 700; margin: 0; color: #ffffff; }
     .body { padding: 28px 24px; }
     .body p { font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 16px 0; }
-    .features-box { background-color: #f8fafc; border-radius: 8px; padding: 16px 20px; border: 1px solid #edf2f7; margin: 20px 0; }
-    .feature-item { margin-bottom: 10px; font-size: 14px; color: #334155; }
-    .feature-item:last-child { margin-bottom: 0; }
-    .btn-container { text-align: center; margin: 28px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 30px; border-radius: 6px; display: inline-block; }
+    .info-box { background-color: #f8fafc; border-radius: 8px; padding: 16px 20px; border: 1px solid #edf2f7; margin: 20px 0; }
+    .info-item { margin-bottom: 10px; font-size: 14px; color: #334155; }
+    .info-item:last-child { margin-bottom: 0; }
     .footer { padding: 20px 24px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; line-height: 1.5; text-align: center; }
     .footer a { color: #2563EB; text-decoration: none; }
   </style>
@@ -290,28 +288,25 @@ export async function sendEmail({
       </div>
       <div class="body">
         <p>Hello {{first_name}},</p>
-        <p>Thank you for joining the priority waitlist for <strong>Interview Ready</strong>. Your spot has been confirmed.</p>
-        <div class="features-box">
-          <div class="feature-item"><strong>Waitlist Position:</strong> #{{queue_position}}</div>
-          <div class="feature-item"><strong>Included Credits:</strong> 10 complimentary AI credits reserved for your account.</div>
-          <div class="feature-item"><strong>ATS Resume Scanner:</strong> Instant match score against job descriptions.</div>
+        <p>Thank you for joining the waitlist for <strong>Interview Ready</strong>. Your spot has been confirmed.</p>
+        <div class="info-box">
+          <div class="info-item"><strong>Waitlist Position:</strong> #{{queue_position}}</div>
+          <div class="info-item"><strong>Status:</strong> Confirmed</div>
         </div>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Explore Platform Preview</a>
-        </div>
-        <p>If you have any questions or need assistance, simply reply to this email at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
+        <p>We will notify you at this email address when access becomes available.</p>
+        <p>If you have any questions, reply to this email at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
         <p>Best regards,<br>The Interview Ready Team</p>
       </div>
       <div class="footer">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a></p>
-        <p>To manage email preferences or unsubscribe, <a href="mailto:info@appinterviewready.top?subject=unsubscribe">click here to unsubscribe</a>.</p>
+        <p>To unsubscribe, reply with subject: unsubscribe.</p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
 </body>
 </html>`;
-        templateText = `Hello {{first_name}},\n\nThank you for joining the priority waitlist for Interview Ready. Your spot has been confirmed.\n\n- Waitlist Position: #{{queue_position}}\n- Included Credits: 10 complimentary AI credits reserved for your account.\n- ATS Resume Scanner: Instant match score against job descriptions.\n\nExplore Platform Preview: https://appinterviewready.top\n\nIf you have any questions or need assistance, simply reply to this email at info@appinterviewready.top.\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top\nTo manage email preferences or unsubscribe, reply with unsubscribe.`;
+        templateText = `Hello {{first_name}},\n\nThank you for joining the waitlist for Interview Ready. Your spot has been confirmed.\n\nWaitlist Position: #{{queue_position}}\nStatus: Confirmed\n\nWe will notify you at this email address when access becomes available.\n\nIf you have any questions, reply to info@appinterviewready.top.\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top\nTo unsubscribe, reply with subject: unsubscribe.`;
       } else if (templateKey === 'welcome') {
         templateSubj = "Welcome to Interview Ready - Your Account Details";
         templateHtml = `<!DOCTYPE html>

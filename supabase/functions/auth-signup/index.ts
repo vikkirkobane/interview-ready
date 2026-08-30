@@ -63,8 +63,11 @@ serve(async (req: any) => {
     }
 
     let actionLink = linkData?.properties?.action_link || redirectTo;
-    // Strict domain hygiene: Ensure redirect_to is locked to appinterviewready.top (prevents Jellyfish third-party domain flags)
-    actionLink = actionLink.replace(/redirect_to=[^&]+/g, 'redirect_to=https%3A%2F%2Fappinterviewready.top%2Fauth%2Fcallback');
+    // Strict domain hygiene: Replace supabase.co domain with our own /verify-email proxy
+    // (Jellyfish flags free cloud subdomains like supabase.co/vercel.app in emails sent from custom domains)
+    actionLink = actionLink
+      .replace('https://rdxcvqcxgvdgvxvfkhlr.supabase.co/auth/v1/verify', 'https://appinterviewready.top/verify-email')
+      .replace(/redirect_to=[^&]+/g, 'redirect_to=https%3A%2F%2Fappinterviewready.top%2Fauth%2Fcallback');
     const displayName = firstName || 'there';
 
     // 2. Sync to Airtable in background
