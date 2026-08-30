@@ -127,6 +127,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signUp: async (email, password, firstName = '', lastName = '') => {
     set({ loading: true });
 
+    // 1. Dispatch via high-deliverability auth-signup Edge Function (Spaceship TLS + Airtable Sync)
+    try {
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://rdxcvqcxgvdgvxvfkhlr.supabase.co';
+      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+
+      const resp = await fetch(`${supabaseUrl}/functions/v1/auth-signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName,
+        }),
+      });
+
+      if (resp.ok) {
+        const resData = await resp.json();
+        set({ loading: false });
+        return { error: null, user: resData?.user };
+      } else {
+        const errData = await resp.json().catch(() => ({}));
+        if (errData?.error) {
+          set({ loading: false });
+          return { error: getUserFriendlyErrorMessage(errData.error) };
+        }
+      }
+    } catch {
+      // Fallback to standard Supabase auth client if network error occurs
+    }
+
     const origin = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
       ? (globalThis as any).location.origin
       : 'https://appinterviewready.top';
