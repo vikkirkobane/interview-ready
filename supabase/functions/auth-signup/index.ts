@@ -102,7 +102,7 @@ serve(async (req: any) => {
       }
     }
 
-    // 3. Dispatch Branded Confirmation Email via sendEmail
+    // 3. Dispatch Branded Confirmation Email via sendEmail (Clean ASCII, Zero Emojis)
     const confirmSubject = 'Confirm Your Email - Interview Ready';
     const confirmHtml = `<!DOCTYPE html>
 <html>
@@ -137,23 +137,23 @@ serve(async (req: any) => {
         <div class="header-tagline">Confirm Your Email Address</div>
       </div>
       <div class="body">
-        <div class="badge">🚀 1-STEP ACTIVATION</div>
+        <div class="badge">1-STEP ACCOUNT ACTIVATION</div>
         <h2>Hello ${displayName},</h2>
         <p>Thank you for signing up for <strong>Interview Ready</strong>. Click the button below to verify your email and activate your <strong>10 Free AI Credits</strong>:</p>
         <div class="btn-container">
-          <a href="${actionLink}" class="btn">Confirm Email & Start</a>
+          <a href="${actionLink}" class="btn">Confirm Email and Start</a>
         </div>
         <div class="features-box">
-          <div class="feature-item">⚡ <strong>AI ATS Resume Scanner:</strong> Optimize your resume for any role.</div>
-          <div class="feature-item">🎯 <strong>AI Mock Interview Coach:</strong> Practice with real-time feedback.</div>
-          <div class="feature-item">🎁 <strong>10 Free Credits:</strong> Ready in your account upon verification.</div>
+          <div class="feature-item"><strong>AI ATS Resume Scanner:</strong> Optimize your resume for any role.</div>
+          <div class="feature-item"><strong>AI Mock Interview Coach:</strong> Practice with real-time feedback.</div>
+          <div class="feature-item"><strong>10 Free Credits:</strong> Ready in your account upon verification.</div>
         </div>
-        <p style="font-size: 13px; color: #64748b; margin-top: 24px;">If you didn't create an account, you can safely ignore this email.</p>
+        <p style="font-size: 13px; color: #64748b; margin-top: 24px;">If you did not create an account, you can safely ignore this email.</p>
       </div>
       <div class="footer">
-        <p>Interview Ready • <a href="https://appinterviewready.top">appinterviewready.top</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="font-size: 11px; color: #94a3b8; margin-top: 12px;">You received this transactional email for your account verification. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
-        <p>© 2026 Interview Ready. All rights reserved.</p>
+        <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>

@@ -297,22 +297,22 @@ export async function sendEmail({
         <div class="header-tagline">Land Your Next Job Faster</div>
       </div>
       <div class="body">
-        <div class="badge">🚀 WAITLIST SPOT #{{queue_position}}</div>
+        <div class="badge">PRIORITY WAITLIST: SPOT #{{queue_position}}</div>
         <h2>Hi {{first_name}},</h2>
         <p>You're officially on the priority waitlist for <strong>Interview Ready</strong>! You will be among the first to experience our next-generation AI career preparation tools.</p>
         <div class="features-box">
-          <div class="feature-item">⚡ <strong>Priority Access:</strong> Instant notification when your tier unlocks.</div>
-          <div class="feature-item">🎁 <strong>Bonus Credits:</strong> 10 free AI credits reserved for your account.</div>
-          <div class="feature-item">📄 <strong>ATS Resume Scanner:</strong> Instant feedback on job match scores.</div>
+          <div class="feature-item"><strong>Priority Access:</strong> Instant notification when your tier unlocks.</div>
+          <div class="feature-item"><strong>Bonus Credits:</strong> 10 free AI credits reserved for your account.</div>
+          <div class="feature-item"><strong>ATS Resume Scanner:</strong> Instant feedback on job match scores.</div>
         </div>
         <div class="btn-container">
           <a href="https://appinterviewready.top" class="btn">Explore Platform Preview</a>
         </div>
       </div>
       <div class="footer">
-        <p>Interview Ready • <a href="https://appinterviewready.top">appinterviewready.top</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="font-size: 11px; color: #94a3b8; margin-top: 12px;">You received this transactional email regarding your waitlist confirmation. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
-        <p>© 2026 Interview Ready. All rights reserved.</p>
+        <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -354,21 +354,21 @@ export async function sendEmail({
         <div class="header-tagline">Land Your Next Job Faster</div>
       </div>
       <div class="body">
-        <div class="badge">🎁 WELCOME BONUS: 10 FREE AI CREDITS</div>
+        <div class="badge">WELCOME BONUS: 10 FREE AI CREDITS</div>
         <h2>Hello {{first_name}},</h2>
         <p>Welcome to <strong>Interview Ready</strong>! We are thrilled to help you accelerate your job search, craft ATS-beating resumes, and ace your upcoming interviews.</p>
         <div class="features-box">
-          <div class="feature-item">⚡ <strong>AI Job Analyzer:</strong> Match your profile against any job description.</div>
-          <div class="feature-item">📄 <strong>Tailored Resumes:</strong> Stand out to hiring managers in seconds.</div>
-          <div class="feature-item">🎯 <strong>Mock Interviews:</strong> Practice real questions tailored to your target role.</div>
+          <div class="feature-item"><strong>AI Job Analyzer:</strong> Match your profile against any job description.</div>
+          <div class="feature-item"><strong>Tailored Resumes:</strong> Stand out to hiring managers in seconds.</div>
+          <div class="feature-item"><strong>Mock Interviews:</strong> Practice real questions tailored to your target role.</div>
         </div>
         <div class="btn-container">
           <a href="https://appinterviewready.top" class="btn">Get Started Now</a>
         </div>
       </div>
       <div class="footer">
-        <p>Interview Ready • <a href="https://appinterviewready.top/#faq">Help Center & FAQ</a> • <a href="https://appinterviewready.top/privacy">Privacy Policy</a></p>
-        <p>© 2026 Interview Ready. All rights reserved.</p>
+        <p>Interview Ready | <a href="https://appinterviewready.top/#faq">Help Center & FAQ</a> | <a href="https://appinterviewready.top/privacy">Privacy Policy</a></p>
+        <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
