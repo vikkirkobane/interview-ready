@@ -114,7 +114,7 @@ export default function SettingsScreen() {
           </View>
           <Badge 
             text={isPro ? (plan === 'PREMIUM_PLUS' ? 'Active VIP' : 'Active Pro') : 'Free Plan'} 
-            variant={isPro ? 'success' : 'default'} 
+            variant={isPro ? 'success' : 'skill'} 
           />
         </View>
 
@@ -142,6 +142,13 @@ export default function SettingsScreen() {
             onPress={() => router.push('/(tabs)/pricing' as any)}
           />
         </View>
+
+        <View style={[styles.divider, { backgroundColor: colors.border, marginLeft: 0 }]} />
+        <SettingRow
+          iconName="receipt-outline"
+          title="Billing & Payment History"
+          onPress={() => router.push('/billing-history' as any)}
+        />
       </Card>
 
       {/* Preferences */}

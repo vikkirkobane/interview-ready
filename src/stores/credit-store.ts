@@ -52,8 +52,9 @@ export const useCreditStore = create<CreditStoreState>((set, get) => ({
             .single();
 
           if (fetchError) throw fetchError;
+          if (!data) return null;
 
-          const isPlanExpired = data.plan_expires_at && new Date(data.plan_expires_at).getTime() < Date.now();
+          const isPlanExpired = Boolean(data.plan_expires_at && new Date(data.plan_expires_at).getTime() < Date.now());
           const effectivePlan = isPlanExpired ? 'FREE' : (data.plan || 'FREE');
 
           return {

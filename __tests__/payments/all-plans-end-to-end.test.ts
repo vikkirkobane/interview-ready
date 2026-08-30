@@ -253,7 +253,7 @@ describe('All Payment Plans — End-to-End Comprehensive Verification', () => {
 
   describe('4. Progress Bar & Capacity Ratio Calculation', () => {
     it('accurately computes capacity scale for users with starter pack top-ups', () => {
-      const plan = 'FREE';
+      const plan: string = 'FREE';
       const credits = 35;
       const totalEarned = 42;
       const baseCapacity = plan === 'PREMIUM_PLUS' ? 400 : plan === 'PREMIUM' ? 150 : 10;
@@ -265,7 +265,7 @@ describe('All Payment Plans — End-to-End Comprehensive Verification', () => {
     });
 
     it('accurately computes capacity scale for new users with starting credits', () => {
-      const plan = 'FREE';
+      const plan: string = 'FREE';
       const credits = 10;
       const totalEarned = 10;
       const baseCapacity = 10;
