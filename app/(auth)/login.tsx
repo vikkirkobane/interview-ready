@@ -1,6 +1,6 @@
 import { Pressable, View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing } from '../../src/theme/tokens';
 import { useTheme } from '../../src/theme/useTheme';
@@ -11,6 +11,7 @@ import * as Linking from 'expo-linking';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ error?: string }>();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { signIn, loading, session, signInWithGoogleIdToken, signInWithLinkedInIdToken } = useAuthStore();
@@ -18,7 +19,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(params.error ? decodeURIComponent(params.error) : '');
 
   // Route as soon as a session lands — covers OAuth flows (LinkedIn/Google)
   // where the session is delivered asynchronously via deep-link callback.
