@@ -44,7 +44,7 @@ describe('Compliance & Public Informational Pages', () => {
     const screen = await renderWithProviders(<ContactScreen />);
     expect(screen.getByText('Contact & Support')).toBeTruthy();
     expect(screen.getByText('Send us a Message')).toBeTruthy();
-    expect(screen.getByText('support@appinterviewready.top')).toBeTruthy();
+    expect(screen.getByText('info@appinterviewready.top')).toBeTruthy();
     expect(screen.getByPlaceholderText('e.g. Alex Smith')).toBeTruthy();
     expect(screen.getByPlaceholderText('e.g. alex@example.com')).toBeTruthy();
     expect(screen.getByPlaceholderText('How can we help you?')).toBeTruthy();

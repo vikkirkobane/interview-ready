@@ -64,13 +64,13 @@ export default function ContactScreen() {
         <View style={styles.cardsRow}>
           <Pressable 
             style={[styles.infoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-            onPress={() => Linking.openURL('mailto:support@appinterviewready.top')}
+            onPress={() => Linking.openURL('mailto:info@appinterviewready.top')}
           >
             <View style={[styles.cardIcon, { backgroundColor: `${colors.primary}15` }]}>
               <Ionicons name="mail-outline" size={24} color={colors.primary} />
             </View>
             <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Email Support</Text>
-            <Text style={[styles.cardValue, { color: colors.primary }]}>support@appinterviewready.top</Text>
+            <Text style={[styles.cardValue, { color: colors.primary }]}>info@appinterviewready.top</Text>
             <Text style={[styles.cardNote, { color: colors.textMuted }]}>Response within 24 hours</Text>
           </Pressable>
 

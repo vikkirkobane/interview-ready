@@ -88,7 +88,7 @@ export default function TermsOfServiceScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>8. Contact Us</Text>
           <Text style={[styles.paragraph, { color: colors.textBody }]}>
-            For any legal or terms inquiries, contact us at <Text style={{ fontWeight: '600', color: colors.primary }}>legal@appinterviewready.top</Text> or visit our <Text style={{ fontWeight: '600', color: colors.primary }} onPress={() => router.push('/contact' as any)}>Contact Page</Text>.
+            For any legal or terms inquiries, contact us at <Text style={{ fontWeight: '600', color: colors.primary }}>info@appinterviewready.top</Text> or visit our <Text style={{ fontWeight: '600', color: colors.primary }} onPress={() => router.push('/contact' as any)}>Contact Page</Text>.
           </Text>
         </View>
       </ScrollView>

@@ -87,7 +87,7 @@ export default function PrivacyPolicyScreen() {
           <Text style={[styles.bullet, { color: colors.textBody }]}>• <Text style={{ fontWeight: '600', color: colors.textPrimary }}>Right to Erasure (Deletion):</Text> Request deletion of your account and personal data.</Text>
           <Text style={[styles.bullet, { color: colors.textBody }]}>• <Text style={{ fontWeight: '600', color: colors.textPrimary }}>Right to Restrict or Object:</Text> Object to or restrict processing of your data under applicable law.</Text>
           <Text style={[styles.paragraph, { color: colors.textBody, marginTop: Spacing.sm }]}>
-            To exercise any of these rights, contact our Data Privacy Officer at <Text style={{ fontWeight: '600', color: colors.primary }}>privacy@appinterviewready.top</Text>.
+            To exercise any of these rights, contact us at <Text style={{ fontWeight: '600', color: colors.primary }}>info@appinterviewready.top</Text>.
           </Text>
         </View>
 
@@ -103,7 +103,7 @@ export default function PrivacyPolicyScreen() {
           <Text style={[styles.paragraph, { color: colors.textBody }]}>
             If you have questions, concerns, or requests regarding this Privacy Policy, please contact us:
           </Text>
-          <Text style={[styles.bullet, { color: colors.textBody }]}>• <Text style={{ fontWeight: '600', color: colors.textPrimary }}>Email:</Text> support@appinterviewready.top</Text>
+          <Text style={[styles.bullet, { color: colors.textBody }]}>• <Text style={{ fontWeight: '600', color: colors.textPrimary }}>Email:</Text> info@appinterviewready.top</Text>
           <Text style={[styles.bullet, { color: colors.textBody }]}>• <Text style={{ fontWeight: '600', color: colors.textPrimary }}>Website:</Text> https://appinterviewready.top/contact</Text>
         </View>
       </ScrollView>
