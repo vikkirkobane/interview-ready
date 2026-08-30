@@ -62,7 +62,9 @@ serve(async (req: any) => {
       );
     }
 
-    const actionLink = linkData?.properties?.action_link || redirectTo;
+    let actionLink = linkData?.properties?.action_link || redirectTo;
+    // Strict domain hygiene: Ensure redirect_to is locked to appinterviewready.top (prevents Jellyfish third-party domain flags)
+    actionLink = actionLink.replace(/redirect_to=[^&]+/g, 'redirect_to=https%3A%2F%2Fappinterviewready.top%2Fauth%2Fcallback');
     const displayName = firstName || 'there';
 
     // 2. Sync to Airtable in background
@@ -160,7 +162,7 @@ serve(async (req: any) => {
 </body>
 </html>`;
 
-    const confirmText = `Hello ${displayName},\n\nThank you for signing up for Interview Ready. Please confirm your email address by clicking the link below:\n\n${actionLink}\n\nVisit: https://appinterviewready.top\nSupport: info@appinterviewready.top\n\n- The Interview Ready Team`;
+    const confirmText = `Hello ${displayName},\n\nThank you for signing up for Interview Ready. Please confirm your email address by clicking the link below:\n\n${actionLink}\n\n- AI ATS Resume Scanner: Optimize your resume for any role.\n- AI Mock Interview Coach: Practice with real-time feedback.\n- 10 Free Credits: Ready in your account upon verification.\n\nIf you did not create an account, you can safely ignore this email.\n\nInterview Ready | appinterviewready.top | info@appinterviewready.top\nTo unsubscribe: info@appinterviewready.top?subject=unsubscribe`;
 
     let emailSent = false;
     try {
