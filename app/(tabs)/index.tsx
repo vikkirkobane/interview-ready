@@ -47,13 +47,9 @@ export default function DashboardScreen() {
   const userName = user?.user_metadata?.first_name || 'Alex';
   const credits = balance?.balance ?? 0;
   
-  let maxCredits = 10;
-  if (plan === 'PREMIUM') maxCredits = 150;
-  if (plan === 'PREMIUM_PLUS') maxCredits = 400;
-
-  if (plan === 'FREE' && credits > maxCredits) {
-    maxCredits = credits;
-  }
+  const totalEarned = balance?.totalEarned || 0;
+  const baseCapacity = plan === 'PREMIUM_PLUS' ? 400 : plan === 'PREMIUM' ? 150 : 10;
+  const maxCredits = Math.max(baseCapacity, totalEarned, credits);
   const completeness = (profile as any)?.profile_completeness ?? 0;
 
   const avatarUri = user?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=ffffff&size=128`;
@@ -161,7 +157,7 @@ export default function DashboardScreen() {
                 borderWidth: 1.5 
               }
             ]}
-            onPress={() => router.push('/(tabs)/pricing?reason=low_credits' as any)}
+            onPress={() => router.push((!isPro && credits < 2) ? ('/(tabs)/pricing?reason=low_credits' as any) : ('/(tabs)/pricing' as any))}
           >
             <ShimmerEffect duration={4000} />
             <View style={styles.statHeader}>

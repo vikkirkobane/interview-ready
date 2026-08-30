@@ -220,7 +220,7 @@ export default function PricingScreen() {
   const { balance, isPro: creditIsPro, plan } = useCredits();
   const isPro = creditIsPro || user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro' || plan === 'PREMIUM' || plan === 'PREMIUM_PLUS';
   const { reason } = useLocalSearchParams<{ reason?: string }>();
-  const isLowCredits = reason === 'low_credits' || (!isPro && balance !== null && balance.balance < 2);
+  const isLowCredits = !isPro && balance !== null && balance.balance < 2;
 
   const { colors } = useTheme();
   const styles = getStyles(colors);
