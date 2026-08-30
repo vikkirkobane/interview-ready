@@ -2,13 +2,14 @@ import { Pressable, View, Text, StyleSheet, ActivityIndicator } from 'react-nati
 import React, { useEffect, useState, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Toast from 'react-native-toast-message';
-import { Colors, Spacing, Typography } from '../../src/theme/tokens';
+import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { supabase } from '../../src/lib/supabase';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { queryClient } from '../../src/lib/query-client';
 import { _resetCreditCache } from '../../src/hooks/useCredits';
 import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
+import { Ionicons } from '@expo/vector-icons';
 
 type PaymentStatus = 'verifying' | 'success' | 'failed' | 'error';
 
@@ -17,6 +18,7 @@ export default function PaymentCallbackScreen() {
   const params = useLocalSearchParams();
   const reference = params.reference as string;
   const { setSession } = useAuthStore();
+  const { colors } = useTheme();
 
   const [status, setStatus] = useState<PaymentStatus>('verifying');
   const [message, setMessage] = useState('Verifying your payment with Paystack...');
@@ -128,67 +130,67 @@ export default function PaymentCallbackScreen() {
   const renderIcon = () => {
     switch (status) {
       case 'verifying':
-        return <ActivityIndicator size="large" color={Colors.violet} />;
+        return <ActivityIndicator size="large" color={colors.primary} />;
       case 'success':
-        return <Text style={styles.iconSuccess}>✓</Text>;
+        return <Ionicons name="checkmark" size={60} color={colors.success} />;
       case 'failed':
       case 'error':
-        return <Text style={styles.iconError}>✕</Text>;
+        return <Ionicons name="close" size={60} color={colors.error} />;
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
       case 'success':
-        return Colors.success;
+        return colors.success;
       case 'failed':
       case 'error':
-        return Colors.error;
+        return colors.error;
       default:
-        return Colors.violet;
+        return colors.primary;
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
       <View style={styles.content}>
-        <View style={[styles.iconContainer, { borderColor: getStatusColor() }]}>
+        <View style={[styles.iconContainer, { borderColor: getStatusColor(), backgroundColor: `${getStatusColor()}10` }]}>
           {renderIcon()}
         </View>
 
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
           {status === 'verifying' && 'Verifying Payment'}
           {status === 'success' && 'Payment Successful!'}
           {status === 'failed' && 'Payment Failed'}
           {status === 'error' && 'Verification Error'}
         </Text>
 
-        <Text style={styles.message}>{message}</Text>
+        <Text style={[styles.message, { color: colors.textMuted }]}>{message}</Text>
 
         {paymentDetails && (
-          <View style={styles.detailsCard}>
+          <View style={[styles.detailsCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Reference:</Text>
-              <Text style={styles.detailValue}>{paymentDetails.reference}</Text>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Reference:</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{paymentDetails.reference}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Amount:</Text>
-              <Text style={styles.detailValue}>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Amount:</Text>
+              <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
                 {paymentDetails.currency} {paymentDetails.amount?.toLocaleString()}
               </Text>
             </View>
             {paymentDetails.paid_at && (
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Date:</Text>
-                <Text style={styles.detailValue}>
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Date:</Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>
                   {new Date(paymentDetails.paid_at).toLocaleString()}
                 </Text>
               </View>
             )}
             {paymentDetails.channel && (
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Channel:</Text>
-                <Text style={styles.detailValue}>{paymentDetails.channel}</Text>
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Channel:</Text>
+                <Text style={[styles.detailValue, { color: colors.textPrimary }]}>{paymentDetails.channel}</Text>
               </View>
             )}
           </View>
@@ -199,7 +201,7 @@ export default function PaymentCallbackScreen() {
             style={[styles.button, { backgroundColor: getStatusColor() }]}
             onPress={handleContinue}
           >
-            <Text style={styles.buttonText}>
+            <Text style={[styles.buttonText, { color: colors.textInverse }]}>
               {status === 'success' ? 'Continue to Dashboard' : 'Try Again'}
             </Text>
           </Pressable>
@@ -208,9 +210,9 @@ export default function PaymentCallbackScreen() {
         {status === 'failed' && (
           <Pressable
             style={styles.supportButton}
-            onPress={() => router.push('/(tabs)/settings')}
+            onPress={() => router.push('/contact' as any)}
           >
-            <Text style={styles.supportButtonText}>Contact Support</Text>
+            <Text style={[styles.supportButtonText, { color: colors.primary }]}>Contact Support</Text>
           </Pressable>
         )}
       </View>
@@ -221,55 +223,44 @@ export default function PaymentCallbackScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgSecondary,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: Spacing.xl,
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
   },
   iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 4,
+    width: 100,
+    height: 100,
+    borderRadius: Radius.full,
+    borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Spacing.xl,
   },
-  iconSuccess: {
-    fontSize: 64,
-    color: Colors.success,
-    fontWeight: '700',
-  },
-  iconError: {
-    fontSize: 64,
-    color: Colors.error,
-    fontWeight: '700',
-  },
   title: {
-    ...Typography.displayMd,
-    color: Colors.textPrimary,
+    ...Typography.headingLg,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   message: {
-    ...Typography.bodyLg,
-    color: Colors.textBody,
+    ...Typography.bodyMd,
     textAlign: 'center',
     marginBottom: Spacing.xl,
-    maxWidth: 400,
+    lineHeight: 22,
   },
   detailsCard: {
-    backgroundColor: Colors.bgCard,
-    borderRadius: 12,
+    borderRadius: Radius.lg,
     padding: Spacing.lg,
     width: '100%',
-    maxWidth: 400,
     marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    ...Shadow.card,
   },
   detailRow: {
     flexDirection: 'row',
@@ -277,27 +268,24 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   detailLabel: {
-    ...Typography.bodyMd,
-    color: Colors.textMuted,
+    ...Typography.bodySm,
     fontWeight: '600',
   },
   detailValue: {
-    ...Typography.bodyMd,
-    color: Colors.textPrimary,
-    fontWeight: '500',
+    ...Typography.bodySm,
+    fontWeight: '600',
   },
   button: {
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: 12,
+    height: 50,
+    borderRadius: Radius.full,
     width: '100%',
-    maxWidth: 400,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: Spacing.md,
+    ...Shadow.card,
   },
   buttonText: {
     ...Typography.headingMd,
-    color: Colors.textInverse,
     fontWeight: '700',
   },
   supportButton: {
@@ -306,7 +294,6 @@ const styles = StyleSheet.create({
   },
   supportButtonText: {
     ...Typography.bodyMd,
-    color: Colors.violet,
     fontWeight: '600',
   },
 });

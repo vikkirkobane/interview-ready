@@ -437,6 +437,9 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.lg,
     paddingBottom: 120,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   summaryGrid: {
     flexDirection: 'row',
