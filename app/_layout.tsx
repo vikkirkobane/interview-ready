@@ -99,13 +99,15 @@ function AuthGuard() {
     // Non-grouped auth/callback route (app/auth/callback.tsx → /auth/callback)
     if (firstSegment === 'auth' && secondSegment === 'callback') return;
 
-    // Allow public informational and compliance pages without authentication
+    // Allow public landing, informational, and compliance pages without authentication
+    const isLandingOrIndex = !firstSegment || firstSegment === 'index';
     const isPublicRoute =
+      isLandingOrIndex ||
       firstSegment === 'privacy' ||
       firstSegment === 'terms' ||
       firstSegment === 'about' ||
       firstSegment === 'contact';
-    if (isPublicRoute) return;
+    if (isPublicRoute && !session) return;
 
     // CRITICAL: Don't redirect to welcome if an OAuth deep link is still
     // being processed. The code exchange is async and may not have completed yet.
@@ -120,7 +122,7 @@ function AuthGuard() {
       const isCompleted = session.user?.user_metadata?.onboarding_completed;
       const inOnboarding = firstSegment === '(onboarding)';
       
-      if (!isCompleted && !inOnboarding) {
+      if (!isCompleted && !inOnboarding && !isLandingOrIndex) {
         router.replace('/(onboarding)/referral-code' as any);
       } else if (isCompleted && inAuthGroup) {
         router.replace('/(tabs)');
