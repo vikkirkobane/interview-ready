@@ -7,11 +7,13 @@ import {
   StyleSheet,
   Platform,
   useWindowDimensions,
+  Animated,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle, Path, G, Text as SvgText, TSpan } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useAuthStore } from '../../stores/auth-store';
 import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
@@ -127,13 +129,18 @@ export default function LandingPage() {
 
   const [activeDemo, setActiveDemo] = useState<ProfessionDemo>(DEMO_DATA[0]);
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [simulatedScore, setSimulatedScore] = useState(activeDemo.originalScore);
-  const [simulatedText, setSimulatedText] = useState(activeDemo.originalText);
+  const [simulatedScore, setSimulatedScore] = useState(activeDemo.optimizedScore);
+  const [simulatedText, setSimulatedText] = useState(activeDemo.optimizedText);
   const [showOptimized, setShowOptimized] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+
+  // Smooth Animations
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scoreCounterRef = useRef<any>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const sectionPositions = useRef<{ [key: string]: number }>({});
@@ -142,23 +149,68 @@ export default function LandingPage() {
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (scoreCounterRef.current) clearInterval(scoreCounterRef.current);
     };
   }, []);
 
   const handleSelectDemo = (demo: ProfessionDemo) => {
+    if (demo.id === activeDemo.id && !isOptimizing) return;
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (scoreCounterRef.current) clearInterval(scoreCounterRef.current);
+
     setActiveDemo(demo);
     setIsOptimizing(true);
     setShowOptimized(false);
     setSimulatedScore(demo.originalScore);
     setSimulatedText(demo.originalText);
 
+    // Smooth subtle fade & scale down
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0.35,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 0.97,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // After brief optimization pulse, smoothly animate score upward and fade in
     timerRef.current = setTimeout(() => {
-      setSimulatedScore(demo.optimizedScore);
+      let currentScore = demo.originalScore;
+      const targetScore = demo.optimizedScore;
+      const step = Math.max(1, Math.floor((targetScore - currentScore) / 8));
+
+      scoreCounterRef.current = setInterval(() => {
+        currentScore += step;
+        if (currentScore >= targetScore) {
+          currentScore = targetScore;
+          clearInterval(scoreCounterRef.current);
+        }
+        setSimulatedScore(currentScore);
+      }, 30);
+
       setSimulatedText(demo.optimizedText);
       setShowOptimized(true);
       setIsOptimizing(false);
-    }, 450);
+
+      // Smooth fade and spring in
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 6,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 400);
   };
 
   const handleGetStarted = () => {
@@ -195,36 +247,38 @@ export default function LandingPage() {
       {/* 1. STICKY NAVBAR */}
       <View style={styles.navbar}>
         <View style={styles.navbarInner}>
-          {/* Logo & Brand */}
-          <Pressable
-            style={styles.navBrand}
-            onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
-          >
-            <Image
-              source={require('../../../assets/logo.png')}
-              style={styles.navLogo}
-              contentFit="contain"
-            />
-            <Text style={styles.brandText}>Interview Ready</Text>
-          </Pressable>
+          {/* Left Group: Brand + Desktop Nav Links */}
+          <View style={styles.navLeftGroup}>
+            <Pressable
+              style={styles.navBrand}
+              onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+            >
+              <Image
+                source={require('../../../assets/logo.png')}
+                style={styles.navLogo}
+                contentFit="contain"
+              />
+              <Text style={styles.brandText}>Interview Ready</Text>
+            </Pressable>
 
-          {/* Desktop Nav Links */}
-          {isDesktop && (
-            <View style={styles.navLinks}>
-              <Pressable onPress={() => scrollToSection('features')} style={styles.navLinkItem}>
-                <Text style={styles.navLinkText}>Features</Text>
-              </Pressable>
-              <Pressable onPress={() => scrollToSection('how-it-works')} style={styles.navLinkItem}>
-                <Text style={styles.navLinkText}>How It Works</Text>
-              </Pressable>
-              <Pressable onPress={() => scrollToSection('testimonials')} style={styles.navLinkItem}>
-                <Text style={styles.navLinkText}>Recruiter Tested</Text>
-              </Pressable>
-              <Pressable onPress={() => scrollToSection('faq')} style={styles.navLinkItem}>
-                <Text style={styles.navLinkText}>FAQ</Text>
-              </Pressable>
-            </View>
-          )}
+            {/* Desktop Nav Links */}
+            {isDesktop && (
+              <View style={styles.navLinks}>
+                <Pressable onPress={() => scrollToSection('features')} style={styles.navLinkItem}>
+                  <Text style={styles.navLinkText}>Features</Text>
+                </Pressable>
+                <Pressable onPress={() => scrollToSection('how-it-works')} style={styles.navLinkItem}>
+                  <Text style={styles.navLinkText}>How It Works</Text>
+                </Pressable>
+                <Pressable onPress={() => scrollToSection('testimonials')} style={styles.navLinkItem}>
+                  <Text style={styles.navLinkText}>Recruiter Tested</Text>
+                </Pressable>
+                <Pressable onPress={() => scrollToSection('faq')} style={styles.navLinkItem}>
+                  <Text style={styles.navLinkText}>FAQ</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
 
           {/* Nav Right CTA */}
           <View style={styles.navRight}>
@@ -241,7 +295,7 @@ export default function LandingPage() {
                   </Pressable>
                 )}
                 <Pressable style={styles.navPrimaryBtn} onPress={handleGetStarted}>
-                  <Text style={styles.navPrimaryBtnText}>Get Early Access</Text>
+                  <Text style={styles.navPrimaryBtnText}>Get Started</Text>
                   <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
                 </Pressable>
               </>
@@ -417,8 +471,16 @@ export default function LandingPage() {
                         })}
                       </View>
 
-                      {/* Score Gauge Card */}
-                      <View style={styles.simScoreCard}>
+                      {/* Animated Score Gauge Card */}
+                      <Animated.View
+                        style={[
+                          styles.simScoreCard,
+                          {
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }],
+                          },
+                        ]}
+                      >
                         <View>
                           <Text style={styles.simScoreLabel}>ATS MATCH SCORE</Text>
                           <Text style={styles.simScoreSub}>Resume Compatibility</Text>
@@ -443,10 +505,18 @@ export default function LandingPage() {
                             {simulatedScore}%
                           </Text>
                         </View>
-                      </View>
+                      </Animated.View>
 
                       {/* Original vs Optimized Bullet Content */}
-                      <View style={styles.bulletArea}>
+                      <Animated.View
+                        style={[
+                          styles.bulletArea,
+                          {
+                            opacity: fadeAnim,
+                            transform: [{ scale: scaleAnim }],
+                          },
+                        ]}
+                      >
                         {/* Before State */}
                         <View style={styles.beforeBox}>
                           <View style={styles.stateTagBefore}>
@@ -491,7 +561,7 @@ export default function LandingPage() {
                             ))}
                           </View>
                         )}
-                      </View>
+                      </Animated.View>
                     </View>
 
                     {/* Simulated Device Action Bar */}
@@ -1005,9 +1075,21 @@ export default function LandingPage() {
 
             <View style={styles.footerBottom}>
               <Text style={styles.copyright}>© 2026 Interview Ready. All rights reserved.</Text>
-              <View style={{ flexDirection: 'row', gap: 16 }}>
-                <Ionicons name="logo-linkedin" size={18} color="#93C5FD" />
-                <Ionicons name="logo-twitter" size={18} color="#93C5FD" />
+              <View style={styles.footerSocials}>
+                <Pressable
+                  onPress={() => Linking.openURL('https://www.linkedin.com/company/interview-ready-app')}
+                  accessibilityLabel="Visit Interview Ready on LinkedIn"
+                  style={styles.socialBtn}
+                >
+                  <Ionicons name="logo-linkedin" size={20} color="#93C5FD" />
+                </Pressable>
+                <Pressable
+                  onPress={() => Linking.openURL('https://twitter.com')}
+                  accessibilityLabel="Visit Interview Ready on Twitter"
+                  style={styles.socialBtn}
+                >
+                  <Ionicons name="logo-twitter" size={20} color="#93C5FD" />
+                </Pressable>
               </View>
             </View>
           </View>
@@ -1059,6 +1141,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  navLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 40,
+  },
   navBrand: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1078,7 +1165,7 @@ const styles = StyleSheet.create({
   navLinks: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 32,
+    gap: 28,
   },
   navLinkItem: {
     paddingVertical: 6,
@@ -1416,6 +1503,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     alignItems: 'center',
     borderRadius: Radius.md,
+    ...(Platform.OS === 'web' ? ({ transition: 'all 0.2s ease-in-out' } as any) : {}),
   },
   simTabActive: {
     backgroundColor: '#FFFFFF',
@@ -2326,6 +2414,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  footerSocials: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  socialBtn: {
+    padding: 6,
+    borderRadius: Radius.md,
   },
   copyright: {
     fontSize: 12,
