@@ -460,6 +460,14 @@ export default function PricingScreen() {
       showsVerticalScrollIndicator={Platform.OS === 'web'}
     >
       <View style={styles.header}>
+        <Pressable
+          style={[styles.backBtn, { alignSelf: 'flex-start', marginBottom: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+        </Pressable>
         <Text style={styles.title}>Choose Your Plan</Text>
         <Text style={styles.subtitle}>
           Unlock unlimited AI-powered career tools and land your dream job faster
@@ -648,6 +656,11 @@ const getStyles = (colors: any) => StyleSheet.create({
   header: {
     marginBottom: Spacing.xl,
     alignItems: 'center',
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   lowCreditBanner: {
     flexDirection: 'row',

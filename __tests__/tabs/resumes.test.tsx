@@ -91,6 +91,14 @@ describe('My Resumes — user stories', () => {
     expect(router.push).toHaveBeenCalledWith('/(tabs)/new-resume');
   });
 
+  it('navigates back when back button is pressed', async () => {
+    const screen = await renderScreen();
+    const backBtn = screen.getByLabelText('Go back');
+    expect(backBtn).toBeTruthy();
+    fireEvent.press(backBtn);
+    expect(router.back).toHaveBeenCalled();
+  });
+
   it('shows an empty state when there are no resumes', async () => {
     const screen = await renderScreen();
     await waitFor(() => {

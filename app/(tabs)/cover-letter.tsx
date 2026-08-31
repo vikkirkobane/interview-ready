@@ -426,7 +426,7 @@ export default function CoverLetterGeneratorScreen() {
   const handleBack = () => {
     if (fromList === 'true' && id) {
       router.back();
-    } else {
+    } else if (generatedLetter) {
       hasResetRef.current = true;
       setGeneratedLetter(null);
       setCoverLetterObj(null);
@@ -435,6 +435,10 @@ export default function CoverLetterGeneratorScreen() {
       } catch {
         // ignore
       }
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
     }
   };
 
@@ -448,12 +452,12 @@ export default function CoverLetterGeneratorScreen() {
         
         {/* Page Header */}
         <View style={styles.pageHeader}>
-          {(generatedLetter || fromList === 'true') && !generating && (
+          {!generating && (
             <Pressable
               style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
               onPress={handleBack}
               accessibilityRole="button"
-              accessibilityLabel="Back to cover letter generator"
+              accessibilityLabel={generatedLetter ? "Back to cover letter generator" : "Go back"}
             >
               <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
             </Pressable>

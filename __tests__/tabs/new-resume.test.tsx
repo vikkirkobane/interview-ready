@@ -378,25 +378,8 @@ describe('Resume Builder (new-resume) — user stories', () => {
       expect(screen.getByText('Start Over & Create New Resume')).toBeTruthy();
     });
 
-    // Press the Top Return Arrow button
+    // Press the Top Return Arrow button -> takes user directly to the first screen of the page
     await fireEvent.press(screen.getByLabelText('Back to resume generator'));
-
-    // Should prompt confirmation alert
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Start Over?',
-      'Would you like to start over and generate a new resume? Any unsaved edits will be discarded.',
-      expect.any(Array)
-    );
-
-    const alertButtons = (Alert.alert as jest.Mock).mock.calls[0][2];
-    const confirmButton = alertButtons.find((btn: any) => btn.text === 'Start Over');
-    expect(confirmButton).toBeDefined();
-
-    // Trigger the confirmation action
-    await act(async () => {
-      confirmButton.onPress();
-      await flushPromises();
-    });
 
     // Should return back to the initial resume creation form state
     await waitFor(() => {

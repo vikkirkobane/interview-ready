@@ -25,7 +25,7 @@ import { useAuthStore } from '../../src/stores/auth-store';
 import { useProfileStore } from '../../src/stores/profile-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { supabase } from '../../src/lib/supabase';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import Toast from 'react-native-toast-message';
 import { handleApiError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
@@ -69,6 +69,7 @@ const KW_COLOR: Record<string, string> = {
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function LinkedinOptimizerScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const { user, signInWithOAuth } = useAuthStore();
   const { profile, fetchProfile, updateProfile } = useProfileStore();
@@ -457,6 +458,14 @@ export default function LinkedinOptimizerScreen() {
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
           {/* Header */}
           <View style={s.pageHeader}>
+            <Pressable 
+              style={[s.backBtn, { alignSelf: 'flex-start', marginBottom: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+            </Pressable>
             <View style={[s.liIcon, { backgroundColor: '#0A66C2' }]}>
               <Ionicons name="logo-linkedin" size={36} color="#fff" />
             </View>
@@ -529,6 +538,14 @@ export default function LinkedinOptimizerScreen() {
 <ScrollView style={[s.screen, { backgroundColor: colors.bgSecondary }]} contentContainerStyle={s.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         {/* Header */}
         <View style={s.pageHeader}>
+          <Pressable 
+            style={[s.backBtn, { alignSelf: 'flex-start', marginBottom: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+          </Pressable>
           <View style={[s.liIcon, { backgroundColor: colors.bgPrimary }]}>
             <Ionicons name="logo-linkedin" size={32} color="#0A66C2" />
           </View>

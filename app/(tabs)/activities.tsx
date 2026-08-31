@@ -20,6 +20,14 @@ export default function AllActivitiesScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.header}>
+          <Pressable 
+            style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </Pressable>
           <Text style={[styles.title, { color: colors.textPrimary }]}>All Recent Activity</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             Your complete history of resumes, cover letters, job matches, and interviews.
@@ -81,6 +89,13 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacing.xl,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   title: {
     ...Typography.displayMd,

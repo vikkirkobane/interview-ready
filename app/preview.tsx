@@ -81,8 +81,13 @@ export default function PreviewScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.bgSecondary }]} edges={['top', 'bottom']}>
       <View style={[styles.header, { backgroundColor: colors.bgPrimary, borderBottomColor: colors.border }]}>
-        <Pressable style={styles.backButton} onPress={handleBack}>
-           <Text style={{ ...Typography.headingLg, color: colors.textBody }}>←</Text>
+        <Pressable 
+          style={styles.backButton} 
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
         <Ionicons name="document-text" size={24} color={colors.primary} style={{ marginRight: 8 }} />
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Document Preview</Text>

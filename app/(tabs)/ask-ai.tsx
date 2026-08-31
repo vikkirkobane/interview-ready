@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import { useFilePicker } from '../../src/hooks/useFilePicker';import * as Clipboard from 'expo-clipboard';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { handleApiError, isInsufficientCreditsError, getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
+import { useRouter } from 'expo-router';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../src/lib/supabase';
@@ -19,6 +20,7 @@ import { useCreditGuard } from '../../src/lib/creditGuard';
 type Message = { id: string; role: 'user' | 'ai'; text: string; };
 
 export default function AskAIScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const { requireCredits } = useCreditGuard();
   const [messages, setMessages] = useState<Message[]>([
@@ -263,6 +265,16 @@ onFilePicked: async (payload) => {
     setJdFileName(null);
   };
 
+  const handleBack = () => {
+    if (messages.length > 1) {
+      handleResetChat();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bgSecondary }]}>
       <KeyboardAvoidingView 
@@ -278,16 +290,14 @@ onFilePicked: async (payload) => {
           
           {/* Page Header */}
           <View style={styles.pageHeader}>
-            {messages.length > 1 && (
-              <Pressable
-                style={[styles.backBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-                onPress={handleResetChat}
-                accessibilityRole="button"
-                accessibilityLabel="Reset chat"
-              >
-                <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
-              </Pressable>
-            )}
+            <Pressable
+              style={[styles.backBtn, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+              onPress={handleBack}
+              accessibilityRole="button"
+              accessibilityLabel={messages.length > 1 ? "Reset chat" : "Go back"}
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+            </Pressable>
             <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Ask AI</Text>
             <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>Chat with AI to answer application questions flawlessly.</Text>
           </View>

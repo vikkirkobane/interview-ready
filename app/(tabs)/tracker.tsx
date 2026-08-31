@@ -294,7 +294,17 @@ export default function TrackerScreen() {
       <View style={styles.mainContent}>
         {/* Header Info */}
         <View style={styles.pageHeader}>
-          <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Application Tracker</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 }}>
+            <Pressable 
+              style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+              onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+            </Pressable>
+            <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Application Tracker</Text>
+          </View>
           <Pressable style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => setIsAddModalVisible(true)}>
             <Ionicons name="add" size={16} color={colors.textInverse} />
             <Text style={[styles.addButtonText, { color: colors.textInverse }]}>Add New</Text>
@@ -359,6 +369,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.xl,
     gap: Spacing.md,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   pageTitle: {
     ...Typography.displayMd,

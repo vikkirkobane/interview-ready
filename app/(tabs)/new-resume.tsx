@@ -609,11 +609,24 @@ export default function ResumeBuilderScreen() {
     setUrlError('');
     try {
       router.setParams({ id: '', template: '', fromList: '' });
-      router.replace('/new-resume' as any);
+      router.replace('/(tabs)/new-resume' as any);
     } catch {
       // no-op
     }
     Toast.show({ type: 'info', text1: 'Ready for new resume', text2: 'Enter a job description or choose a template to begin.' });
+  };
+
+  const handleBack = () => {
+    if (fromList === 'true' && id) {
+      router.back();
+    } else if (draft) {
+      // Return user to the first screen of the page (resume generator / template selection)
+      resetToNewResume();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   const handleStartOver = () => {
@@ -1879,16 +1892,14 @@ export default function ResumeBuilderScreen() {
   function renderPageHeader() {
     return (
       <View style={styles.pageHeader}>
-        {draft && (
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={handleStartOver}
-            accessibilityRole="button"
-            accessibilityLabel="Back to resume generator"
-          >
-            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel={draft ? "Back to resume generator" : "Go back"}
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+        </TouchableOpacity>
         <View style={styles.pageHeaderTop}>
           <View style={{ flex: 1, paddingRight: 12 }}>
             <Text style={styles.pageTitle}>Resume Builder</Text>

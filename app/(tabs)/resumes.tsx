@@ -45,6 +45,14 @@ export default function ResumesScreen() {
         borderBottomColor: colors.border 
       }]}>
         <View style={styles.headerLeft}>
+          <Pressable 
+            style={styles.backBtn} 
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </Pressable>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>My Resumes</Text>
         </View>
         <View style={styles.headerRight}>
@@ -143,6 +151,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+  },
+  backBtn: {
+    padding: 6,
+    borderRadius: Radius.full,
   },
   headerTitle: {
     ...Typography.headingLg,

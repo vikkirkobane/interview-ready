@@ -70,7 +70,7 @@ describe('Document Preview — user stories', () => {
       '<html><body>Preview</body></html>'
     );
     const screen = await renderWithProviders(<PreviewScreen />);
-    await fireEvent.press(screen.getByText('←'));
+    await fireEvent.press(screen.getByLabelText('Go back'));
     expect(usePreviewStore.getState().documentType).toBeNull();
     expect(router.back).toHaveBeenCalled();
   });

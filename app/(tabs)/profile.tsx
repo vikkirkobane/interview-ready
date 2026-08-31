@@ -422,6 +422,18 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.container} 
         showsVerticalScrollIndicator={Platform.OS === 'web'}
       >
+        <View style={styles.pageHeader}>
+          <Pressable 
+            style={[styles.backBtn, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]} 
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </Pressable>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Profile</Text>
+        </View>
+
         <View style={styles.bioSection}>
           <View style={styles.avatarWrapper}>
             <ScoreRing score={completeness} size="xl" color={colors.primary} />
@@ -895,6 +907,21 @@ const styles = StyleSheet.create({
     maxWidth: 1200,
     width: '100%',
     alignSelf: 'center',
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  headerTitle: {
+    ...Typography.headingLg,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   bioSection: {
     alignItems: 'center',

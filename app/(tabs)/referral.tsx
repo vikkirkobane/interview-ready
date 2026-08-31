@@ -8,8 +8,10 @@ import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 import { useReferral } from '../../src/hooks/useReferral';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 export default function ReferralScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const { stats, loading, applyReferralCode } = useReferral();
   const [inputCode, setInputCode] = useState('');
@@ -111,6 +113,14 @@ export default function ReferralScreen() {
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.heroSection}>
+          <Pressable 
+            style={[styles.backBtn, { alignSelf: 'flex-start', marginBottom: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </Pressable>
           <View style={[styles.heroIconBox, { backgroundColor: `${colors.primary}1A` }]}>
             <Ionicons name="gift" size={40} color={colors.primary} />
           </View>
@@ -266,6 +276,11 @@ const styles = StyleSheet.create({
   heroSection: {
     alignItems: 'center',
     marginBottom: Spacing.xxl,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   heroIconBox: {
     width: 80,

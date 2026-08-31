@@ -88,6 +88,19 @@ export default function SettingsScreen() {
       showsVerticalScrollIndicator={Platform.OS === 'web'}
     >
       
+      {/* Header */}
+      <View style={styles.header}>
+        <Pressable 
+          style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]} 
+          onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+        </Pressable>
+        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Settings</Text>
+      </View>
+
       {/* Profile Section */}
       <View style={styles.profileSection}>
         <View style={[styles.avatarContainer, { backgroundColor: colors.primary, overflow: 'hidden' }]}>
@@ -273,6 +286,20 @@ const styles = StyleSheet.create({
     maxWidth: 800,
     width: '100%',
     alignSelf: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+  },
+  headerTitle: {
+    ...Typography.headingLg,
   },
   profileSection: {
     alignItems: 'center',

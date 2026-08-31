@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
 import { supabase } from '../../src/lib/supabase';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useCompanyResearchMutation,
   CompanyResearchResult,
@@ -101,6 +101,7 @@ const BulletList = ({
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function CompanyResearchScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const researchMutation = useCompanyResearchMutation();
   const { user } = useAuthStore();
@@ -185,6 +186,14 @@ export default function CompanyResearchScreen() {
       >
         {/* Header */}
         <View style={s.hero}>
+          <Pressable 
+            style={[s.backBtn, { alignSelf: 'flex-start', marginBottom: Spacing.sm, backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+          </Pressable>
           <View style={[s.heroIcon, { backgroundColor: '#0ea5e940' }]}>
             <Ionicons name="business" size={36} color="#0ea5e9" />
           </View>

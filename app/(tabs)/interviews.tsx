@@ -158,6 +158,14 @@ export default function InterviewsLobbyScreen() {
         
         {/* Page Header */}
         <View style={styles.pageHeader}>
+          <Pressable
+            style={[styles.backBtn, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}
+            onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+          </Pressable>
           <Text style={[styles.pageTitle, { color: colors.textPrimary }]}>Mock Interviews</Text>
           <Text style={[styles.pageSubtitle, { color: colors.textMuted }]}>Practice with AI across behavioral, technical, and manager roles.</Text>
         </View>
@@ -376,6 +384,13 @@ const styles = StyleSheet.create({
   },
   pageHeader: {
     marginBottom: Spacing.xl,
+  },
+  backBtn: {
+    alignSelf: 'flex-start',
+    marginBottom: Spacing.sm,
+    padding: 8,
+    borderRadius: Radius.full,
+    borderWidth: 1,
   },
   pageTitle: {
     ...Typography.displayMd,
