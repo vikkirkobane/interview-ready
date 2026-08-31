@@ -37,17 +37,18 @@ describe('Landing Page & Root Index — user stories', () => {
     expect(screen.getByText('Job applications are broken.')).toBeTruthy();
     expect(screen.getByText('The ATS Blocker')).toBeTruthy();
     expect(screen.getByText('The Time Sink')).toBeTruthy();
-    expect(screen.getByText('The Formatting Trap')).toBeTruthy();
+    expect(screen.getByText('The Formatting Nightmare')).toBeTruthy();
 
     // Feature items
-    expect(screen.getByText('Built for Serious Candidates')).toBeTruthy();
-    expect(screen.getByText('Targeted Resumes That Pass the Bots')).toBeTruthy();
-    expect(screen.getByText('Real-Time Match Score & Skills Gap')).toBeTruthy();
+    expect(screen.getByText('AI Resume Tailoring')).toBeTruthy();
+    expect(screen.getByText('Recruiter-Tested Cover Letters')).toBeTruthy();
+    expect(screen.getByText('ATS Keyword Integration')).toBeTruthy();
+    expect(screen.getByText('Universal Careers & Word Export')).toBeTruthy();
 
     // How it works & FAQs
-    expect(screen.getByText('How Interview Ready Works')).toBeTruthy();
+    expect(screen.getByText('Three Steps to Your Next Callback')).toBeTruthy();
     expect(screen.getByText('Frequently Asked Questions')).toBeTruthy();
-    expect(screen.getByText('Ready to Land Your Next Role?')).toBeTruthy();
+    expect(screen.getByText('Your next opportunity is one application away.')).toBeTruthy();
   });
 
   it('navigates to the welcome screen when clicking Get Started as a guest', async () => {
@@ -84,7 +85,7 @@ describe('Landing Page & Root Index — user stories', () => {
     });
 
     // Check that Lagos location or nurse keywords appear
-    expect(screen.getByText('Lagos, Nigeria')).toBeTruthy();
+    expect(screen.getAllByText('Lagos, Nigeria').length).toBeGreaterThan(0);
   });
 
   it('renders Go to Dashboard CTA when user is already authenticated', async () => {

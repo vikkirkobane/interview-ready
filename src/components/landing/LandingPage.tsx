@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Path, G, Text as SvgText, TSpan } from 'react-native-svg';
 import { useAuthStore } from '../../stores/auth-store';
 import PrivacyModal from './PrivacyModal';
 import TermsModal from './TermsModal';
@@ -71,43 +71,50 @@ const DEMO_DATA: ProfessionDemo[] = [
 
 const FAQS = [
   {
-    q: 'How does the ATS optimization engine work?',
-    a: 'Our engine extracts hard skills, technical requirements, and core competencies from your target job posting, then formats your career achievements using the exact keyword hierarchy preferred by top Applicant Tracking Systems (Workday, Greenhouse, Lever, Taleo).',
+    q: 'Is it free to use?',
+    a: 'Yes. Core formatting templates and general drafting are free of charge. No credit card is required to join or create an account.',
   },
   {
-    q: 'Can I export both PDF and Word (.docx) formats?',
-    a: 'Yes! Every resume you generate can be downloaded in high-res, print-ready PDF and clean, fully editable Microsoft Word (.docx) formats.',
+    q: 'What makes Interview Ready different from general AI writing bots?',
+    a: 'Unlike generic templates, Interview Ready explicitly matches recruiter-tested phrasing structures and integrates specific industry keywords. It generates documents designed from ground up to satisfy modern ATS screeners.',
   },
   {
-    q: 'What is included in the AI Mock Interview prep?',
-    a: 'You get realistic, role-specific technical and behavioral interview sessions tailored to your job description. The AI listens, scores your answers, and gives real-time constructive coaching on how to improve your answers.',
+    q: 'Which industries or professions does it support?',
+    a: 'We offer universal profession support. It works dynamically for developers, healthcare administrators, nurses, lawyers, teachers, NGO workers, hospitality staff, accountants, and beyond.',
   },
   {
-    q: 'Is it free to get started?',
-    a: 'Yes. You receive free AI credits upon creating your account to generate resumes, cover letters, and practice interview questions immediately.',
+    q: 'Can I export directly to Microsoft Word format?',
+    a: 'Yes. Every output generated exports directly in dual formats: an editable Microsoft Word (DOCX) file for personalized adjustments, and a print-ready PDF layout.',
+  },
+  {
+    q: 'Is my work history data secure?',
+    a: 'Your privacy is fully protected. All data processed is encrypted and never shared with secondary brokers or utilized for generic model training. You retain total ownership of your records.',
   },
 ];
 
 const TESTIMONIALS = [
   {
     name: 'Samuel O.',
-    role: 'Full-Stack Developer',
-    placedAt: 'Placed at Series B Fintech',
-    quote: 'I applied for 3 months with 0 callbacks. After tailoring my resume with Interview Ready, I landed 4 first-round interviews within 2 weeks.',
+    role: 'Software Engineer',
+    location: 'Nairobi, Kenya',
+    image: 'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?q=80&w=120&auto=format&fit=crop',
+    quote: 'I submitted three applications utilizing the optimized cv format from Interview Ready. Within a single week, I received interview callbacks from all three companies. The achievements generated were far more metrics-focused than what I could write myself.',
     score: '98% ATS Match',
   },
   {
     name: 'Amina K.',
-    role: 'Clinical Operations Lead',
-    placedAt: 'Placed at International Health NGO',
-    quote: 'The AI transformed my basic duties into high-impact metrics. The recruiter specifically praised how clear and quantifiable my bullet points were.',
+    role: 'Registered Nurse',
+    location: 'Lagos, Nigeria',
+    image: 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?q=80&w=120&auto=format&fit=crop',
+    quote: 'Applying to healthcare roles in the UK meant meeting strict documentation standards. Interview Ready aligned my achievements and CV layout perfectly on the first attempt. Recommending this to every healthcare peer looking to relocate.',
     score: '96% ATS Match',
   },
   {
     name: 'David M.',
-    role: 'Financial Analyst',
-    placedAt: 'Placed at Global Advisory Firm',
-    quote: 'The mock interview tool prepared me for the exact behavioral questions they asked during my final partner round. Unbelievably accurate.',
+    role: 'Finance Analyst',
+    location: 'Accra, Ghana',
+    image: 'https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?q=80&w=120&auto=format&fit=crop',
+    quote: 'The accompanying cover letter written by the editor was remarkably natural and company-specific. My interviewer literally highlighted my professional story during our initial discussion. This is a game-changer for applications.',
     score: '99% ATS Match',
   },
 ];
@@ -121,7 +128,8 @@ export default function LandingPage() {
   const [activeDemo, setActiveDemo] = useState<ProfessionDemo>(DEMO_DATA[0]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [simulatedScore, setSimulatedScore] = useState(activeDemo.originalScore);
-  const [showOptimized, setShowOptimized] = useState(false);
+  const [simulatedText, setSimulatedText] = useState(activeDemo.originalText);
+  const [showOptimized, setShowOptimized] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -143,12 +151,14 @@ export default function LandingPage() {
     setIsOptimizing(true);
     setShowOptimized(false);
     setSimulatedScore(demo.originalScore);
+    setSimulatedText(demo.originalText);
 
     timerRef.current = setTimeout(() => {
       setSimulatedScore(demo.optimizedScore);
+      setSimulatedText(demo.optimizedText);
       setShowOptimized(true);
       setIsOptimizing(false);
-    }, 100);
+    }, 450);
   };
 
   const handleGetStarted = () => {
@@ -176,7 +186,7 @@ export default function LandingPage() {
     setMobileMenuOpen(false);
     const y = sectionPositions.current[key];
     if (y !== undefined && scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: Math.max(0, y - 80), animated: true });
+      scrollViewRef.current.scrollTo({ y: Math.max(0, y - 70), animated: true });
     }
   };
 
@@ -221,7 +231,7 @@ export default function LandingPage() {
             {session ? (
               <Pressable style={styles.navPrimaryBtn} onPress={() => router.push('/(tabs)')}>
                 <Text style={styles.navPrimaryBtnText}>Go to Dashboard</Text>
-                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
               </Pressable>
             ) : (
               <>
@@ -231,7 +241,7 @@ export default function LandingPage() {
                   </Pressable>
                 )}
                 <Pressable style={styles.navPrimaryBtn} onPress={handleGetStarted}>
-                  <Text style={styles.navPrimaryBtnText}>Get Started</Text>
+                  <Text style={styles.navPrimaryBtnText}>Get Early Access</Text>
                   <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
                 </Pressable>
               </>
@@ -262,7 +272,12 @@ export default function LandingPage() {
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </Pressable>
             <Pressable style={styles.mobileNavItem} onPress={() => scrollToSection('testimonials')}>
-              <Text style={styles.mobileNavText}>Testimonials</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.mobileNavText}>Testimonials</Text>
+                <View style={styles.verifiedTag}>
+                  <Text style={styles.verifiedTagText}>VERIFIED</Text>
+                </View>
+              </View>
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </Pressable>
             <Pressable style={styles.mobileNavItem} onPress={() => scrollToSection('faq')}>
@@ -275,6 +290,10 @@ export default function LandingPage() {
                 <Ionicons name="log-in-outline" size={18} color="#1A4F8A" />
               </Pressable>
             )}
+            <Pressable style={[styles.heroPrimaryBtn, { marginTop: 12 }]} onPress={handleGetStarted}>
+              <Text style={styles.heroPrimaryBtnText}>Get Started for Free</Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </Pressable>
           </View>
         )}
       </View>
@@ -291,33 +310,35 @@ export default function LandingPage() {
             <View style={[styles.heroGrid, isDesktop ? styles.heroGridDesktop : styles.heroGridMobile]}>
               {/* Left Column: Headline & Action */}
               <View style={styles.heroLeft}>
-                <View style={styles.earlyBadge}>
-                  <Text style={styles.earlyBadgeText}>AI-POWERED CAREER PLATFORM</Text>
-                </View>
-
                 <Text style={styles.heroTitle}>
                   Land More{'\n'}
                   <Text style={styles.heroTitleAccent}>Interviews Faster.</Text>
                 </Text>
 
                 <Text style={styles.heroSubtitle}>
-                  Interview Ready writes, formats, and exports ATS-optimized resumes, tailored cover letters, and provides dynamic AI interview coaching tailored to any target job description.
+                  Interview Ready writes, formats, and exports professional resumes and cover letters in seconds. ATS-optimized, recruiter-tested, and tailored to any job description you target.
                 </Text>
 
                 {/* Social Proof Avatars */}
                 <View style={styles.heroProof}>
                   <View style={styles.proofAvatars}>
-                    <View style={[styles.avatarCircle, { backgroundColor: '#38BDF8' }]}>
-                      <Text style={styles.avatarInitial}>S</Text>
-                    </View>
-                    <View style={[styles.avatarCircle, { backgroundColor: '#818CF8', marginLeft: -8 }]}>
-                      <Text style={styles.avatarInitial}>A</Text>
-                    </View>
-                    <View style={[styles.avatarCircle, { backgroundColor: '#34D399', marginLeft: -8 }]}>
-                      <Text style={styles.avatarInitial}>D</Text>
-                    </View>
+                    <Image
+                      source={{ uri: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=120&auto=format&fit=crop' }}
+                      style={[styles.avatarImg, { zIndex: 3 }]}
+                      contentFit="cover"
+                    />
+                    <Image
+                      source={{ uri: 'https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?q=80&w=120&auto=format&fit=crop' }}
+                      style={[styles.avatarImg, { marginLeft: -8, zIndex: 2 }]}
+                      contentFit="cover"
+                    />
+                    <Image
+                      source={{ uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=120&auto=format&fit=crop' }}
+                      style={[styles.avatarImg, { marginLeft: -8, zIndex: 1 }]}
+                      contentFit="cover"
+                    />
                   </View>
-                  <Text style={styles.proofText}>Trusted by 10,000+ ambitious global job seekers</Text>
+                  <Text style={styles.proofText}>Early Access open for ambitious African professionals.</Text>
                 </View>
 
                 {/* Action Buttons */}
@@ -337,126 +358,148 @@ export default function LandingPage() {
                 </View>
 
                 <Text style={styles.heroDisclaimer}>
-                  Free to start • No credit card required • Instant PDF & DOCX export
+                  Free to start • No subscription required for core formatting tools.
                 </Text>
               </View>
 
-              {/* Right Column: Live Interactive ATS Simulator */}
+              {/* Right Column: High-Fidelity Phone Mockup with Live Interactive Simulator */}
               <View style={styles.heroRight}>
-                <View style={styles.phoneFrame}>
-                  {/* Phone Notch */}
+                {/* Glow Accent behind phone */}
+                <View style={styles.phoneGlow} />
+
+                {/* Phone Shell */}
+                <View style={[styles.phoneFrame, Platform.OS === 'web' && ({ className: 'phone-float' } as any)]}>
+                  {/* Speaker / Notch */}
                   <View style={styles.phoneNotch}>
                     <View style={styles.notchPill} />
                   </View>
 
+                  {/* Internal Screen */}
                   <View style={styles.phoneScreen}>
-                    {/* Screen Top Bar */}
+                    {/* Simulator App Header */}
                     <View style={styles.simHeader}>
                       <View style={styles.simBrand}>
-                        <Image source={require('../../../assets/logo.png')} style={{ width: 16, height: 16 }} />
-                        <Text style={styles.simBrandText}>ATS Optimizer</Text>
+                        <Image
+                          source={require('../../../assets/logo.png')}
+                          style={styles.simLogo}
+                          contentFit="contain"
+                        />
+                        <Text style={styles.simBrandText}>Interview Ready</Text>
                       </View>
                       <View style={styles.simBadge}>
                         <Text style={styles.simBadgeText}>AI Active</Text>
                       </View>
                     </View>
 
-                    {/* Profile Selector */}
-                    <View style={styles.simTabs}>
-                      {DEMO_DATA.map((demo) => {
-                        const isSelected = activeDemo.id === demo.id;
-                        return (
-                          <Pressable
-                            key={demo.id}
-                            style={[styles.simTab, isSelected && styles.simTabActive]}
-                            onPress={() => handleSelectDemo(demo)}
-                          >
-                            <Text style={[styles.simTabText, isSelected && styles.simTabTextActive]}>
-                              {demo.tabLabel}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-
-                    {/* Gauge Card */}
-                    <View style={styles.simScoreCard}>
-                      <View>
-                        <Text style={styles.simScoreLabel}>ATS Match Score</Text>
-                        <Text style={styles.simScoreSub}>Resume Compatibility</Text>
+                    {/* Simulator Content Area */}
+                    <View style={styles.simContent}>
+                      {/* Select Profession Title */}
+                      <View style={styles.simTitleWrap}>
+                        <Text style={styles.simSubtitleUpper}>ATS OPTIMIZER ENGINE</Text>
+                        <Text style={styles.simSubtitle}>Select a beta user profile:</Text>
                       </View>
-                      <View style={styles.gaugeBox}>
-                        <Svg width={44} height={44} viewBox="0 0 44 44">
-                          <Circle cx="22" cy="22" r="18" stroke="#E2E8F0" strokeWidth="3.5" fill="none" />
-                          <Circle
-                            cx="22"
-                            cy="22"
-                            r="18"
-                            stroke={simulatedScore > 60 ? '#10B981' : '#EF4444'}
-                            strokeWidth="3.5"
-                            fill="none"
-                            strokeDasharray={`${2 * Math.PI * 18}`}
-                            strokeDashoffset={`${2 * Math.PI * 18 * (1 - simulatedScore / 100)}`}
-                            strokeLinecap="round"
-                            transform="rotate(-90 22 22)"
-                          />
-                        </Svg>
-                        <Text style={[styles.gaugeVal, { color: simulatedScore > 60 ? '#047857' : '#B91C1C' }]}>
-                          {simulatedScore}%
-                        </Text>
-                      </View>
-                    </View>
 
-                    {/* Before State */}
-                    <View style={styles.beforeBox}>
-                      <View style={styles.stateTagBefore}>
-                        <Text style={styles.stateTagBeforeText}>Weak CV</Text>
+                      {/* Mini Tabs */}
+                      <View style={styles.simTabs}>
+                        {DEMO_DATA.map((demo) => {
+                          const isSelected = activeDemo.id === demo.id;
+                          return (
+                            <Pressable
+                              key={demo.id}
+                              style={[styles.simTab, isSelected && styles.simTabActive]}
+                              onPress={() => handleSelectDemo(demo)}
+                            >
+                              <Text style={[styles.simTabText, isSelected && styles.simTabTextActive]}>
+                                {demo.tabLabel}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
                       </View>
-                      <Text style={styles.stateTitle}>Before AI Treatment</Text>
-                      <Text style={styles.stateBody}>{activeDemo.originalText}</Text>
-                    </View>
 
-                    {/* Status indicator */}
-                    {isOptimizing ? (
-                      <View style={styles.optimizingRow}>
-                        <Text style={styles.optimizingText}>⚡ Injecting High-Impact ATS Keywords...</Text>
+                      {/* Score Gauge Card */}
+                      <View style={styles.simScoreCard}>
+                        <View>
+                          <Text style={styles.simScoreLabel}>ATS MATCH SCORE</Text>
+                          <Text style={styles.simScoreSub}>Resume Compatibility</Text>
+                        </View>
+                        <View style={styles.gaugeBox}>
+                          <Svg width={44} height={44} viewBox="0 0 44 44">
+                            <Circle cx="22" cy="22" r="18" stroke="#E5E7EB" strokeWidth="3" fill="none" />
+                            <Circle
+                              cx="22"
+                              cy="22"
+                              r="18"
+                              stroke={simulatedScore > 60 ? '#10B981' : '#EF4444'}
+                              strokeWidth="3.5"
+                              fill="none"
+                              strokeDasharray={`${2 * Math.PI * 18}`}
+                              strokeDashoffset={`${2 * Math.PI * 18 * (1 - simulatedScore / 100)}`}
+                              strokeLinecap="round"
+                              transform="rotate(-90 22 22)"
+                            />
+                          </Svg>
+                          <Text style={[styles.gaugeVal, { color: simulatedScore > 60 ? '#10B981' : '#EF4444' }]}>
+                            {simulatedScore}%
+                          </Text>
+                        </View>
                       </View>
-                    ) : (
-                      <View style={{ height: 16 }} />
-                    )}
 
-                    {/* After State */}
-                    <View style={[styles.afterBox, showOptimized && styles.afterBoxActive]}>
-                      <View style={styles.stateHeader}>
-                        <Text style={styles.stateTitleOptimized}>Interview Ready CV</Text>
-                        {showOptimized && (
-                          <View style={styles.recruiterBadge}>
-                            <Text style={styles.recruiterBadgeText}>Recruiter Proof ✓</Text>
+                      {/* Original vs Optimized Bullet Content */}
+                      <View style={styles.bulletArea}>
+                        {/* Before State */}
+                        <View style={styles.beforeBox}>
+                          <View style={styles.stateTagBefore}>
+                            <Text style={styles.stateTagBeforeText}>Weak CV</Text>
+                          </View>
+                          <Text style={styles.stateTitleBefore}>BEFORE AI TREATMENT</Text>
+                          <Text style={styles.stateBodyBefore}>{activeDemo.originalText}</Text>
+                        </View>
+
+                        {/* AI Conversion Process Indicator */}
+                        {isOptimizing ? (
+                          <View style={styles.optimizingRow}>
+                            <View style={styles.pingDot} />
+                            <Text style={styles.optimizingText}>ATS KEYWORD INJECTOR...</Text>
+                          </View>
+                        ) : (
+                          <View style={{ height: 16 }} />
+                        )}
+
+                        {/* After State */}
+                        <View style={[styles.afterBox, showOptimized && styles.afterBoxActive]}>
+                          <View style={styles.stateHeader}>
+                            <Text style={styles.stateTitleOptimized}>INTERVIEW READY CV</Text>
+                            {showOptimized && (
+                              <View style={styles.recruiterBadge}>
+                                <Text style={styles.recruiterBadgeText}>Recruiter Proof ✓</Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text style={styles.stateBodyOptimized}>
+                            {simulatedText}
+                          </Text>
+                        </View>
+
+                        {/* Keyword badging */}
+                        {!isOptimizing && showOptimized && (
+                          <View style={styles.keywordsWrap}>
+                            {activeDemo.keywords.map((kw, i) => (
+                              <View key={i} style={styles.kwBadge}>
+                                <Text style={styles.kwText}>+ {kw}</Text>
+                              </View>
+                            ))}
                           </View>
                         )}
                       </View>
-                      <Text style={styles.stateBodyOptimized}>
-                        {showOptimized ? activeDemo.optimizedText : '...'}
-                      </Text>
                     </View>
 
-                    {/* Injected Keywords */}
-                    {showOptimized && (
-                      <View style={styles.keywordsWrap}>
-                        {activeDemo.keywords.slice(0, 3).map((kw, i) => (
-                          <View key={i} style={styles.kwBadge}>
-                            <Text style={styles.kwText}>+ {kw}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-
-                    {/* Footer bar */}
+                    {/* Simulated Device Action Bar */}
                     <View style={styles.simFooter}>
                       <Text style={styles.simLocation}>{activeDemo.location}</Text>
                       <View style={styles.simStatus}>
-                        <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                        <Text style={styles.simStatusText}>ATS Ready</Text>
+                        <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                        <Text style={styles.simStatusText}>Keywords Injected</Text>
                       </View>
                     </View>
                   </View>
@@ -472,45 +515,57 @@ export default function LandingPage() {
             <View style={styles.sectionHeader}>
               <Text style={styles.problemHeading}>Job applications are broken.</Text>
               <Text style={styles.sectionSub}>
-                Applying to global remote roles or local companies shouldn't feel like gambling. Traditional resumes fail silently without you ever knowing why.
+                Applying to global remote roles or local corporations should not feel like gambling. Traditional resumes fail silently without you ever knowing why.
               </Text>
             </View>
 
             <View style={[styles.cardsGrid, isDesktop ? styles.cardsGrid3Col : styles.cardsGrid1Col]}>
               <View style={styles.problemCard}>
                 <View style={styles.problemIconWrap}>
-                  <Ionicons name="warning-outline" size={24} color="#1A4F8A" />
+                  <Ionicons name="alert-circle" size={24} color="#1A4F8A" />
                 </View>
                 <Text style={styles.problemCardTitle}>The ATS Blocker</Text>
                 <Text style={styles.problemCardBody}>
-                  Applicant Tracking Systems filter out up to 75% of submissions before a recruiter even opens them. Without the exact keyword density, you get disqualified instantly.
+                  Applicant Tracking Systems filter out up to 75% of submissions before a human recruiter even sees them. If you lack the exact keywords, you get rejected instantly.
                 </Text>
               </View>
 
               <View style={styles.problemCard}>
                 <View style={styles.problemIconWrap}>
-                  <Ionicons name="time-outline" size={24} color="#1A4F8A" />
+                  <Ionicons name="time" size={24} color="#1A4F8A" />
                 </View>
                 <Text style={styles.problemCardTitle}>The Time Sink</Text>
                 <Text style={styles.problemCardBody}>
-                  Customizing your resume and writing tailored cover letters for every role takes hours. Candidates get exhausted and burn out before sending 10 applications.
+                  Writing a customized cover letter and tweaking your professional bio for every single position description takes hours. You lose momentum before you even submit.
                 </Text>
               </View>
 
               <View style={styles.problemCard}>
                 <View style={styles.problemIconWrap}>
-                  <Ionicons name="layers-outline" size={24} color="#1A4F8A" />
+                  <Ionicons name="layers" size={24} color="#1A4F8A" />
                 </View>
-                <Text style={styles.problemCardTitle}>The Formatting Trap</Text>
+                <Text style={styles.problemCardTitle}>The Formatting Nightmare</Text>
                 <Text style={styles.problemCardBody}>
-                  Complex graphics and non-standard layouts break automated document parsers. We generate clean, standardized structures that score 95%+ every time.
+                  Word files break across operating systems, and automated reading scripts garble PDF headers. If your layout is wrong, your application is disqualified.
                 </Text>
               </View>
+            </View>
+
+            {/* Transition pivot line */}
+            <View style={styles.problemPivot}>
+              <Text style={styles.pivotText}>That's exactly why we built Interview Ready.</Text>
+              <Pressable
+                style={styles.pivotLink}
+                onPress={() => scrollToSection('how-it-works')}
+              >
+                <Text style={styles.pivotLinkText}>SEE HOW IT WORKS</Text>
+                <Ionicons name="chevron-down" size={16} color="#1A4F8A" />
+              </Pressable>
             </View>
           </View>
         </View>
 
-        {/* 4. CORE FEATURES SECTION */}
+        {/* 4. CORE FEATURES SECTION (Alternating Rows) */}
         <View
           style={styles.featuresSection}
           onLayout={(e) => {
@@ -518,161 +573,175 @@ export default function LandingPage() {
           }}
         >
           <View style={styles.container}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTag}>
-                <Text style={styles.sectionTagText}>INTELLIGENT SUITE</Text>
-              </View>
-              <Text style={styles.sectionTitle}>Built for Serious Candidates</Text>
-              <Text style={styles.sectionSub}>
-                Everything you need to turn a job posting into an interview invitation.
-              </Text>
-            </View>
-
-            {/* Feature 1 */}
+            {/* Feature 1: AI Resume Tailoring */}
             <View style={[styles.featureRow, isDesktop ? styles.featureRowDesktop : styles.featureRowMobile]}>
-              <View style={styles.featureTextCol}>
-                <View style={styles.featureBadge}>
-                  <Ionicons name="document-text-outline" size={18} color="#1A4F8A" />
-                  <Text style={styles.featureBadgeText}>ATS Resume Builder</Text>
-                </View>
-                <Text style={styles.featureTitle}>Targeted Resumes That Pass the Bots</Text>
-                <Text style={styles.featureBody}>
-                  Automatically align your work history, metrics, and technical skills with the exact keywords found in your target job description. Generate full-page, dense bullet points that highlight results.
-                </Text>
-                <View style={styles.featurePoints}>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>5+ Metric-Dense Bullets per Role</Text>
-                  </View>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>Executive, Modern & Classic Templates</Text>
-                  </View>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>1-Click PDF & DOCX Download</Text>
-                  </View>
-                </View>
-              </View>
-              <View style={styles.featureCardVisual}>
-                <View style={styles.mockResumeCard}>
-                  <View style={styles.mockResumeHeader}>
+              <View style={styles.featureVisualCol}>
+                <View style={styles.graphicCard}>
+                  <View style={styles.graphicHeader}>
                     <View style={styles.mockDotRow}>
-                      <View style={[styles.mockDot, { backgroundColor: '#EF4444' }]} />
-                      <View style={[styles.mockDot, { backgroundColor: '#F59E0B' }]} />
-                      <View style={[styles.mockDot, { backgroundColor: '#10B981' }]} />
+                      <View style={[styles.mockDot, { backgroundColor: '#E2E8F0' }]} />
+                      <View style={[styles.mockDot, { backgroundColor: '#CBD5E1' }]} />
+                      <View style={[styles.mockDot, { backgroundColor: 'rgba(26, 79, 138, 0.3)' }]} />
                     </View>
-                    <Text style={styles.mockResumeFormat}>ATS High-Score Layout</Text>
+                    <Text style={styles.graphicFormatTag}>PDF + DOCX ready</Text>
                   </View>
-                  <View style={styles.mockLineHeader} />
-                  <View style={styles.mockLineSub} />
-                  <View style={styles.mockBadgeItem}>
-                    <Ionicons name="sparkles" size={14} color="#1A4F8A" />
-                    <Text style={styles.mockBadgeItemText}>Quantified Achievement: +35% Latency Reduction</Text>
-                  </View>
-                  <View style={styles.mockBadgeItem}>
-                    <Ionicons name="sparkles" size={14} color="#1A4F8A" />
-                    <Text style={styles.mockBadgeItemText}>Categorized Skills: React, TypeScript, Docker, CI/CD</Text>
+                  <View style={styles.mockTemplateContent}>
+                    <View style={{ width: '35%', height: 14, backgroundColor: 'rgba(26, 79, 138, 0.25)', borderRadius: 6, marginBottom: 8 }} />
+                    <View style={{ width: '100%', height: 10, backgroundColor: '#E2E8F0', borderRadius: 4, marginBottom: 12 }} />
+                    <View style={styles.mockBulletItem}>
+                      <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                      <View style={styles.mockBulletBadge}>
+                        <Text style={styles.mockBulletBadgeText}>Tailored bullet achievements</Text>
+                      </View>
+                    </View>
+                    <View style={[styles.mockBulletItem, { marginTop: 6 }]}>
+                      <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                      <View style={{ width: '80%', height: 10, backgroundColor: '#E2E8F0', borderRadius: 4 }} />
+                    </View>
+                    <View style={styles.mockDownloadRow}>
+                      <View style={styles.mockDownloadPill}>
+                        <Ionicons name="download-outline" size={12} color="#475569" />
+                        <Text style={styles.mockDownloadPillText}>Resume.pdf</Text>
+                      </View>
+                      <View style={styles.mockDownloadPill}>
+                        <Ionicons name="download-outline" size={12} color="#475569" />
+                        <Text style={styles.mockDownloadPillText}>Resume.docx</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
               </View>
+
+              <View style={styles.featureTextCol}>
+                <Text style={styles.featureNumber}>01</Text>
+                <Text style={styles.featureTitle}>AI Resume Tailoring</Text>
+                <Text style={styles.featureBody}>
+                  Simply paste your existing work history alongside your target job description. Our engine immediately drafts a professional resume structured with correct keywords, strong metric-driven verbs, and clean summaries.
+                </Text>
+                <Text style={styles.featureBenefit}>
+                  <Text style={styles.benefitLabel}>Benefit: </Text>
+                  Creates tailored resume drafts in 30 seconds instead of hours, completely meeting international ATS standards.
+                </Text>
+              </View>
             </View>
 
-            {/* Feature 2 */}
+            {/* Feature 2: Recruiter-Tested Cover Letters */}
             <View style={[styles.featureRow, isDesktop ? styles.featureRowDesktopReverse : styles.featureRowMobile]}>
-              <View style={styles.featureTextCol}>
-                <View style={styles.featureBadge}>
-                  <Ionicons name="search-outline" size={18} color="#1A4F8A" />
-                  <Text style={styles.featureBadgeText}>Job Description Match Analyzer</Text>
-                </View>
-                <Text style={styles.featureTitle}>Real-Time Match Score & Skills Gap</Text>
-                <Text style={styles.featureBody}>
-                  Paste any job URL or text. Get an instant compatibility score, breakdown of missing requirements, and suggestions on how to bridge the gap.
-                </Text>
-                <View style={styles.featurePoints}>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>Instant 0–100% Match Calculation</Text>
+              <View style={styles.featureVisualCol}>
+                <View style={styles.graphicCard}>
+                  <View style={styles.graphicHeader}>
+                    <View style={[styles.mockDot, { backgroundColor: '#CBD5E1' }]} />
+                    <Text style={styles.graphicFormatTag}>Cover Letter Writer</Text>
                   </View>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>Red Flag & Dealbreaker Detection</Text>
-                  </View>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>Actionable Rewrite Suggestions</Text>
+                  <View style={styles.mockLetterContent}>
+                    <Text style={styles.mockLetterTo}>To: hiring@company.com</Text>
+                    <View style={styles.mockLetterSubjectBox}>
+                      <Text style={styles.mockLetterSubjectText}>Subject: Applying for Remote Role</Text>
+                    </View>
+                    <Text style={styles.mockLetterSalutation}>"Dear Hiring Manager,"</Text>
+                    <View style={styles.mockLetterBodyBox}>
+                      <Text style={styles.mockLetterBodyText}>
+                        Instead of summarizing my resume, I want to share how I solved budget variance challenges...
+                      </Text>
+                    </View>
+                    <View style={{ width: '100%', height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, marginTop: 8 }} />
+                    <View style={{ width: '75%', height: 8, backgroundColor: '#E2E8F0', borderRadius: 4, marginTop: 4 }} />
                   </View>
                 </View>
               </View>
-              <View style={styles.featureCardVisual}>
-                <View style={styles.mockMatchCard}>
-                  <View style={styles.matchScoreBadge}>
-                    <Text style={styles.matchScoreNumber}>94%</Text>
-                    <Text style={styles.matchScoreLabel}>Match Score</Text>
-                  </View>
-                  <View style={styles.matchItemRow}>
-                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                    <Text style={styles.matchItemText}>Required Skills Matched (9/10)</Text>
-                  </View>
-                  <View style={styles.matchItemRow}>
-                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                    <Text style={styles.matchItemText}>Experience Level Aligned (5+ Years)</Text>
-                  </View>
-                  <View style={styles.matchItemRow}>
-                    <Ionicons name="alert-circle" size={16} color="#F59E0B" />
-                    <Text style={styles.matchItemText}>Missing: Kubernetes Certification</Text>
-                  </View>
-                </View>
+
+              <View style={styles.featureTextCol}>
+                <Text style={styles.featureNumber}>02</Text>
+                <Text style={styles.featureTitle}>Recruiter-Tested Cover Letters</Text>
+                <Text style={styles.featureBody}>
+                  Generate high-conversion cover letters calibrated to 280–380 words. Instead of stale layouts, our letter structure writes in a specific, metric-backed professional voice optimized for readability and emotional engagement.
+                </Text>
+                <Text style={styles.featureBenefit}>
+                  <Text style={styles.benefitLabel}>Benefit: </Text>
+                  Delivers narrative cover letters written in your human voice, not a repetitive corporate bot template.
+                </Text>
               </View>
             </View>
 
-            {/* Feature 3 */}
+            {/* Feature 3: ATS Keyword Integration */}
             <View style={[styles.featureRow, isDesktop ? styles.featureRowDesktop : styles.featureRowMobile]}>
-              <View style={styles.featureTextCol}>
-                <View style={styles.featureBadge}>
-                  <Ionicons name="chatbubbles-outline" size={18} color="#1A4F8A" />
-                  <Text style={styles.featureBadgeText}>AI Mock Interview Prep</Text>
-                </View>
-                <Text style={styles.featureTitle}>Practice Realistic Interviews with Instant Feedback</Text>
-                <Text style={styles.featureBody}>
-                  Simulate rigorous technical and behavioral questions generated directly from your target job description. Receive constructive scoring and talking points.
-                </Text>
-                <View style={styles.featurePoints}>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>Role-Specific Interview Scenarios</Text>
+              <View style={styles.featureVisualCol}>
+                <View style={styles.graphicCard}>
+                  <Text style={styles.graphicHeaderSmall}>JOB DESCRIPTION KEY TERMS</Text>
+                  <View style={styles.mockKeywordsGrid}>
+                    <View style={styles.mockKwBadgeActive}>
+                      <Text style={styles.mockKwBadgeActiveText}>✓ Cloud Architecture</Text>
+                    </View>
+                    <View style={styles.mockKwBadgeActive}>
+                      <Text style={styles.mockKwBadgeActiveText}>✓ Budget Control</Text>
+                    </View>
+                    <View style={styles.mockKwBadgeActive}>
+                      <Text style={styles.mockKwBadgeActiveText}>✓ Metric-Driven</Text>
+                    </View>
+                    <View style={styles.mockKwBadgeInactive}>
+                      <Text style={styles.mockKwBadgeInactiveText}>CI/CD Pipeline</Text>
+                    </View>
+                    <View style={styles.mockKwBadgeInactive}>
+                      <Text style={styles.mockKwBadgeInactiveText}>Patient Safety</Text>
+                    </View>
                   </View>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>STAR-Method Answer Coaching</Text>
-                  </View>
-                  <View style={styles.pointRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                    <Text style={styles.pointText}>Confidence & Delivery Insights</Text>
+                  <View style={styles.mockVerdictBox}>
+                    <Text style={styles.mockVerdictLabel}>ATS OPTIMIZER VERDICT</Text>
+                    <Text style={styles.mockVerdictText}>Top 15 keywords naturally integrated into work achievements.</Text>
                   </View>
                 </View>
               </View>
-              <View style={styles.featureCardVisual}>
-                <View style={styles.mockChatCard}>
-                  <View style={styles.mockChatBubbleAI}>
-                    <Text style={styles.mockChatAuthor}>AI Interviewer</Text>
-                    <Text style={styles.mockChatText}>
-                      "Tell me about a time you optimized a slow database query that was impacting user latency."
-                    </Text>
+
+              <View style={styles.featureTextCol}>
+                <Text style={styles.featureNumber}>03</Text>
+                <Text style={styles.featureTitle}>ATS Keyword Integration</Text>
+                <Text style={styles.featureBody}>
+                  Our technology performs a comparative analysis of your bio against the target job profile. It extracts missing skills and inserts the top 15–20 high-value terms into your experience statements logically and gracefully.
+                </Text>
+                <Text style={styles.featureBenefit}>
+                  <Text style={styles.benefitLabel}>Benefit: </Text>
+                  Clears applicant screening filters so your submission lands directly on human recruiter desks for actual review.
+                </Text>
+              </View>
+            </View>
+
+            {/* Feature 4: Universal Careers & Word Export */}
+            <View style={[styles.featureRow, isDesktop ? styles.featureRowDesktopReverse : styles.featureRowMobile]}>
+              <View style={styles.featureVisualCol}>
+                <View style={[styles.graphicCard, { alignItems: 'center' }]}>
+                  <View style={styles.mockDualGrid}>
+                    <View style={styles.mockDualBox}>
+                      <Ionicons name="globe-outline" size={16} color="#1A4F8A" />
+                      <Text style={styles.mockDualText}>GLOBAL REMOTE</Text>
+                    </View>
+                    <View style={styles.mockDualBox}>
+                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                      <Text style={styles.mockDualText}>RECRUITER VERIFIED</Text>
+                    </View>
                   </View>
-                  <View style={styles.mockChatBubbleFeedback}>
-                    <Ionicons name="bulb-outline" size={14} color="#047857" />
-                    <Text style={styles.mockChatFeedbackText}>
-                      Feedback: Strong use of STAR format. Quantify the throughput metric for higher impact.
-                    </Text>
-                  </View>
+                  <Pressable style={styles.mockBundleBtn} onPress={handleGetStarted}>
+                    <Ionicons name="download" size={14} color="#FFFFFF" />
+                    <Text style={styles.mockBundleBtnText}>Download DOCX + PDF Bundle</Text>
+                  </Pressable>
                 </View>
+              </View>
+
+              <View style={styles.featureTextCol}>
+                <Text style={styles.featureNumber}>04</Text>
+                <Text style={styles.featureTitle}>Universal Careers & Word Export</Text>
+                <Text style={styles.featureBody}>
+                  Whether you are an engineer in Nairobi, a registered nurse in Lagos, or an analyst in Accra, Interview Ready caters to every profession. Download your custom documents in both print-ready PDF and editable DOCX formats.
+                </Text>
+                <Text style={styles.featureBenefit}>
+                  <Text style={styles.benefitLabel}>Benefit: </Text>
+                  Provides fully formatted Microsoft Word-compatible layouts. You maintain 100% control with no hidden file locks or fees.
+                </Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* 5. HOW IT WORKS */}
+        {/* 5. HOW IT WORKS (3 Steps) */}
         <View
           style={styles.stepsSection}
           onLayout={(e) => {
@@ -681,48 +750,103 @@ export default function LandingPage() {
         >
           <View style={styles.container}>
             <View style={styles.sectionHeader}>
-              <View style={styles.sectionTag}>
-                <Text style={styles.sectionTagText}>SIMPLE 3-STEP PROCESS</Text>
-              </View>
-              <Text style={styles.sectionTitle}>How Interview Ready Works</Text>
-              <Text style={styles.sectionSub}>From blank page to top-tier applicant in 60 seconds.</Text>
+              <Text style={styles.problemHeading}>Three Steps to Your Next Callback</Text>
+              <Text style={styles.sectionSub}>
+                We eliminated the complex setup. Prepare polished, targeted applications in under three minutes.
+              </Text>
             </View>
 
             <View style={[styles.stepsGrid, isDesktop ? styles.stepsGrid3Col : styles.stepsGrid1Col]}>
               <View style={styles.stepCard}>
                 <View style={styles.stepNumberBadge}>
-                  <Text style={styles.stepNumberText}>1</Text>
+                  <Text style={styles.stepNumberText}>01</Text>
                 </View>
-                <Text style={styles.stepTitle}>Paste Target Job</Text>
+                <Text style={styles.stepTitle}>Input Your Work History</Text>
                 <Text style={styles.stepBody}>
-                  Paste the job posting URL or raw description text. You can also upload your existing resume or fill in your background.
+                  Type in your general experience details or simply paste a draft of your current raw curriculum vitae.
                 </Text>
               </View>
 
               <View style={styles.stepCard}>
                 <View style={styles.stepNumberBadge}>
-                  <Text style={styles.stepNumberText}>2</Text>
+                  <Text style={styles.stepNumberText}>02</Text>
                 </View>
-                <Text style={styles.stepTitle}>AI Generates Tailored Assets</Text>
+                <Text style={styles.stepTitle}>Paste Target Job Spec</Text>
                 <Text style={styles.stepBody}>
-                  Our AI extracts keywords, crafts metric-dense experience bullets, and designs an ATS-compliant resume and matching cover letter.
+                  Copy the text of the job description from LinkedIn, BrighterMonday, or any application portal.
                 </Text>
               </View>
 
               <View style={styles.stepCard}>
-                <View style={styles.stepNumberBadge}>
-                  <Text style={styles.stepNumberText}>3</Text>
+                <View style={[styles.stepNumberBadge, { backgroundColor: '#1A4F8A' }]}>
+                  <Text style={[styles.stepNumberText, { color: '#FFFFFF' }]}>03</Text>
                 </View>
-                <Text style={styles.stepTitle}>Practice & Ace the Interview</Text>
+                <Text style={styles.stepTitle}>Download DOCX & PDF</Text>
                 <Text style={styles.stepBody}>
-                  Download print-ready PDF/DOCX files, run interactive mock interview sessions, and apply with complete confidence.
+                  Export ATS-optimized achievements and a custom cover letter formatted perfectly for instant submission.
                 </Text>
+              </View>
+            </View>
+
+            <View style={{ alignItems: 'center', marginTop: 36 }}>
+              <Pressable style={styles.heroPrimaryBtn} onPress={handleGetStarted}>
+                <Text style={styles.heroPrimaryBtnText}>Get Started Free</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        {/* 5.5 CORPORATE APPROVALS & PARTNERS */}
+        <View style={styles.partnersSection}>
+          <View style={styles.container}>
+            <Text style={styles.partnersTag}>CORPORATE APPROVALS</Text>
+            <Text style={styles.partnersSub}>
+              Ecosystem partners supporting the next wave of African professional talent
+            </Text>
+            <View style={styles.partnersGrid}>
+              {/* Partner 1: Tunga Academy */}
+              <View style={styles.partnerCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#E33439', alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 8, fontWeight: '900' }}>TUNGA</Text>
+                  </View>
+                  <View>
+                    <Text style={{ color: '#1E3146', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 }}>TUNGA</Text>
+                    <Text style={{ color: '#64748B', fontSize: 8, fontWeight: '700', letterSpacing: 1 }}>ACADEMY</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Partner 2: StartHub Africa */}
+              <View style={styles.partnerCard}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Svg width={28} height={32} viewBox="0 0 44 50">
+                    <Path d="M20,5 C10,12 8,25 15,33 C18,36 21,41 21,45" stroke="#851C1D" strokeWidth="4" strokeLinecap="round" fill="none" />
+                    <Path d="M24,5 C34,12 36,25 29,33 C26,36 23,41 23,45" stroke="#E6A024" strokeWidth="4" strokeLinecap="round" fill="none" />
+                    <Circle cx="22" cy="12" r="4" fill="#1F3245" />
+                  </Svg>
+                  <View>
+                    <Text style={{ color: '#1F3245', fontSize: 16, fontWeight: '800' }}>StartHub</Text>
+                    <Text style={{ color: '#425E34', fontSize: 8, fontWeight: '700', letterSpacing: 1 }}>AFRICA</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Partner 3: VC4A */}
+              <View style={styles.partnerCard}>
+                <View>
+                  <Text style={{ color: '#0F172A', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>
+                    VC4<Text style={{ color: '#009688' }}>A</Text>
+                  </Text>
+                  <Text style={{ color: '#64748B', fontSize: 8, fontWeight: '700', letterSpacing: 1 }}>ECOSYSTEM</Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
 
-        {/* 6. TESTIMONIALS */}
+        {/* 6. TESTIMONIALS & RESULTS */}
         <View
           style={styles.testimonialsSection}
           onLayout={(e) => {
@@ -731,11 +855,8 @@ export default function LandingPage() {
         >
           <View style={styles.container}>
             <View style={styles.sectionHeader}>
-              <View style={styles.sectionTag}>
-                <Text style={styles.sectionTagText}>PROVEN OUTCOMES</Text>
-              </View>
-              <Text style={styles.sectionTitle}>Recruiter Tested & Candidate Approved</Text>
-              <Text style={styles.sectionSub}>Real results from candidates who leveled up their applications.</Text>
+              <Text style={styles.partnersTag}>BETA USER RESULTS</Text>
+              <Text style={styles.problemHeading}>Ambitious professionals are getting callbacks.</Text>
             </View>
 
             <View style={[styles.cardsGrid, isDesktop ? styles.cardsGrid3Col : styles.cardsGrid1Col]}>
@@ -743,15 +864,18 @@ export default function LandingPage() {
                 <View key={idx} style={styles.testimonialCard}>
                   <View style={styles.testimonialStars}>
                     {[...Array(5)].map((_, i) => (
-                      <Ionicons key={i} name="star" size={16} color="#F59E0B" />
+                      <Ionicons key={i} name="star" size={16} color="#0EA5E9" />
                     ))}
                   </View>
                   <Text style={styles.testimonialQuote}>"{item.quote}"</Text>
                   <View style={styles.testimonialFooter}>
-                    <View>
-                      <Text style={styles.testimonialName}>{item.name}</Text>
-                      <Text style={styles.testimonialRole}>{item.role}</Text>
-                      <Text style={styles.testimonialPlaced}>{item.placedAt}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Image source={{ uri: item.image }} style={styles.testimonialAvatar} contentFit="cover" />
+                      <View>
+                        <Text style={styles.testimonialName}>{item.name}</Text>
+                        <Text style={styles.testimonialRole}>{item.role}</Text>
+                        <Text style={styles.testimonialPlaced}>{item.location}</Text>
+                      </View>
                     </View>
                     <View style={styles.testimonialScoreBadge}>
                       <Text style={styles.testimonialScoreText}>{item.score}</Text>
@@ -759,6 +883,22 @@ export default function LandingPage() {
                   </View>
                 </View>
               ))}
+            </View>
+
+            {/* Aggregate metrics bar */}
+            <View style={styles.metricsBar}>
+              <View style={styles.metricItem}>
+                <Text style={styles.metricNumber}>10,000+</Text>
+                <Text style={styles.metricLabel}>RESUMES GENERATED</Text>
+              </View>
+              <View style={styles.metricItem}>
+                <Text style={[styles.metricNumber, { color: '#0F172A' }]}>94%</Text>
+                <Text style={styles.metricLabel}>INTERVIEW RATE INCREASE</Text>
+              </View>
+              <View style={styles.metricItem}>
+                <Text style={styles.metricNumber}>DOCX + PDF</Text>
+                <Text style={styles.metricLabel}>INSTANT DUAL EXPORT</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -772,8 +912,10 @@ export default function LandingPage() {
         >
           <View style={styles.container}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-              <Text style={styles.sectionSub}>Everything you need to know about the platform.</Text>
+              <Text style={styles.problemHeading}>Frequently Asked Questions</Text>
+              <Text style={styles.sectionSub}>
+                Have questions about how Interview Ready can help your application? Find your answers below.
+              </Text>
             </View>
 
             <View style={styles.faqList}>
@@ -789,8 +931,8 @@ export default function LandingPage() {
                       <Text style={styles.faqQuestion}>{faq.q}</Text>
                       <Ionicons
                         name={isOpen ? 'chevron-up' : 'chevron-down'}
-                        size={20}
-                        color="#1A4F8A"
+                        size={18}
+                        color={isOpen ? '#1A4F8A' : '#94A3B8'}
                       />
                     </View>
                     {isOpen && <Text style={styles.faqAnswer}>{faq.a}</Text>}
@@ -801,20 +943,29 @@ export default function LandingPage() {
           </View>
         </View>
 
-        {/* 8. FINAL CONVERSION BANNER */}
+        {/* 8. FINAL CONVERSION CTA */}
         <View style={styles.ctaSection}>
           <View style={styles.container}>
             <View style={styles.ctaCard}>
-              <Text style={styles.ctaTitle}>Ready to Land Your Next Role?</Text>
-              <Text style={styles.ctaSubtitle}>
-                Join thousands of candidates using Interview Ready to build high-scoring resumes and ace their interviews.
+              <View style={styles.earlyBadge}>
+                <Text style={styles.earlyBadgeText}>EARLY ACCESS PRIORITY</Text>
+              </View>
+              <Text style={styles.ctaTitle}>Your next opportunity is one application away.</Text>
+              <Text style={styles.ctaSub}>
+                Join the priority queue today. Prepare tailored resumes and cover letters in under 3 minutes and boost your interview callback rate.
               </Text>
-              <Pressable style={styles.ctaBtn} onPress={handleGetStarted}>
-                <Text style={styles.ctaBtnText}>
-                  {session ? 'Launch Dashboard' : 'Get Started for Free'}
-                </Text>
-                <Ionicons name="arrow-forward" size={18} color="#1A4F8A" />
-              </Pressable>
+              <View style={styles.ctaActions}>
+                <Pressable style={styles.heroPrimaryBtn} onPress={handleGetStarted}>
+                  <Text style={styles.heroPrimaryBtnText}>Get Started for Free</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </Pressable>
+                {!session && (
+                  <Pressable style={styles.heroSecondaryBtn} onPress={handleSignIn}>
+                    <Text style={styles.heroSecondaryBtnText}>Sign In</Text>
+                  </Pressable>
+                )}
+              </View>
+              <Text style={styles.ctaDisclaimer}>Free to start • Standard privacy policies apply.</Text>
             </View>
           </View>
         </View>
@@ -822,30 +973,42 @@ export default function LandingPage() {
         {/* 9. FOOTER */}
         <View style={styles.footer}>
           <View style={styles.container}>
-            <View style={[styles.footerInner, isDesktop ? styles.footerInnerDesktop : styles.footerInnerMobile]}>
-              <View style={styles.footerBrand}>
-                <View style={styles.navBrand}>
-                  <Image source={require('../../../assets/logo.png')} style={styles.footerLogo} />
-                  <Text style={styles.brandText}>Interview Ready</Text>
+            <View style={styles.footerGrid}>
+              <View style={styles.footerColMain}>
+                <View style={styles.footerBrand}>
+                  <Image
+                    source={require('../../../assets/logo.png')}
+                    style={[styles.navLogo, { tintColor: '#FFFFFF' }]}
+                    contentFit="contain"
+                  />
+                  <Text style={styles.footerBrandText}>Interview Ready</Text>
                 </View>
-                <Text style={styles.footerTagline}>Paste a job. Land the interview.</Text>
+                <Text style={styles.footerTagline}>
+                  We build automated career utilities for ambitious professionals across Africa and beyond, helping candidates compete on a global scale.
+                </Text>
               </View>
 
-              <View style={styles.footerLinks}>
-                <Pressable onPress={() => setShowPrivacy(true)}>
-                  <Text style={styles.footerLinkText}>Privacy Policy</Text>
-                </Pressable>
-                <Pressable onPress={() => setShowTerms(true)}>
-                  <Text style={styles.footerLinkText}>Terms of Service</Text>
-                </Pressable>
-                <Text style={styles.footerLinkText}>Support: info@appinterviewready.top</Text>
+              <View style={styles.footerCol}>
+                <Text style={styles.footerHeading}>Product</Text>
+                <Pressable onPress={() => scrollToSection('features')}><Text style={styles.footerLink}>Features</Text></Pressable>
+                <Pressable onPress={() => scrollToSection('how-it-works')}><Text style={styles.footerLink}>How It Works</Text></Pressable>
+                <Pressable onPress={() => scrollToSection('testimonials')}><Text style={styles.footerLink}>Testimonials</Text></Pressable>
+              </View>
+
+              <View style={styles.footerCol}>
+                <Text style={styles.footerHeading}>Legal & Support</Text>
+                <Pressable onPress={() => setShowPrivacy(true)}><Text style={styles.footerLink}>Privacy Policy</Text></Pressable>
+                <Pressable onPress={() => setShowTerms(true)}><Text style={styles.footerLink}>Terms of Service</Text></Pressable>
+                <Text style={styles.footerLink}>Support: info@appinterviewready.top</Text>
               </View>
             </View>
 
             <View style={styles.footerBottom}>
-              <Text style={styles.footerCopy}>
-                © {new Date().getFullYear()} Interview Ready. All rights reserved.
-              </Text>
+              <Text style={styles.copyright}>© 2026 Interview Ready. All rights reserved.</Text>
+              <View style={{ flexDirection: 'row', gap: 16 }}>
+                <Ionicons name="logo-linkedin" size={18} color="#93C5FD" />
+                <Ionicons name="logo-twitter" size={18} color="#93C5FD" />
+              </View>
             </View>
           </View>
         </View>
@@ -861,36 +1024,37 @@ export default function LandingPage() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F9FAFB',
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 0,
+    flexGrow: 1,
   },
   container: {
     width: '100%',
-    maxWidth: 1140,
-    alignSelf: 'center',
-    paddingHorizontal: 20,
+    maxWidth: 1120,
+    marginHorizontal: 'auto',
+    paddingHorizontal: 24,
   },
 
   // 1. NAVBAR
   navbar: {
+    position: 'sticky' as any,
+    top: 0,
+    zIndex: 50,
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
-    zIndex: 100,
-    ...(Platform.OS === 'web' ? ({ position: 'sticky', top: 0 } as any) : {}),
+    backdropFilter: 'blur(12px)',
   },
   navbarInner: {
-    width: '100%',
-    maxWidth: 1140,
-    alignSelf: 'center',
-    paddingHorizontal: 20,
-    height: 68,
+    maxWidth: 1120,
+    marginHorizontal: 'auto',
+    paddingHorizontal: 24,
+    height: 64,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -901,10 +1065,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   navLogo: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
   },
   brandText: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
@@ -913,12 +1078,13 @@ const styles = StyleSheet.create({
   navLinks: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 28,
+    gap: 32,
   },
   navLinkItem: {
     paddingVertical: 6,
   },
   navLinkText: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 14,
     fontWeight: '600',
     color: '#475569',
@@ -929,23 +1095,23 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   navSecondaryBtn: {
-    paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: Radius.md,
+    paddingHorizontal: 16,
+    borderRadius: Radius.lg,
   },
   navSecondaryBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A4F8A',
+    color: '#334155',
   },
   navPrimaryBtn: {
+    backgroundColor: '#1A4F8A',
+    paddingVertical: 9,
+    paddingHorizontal: 18,
+    borderRadius: Radius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#1A4F8A',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: Radius.lg,
     shadowColor: '#1A4F8A',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -953,33 +1119,50 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   navPrimaryBtnText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
   mobileMenuToggle: {
     padding: 8,
-    borderRadius: 8,
   },
   mobileDropdown: {
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#F1F5F9',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
   },
   mobileNavItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#F8FAFC',
   },
   mobileNavText: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 15,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#334155',
+  },
+  verifiedTag: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#DBEAFE',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 99,
+  },
+  verifiedTagText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#1A4F8A',
+    letterSpacing: 0.5,
   },
 
   // 2. HERO
@@ -987,11 +1170,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
-    paddingVertical: 48,
+    paddingVertical: 64,
+    overflow: 'hidden',
   },
   heroGrid: {
     alignItems: 'center',
-    gap: 40,
+    gap: 48,
   },
   heroGridDesktop: {
     flexDirection: 'row',
@@ -1004,83 +1188,91 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: 580,
   },
+  heroRight: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  phoneGlow: {
+    position: 'absolute',
+    width: 280,
+    height: 280,
+    backgroundColor: 'rgba(14, 165, 233, 0.15)',
+    borderRadius: 140,
+    filter: 'blur(48px)' as any,
+  },
   earlyBadge: {
-    alignSelf: 'flex-start',
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#DBEAFE',
     paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 100,
+    borderRadius: Radius.full,
+    alignSelf: 'flex-start',
     marginBottom: 16,
   },
   earlyBadgeText: {
     fontSize: 11,
     fontWeight: '800',
     color: '#1A4F8A',
-    letterSpacing: 0.6,
+    letterSpacing: 0.5,
   },
   heroTitle: {
-    fontSize: 44,
-    lineHeight: 52,
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 48,
     fontWeight: '800',
     color: '#0F172A',
-    letterSpacing: -1,
-    marginBottom: 18,
+    lineHeight: 56,
+    letterSpacing: -1.5,
+    marginBottom: 16,
   },
   heroTitleAccent: {
     color: '#0EA5E9',
   },
   heroSubtitle: {
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 26,
     color: '#475569',
+    fontWeight: '400',
     marginBottom: 24,
   },
   heroProof: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 28,
+    marginBottom: 32,
   },
   proofAvatars: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatarCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  avatarImg: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: 2,
     borderColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarInitial: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
   },
   proofText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#64748B',
   },
   heroActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
-    flexWrap: 'wrap',
+    gap: 14,
+    marginBottom: 16,
   },
   heroPrimaryBtn: {
+    backgroundColor: '#1A4F8A',
+    paddingVertical: 14,
+    paddingHorizontal: 26,
+    borderRadius: Radius.xl,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#1A4F8A',
-    paddingHorizontal: 28,
-    paddingVertical: 16,
-    borderRadius: Radius.xl,
     shadowColor: '#1A4F8A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -1088,107 +1280,142 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   heroPrimaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
   heroSecondaryBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 15,
-    borderRadius: Radius.xl,
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    paddingVertical: 14,
+    paddingHorizontal: 22,
+    borderRadius: Radius.xl,
   },
   heroSecondaryBtnText: {
-    color: '#334155',
     fontSize: 15,
     fontWeight: '600',
+    color: '#334155',
   },
   heroDisclaimer: {
     fontSize: 12,
     color: '#94A3B8',
-    marginTop: 4,
+    fontWeight: '500',
   },
 
-  // HERO SIMULATOR MOCKUP
-  heroRight: {
+  // PHONE MOCKUP
+  phoneFrame: {
+    width: 330,
+    minHeight: 560,
+    backgroundColor: '#0D1117',
+    borderRadius: 44,
+    borderWidth: 6,
+    borderColor: '#1E293B',
+    padding: 10,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2,
+    shadowRadius: 28,
+    elevation: 10,
+  },
+  phoneNotch: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    transform: [{ translateX: -60 }],
+    width: 120,
+    height: 22,
+    backgroundColor: '#0D1117',
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
+    zIndex: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  phoneFrame: {
-    width: 320,
-    backgroundColor: '#0F172A',
-    borderRadius: 40,
-    padding: 10,
-    borderWidth: 5,
-    borderColor: '#1E293B',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.3,
-    shadowRadius: 28,
-    elevation: 8,
-  },
-  phoneNotch: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
   notchPill: {
-    width: 48,
+    width: 44,
     height: 4,
-    backgroundColor: '#334155',
+    backgroundColor: '#374151',
     borderRadius: 2,
   },
   phoneScreen: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 30,
+    borderRadius: 34,
+    backgroundColor: '#F9FAFB',
     overflow: 'hidden',
-    padding: 12,
+    flex: 1,
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   simHeader: {
+    backgroundColor: '#1A4F8A',
+    paddingTop: 24,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1A4F8A',
-    marginHorizontal: -12,
-    marginTop: -12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 10,
   },
   simBrand: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
+  simLogo: {
+    width: 18,
+    height: 18,
+    tintColor: '#FFFFFF',
+  },
   simBrandText: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },
   simBadge: {
     backgroundColor: '#0EA5E9',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 100,
+    borderRadius: 99,
   },
   simBadgeText: {
-    color: '#FFFFFF',
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  simContent: {
+    padding: 12,
+    gap: 10,
+  },
+  simTitleWrap: {
+    alignItems: 'center',
+  },
+  simSubtitleUpper: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.6,
+  },
+  simSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#334155',
+    marginTop: 2,
   },
   simTabs: {
     flexDirection: 'row',
     backgroundColor: '#E2E8F0',
-    borderRadius: 8,
-    padding: 2,
-    marginBottom: 10,
+    padding: 3,
+    borderRadius: Radius.lg,
+    gap: 3,
   },
   simTab: {
     flex: 1,
-    paddingVertical: 5,
+    paddingVertical: 6,
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: Radius.md,
   },
   simTabActive: {
     backgroundColor: '#FFFFFF',
@@ -1196,138 +1423,156 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    elevation: 1,
   },
   simTabText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#64748B',
+    letterSpacing: 0.5,
   },
   simTabTextActive: {
     color: '#1A4F8A',
-    fontWeight: '700',
   },
   simScoreCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    borderRadius: Radius.xl,
+    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   simScoreLabel: {
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 8,
+    fontWeight: '800',
     color: '#94A3B8',
-    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   simScoreSub: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 12,
     fontWeight: '700',
     color: '#0F172A',
+    marginTop: 2,
   },
   gaugeBox: {
-    position: 'relative',
     width: 44,
     height: 44,
-    justifyContent: 'center',
+    position: 'relative',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   gaugeVal: {
     position: 'absolute',
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
+  },
+  bulletArea: {
+    gap: 8,
   },
   beforeBox: {
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
     borderColor: '#FEE2E2',
-    borderRadius: 10,
-    padding: 8,
-    marginBottom: 6,
+    borderRadius: Radius.lg,
+    padding: 10,
     position: 'relative',
   },
   stateTagBefore: {
     position: 'absolute',
     top: 6,
-    right: 6,
+    right: 8,
     backgroundColor: '#FEE2E2',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 100,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   stateTagBeforeText: {
     fontSize: 8,
-    fontWeight: '700',
-    color: '#DC2626',
+    fontWeight: '800',
+    color: '#B91C1C',
   },
-  stateTitle: {
+  stateTitleBefore: {
     fontSize: 8,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#94A3B8',
-    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
-  stateBody: {
+  stateBodyBefore: {
     fontSize: 10,
     lineHeight: 14,
     color: '#64748B',
-    marginTop: 4,
   },
   optimizingRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     paddingVertical: 2,
+  },
+  pingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#1A4F8A',
   },
   optimizingText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1A4F8A',
+    letterSpacing: 0.6,
   },
   afterBox: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 10,
-    padding: 8,
+    borderRadius: Radius.lg,
+    padding: 10,
   },
   afterBoxActive: {
     backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+    borderColor: '#D1FAE5',
   },
   stateHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 4,
   },
   stateTitleOptimized: {
     fontSize: 8,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#047857',
-    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   recruiterBadge: {
     backgroundColor: '#D1FAE5',
     paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 100,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   recruiterBadgeText: {
     fontSize: 8,
-    fontWeight: '700',
-    color: '#047857',
+    fontWeight: '800',
+    color: '#065F46',
   },
   stateBodyOptimized: {
     fontSize: 10,
     lineHeight: 14,
-    color: '#0F172A',
-    marginTop: 4,
+    color: '#1E293B',
+    fontWeight: '500',
   },
   keywordsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginTop: 8,
   },
   kwBadge: {
     backgroundColor: '#EFF6FF',
@@ -1335,7 +1580,7 @@ const styles = StyleSheet.create({
     borderColor: '#DBEAFE',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 100,
+    borderRadius: 4,
   },
   kwText: {
     fontSize: 8,
@@ -1343,18 +1588,20 @@ const styles = StyleSheet.create({
     color: '#1A4F8A',
   },
   simFooter: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    paddingTop: 8,
-    marginTop: 10,
   },
   simLocation: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
   },
   simStatus: {
     flexDirection: 'row',
@@ -1362,52 +1609,38 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   simStatusText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#047857',
   },
 
-  // 3. PROBLEM SECTION
+  // 3. PROBLEM STATEMENT
   problemSection: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 64,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 72,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   sectionHeader: {
+    textAlign: 'center',
     alignItems: 'center',
-    marginBottom: 44,
+    maxWidth: 640,
+    marginHorizontal: 'auto',
+    marginBottom: 48,
   },
   problemHeading: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 32,
     fontWeight: '800',
     color: '#1A4F8A',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  sectionTag: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 100,
-    marginBottom: 12,
-  },
-  sectionTagText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#1A4F8A',
-    letterSpacing: 0.6,
-  },
-  sectionTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#0F172A',
+    letterSpacing: -0.8,
     marginBottom: 12,
     textAlign: 'center',
   },
   sectionSub: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#64748B',
-    maxWidth: 620,
+    color: '#475569',
     textAlign: 'center',
   },
   cardsGrid: {
@@ -1422,26 +1655,27 @@ const styles = StyleSheet.create({
   problemCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: Radius.xl,
-    padding: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E5E7EB',
+    borderRadius: Radius.xl,
+    padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 6,
     elevation: 1,
   },
   problemIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: Radius.lg,
     backgroundColor: '#EFF6FF',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   problemCardTitle: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 18,
     fontWeight: '700',
     color: '#0F172A',
@@ -1450,233 +1684,313 @@ const styles = StyleSheet.create({
   problemCardBody: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: '#475569',
+  },
+  problemPivot: {
+    alignItems: 'center',
+    marginTop: 48,
+    gap: 8,
+  },
+  pivotText: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1A4F8A',
+  },
+  pivotLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+  },
+  pivotLinkText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#1A4F8A',
+    letterSpacing: 1,
   },
 
-  // 4. FEATURES SECTION
+  // 4. FEATURES (ALTERNATING ROWS)
   featuresSection: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 72,
+    paddingVertical: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   featureRow: {
     alignItems: 'center',
-    gap: 40,
-    marginVertical: 36,
+    gap: 48,
+    marginBottom: 80,
   },
   featureRowDesktop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   featureRowDesktopReverse: {
     flexDirection: 'row-reverse',
-    justifyContent: 'space-between',
   },
   featureRowMobile: {
     flexDirection: 'column',
   },
   featureTextCol: {
     flex: 1,
-    maxWidth: 520,
+    maxWidth: 540,
   },
-  featureBadge: {
-    flexDirection: 'row',
+  featureVisualCol: {
+    flex: 1,
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F1F5F9',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 100,
-    marginBottom: 12,
+    justifyContent: 'center',
   },
-  featureBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1A4F8A',
+  featureNumber: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 28,
+    fontWeight: '800',
+    color: 'rgba(14, 165, 233, 0.4)',
+    letterSpacing: 3,
+    marginBottom: 6,
   },
   featureTitle: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 28,
     fontWeight: '800',
     color: '#0F172A',
-    lineHeight: 36,
-    marginBottom: 14,
+    letterSpacing: -0.6,
+    marginBottom: 12,
   },
   featureBody: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#64748B',
-    marginBottom: 20,
+    color: '#475569',
+    marginBottom: 16,
   },
-  featurePoints: {
-    gap: 10,
+  featureBenefit: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#475569',
   },
-  pointRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  benefitLabel: {
+    fontWeight: '800',
+    color: '#1A4F8A',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  pointText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  featureCardVisual: {
-    flex: 1,
-    maxWidth: 460,
+  graphicCard: {
     width: '100%',
-  },
-  mockResumeCard: {
-    backgroundColor: '#F8FAFC',
+    maxWidth: 400,
+    backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: Radius.xl,
-    padding: 24,
+    borderRadius: 20,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
   },
-  mockResumeHeader: {
+  graphicHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    marginBottom: 16,
+    borderBottomColor: '#F1F5F9',
+  },
+  graphicHeaderSmall: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.6,
+    marginBottom: 12,
+  },
+  graphicFormatTag: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#64748B',
   },
   mockDotRow: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
   mockDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
   },
-  mockResumeFormat: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#1A4F8A',
+  mockTemplateContent: {
+    paddingTop: 16,
   },
-  mockLineHeader: {
-    width: '60%',
-    height: 14,
-    backgroundColor: '#1A4F8A',
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  mockLineSub: {
-    width: '85%',
-    height: 8,
-    backgroundColor: '#CBD5E1',
-    borderRadius: 4,
-    marginBottom: 16,
-  },
-  mockBadgeItem: {
+  mockBulletItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+  },
+  mockBulletBadge: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  mockBulletBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#065F46',
+    textTransform: 'uppercase',
+  },
+  mockDownloadRow: {
+    flexDirection: 'row',
     gap: 8,
-    backgroundColor: '#EFF6FF',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 8,
+    marginTop: 16,
   },
-  mockBadgeItemText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1E293B',
-    flex: 1,
-  },
-  mockMatchCard: {
+  mockDownloadPill: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: Radius.xl,
-    padding: 24,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-  },
-  matchScoreBadge: {
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  matchScoreNumber: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#047857',
-  },
-  matchScoreLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#065F46',
-    marginTop: 2,
-  },
-  matchItemRow: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
-  matchItemText: {
-    fontSize: 13,
+  mockDownloadPillText: {
+    fontSize: 10,
     fontWeight: '600',
     color: '#334155',
   },
-  mockChatCard: {
+  mockLetterContent: {
+    paddingTop: 12,
+    gap: 8,
+  },
+  mockLetterTo: {
+    fontSize: 9,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+  },
+  mockLetterSubjectBox: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: Radius.xl,
-    padding: 24,
-    gap: 14,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
-  mockChatBubbleAI: {
-    backgroundColor: '#F1F5F9',
-    padding: 16,
-    borderRadius: 14,
+  mockLetterSubjectText: {
+    fontSize: 10,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+    color: '#1E293B',
   },
-  mockChatAuthor: {
+  mockLetterSalutation: {
     fontSize: 11,
     fontWeight: '700',
     color: '#1A4F8A',
-    marginBottom: 4,
   },
-  mockChatText: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: '#1E293B',
+  mockLetterBodyBox: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    borderRadius: 8,
+    padding: 8,
   },
-  mockChatBubbleFeedback: {
+  mockLetterBodyText: {
+    fontSize: 10,
+    lineHeight: 14,
+    color: '#065F46',
+  },
+  mockKeywordsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  mockKwBadgeActive: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  mockKwBadgeActiveText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  mockKwBadgeInactive: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  mockKwBadgeInactiveText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  mockVerdictBox: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  mockVerdictLabel: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+  },
+  mockVerdictText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#047857',
+    marginTop: 2,
+  },
+  mockDualGrid: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+    width: '100%',
+  },
+  mockDualBox: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: Radius.lg,
+    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ECFDF5',
-    padding: 12,
-    borderRadius: 10,
+    gap: 6,
   },
-  mockChatFeedbackText: {
+  mockDualText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  mockBundleBtn: {
+    backgroundColor: '#1A4F8A',
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: Radius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  mockBundleBtnText: {
     fontSize: 12,
-    lineHeight: 16,
-    color: '#065F46',
-    flex: 1,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 
   // 5. HOW IT WORKS
   stepsSection: {
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 72,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   stepsGrid: {
     gap: 24,
@@ -1690,27 +2004,33 @@ const styles = StyleSheet.create({
   stepCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: Radius.xl,
-    padding: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E5E7EB',
+    borderRadius: Radius.xl,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
   },
   stepNumberBadge: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1A4F8A',
-    justifyContent: 'center',
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   stepNumberText: {
-    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 14,
     fontWeight: '800',
-    fontSize: 16,
+    color: '#1E293B',
   },
   stepTitle: {
-    fontSize: 18,
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
     marginBottom: 8,
@@ -1718,91 +2038,171 @@ const styles = StyleSheet.create({
   stepBody: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#64748B',
+    color: '#475569',
+  },
+
+  // 5.5 CORPORATE PARTNERS
+  partnersSection: {
+    backgroundColor: '#F8FAFC',
+    paddingVertical: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  partnersTag: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#1A4F8A',
+    letterSpacing: 1.2,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  partnersSub: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#334155',
+    textAlign: 'center',
+    marginBottom: 32,
+  },
+  partnersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  partnerCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: Radius.xl,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    minWidth: 160,
   },
 
   // 6. TESTIMONIALS
   testimonialsSection: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 72,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    paddingVertical: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   testimonialCard: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: Radius.xl,
-    padding: 24,
+    backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    borderRadius: Radius.xl,
+    padding: 24,
     justifyContent: 'space-between',
+    gap: 16,
   },
   testimonialStars: {
     flexDirection: 'row',
-    gap: 2,
-    marginBottom: 12,
+    gap: 3,
   },
   testimonialQuote: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#334155',
+    color: '#475569',
     fontStyle: 'italic',
-    marginBottom: 18,
   },
   testimonialFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  testimonialAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   testimonialName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#0F172A',
   },
   testimonialRole: {
-    fontSize: 12,
-    color: '#64748B',
-  },
-  testimonialPlaced: {
     fontSize: 11,
     fontWeight: '600',
     color: '#1A4F8A',
-    marginTop: 2,
+  },
+  testimonialPlaced: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   testimonialScoreBadge: {
     backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: Radius.md,
   },
   testimonialScoreText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#1A4F8A',
+  },
+  metricsBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginTop: 64,
+    paddingTop: 48,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    gap: 24,
+  },
+  metricItem: {
+    alignItems: 'center',
+  },
+  metricNumber: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 36,
+    fontWeight: '800',
+    color: '#1A4F8A',
+    letterSpacing: -1,
+  },
+  metricLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.6,
+    marginTop: 4,
   },
 
   // 7. FAQ
   faqSection: {
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 72,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 80,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   faqList: {
-    maxWidth: 760,
-    width: '100%',
-    alignSelf: 'center',
+    maxWidth: 720,
+    marginHorizontal: 'auto',
     gap: 12,
+    width: '100%',
   },
   faqItem: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: Radius.lg,
-    padding: 20,
+    borderRadius: Radius.xl,
+    padding: 18,
   },
   faqQuestionRow: {
     flexDirection: 'row',
@@ -1810,121 +2210,125 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   faqQuestion: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
     fontSize: 15,
     fontWeight: '700',
     color: '#0F172A',
     flex: 1,
-    marginRight: 12,
+    paddingRight: 12,
   },
   faqAnswer: {
     fontSize: 14,
     lineHeight: 22,
     color: '#475569',
     marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
     paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F8FAFC',
   },
 
   // 8. FINAL CTA
   ctaSection: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 72,
+    paddingVertical: 88,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   ctaCard: {
-    backgroundColor: '#1A4F8A',
-    borderRadius: 28,
-    paddingVertical: 48,
-    paddingHorizontal: 32,
     alignItems: 'center',
     textAlign: 'center',
-    shadowColor: '#1A4F8A',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
+    maxWidth: 680,
+    marginHorizontal: 'auto',
   },
   ctaTitle: {
-    fontSize: 32,
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 40,
     fontWeight: '800',
-    color: '#FFFFFF',
-    marginBottom: 12,
+    color: '#0F172A',
+    letterSpacing: -1,
+    lineHeight: 48,
+    marginBottom: 16,
     textAlign: 'center',
   },
-  ctaSubtitle: {
+  ctaSub: {
     fontSize: 16,
-    lineHeight: 24,
-    color: '#DBEAFE',
-    maxWidth: 580,
+    lineHeight: 26,
+    color: '#475569',
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 32,
   },
-  ctaBtn: {
+  ctaActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: Radius.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    gap: 14,
+    marginBottom: 14,
   },
-  ctaBtnText: {
-    color: '#1A4F8A',
-    fontSize: 16,
-    fontWeight: '700',
+  ctaDisclaimer: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '500',
   },
 
   // 9. FOOTER
   footer: {
-    backgroundColor: '#0F172A',
-    paddingVertical: 48,
+    backgroundColor: '#1A4F8A',
+    paddingVertical: 64,
   },
-  footerInner: {
-    gap: 24,
-    alignItems: 'center',
-  },
-  footerInnerDesktop: {
+  footerGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 40,
+    marginBottom: 48,
   },
-  footerInnerMobile: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+  footerColMain: {
+    flex: 2,
+    minWidth: 260,
+  },
+  footerCol: {
+    flex: 1,
+    minWidth: 140,
+    gap: 12,
   },
   footerBrand: {
-    gap: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
   },
-  footerLogo: {
-    width: 28,
-    height: 28,
+  footerBrandText: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   footerTagline: {
     fontSize: 13,
-    color: '#94A3B8',
+    lineHeight: 20,
+    color: '#BFDBFE',
   },
-  footerLinks: {
-    gap: 12,
-    alignItems: 'flex-start',
+  footerHeading: {
+    fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
-  footerLinkText: {
+  footerLink: {
     fontSize: 13,
-    color: '#CBD5E1',
-    fontWeight: '500',
+    color: '#DBEAFE',
   },
   footerBottom: {
+    paddingTop: 32,
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
-    paddingTop: 24,
-    marginTop: 32,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  footerCopy: {
+  copyright: {
     fontSize: 12,
-    color: '#64748B',
+    color: '#93C5FD',
   },
 });

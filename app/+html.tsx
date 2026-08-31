@@ -49,18 +49,43 @@ export default function Root({ children }: PropsWithChildren) {
         />
         <meta name="google-adsense-account" content="ca-pub-3023396295642660" />
 
+        {/* Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Sora:wght@300;400;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+
         {/* Reset web styles for native feel */}
         <ScrollViewStyleReset />
 
         <style
           dangerouslySetInnerHTML={{
             __html: `
+              @keyframes float {
+                0%, 100% {
+                  transform: translateY(0px);
+                }
+                50% {
+                  transform: translateY(-10px);
+                }
+              }
+              .phone-float {
+                animation: float 4s ease-in-out infinite;
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .phone-float {
+                  animation: none !important;
+                }
+              }
               html, body, #root {
                 width: 100%;
                 height: 100%;
                 margin: 0;
                 padding: 0;
-                background-color: #0a0f1d;
+                background-color: #F9FAFB;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
                 touch-action: manipulation;
