@@ -43,6 +43,7 @@ supabase/.temp/
 
 # Archived dev artifacts (untracked)
 _archive/
+interview-ready-landing/
 
 # EAS signing keystore (secret — never commit)
 @victor48s-team__interview-ready.jks

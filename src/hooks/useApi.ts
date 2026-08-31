@@ -46,13 +46,21 @@ export const useParseResumeMutation = () => {
       const response = await apiUploadFile('profile-parse-resume', params.fileUri, params.fileName, params.mimeType, params.webFile);
       if (response.error) throw new Error(response.error);
       return response.data as {
+        name?: string;
         current_role: string;
         company: string;
+        location?: string;
+        phone?: string;
+        email?: string;
+        linkedin_url?: string;
+        portfolio_url?: string;
         summary: string;
         technical_skills: string[];
         soft_skills: string[];
         work_history: any[];
         education: any[];
+        certifications?: any[];
+        projects?: any[];
       };
     },
     onSuccess: () => { refreshCredits(); },

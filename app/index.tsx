@@ -1,14 +1,15 @@
-import { Redirect } from 'expo-router';
+import React from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuthStore } from '../src/stores/auth-store';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { Colors } from '../src/theme';
+import LandingPage from '../src/components/landing/LandingPage';
 
 /**
- * Root index — redirects based on auth state.
- * Authenticated users → tabs, unauthenticated → welcome.
+ * Root index — Displays the marketing landing page with direct
+ * "Get Started" / "Sign In" / "Go to Dashboard" navigation actions.
  */
 export default function Index() {
-  const { session, initialized, loading } = useAuthStore();
+  const { initialized, loading } = useAuthStore();
 
   if (!initialized || loading) {
     return (
@@ -18,15 +19,7 @@ export default function Index() {
     );
   }
 
-  if (session) {
-    const isCompleted = session.user?.user_metadata?.onboarding_completed;
-    if (!isCompleted) {
-      return <Redirect href="/(onboarding)/referral-code" />;
-    }
-    return <Redirect href="/(tabs)" />;
-  }
-
-  return <Redirect href="/(auth)/welcome" />;
+  return <LandingPage />;
 }
 
 const styles = StyleSheet.create({

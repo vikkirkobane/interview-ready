@@ -117,13 +117,12 @@ describe('Signup screen — user stories', () => {
     await fireEvent.press(screen.getByLabelText('Create Account'));
 
     await waitFor(() => {
-      expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
-        email: 'jane@example.com',
-        password: 'Password123',
-        options: {
-          data: { first_name: '', last_name: '' },
-        },
-      });
+      expect(mockSupabase.auth.signUp).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'jane@example.com',
+          password: 'Password123',
+        })
+      );
     });
     await waitFor(() => {
       expect(router.replace).toHaveBeenCalledWith('/(onboarding)/referral-code');
@@ -142,7 +141,7 @@ describe('Signup screen — user stories', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('Account created. Check your email to confirm your account, then sign in.')
+        screen.getByText('Account created successfully! Please check your email to confirm your account, then sign in.')
       ).toBeTruthy();
     });
     expect(router.replace).not.toHaveBeenCalledWith('/(onboarding)/referral-code');

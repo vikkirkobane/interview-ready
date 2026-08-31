@@ -149,10 +149,10 @@ const aiResume = (templateId: string | null): DraftResume => ({
     title: 'Senior Product Strategy Lead',
     subtitle: 'Enterprise SaaS & Growth Architecture Specialist',
     email: 'alex.morgan@email.com',
-    phone: '+1 (555) 234-5678',
+    phone: '',
     linkedin: 'linkedin.com/in/alexmorgan',
     portfolio: 'alexmorgan.io',
-    location: 'San Francisco, CA',
+    location: '',
   },
   summary: 'Senior Product Strategy Lead with 7+ years of experience scaling high-growth SaaS platforms, driving $20M+ in annual revenue, and leading cross-functional engineering and product squads. Proven track record in translating complex customer requirements into high-impact roadmap execution. Adept at optimizing product lifecycle metrics, mentoring high-performing teams, and accelerating market expansion.',
   experience: [
@@ -161,12 +161,13 @@ const aiResume = (templateId: string | null): DraftResume => ({
       title: 'Senior Product Strategy Lead',
       company: 'Global Tech Solutions',
       date_range: '2021 – Present',
-      location: 'San Francisco, CA',
+      location: '',
       bullets: [
         'Spearheaded digital transformation initiatives across 12 product squads, accelerating feature release velocity by 38%.',
         'Managed a $20M+ enterprise SaaS product portfolio, delivering 40% YoY ARR growth across North America and EMEA.',
         'Engineered data-driven monetization funnels resulting in a 24% increase in user expansion and retention metrics.',
         'Built, mentored, and scaled a high-performing team of 8 product managers and technical product owners.',
+        'Collaborated with C-suite stakeholders to define multi-year product roadmaps aligned with corporate strategic objectives.',
       ],
     },
     {
@@ -174,18 +175,19 @@ const aiResume = (templateId: string | null): DraftResume => ({
       title: 'Product Manager',
       company: 'InnovateCo Technologies',
       date_range: '2018 – 2021',
-      location: 'San Francisco, CA',
+      location: '',
       bullets: [
         'Launched 3 core enterprise B2B workflow solutions adopted by 500+ Fortune 1000 commercial clients.',
         'Reduced customer churn by 18% through continuous customer feedback loops and predictive usage analytics.',
         'Partnered closely with engineering and design leadership to maintain a 99.8% on-time sprint completion rate.',
+        'Authored comprehensive PRDs, user stories, and technical acceptance criteria across 25+ consecutive sprint cycles.',
       ],
     },
   ],
   skills: [
-    { id: '1', category: 'Core Competencies & Strategy', items: ['Product Strategy', 'Executive Leadership', 'P&L Management', 'Roadmap Prioritization', 'Stakeholder Alignment'] },
-    { id: '2', category: 'Technical & Analytics', items: ['Agile / Scrum', 'Data-Driven Decision Making', 'SQL & BI Analytics', 'API & Microservices Architecture'] },
-    { id: '3', category: 'Tools & Platforms', items: ['Jira / Linear', 'Figma', 'Mixpanel / Amplitude', 'PostgreSQL', 'Cloud Infrastructures'] },
+    { id: '1', category: 'Core Competencies & Strategy', items: ['Product Strategy', 'Executive Leadership', 'P&L Management', 'Roadmap Prioritization', 'Stakeholder Alignment', 'Market Analysis'] },
+    { id: '2', category: 'Technical & Analytics', items: ['Agile / Scrum', 'Data-Driven Decision Making', 'SQL & BI Analytics', 'API & Microservices Architecture', 'A/B Testing'] },
+    { id: '3', category: 'Tools & Platforms', items: ['Jira / Linear', 'Figma', 'Mixpanel / Amplitude', 'PostgreSQL', 'AWS Cloud Infrastructure', 'Tableau'] },
   ],
   education: [
     { id: '1', degree: 'Master of Business Administration (MBA)', institution: 'Stanford University', year: '2016 – 2018', note: 'Top 5% Graduate' },
@@ -199,7 +201,7 @@ const aiResume = (templateId: string | null): DraftResume => ({
     include: true,
     name: 'Enterprise Workflow Engine Modernization',
     tech_stack: 'React, Node.js, GraphQL, AWS Cloud',
-    bullet: 'Architected and led the rollout of an automated workflow engine processing 10M+ daily events with sub-100ms latency.',
+    bullet: 'Architected and led the rollout of an automated workflow engine processing 10M+ daily events with sub-100ms latency, driving a 30% reduction in infrastructure costs.',
   },
   sections_to_include: {
     summary: true,
@@ -314,19 +316,39 @@ export default function ResumeBuilderScreen() {
       // Helper to populate draft from AI content returned by the server.
       const applyGeneratedContent = (content: any) => {
         setAiGeneratedContent(content);
+        const hasFeaturedProject = !!(
+          (content.featured_project && (content.featured_project.name || content.featured_project.title)) ||
+          (Array.isArray(content.projects) && content.projects.length > 0)
+        );
+        const projectData = content.featured_project || (Array.isArray(content.projects) && content.projects[0]) || { include: false, name: '', tech_stack: '', bullet: '' };
+
         setDraft({
           templateId: selectedTemplateId || 'executive',
           header: content.header || { name: '', title: '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
-          summary: content.summary?.text || '',
-          experience: (content.experience || []).map((e: any) => ({ ...e, id: e.id || uid() })),
-          skills: (content.skills || []).map((s: any) => ({ ...s, id: s.id || uid() })),
+          summary: typeof content.summary === 'string' ? content.summary : (content.summary?.text || ''),
+          experience: (content.experience || []).map((e: any) => ({
+            ...e,
+            id: e.id || uid(),
+            bullets: Array.isArray(e.bullets) ? e.bullets : (typeof e.description === 'string' && e.description.trim() ? [e.description] : []),
+          })),
+          skills: (content.skills || []).map((s: any) => ({ ...s, id: s.id || uid(), items: s.items || [] })),
           education: (content.education || []).map((e: any) => ({ ...e, id: e.id || uid() })),
-          certifications: content.certifications || [],
-          awards: content.recognition || [],
-          featuredProject: content.featured_project || { include: false, name: '', tech_stack: '', bullet: '' },
+          certifications: (content.certifications || []).map((c: any) => typeof c === 'string' ? { id: uid(), name: c, issuer: '', year: '' } : { ...c, id: c.id || uid() }),
+          awards: (content.recognition || content.awards || []).map((a: any) => typeof a === 'string' ? { id: uid(), name: a, issuer: '', year: '' } : { ...a, id: a.id || uid() }),
+          featuredProject: {
+            include: projectData.include !== false && hasFeaturedProject,
+            name: projectData.name || projectData.title || '',
+            tech_stack: projectData.tech_stack || '',
+            bullet: projectData.bullet || (Array.isArray(projectData.bullets) ? projectData.bullets.join(' ') : '') || '',
+          },
           sections_to_include: content.sections_to_include || {
-            summary: true, skills: true, experience: true,
-            featured_project: false, education: true, certifications: false, recognition: false,
+            summary: true,
+            skills: (content.skills || []).length > 0,
+            experience: (content.experience || []).length > 0,
+            featured_project: hasFeaturedProject,
+            education: (content.education || []).length > 0,
+            certifications: (content.certifications?.length || 0) > 0,
+            recognition: (content.recognition?.length || content.awards?.length || 0) > 0,
           }
         });
         setIsGenerating(false);
@@ -442,6 +464,13 @@ export default function ResumeBuilderScreen() {
   React.useEffect(() => {
     if (id && !hasStartedOver && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
       const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
+      const hasFeaturedProject = !!(
+        (remoteResume.featuredProject && (remoteResume.featuredProject.name || remoteResume.featuredProject.title)) ||
+        (remoteResume.featured_project && (remoteResume.featured_project.name || remoteResume.featured_project.title)) ||
+        (Array.isArray(remoteResume.projects) && remoteResume.projects.length > 0)
+      );
+      const projectData = remoteResume.featuredProject || (Array.isArray(remoteResume.projects) && remoteResume.projects[0]) || remoteResume.featured_project || { include: false, name: '', tech_stack: '', bullet: '' };
+
       setDraft({
         templateId: remoteResume.templateId || 'executive',
         header: remoteResume.header || remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
@@ -456,15 +485,18 @@ export default function ResumeBuilderScreen() {
           return { ...c, id: c.id || uid() };
         }),
         awards: (remoteResume.awards || remoteResume.recognition || []).map((a: any) => ({ ...a, id: a.id || uid() })),
-        featuredProject: remoteResume.featuredProject || (remoteResume.projects && remoteResume.projects.length > 0 
-          ? remoteResume.projects[0] 
-          : (remoteResume.featured_project || { include: false, name: '', tech_stack: '', bullet: '' })),
+        featuredProject: {
+          include: projectData.include !== false && hasFeaturedProject,
+          name: projectData.name || projectData.title || '',
+          tech_stack: projectData.tech_stack || '',
+          bullet: projectData.bullet || (Array.isArray(projectData.bullets) ? projectData.bullets.join(' ') : '') || '',
+        },
         sections_to_include: remoteResume.sections_to_include || {
           summary: true,
-          skills: true,
-          experience: true,
-          featured_project: false,
-          education: true,
+          skills: (remoteResume.skills || []).length > 0,
+          experience: (remoteResume.experience || []).length > 0,
+          featured_project: hasFeaturedProject,
+          education: (remoteResume.education || []).length > 0,
           certifications: (remoteResume.certifications?.length || 0) > 0,
           recognition: (remoteResume.awards?.length || remoteResume.recognition?.length || 0) > 0,
         }
@@ -549,7 +581,7 @@ export default function ResumeBuilderScreen() {
         summary: draft.sections_to_include?.summary !== false && !!summaryText,
         skills: draft.sections_to_include?.skills !== false && (draft.skills || []).length > 0,
         experience: draft.sections_to_include?.experience !== false && (draft.experience || []).length > 0,
-        featured_project: draft.sections_to_include?.featured_project !== false && !!(draft.featuredProject?.include || (draft as any).featured_project?.include),
+        featured_project: draft.sections_to_include?.featured_project !== false && !!(draft.featuredProject?.include && (draft.featuredProject?.name || draft.featuredProject?.tech_stack || draft.featuredProject?.bullet)),
         education: draft.sections_to_include?.education !== false && (draft.education || []).length > 0,
         certifications: draft.sections_to_include?.certifications !== false && (draft.certifications || []).length > 0,
         languages: false,
@@ -728,17 +760,18 @@ export default function ResumeBuilderScreen() {
           const parsed = await parseResume.mutateAsync(payload);
 
           // 3. Map parsed data → DraftResume fields
+          const parsedProject = Array.isArray(parsed.projects) && parsed.projects.length > 0 ? parsed.projects[0] : null;
           const importedDraft: DraftResume = {
             templateId: selectedTemplateId || 'executive',
             header: {
-              name: '',
+              name: parsed.name || user?.user_metadata?.full_name || user?.user_metadata?.name || '',
               title: parsed.current_role || '',
               subtitle: parsed.company || '',
-              email: '',
-              phone: '',
-              linkedin: '',
-              portfolio: '',
-              location: '',
+              email: parsed.email || user?.email || '',
+              phone: parsed.phone || '',
+              linkedin: parsed.linkedin_url || '',
+              portfolio: parsed.portfolio_url || '',
+              location: parsed.location || '',
             },
             summary: parsed.summary || '',
             experience: (parsed.work_history || []).map((w: any) => ({
@@ -746,9 +779,9 @@ export default function ResumeBuilderScreen() {
               title: w.title || '',
               company: w.company || '',
               date_range: [w.start_date, w.current ? 'Present' : w.end_date].filter(Boolean).join(' – '),
-              location: '',
+              location: w.location || '',
               bullets: w.description
-                ? w.description.split('\n').map((s: string) => s.trim()).filter(Boolean)
+                ? w.description.split('\n').map((s: string) => s.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean)
                 : [],
             })),
             skills: [
@@ -761,21 +794,29 @@ export default function ResumeBuilderScreen() {
             ],
             education: (parsed.education || []).map((e: any) => ({
               id: uid(),
-              degree: [e.degree, e.field].filter(Boolean).join(' in '),
-              institution: e.school || '',
+              degree: [e.degree, e.field].filter(Boolean).join(' in ') || e.degree || '',
+              institution: e.school || e.institution || '',
               year: e.end_date || e.start_date || '',
               note: e.gpa ? `GPA: ${e.gpa}` : undefined,
             })),
-            certifications: [],
+            certifications: (parsed.certifications || []).map((c: any) => {
+              if (typeof c === 'string') return { id: uid(), name: c, issuer: '', year: '' };
+              return { id: uid(), name: c.name || '', issuer: c.issuer || '', year: c.year || '' };
+            }),
             awards: [],
-            featuredProject: { include: false, name: '', tech_stack: '', bullet: '' },
+            featuredProject: parsedProject ? {
+              include: true,
+              name: parsedProject.name || parsedProject.title || '',
+              tech_stack: parsedProject.tech_stack || '',
+              bullet: parsedProject.bullet || parsedProject.description || '',
+            } : { include: false, name: '', tech_stack: '', bullet: '' },
             sections_to_include: {
               summary: !!parsed.summary,
-              skills: (parsed.technical_skills?.length > 0 || parsed.soft_skills?.length > 0),
-              experience: (parsed.work_history?.length > 0),
-              featured_project: false,
-              education: (parsed.education?.length > 0),
-              certifications: false,
+              skills: (parsed.technical_skills?.length || 0) > 0 || (parsed.soft_skills?.length || 0) > 0,
+              experience: (parsed.work_history?.length || 0) > 0,
+              featured_project: !!parsedProject,
+              education: (parsed.education?.length || 0) > 0,
+              certifications: (parsed.certifications?.length || 0) > 0,
               recognition: false,
             },
           };
