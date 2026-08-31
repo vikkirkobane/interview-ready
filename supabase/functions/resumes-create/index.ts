@@ -213,10 +213,14 @@ EXECUTIVE RESUME CREATION STANDARDS (ADAPTIVE DENSITY)
   * Allocate 4–5 bullets for the most recent role, 3–4 for the second role, and 2 for earlier roles.
   * Ensure the content flows cleanly and fills 1 full page (or 2 pages for 10+ year careers) with zero awkward orphans.
 
-2. PROFESSIONAL TITLE & HEADER
+2. PROFESSIONAL TITLE & HEADER (STRICT ANTI-HALLUCINATION FOR CONTACT DETAILS)
 - Set header.title to the EXACT target job title from the job description (e.g. "Senior Full Stack Engineer", "Principal Product Manager")
 - Never use weak qualifiers ("Aspiring", "Seeking", "Junior") unless explicitly in the JD
 - Include a compelling subtitle that encapsulates specialization (e.g. "Distributed Systems & Cloud Architecture Specialist")
+- CONTACT INFORMATION ACCURACY (CRITICAL):
+  * ONLY use the candidate's real location, phone number, email, and linkedin/portfolio if provided in the CANDIDATE INFORMATION.
+  * If location or phone or linkedin is NOT provided or is empty in CANDIDATE INFORMATION, set that field in the header to an empty string "" — DO NOT invent, hallucinate, or default to placeholder cities (such as "San Francisco, CA") or fake phone numbers (such as "+1 (555)...").
+  * Do NOT add fake addresses, phone numbers, or fabricated locations to any role or header.
 
 3. EXECUTIVE SUMMARY (MANDATORY: 3 TO 4 SUBSTANTIVE SENTENCES)
 - Write an authoritative, metric-dense 3 to 4 sentence executive summary:

@@ -239,4 +239,14 @@ describe('Onboarding Step 3 (Analyze) — user stories', () => {
       expect(screen.queryByText('Attached File:')).toBeNull();
     });
   });
+
+  it('allows skipping job description to generate a general resume directly', async () => {
+    const screen = await renderScreen();
+    await fireEvent.press(screen.getByText('Skip & Generate General Resume'));
+
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith('/(onboarding)/resume');
+    });
+    expect(useOnboardingStore.getState().currentStep).toBe(4);
+  });
 });

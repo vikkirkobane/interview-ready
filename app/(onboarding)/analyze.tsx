@@ -253,24 +253,42 @@ export default function AnalyzeScreen() {
 
             {/* Primary Action */}
             {!showResults && (
-              <Pressable 
-                style={[styles.primaryBtn, { backgroundColor: colors.primary }, (!hasInput || analyzeJob.isPending) && [styles.primaryBtnDisabled, { backgroundColor: colors.textMuted }]]}
-                onPress={handleAnalyze}
-                disabled={!hasInput || analyzeJob.isPending}
-                
-              >
-                {analyzeJob.isPending ? (
-                  <>
-                    <ActivityIndicator color="#fff" />
-                    <Text style={styles.primaryBtnText}>Analyzing JD...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.primaryBtnText}>Analyze Job</Text>
-                    <Ionicons name="sparkles" size={20} color="#fff" />
-                  </>
-                )}
-              </Pressable>
+              <>
+                <Pressable 
+                  style={[styles.primaryBtn, { backgroundColor: colors.primary }, (!hasInput || analyzeJob.isPending) && [styles.primaryBtnDisabled, { backgroundColor: colors.textMuted }]]}
+                  onPress={handleAnalyze}
+                  disabled={!hasInput || analyzeJob.isPending}
+                  accessibilityRole="button"
+                  accessibilityLabel="Analyze Job"
+                >
+                  {analyzeJob.isPending ? (
+                    <>
+                      <ActivityIndicator color="#fff" />
+                      <Text style={styles.primaryBtnText}>Analyzing JD...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.primaryBtnText}>Analyze Job</Text>
+                      <Ionicons name="sparkles" size={20} color="#fff" />
+                    </>
+                  )}
+                </Pressable>
+
+                <Pressable
+                  style={styles.skipBtn}
+                  onPress={() => {
+                    useOnboardingStore.getState().nextStep();
+                    router.push('/(onboarding)/resume');
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Skip and create general resume"
+                >
+                  <Text style={[styles.skipBtnText, { color: colors.textMuted }]}>
+                    Don&apos;t have a job description?{' '}
+                    <Text style={{ color: colors.primary, fontWeight: '600' }}>Skip & Generate General Resume</Text>
+                  </Text>
+                </Pressable>
+              </>
             )}
             
             {showResults && (
@@ -649,5 +667,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'transparent',
+  },
+  skipBtn: {
+    marginTop: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  skipBtnText: {
+    ...Typography.bodySm,
+    textAlign: 'center',
   },
 });

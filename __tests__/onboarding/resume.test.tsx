@@ -168,6 +168,25 @@ describe('Onboarding Step 4 (Resume generation) — user stories', () => {
     await waitFor(() => expect(mockExportDOCX).toHaveBeenCalled());
   });
 
+  it('opens fullscreen preview when button is pressed', async () => {
+    mockGenerationComplete();
+    const screen = await renderWithProviders(<ResumeGenScreen />);
+    await waitFor(() => {
+      expect(mockSupabase.__mockHelpers.channelBuilder._listeners.length).toBeGreaterThan(0);
+    });
+    await act(async () => {
+      mockSupabase.__mockHelpers.channelBuilder._emit('generation_complete');
+    });
+    await waitFor(() => {
+      expect(screen.getByText('Your first resume is ready!')).toBeTruthy();
+    });
+
+    await fireEvent.press(screen.getByText('View Fullscreen Preview'));
+    await waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith('/preview');
+    });
+  });
+
   it('shows an error when generation fails to start', async () => {
     mockApiCall.mockResolvedValue({ data: null, error: 'Resume service down' });
     const screen = await renderWithProviders(<ResumeGenScreen />);

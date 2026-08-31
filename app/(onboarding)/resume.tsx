@@ -24,6 +24,7 @@ import { WebView } from 'react-native-webview';
 import { buildResumeHTML } from '../../src/lib/resumeHTML';
 import { exportResumePDF, exportResumeDOCX } from '../../src/lib/resumeExport';
 import { formatPersonName, sanitizeFileNameSegment } from '../../src/lib/exportUtils';
+import { usePreviewStore } from '../../src/store/previewStore';
 import { ResumeContent } from '../../src/types/schemas';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -39,6 +40,9 @@ function normalizeToResumeContent(
     company?: string;
     skills?: string[];
     email?: string;
+    phone?: string;
+    location?: string;
+    linkedin?: string;
     years?: string;
   }
 ): ResumeContent {
@@ -47,16 +51,16 @@ function normalizeToResumeContent(
 
   const name =
     formatPersonName(h.name || content.name || fallbackMeta?.name) ||
-    'Alex Morgan';
+    'Professional';
   const title =
     h.title ||
     content.title ||
     fallbackMeta?.role ||
     'Senior Professional';
-  const email = h.email || content.email || fallbackMeta?.email || 'candidate@email.com';
-  const phone = h.phone || content.phone || '+1 (555) 234-5678';
-  const location = h.location || content.location || 'San Francisco, CA';
-  const linkedin = h.linkedin || content.linkedin || `linkedin.com/in/${sanitizeFileNameSegment(name).toLowerCase()}`;
+  const email = h.email || content.email || fallbackMeta?.email || '';
+  const phone = h.phone || content.phone || fallbackMeta?.phone || '';
+  const location = h.location || content.location || fallbackMeta?.location || '';
+  const linkedin = h.linkedin || content.linkedin || fallbackMeta?.linkedin || '';
   const portfolio = h.portfolio || content.portfolio || '';
   const subtitle = h.subtitle || content.subtitle || '';
 
@@ -133,9 +137,9 @@ function normalizeToResumeContent(
 
       return {
         title: e.title || e.role || title,
-        company: e.company || e.organization || fallbackMeta?.company || 'Global Solutions Group',
+        company: e.company || e.organization || fallbackMeta?.company || 'Organization',
         date_range: e.date_range || e.dates || '2021 – Present',
-        location: e.location || location,
+        location: e.location || (location ? location : ''),
         bullets: rawBullets,
       };
     });
@@ -143,9 +147,9 @@ function normalizeToResumeContent(
     expList = [
       {
         title: fallbackMeta?.role || title,
-        company: fallbackMeta?.company || 'Global Solutions Group',
+        company: fallbackMeta?.company || 'Organization',
         date_range: '2021 – Present',
-        location,
+        location: location || '',
         bullets: [
           'Spearheaded end-to-end execution of core organizational initiatives, delivering 35%+ efficiency gains.',
           'Architected and implemented optimized workflows reducing turnaround latency by 40% across departments.',
@@ -156,9 +160,9 @@ function normalizeToResumeContent(
       },
       {
         title: `${title} Specialist`,
-        company: 'InnovateCo Technologies',
+        company: 'Innovate Group',
         date_range: '2018 – 2021',
-        location,
+        location: location || '',
         bullets: [
           'Delivered mission-critical platform features adopted across 500+ enterprise stakeholders.',
           'Optimized core infrastructure and resource utilization, decreasing operational costs by 22%.',
@@ -275,6 +279,8 @@ export default function ResumeGenScreen() {
     targetRole,
     currentRole,
     company,
+    location,
+    phone,
     skills,
     yearsExperience,
     analysisId,
@@ -288,7 +294,7 @@ export default function ResumeGenScreen() {
   const candidateFullName = useMemo(() => {
     const fromOnboarding = [firstName, lastName].filter(Boolean).join(' ').trim();
     if (fromOnboarding) return fromOnboarding;
-    return user?.user_metadata?.full_name || user?.user_metadata?.name || 'Alex Morgan';
+    return user?.user_metadata?.full_name || user?.user_metadata?.name || 'Professional';
   }, [firstName, lastName, user]);
 
   const activeResume: ResumeContent = useMemo(() => {
@@ -296,12 +302,14 @@ export default function ResumeGenScreen() {
     return normalizeToResumeContent(raw, {
       name: candidateFullName,
       role: targetRole || currentRole || 'Senior Professional',
-      company: company || 'Enterprise Solutions',
+      company: company || undefined,
+      location: location.trim() || undefined,
+      phone: phone.trim() || undefined,
       skills: skills && skills.length > 0 ? skills : undefined,
       email: user?.email || undefined,
       years: yearsExperience || undefined,
     });
-  }, [resumeData, generatedResume, candidateFullName, targetRole, currentRole, company, skills, user, yearsExperience]);
+  }, [resumeData, generatedResume, candidateFullName, targetRole, currentRole, company, location, phone, skills, user, yearsExperience]);
 
   const previewHtml = useMemo(() => {
     if (!activeResume || !activeResume.header) return '';
@@ -551,26 +559,22 @@ export default function ResumeGenScreen() {
               Impressive work. Your resume scored an 88/100 for the target role.
             </Text>
 
-            {/* Resume Preview Thumbnail */}
+            {/* Resume Preview Window */}
             <View style={styles.thumbnailWrapper}>
               <View style={styles.thumbnailGlow} pointerEvents="none" />
               <View style={[styles.thumbnailCard, { borderColor: colors.border, backgroundColor: '#ffffff', padding: 0, overflow: 'hidden' }]}>
                 {previewHtml ? (
                   Platform.OS === 'web' ? (
-                    // Web: Centered responsive scale of the A4 layout (794px width)
-                    <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', background: '#ffffff' }}>
+                    // Web: Clean full-width scrollable preview
+                    <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', background: '#ffffff', borderRadius: 12 }}>
                       <iframe
                         title="Resume preview"
                         srcDoc={previewHtml}
                         sandbox="allow-same-origin allow-scripts"
                         style={{
                           border: 'none',
-                          width: 794,
-                          height: 1123,
-                          transform: 'scale(0.42)',
-                          transformOrigin: 'top center',
-                          pointerEvents: 'none',
-                          userSelect: 'none',
+                          width: '100%',
+                          height: '100%',
                           background: '#ffffff',
                         } as any}
                       />
@@ -579,10 +583,10 @@ export default function ResumeGenScreen() {
                     // Native: WebView renders crisp HTML document on clean white surface
                     <WebView
                       source={{ html: previewHtml }}
-                      style={{ width: '100%', height: '100%', backgroundColor: '#ffffff' }}
-                      scalesPageToFit={true}
+                      style={{ width: '100%', height: '100%', backgroundColor: '#ffffff', borderRadius: 12 }}
+                      scalesPageToFit={false}
                       scrollEnabled={true}
-                      showsVerticalScrollIndicator={false}
+                      showsVerticalScrollIndicator={true}
                       originWhitelist={['*']}
                     />
                   )
@@ -596,6 +600,21 @@ export default function ResumeGenScreen() {
 
             {/* Action Buttons */}
             <View style={styles.actionBlock}>
+              <Pressable
+                style={[styles.previewFullBtn, { backgroundColor: `${colors.primary}12`, borderColor: `${colors.primary}33` }]}
+                onPress={() => {
+                  if (activeResume && previewHtml) {
+                    usePreviewStore.getState().setPreview('resume', activeResume, previewHtml, 'executive');
+                    router.push('/preview');
+                  }
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="View fullscreen resume preview"
+              >
+                <Ionicons name="expand-outline" size={20} color={colors.primary} />
+                <Text style={[styles.previewFullText, { color: colors.primary }]}>View Fullscreen Preview</Text>
+              </Pressable>
+
               <Pressable 
                 style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]} 
                 onPress={handleDownloadDOCX}
@@ -625,6 +644,8 @@ export default function ResumeGenScreen() {
                 useOnboardingStore.getState().nextStep();
                 router.push('/(onboarding)/discover');
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Continue to Final Step"
             >
                <Text style={[styles.editLink, { color: colors.primary, fontSize: 16 }]}>Continue to Final Step</Text>
             </Pressable>
@@ -753,7 +774,7 @@ const styles = StyleSheet.create({
   successState: {
     alignItems: 'center',
     width: '100%',
-    maxWidth: 400,
+    maxWidth: 640,
   },
   confettiWrapper: {
     marginBottom: Spacing.lg,
@@ -763,7 +784,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     marginTop: Spacing.md,
     width: '100%',
-    maxWidth: 360,
+    maxWidth: 600,
     alignSelf: 'center',
   },
   thumbnailGlow: {
@@ -777,14 +798,30 @@ const styles = StyleSheet.create({
   },
   thumbnailCard: {
     width: '100%',
-    aspectRatio: 0.707,
+    height: 520,
     borderWidth: 1,
     borderRadius: Radius.lg,
     ...Shadow.lg,
   },
   actionBlock: {
     width: '100%',
+    maxWidth: 420,
     gap: Spacing.sm,
+  },
+  previewFullBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: Radius.full,
+    borderWidth: 1.5,
+    gap: 8,
+    marginBottom: 4,
+  },
+  previewFullText: {
+    ...Typography.headingMd,
+    fontSize: 15,
+    fontWeight: '700',
   },
   primaryActionBtn: {
     flexDirection: 'row',

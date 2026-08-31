@@ -85,7 +85,7 @@ describe('Onboarding Step 5 (Discover) — user stories', () => {
     await fireEvent.press(screen.getByText('START SESSION'));
 
     await waitFor(() => {
-      expect(router.replace).toHaveBeenCalledWith('/(tabs)');
+      expect(router.replace).toHaveBeenCalledWith('/(tabs)/interviews');
     });
   });
 });

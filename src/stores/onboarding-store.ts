@@ -14,6 +14,8 @@ interface OnboardingState {
   workPreference: 'REMOTE' | 'HYBRID' | 'ONSITE';
   currentRole: string;
   company: string;
+  location: string;
+  phone: string;
   skills: string[];
   jdText: string;
   jdUrl: string;
@@ -35,6 +37,8 @@ interface OnboardingState {
   setWorkPreference: (pref: 'REMOTE' | 'HYBRID' | 'ONSITE') => void;
   setCurrentRole: (role: string) => void;
   setCompany: (company: string) => void;
+  setLocation: (location: string) => void;
+  setPhone: (phone: string) => void;
   addSkill: (skill: string) => void;
   removeSkill: (skill: string) => void;
   setSkills: (skills: string[]) => void;
@@ -61,6 +65,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       workPreference: 'HYBRID',
       currentRole: '',
       company: '',
+      location: '',
+      phone: '',
       skills: [],
       jdText: '',
       jdUrl: '',
@@ -79,6 +85,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       setWorkPreference: (pref) => set({ workPreference: pref }),
       setCurrentRole: (role) => set({ currentRole: role }),
       setCompany: (company) => set({ company }),
+      setLocation: (location) => set({ location }),
+      setPhone: (phone) => set({ phone }),
       addSkill: (skill) => set((s) => ({
         skills: s.skills.includes(skill) ? s.skills : [...s.skills, skill],
       })),
@@ -104,6 +112,8 @@ export const useOnboardingStore = create<OnboardingState>()(
         workPreference: 'HYBRID',
         currentRole: '',
         company: '',
+        location: '',
+        phone: '',
         skills: [],
         jdText: '',
         jdUrl: '',

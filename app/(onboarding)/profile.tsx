@@ -31,6 +31,8 @@ export default function ProfileScreen() {
   const {
     currentRole, setCurrentRole,
     company, setCompany,
+    location, setLocation,
+    phone, setPhone,
     skills, addSkill, removeSkill, setSkills,
   } = useOnboardingStore();
 
@@ -42,12 +44,14 @@ export default function ProfileScreen() {
       if (!user) return;
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('resume_raw_text')
+        .select('resume_raw_text, location, phone')
         .eq('user_id', user.id)
         .single();
         
-      if (!error && data && data.resume_raw_text) {
-        setHasResume(true);
+      if (!error && data) {
+        if (data.resume_raw_text) setHasResume(true);
+        if (data.location && !location) setLocation(data.location);
+        if (data.phone && !phone) setPhone(data.phone);
       }
     };
     checkExistingResume();
@@ -101,14 +105,6 @@ export default function ProfileScreen() {
           
           if (uploadError) throw uploadError;
           
-          // Optionally, we can get the public URL (if bucket is public)
-          // For now, we don't need to store the URL, but we could if we wanted to.
-          // const { data: publicUrlData } = supabase
-          //   .storage
-          //   .from('interview-ready-files')
-          //   .getPublicUrl(storagePath);
-          // console.log('Uploaded file public URL:', publicUrlData.publicUrl);
-          
           Toast.show({ type: 'info', text1: 'Parsing Resume...', text2: 'Extracting details from your uploaded file.' });
         } catch (uploadError: any) {
           Toast.show({ type: 'error', text1: 'Upload failed', text2: getUserFriendlyErrorMessage(uploadError.message, 'Please try again.') });
@@ -121,6 +117,8 @@ export default function ProfileScreen() {
         
           if (extractedData.current_role) setCurrentRole(extractedData.current_role);
           if (extractedData.company) setCompany(extractedData.company);
+          if ((extractedData as any).location) setLocation((extractedData as any).location);
+          if ((extractedData as any).phone) setPhone((extractedData as any).phone);
           const skillsList = (extractedData as any).top_skills || (extractedData as any).technical_skills;
           if (skillsList && Array.isArray(skillsList)) {
             const uniqueSkills = Array.from(new Set([...skills, ...skillsList]));
@@ -144,9 +142,12 @@ export default function ProfileScreen() {
       await updateProfile.mutateAsync({
         current_role: currentRole,
         technical_skills: skills,
+        location: location.trim() || undefined,
+        phone: phone.trim() || undefined,
         work_history: company ? [{
           company,
           title: currentRole || '',
+          location: location.trim() || undefined,
           start_date: new Date().toISOString().split('T')[0],
           end_date: null,
           current: true,
@@ -241,6 +242,33 @@ export default function ProfileScreen() {
                   placeholderTextColor={colors.textMuted}
                   value={company}
                   onChangeText={setCompany}
+                />
+              </View>
+            </View>
+
+            <View style={styles.rowGrid}>
+              {/* Location Input (Optional) */}
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Location (Optional)</Text>
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
+                  placeholder="e.g. Austin, TX"
+                  placeholderTextColor={colors.textMuted}
+                  value={location}
+                  onChangeText={setLocation}
+                />
+              </View>
+
+              {/* Phone Input (Optional) */}
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Phone (Optional)</Text>
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
+                  placeholder="e.g. (555) 019-2834"
+                  placeholderTextColor={colors.textMuted}
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
                 />
               </View>
             </View>

@@ -50,16 +50,16 @@ export default function DiscoverScreen() {
 
   const completeOnboardingApi = useCompleteOnboardingMutation();
 
-  const handleFinish = async () => {
+  const handleFinish = async (destinationRoute: string = '/(tabs)') => {
     try {
       await supabase.auth.updateUser({ data: { onboarding_completed: true } });
       await completeOnboardingApi.mutateAsync();
       completeOnboarding();
-      router.replace('/(tabs)');
+      router.replace(destinationRoute as any);
     } catch {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Failed to finalize profile' });
       completeOnboarding();
-      router.replace('/(tabs)');
+      router.replace(destinationRoute as any);
     }
   };
 
@@ -105,7 +105,12 @@ export default function DiscoverScreen() {
         <Animated.View style={[styles.gridContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim2 }] }]}>
           
           {/* Job Tracker Card */}
-          <Pressable style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  onPress={handleFinish}>
+          <Pressable 
+            style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  
+            onPress={() => handleFinish('/(tabs)/tracker')}
+            accessibilityRole="button"
+            accessibilityLabel="Explore Job Tracker"
+          >
             <View style={[styles.popularTag, { backgroundColor: `${colors.primary}1A` }]}>
               <Text style={[styles.popularTagText, { color: colors.primary }]}>MOST POPULAR</Text>
             </View>
@@ -123,7 +128,12 @@ export default function DiscoverScreen() {
           </Pressable>
 
           {/* Mock Interviews Card */}
-          <Pressable style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  onPress={handleFinish}>
+          <Pressable 
+            style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  
+            onPress={() => handleFinish('/(tabs)/interviews')}
+            accessibilityRole="button"
+            accessibilityLabel="Start Mock Interviews"
+          >
             <View style={[styles.bentoIconWrapper, { backgroundColor: `${colors.primary}1A` }]}>
               <Ionicons name="mic" size={24} color={colors.primary} />
             </View>
@@ -138,7 +148,12 @@ export default function DiscoverScreen() {
           </Pressable>
 
           {/* LinkedIn Optimizer Card */}
-          <Pressable style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  onPress={handleFinish}>
+          <Pressable 
+            style={[styles.bentoCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}  
+            onPress={() => handleFinish('/(tabs)/linkedin')}
+            accessibilityRole="button"
+            accessibilityLabel="Analyze LinkedIn Profile"
+          >
             <View style={[styles.bentoIconWrapper, { backgroundColor: colors.bgMuted }]}>
               <Ionicons name="logo-linkedin" size={24} color={colors.primary} />
             </View>
@@ -158,8 +173,9 @@ export default function DiscoverScreen() {
         <Animated.View style={[styles.ctaSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim3 }] }]}>
           <Pressable 
             style={[styles.primaryBtn, { backgroundColor: colors.primary }]} 
-            
-            onPress={handleFinish}
+            onPress={() => handleFinish('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Go to Dashboard"
           >
             <Text style={styles.primaryBtnText}>Go to Dashboard</Text>
             <Ionicons name="arrow-forward" size={20} color="#fff" />
@@ -167,8 +183,9 @@ export default function DiscoverScreen() {
 
           <Pressable 
             style={[styles.secondaryBtn, { borderColor: colors.border }]} 
-            
-            onPress={handleFinish}
+            onPress={() => handleFinish('/(tabs)')}
+            accessibilityRole="button"
+            accessibilityLabel="Maybe later"
           >
             <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>Maybe later</Text>
           </Pressable>
