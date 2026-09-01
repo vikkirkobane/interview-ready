@@ -246,7 +246,7 @@ export default function LandingPage() {
     <View style={styles.root}>
       {/* 1. STICKY NAVBAR */}
       <View style={styles.navbar}>
-        <View style={styles.navbarInner}>
+        <View style={[styles.navbarInner, !isDesktop && styles.navbarInnerMobile]}>
           {/* Left Group: Brand + Desktop Nav Links */}
           <View style={styles.navLeftGroup}>
             <Pressable
@@ -255,10 +255,12 @@ export default function LandingPage() {
             >
               <Image
                 source={require('../../../assets/logo.png')}
-                style={styles.navLogo}
+                style={[styles.navLogo, !isDesktop && styles.navLogoMobile]}
                 contentFit="contain"
               />
-              <Text style={styles.brandText}>Interview Ready</Text>
+              <Text style={[styles.brandText, !isDesktop && styles.brandTextMobile]} numberOfLines={1}>
+                Interview Ready
+              </Text>
             </Pressable>
 
             {/* Desktop Nav Links */}
@@ -281,11 +283,16 @@ export default function LandingPage() {
           </View>
 
           {/* Nav Right CTA */}
-          <View style={styles.navRight}>
+          <View style={[styles.navRight, !isDesktop && styles.navRightMobile]}>
             {session ? (
-              <Pressable style={styles.navPrimaryBtn} onPress={() => router.push('/(tabs)')}>
-                <Text style={styles.navPrimaryBtnText}>Go to Dashboard</Text>
-                <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+              <Pressable
+                style={[styles.navPrimaryBtn, !isDesktop && styles.navPrimaryBtnMobile]}
+                onPress={() => router.push('/(tabs)')}
+              >
+                <Text style={[styles.navPrimaryBtnText, !isDesktop && styles.navPrimaryBtnTextMobile]}>
+                  {width < 380 ? 'Dashboard' : 'Go to Dashboard'}
+                </Text>
+                {isDesktop && <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />}
               </Pressable>
             ) : (
               <>
@@ -294,9 +301,12 @@ export default function LandingPage() {
                     <Text style={styles.navSecondaryBtnText}>Sign In</Text>
                   </Pressable>
                 )}
-                <Pressable style={styles.navPrimaryBtn} onPress={handleGetStarted}>
-                  <Text style={styles.navPrimaryBtnText}>Get Started</Text>
-                  <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+                <Pressable
+                  style={[styles.navPrimaryBtn, !isDesktop && styles.navPrimaryBtnMobile]}
+                  onPress={handleGetStarted}
+                >
+                  <Text style={[styles.navPrimaryBtnText, !isDesktop && styles.navPrimaryBtnTextMobile]}>Get Started</Text>
+                  {isDesktop && <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />}
                 </Pressable>
               </>
             )}
@@ -308,7 +318,7 @@ export default function LandingPage() {
                 onPress={() => setMobileMenuOpen(!mobileMenuOpen)}
                 accessibilityLabel="Toggle menu"
               >
-                <Ionicons name={mobileMenuOpen ? 'close' : 'menu'} size={24} color="#0F172A" />
+                <Ionicons name={mobileMenuOpen ? 'close' : 'menu'} size={22} color="#0F172A" />
               </Pressable>
             )}
           </View>
@@ -1140,20 +1150,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 16,
+  },
+  navbarInnerMobile: {
+    paddingHorizontal: 16,
+    gap: 10,
   },
   navLeftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 40,
+    flexShrink: 1,
   },
   navBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    flexShrink: 1,
   },
   navLogo: {
     width: 30,
     height: 30,
+    flexShrink: 0,
+  },
+  navLogoMobile: {
+    width: 26,
+    height: 26,
   },
   brandText: {
     fontFamily: Platform.OS === 'web' ? "'Sora', sans-serif" : undefined,
@@ -1161,6 +1183,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     letterSpacing: -0.5,
+    flexShrink: 1,
+  },
+  brandTextMobile: {
+    fontSize: 16,
+    letterSpacing: -0.3,
   },
   navLinks: {
     flexDirection: 'row',
@@ -1180,6 +1207,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flexShrink: 0,
+  },
+  navRightMobile: {
+    gap: 8,
   },
   navSecondaryBtn: {
     paddingVertical: 8,
@@ -1205,13 +1236,23 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  navPrimaryBtnMobile: {
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: Radius.md,
+    gap: 0,
+  },
   navPrimaryBtnText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  navPrimaryBtnTextMobile: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
   mobileMenuToggle: {
-    padding: 8,
+    padding: 6,
   },
   mobileDropdown: {
     backgroundColor: '#FFFFFF',
