@@ -72,53 +72,82 @@ serve(async (req: any) => {
 
     // 2. Dispatch notification email to company support email via Spaceship
     let emailSent = false;
-    const sanitizedName = name.replace(/[<>]/g, '');
-    const sanitizedEmail = email.replace(/[<>]/g, '');
+    const sanitizedName = name.replace(/[<>]/g, '').trim();
+    const sanitizedEmail = email.replace(/[<>]/g, '').trim().toLowerCase();
     const sanitizedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
 
-    const htmlBody = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; }
-          .card { max-width: 580px; margin: 20px auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
-          .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 24px; color: #ffffff; text-align: center; }
-          .body { padding: 28px; }
-          .detail-box { background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #edf2f7; margin-bottom: 20px; }
-          .msg-box { background: #eff6ff; border-radius: 12px; padding: 16px; border: 1px solid #bfdbfe; color: #1e3a8a; line-height: 1.6; }
-          .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <div class="header">
-            <h2 style="margin: 0; font-size: 20px;">New Support Inquiry</h2>
-          </div>
-          <div class="body">
-            <div class="detail-box">
-              <p style="margin: 0 0 6px;"><strong>Sender:</strong> ${sanitizedName}</p>
-              <p style="margin: 0 0 6px;"><strong>Email:</strong> <a href="mailto:${sanitizedEmail}">${sanitizedEmail}</a></p>
-              <p style="margin: 0;"><strong>Date:</strong> ${new Date().toUTCString()}</p>
-            </div>
-            <h3 style="font-size: 15px; margin: 0 0 8px;">Message:</h3>
-            <div class="msg-box">${sanitizedMessage}</div>
-          </div>
-          <div class="footer">
-            <p style="margin: 0;">Hit "Reply" in your email client to respond to ${sanitizedEmail}.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Admin recipient: prioritize configured admin email (e.g. personal inbox or support address)
+    const adminRecipient = Deno.env.get('ADMIN_NOTIFICATION_EMAIL') || 
+                           Deno.env.get('SUPPORT_NOTIFICATION_EMAIL') || 
+                           COMPANY_SUPPORT_EMAIL;
+
+    const htmlBody = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
+    .wrapper { width: 100%; background-color: #f8fafc; padding: 24px 12px; }
+    .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .header { background: #2563EB; padding: 20px 24px; color: #ffffff; }
+    .header h2 { margin: 0; font-size: 18px; font-weight: 700; color: #ffffff; }
+    .body { padding: 24px; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .info-table td { padding: 6px 0; font-size: 14px; vertical-align: top; }
+    .label { color: #64748b; font-weight: 600; width: 80px; }
+    .val { color: #0f172a; font-weight: 500; }
+    .message-container { background: #f1f5f9; border-radius: 8px; padding: 16px; border: 1px solid #e2e8f0; color: #1e293b; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+    .footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h2>New Website Contact Inquiry</h2>
+      </div>
+      <div class="body">
+        <table class="info-table">
+          <tr>
+            <td class="label">From:</td>
+            <td class="val"><strong>${sanitizedName}</strong></td>
+          </tr>
+          <tr>
+            <td class="label">Email:</td>
+            <td class="val"><a href="mailto:${sanitizedEmail}" style="color: #2563EB;">${sanitizedEmail}</a></td>
+          </tr>
+          <tr>
+            <td class="label">Date:</td>
+            <td class="val">${new Date().toUTCString()}</td>
+          </tr>
+        </table>
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #334155;">Message Content:</p>
+        <div class="message-container">${sanitizedMessage}</div>
+      </div>
+      <div class="footer">
+        <p style="margin: 0;">Reply directly to this email to respond to ${sanitizedName} (${sanitizedEmail}).</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const plainTextBody = `New website contact inquiry received via Interview Ready.\n\n` +
+      `From: ${sanitizedName}\n` +
+      `Email: ${sanitizedEmail}\n` +
+      `Date: ${new Date().toUTCString()}\n\n` +
+      `Message Content:\n${message.trim()}\n\n` +
+      `---\n` +
+      `Reply directly to this email to respond to ${sanitizedName} (${sanitizedEmail}).`;
 
     try {
       await sendEmail({
-        to: COMPANY_SUPPORT_EMAIL,
-        subject: `[Support Inquiry] Message from ${sanitizedName}`,
+        to: adminRecipient,
+        replyTo: `${sanitizedName} <${sanitizedEmail}>`,
+        subject: `Contact Inquiry: ${sanitizedName}`,
         html: htmlBody,
-        text: `New contact message from: ${name} (${email})\n\n${message}`,
+        text: plainTextBody,
         emailType: 'contact_inquiry',
         metadata: { sender_name: sanitizedName, sender_email: sanitizedEmail },
       });
@@ -128,50 +157,62 @@ serve(async (req: any) => {
     }
 
     // 3. Dispatch auto-acknowledgement email to sender
+    const ackSubject = `We received your message - Interview Ready Support`;
+    const ackHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
+    .wrapper { width: 100%; background-color: #f8fafc; padding: 24px 12px; }
+    .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .header { background: #2563EB; padding: 24px; color: #ffffff; text-align: center; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 700; color: #ffffff; }
+    .body { padding: 24px; }
+    .body p { font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0; }
+    .quote-box { background: #f8fafc; border-left: 3px solid #2563EB; border-radius: 4px; padding: 12px 16px; margin: 16px 0; color: #475569; font-size: 14px; }
+    .footer { padding: 16px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
+    .footer a { color: #2563EB; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="card">
+      <div class="header">
+        <h1>Interview Ready Support</h1>
+      </div>
+      <div class="body">
+        <p>Hello ${sanitizedName},</p>
+        <p>Thank you for reaching out to Interview Ready. We have received your message and our team will get back to you within 24 to 48 hours.</p>
+        <p style="margin-bottom: 6px; font-weight: 600; color: #1e293b;">Copy of your message:</p>
+        <div class="quote-box">${sanitizedMessage}</div>
+        <p>If you have additional details to add, feel free to reply directly to this email.</p>
+        <p>Best regards,<br>The Interview Ready Team</p>
+      </div>
+      <div class="footer">
+        <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a></p>
+        <p>&copy; 2026 Interview Ready. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const ackText = `Hello ${sanitizedName},\n\n` +
+      `Thank you for reaching out to Interview Ready. We have received your message and our team will get back to you within 24 to 48 hours.\n\n` +
+      `Copy of your message:\n${message.trim()}\n\n` +
+      `If you have additional details to add, feel free to reply directly to this email.\n\n` +
+      `Best regards,\nThe Interview Ready Team\n\n` +
+      `Interview Ready | appinterviewready.top`;
+
     try {
       await sendEmail({
-        to: email.trim(),
-        subject: `Message Received: Interview Ready Support`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="utf-8">
-            <style>
-              body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; }
-              .card { max-width: 580px; margin: 20px auto; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
-              .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 28px; color: #ffffff; text-align: center; }
-              .body { padding: 28px; }
-              .badge { display: inline-block; background-color: #eff6ff; color: #1d4ed8; font-weight: 700; font-size: 13px; padding: 6px 14px; border-radius: 9999px; margin-bottom: 16px; border: 1px solid #dbeafe; }
-              .msg-box { background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #edf2f7; margin: 16px 0; color: #475569; font-size: 14px; }
-              .footer { padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <div class="header">
-                <h1 style="margin: 0; font-size: 22px;">Interview Ready Support</h1>
-              </div>
-              <div class="body">
-                <div class="badge">✓ INQUIRY RECEIVED</div>
-                <h2 style="font-size: 18px; margin: 0 0 12px;">Hi ${sanitizedName},</h2>
-                <p style="font-size: 14px; color: #475569; line-height: 1.6;">Thank you for contacting Interview Ready. Our support team has received your message and will reply within 24 to 48 hours.</p>
-                <div class="msg-box">
-                  <strong style="color: #0f172a;">Your Message:</strong><br>
-                  ${sanitizedMessage}
-                </div>
-                <p style="font-size: 13px; color: #64748b;">You can reply directly to this email or reach us anytime at <a href="mailto:info@appinterviewready.top" style="color: #2563eb;">info@appinterviewready.top</a>.</p>
-              </div>
-              <div class="footer">
-                <p>Interview Ready • <a href="https://appinterviewready.top" style="color: #2563eb; text-decoration: none;">appinterviewready.top</a></p>
-                <p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">You received this transactional confirmation for your support inquiry. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
-                <p>© 2026 Interview Ready. All rights reserved.</p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `,
-        text: `Hi ${sanitizedName},\n\nThank you for contacting Interview Ready. We have received your message and will reply within 24 to 48 hours.\n\nYour message:\n${message}\n\nInterview Ready Support\ninfo@appinterviewready.top`,
+        to: sanitizedEmail,
+        replyTo: 'Interview Ready Support <info@appinterviewready.top>',
+        subject: ackSubject,
+        html: ackHtml,
+        text: ackText,
         emailType: 'contact_acknowledgement',
         metadata: { recipient_name: sanitizedName },
       });

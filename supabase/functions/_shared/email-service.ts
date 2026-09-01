@@ -12,6 +12,7 @@ interface SendEmailRequest {
   emailType: string;
   metadata?: Record<string, any>;
   supabaseClient?: any;
+  replyTo?: string;
 }
 
 // PII sanitization helpers
@@ -40,6 +41,7 @@ function sanitizeMetadata(metadata: Record<string, any>): Record<string, any> {
 async function sendSpaceshipSmtp({
   to,
   from,
+  replyTo,
   subject,
   html,
   text,
@@ -50,6 +52,7 @@ async function sendSpaceshipSmtp({
 }: {
   to: string;
   from: string;
+  replyTo?: string;
   subject: string;
   html?: string;
   text?: string;
@@ -167,6 +170,18 @@ async function sendSpaceshipSmtp({
     let messageBody = '';
     messageBody += `From: ${encodedFrom}\r\n`;
     messageBody += `To: ${to}\r\n`;
+    if (replyTo) {
+      let encodedReplyTo = replyTo;
+      if (replyTo.includes('<') && replyTo.includes('>')) {
+        const match = replyTo.match(/^(.*?)\s*<([^>]+)>$/);
+        if (match) {
+          const displayName = match[1].trim();
+          const emailAddr = match[2].trim();
+          encodedReplyTo = `"${displayName.replace(/"/g, '')}" <${emailAddr}>`;
+        }
+      }
+      messageBody += `Reply-To: ${encodedReplyTo}\r\n`;
+    }
     messageBody += `Subject: ${encodeMimeHeader(subject)}\r\n`;
     messageBody += `Date: ${dateHeader}\r\n`;
     messageBody += `Message-ID: ${messageId}\r\n`;
@@ -223,6 +238,7 @@ export async function sendEmail({
   emailType,
   metadata = {},
   supabaseClient,
+  replyTo,
 }: SendEmailRequest) {
   const supabase = supabaseClient ?? createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
@@ -423,6 +439,7 @@ export async function sendEmail({
     const result = await sendSpaceshipSmtp({
       to,
       from: fromEmail,
+      replyTo,
       subject: emailSubject,
       html: emailHtml,
       text: emailText,
