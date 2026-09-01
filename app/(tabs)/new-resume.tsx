@@ -260,6 +260,21 @@ export default function ResumeBuilderScreen() {
   // True while the async AI generation is running server-side (between HTTP 202 and Realtime event)
   const [isGenerating, setIsGenerating] = useState(false);
 
+  const [currentResumeId, setCurrentResumeId] = useState<string | null>((id as string) || null);
+  const [hasStartedOver, setHasStartedOver] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'form' | 'editor'>((id && !hasStartedOver) ? 'editor' : 'form');
+  const [prevId, setPrevId] = useState(id);
+  const generationChannelRef = useRef<any>(null);
+
+  if (id !== prevId) {
+    setPrevId(id);
+    if (id) {
+      setCurrentResumeId(id as string);
+      setHasStartedOver(false);
+      setCurrentStep('editor');
+    }
+  }
+
   const { showAd: showInterstitialAd, loaded: interstitialLoaded } = useInterstitialAd();
   const { incrementInterstitialCount, resetInterstitialCount } = useUIStore();
   const { requireCredits } = useCreditGuard();
@@ -310,6 +325,9 @@ export default function ResumeBuilderScreen() {
         is_base: jobDescription.trim().length === 0 && jdFileText.trim().length === 0 && finalJobUrl.length === 0
       });
 
+      setCurrentResumeId(res.resume_id);
+      setHasStartedOver(false);
+
       // Register the resume ID in the URL so the query is keyed correctly.
       router.setParams({ id: res.resume_id });
 
@@ -351,6 +369,7 @@ export default function ResumeBuilderScreen() {
             recognition: (content.recognition?.length || content.awards?.length || 0) > 0,
           }
         });
+        setCurrentStep('editor');
         setIsGenerating(false);
         Toast.show({ type: 'success', text1: 'Resume generated!' });
       };
@@ -435,19 +454,11 @@ export default function ResumeBuilderScreen() {
     }
   };
 
-  const { data: resumeData, isLoading } = useResumeQuery(id as string);
+  const { data: resumeData, isLoading } = useResumeQuery(currentResumeId);
   const remoteResume = (resumeData as any)?.resume_contents?.[0] || resumeData;
   const { profile } = useProfileStore();
 
   const [draft, setDraft] = useState<DraftResume | null>(null);
-  const [hasStartedOver, setHasStartedOver] = useState(false);
-  const [prevId, setPrevId] = useState(id);
-  const generationChannelRef = useRef<any>(null);
-
-  if (id !== prevId) {
-    setPrevId(id);
-    setHasStartedOver(false);
-  }
 
   useEffect(() => {
     return () => {
@@ -462,7 +473,7 @@ export default function ResumeBuilderScreen() {
 
   // Sync from remote when loaded
   React.useEffect(() => {
-    if (id && !hasStartedOver && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
+    if (currentResumeId && !hasStartedOver && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
       const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
       const hasFeaturedProject = !!(
         (remoteResume.featuredProject && (remoteResume.featuredProject.name || remoteResume.featuredProject.title)) ||
@@ -501,16 +512,29 @@ export default function ResumeBuilderScreen() {
           recognition: (remoteResume.awards?.length || remoteResume.recognition?.length || 0) > 0,
         }
       });
+      if (remoteResume.templateId) {
+        setSelectedTemplateId(remoteResume.templateId);
+      }
+      setCurrentStep('editor');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remoteResume]);
+  }, [remoteResume, currentResumeId, hasStartedOver]);
 
   // ── Save ──────────────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!draft) return;
     try {
-      if (id) {
-        await updateMutation.mutateAsync({ id: id as string, resume_contents: [draft] });
+      if (currentResumeId) {
+        await updateMutation.mutateAsync({ id: currentResumeId, resume_contents: [draft] });
+      } else {
+        const res = await createResumeMutation.mutateAsync({
+          title: draft.header?.title ? `${draft.header.title} Resume` : 'My Resume',
+          template_id: draft.templateId || selectedTemplateId || 'executive',
+          is_base: true,
+        });
+        setCurrentResumeId(res.resume_id);
+        router.setParams({ id: res.resume_id });
+        await updateMutation.mutateAsync({ id: res.resume_id, resume_contents: [draft] });
       }
       Toast.show({ type: 'success', text1: 'Resume saved!' });
       addNotification({ title: 'Resume Saved', description: 'Your resume has been saved to the cloud.', type: 'success' });
@@ -617,8 +641,8 @@ export default function ResumeBuilderScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              if (!id) return;
-              await deleteMutation.mutateAsync(id as string);
+              if (!currentResumeId) return;
+              await deleteMutation.mutateAsync(currentResumeId);
               router.back();
             } catch (e: any) {
               Toast.show({ type: 'error', text1: 'Delete Failed', text2: getUserFriendlyErrorMessage(e.message, 'Failed to delete resume.') });
@@ -632,6 +656,7 @@ export default function ResumeBuilderScreen() {
   // ── Start Over / Generate New Resume ───────────────────────────────────────
   const resetToNewResume = () => {
     setHasStartedOver(true);
+    setCurrentResumeId(null);
     setDraft(null);
     setAiGeneratedContent(null);
     setJobDescription('');
@@ -639,9 +664,10 @@ export default function ResumeBuilderScreen() {
     setJdFileText('');
     setJdFileName(null);
     setUrlError('');
+    setSelectedTemplateId('executive');
+    setCurrentStep('form');
     try {
       router.setParams({ id: '', template: '', fromList: '' });
-      router.replace('/(tabs)/new-resume' as any);
     } catch {
       // no-op
     }
@@ -649,21 +675,19 @@ export default function ResumeBuilderScreen() {
   };
 
   const handleBack = () => {
-    if (fromList === 'true' && id) {
-      router.back();
-    } else if (draft) {
-      // Return user to the first screen of the page (resume generator / template selection)
-      resetToNewResume();
-    } else if (router.canGoBack()) {
+    if (currentStep === 'editor' || draft) {
+      // Return user to the first screen of the resume builder where they can change the description of the job
+      setCurrentStep('form');
+    } else if (fromList === 'true' || router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/resumes' as any);
     }
   };
 
   const handleStartOver = () => {
     Alert.alert(
-      "Start Over?",
+      "Start Over & Create New Resume?",
       "Would you like to start over and generate a new resume? Any unsaved edits will be discarded.",
       [
         { text: "Cancel", style: "cancel" },
@@ -685,8 +709,8 @@ export default function ResumeBuilderScreen() {
     
     try {
       // Best-effort auto-save in background without blocking download
-      if (id) {
-        updateMutation.mutate({ id: id as string, resume_contents: [draft] });
+      if (currentResumeId) {
+        updateMutation.mutate({ id: currentResumeId, resume_contents: [draft] });
       }
 
       const resumeData = getPreparedResumeData();
@@ -821,7 +845,9 @@ export default function ResumeBuilderScreen() {
             },
           };
 
+          setCurrentResumeId(null);
           setDraft(importedDraft);
+          setCurrentStep('editor');
           setIsTemplateModalVisible(false);
           Toast.show({
             type: 'success',
@@ -1025,8 +1051,27 @@ export default function ResumeBuilderScreen() {
     });
   };
 
-  // ── Render: No draft yet → Form State ───────────────────────────────────
-  if ((!id || hasStartedOver) && !draft) {
+  if (isGenerating) {
+    return (
+      <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Crafting Your AI Resume...</Text>
+        <Text style={{ marginTop: 6, color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>Tailoring keywords and experience bullets to pass ATS filters. This may take up to 20 seconds.</Text>
+      </View>
+    );
+  }
+
+  if (isLoading && currentResumeId && !draft && !hasStartedOver) {
+    return (
+      <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 12, color: colors.textMuted }}>Loading resume...</Text>
+      </View>
+    );
+  }
+
+  // ── Render: Step 1 (Target Job Description & Template Selection) ────────────────
+  if (currentStep === 'form' || !draft) {
     return (
       <View style={styles.flex}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={Platform.OS === 'web'} keyboardShouldPersistTaps="handled">
@@ -1137,43 +1182,55 @@ export default function ResumeBuilderScreen() {
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={[styles.primaryBtn, { marginVertical: Spacing.xl, height: 54 }]} 
-            onPress={handleGenerate}
-            disabled={createResumeMutation.isPending || analyzeJobMutation.isPending}
-          >
-            {createResumeMutation.isPending || analyzeJobMutation.isPending ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
-                <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
-                  {jobDescription.trim().length > 10 || jobUrl.trim().length > 5 ? 'Generate Tailored Resume' : 'Generate Resume'}
+          {draft ? (
+            <View style={{ gap: Spacing.sm, marginVertical: Spacing.xl }}>
+              <TouchableOpacity 
+                style={[styles.primaryBtn, { height: 54 }]} 
+                onPress={handleGenerate}
+                disabled={createResumeMutation.isPending || analyzeJobMutation.isPending}
+              >
+                {createResumeMutation.isPending || analyzeJobMutation.isPending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
+                    <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
+                      {jobDescription.trim().length > 10 || jobUrl.trim().length > 5 ? 'Re-generate Tailored Resume' : 'Re-generate Resume'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.outlineBtn, { height: 50 }]} 
+                onPress={() => setCurrentStep('editor')}
+              >
+                <Ionicons name="create-outline" size={18} color={colors.primary} />
+                <Text style={[styles.outlineBtnText, { fontSize: 15, marginLeft: 6 }]}>
+                  Continue Editing Current Resume
                 </Text>
-              </>
-            )}
-          </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.primaryBtn, { marginVertical: Spacing.xl, height: 54 }]} 
+              onPress={handleGenerate}
+              disabled={createResumeMutation.isPending || analyzeJobMutation.isPending}
+            >
+              {createResumeMutation.isPending || analyzeJobMutation.isPending ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
+                  <Text style={[styles.primaryBtnText, { fontSize: 16, marginLeft: 8 }]}>
+                    {jobDescription.trim().length > 10 || jobUrl.trim().length > 5 ? 'Generate Tailored Resume' : 'Generate Resume'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
 
         </ScrollView>
-      </View>
-    );
-  }
-
-  if (isGenerating) {
-    return (
-      <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 16, color: colors.textPrimary, fontSize: 16, fontWeight: '600' }}>Crafting Your AI Resume...</Text>
-        <Text style={{ marginTop: 6, color: colors.textMuted, fontSize: 13, textAlign: 'center' }}>Tailoring keywords and experience bullets to pass ATS filters. This may take up to 20 seconds.</Text>
-      </View>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <View style={[styles.flex, { alignItems: 'center', justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.textMuted }}>Loading resume...</Text>
       </View>
     );
   }
@@ -1928,16 +1985,15 @@ export default function ResumeBuilderScreen() {
     </View>
   );
 
-  // ── Render helpers ────────────────────────────────────────────────────────
-
   function renderPageHeader() {
+    const isEditorView = currentStep === 'editor' && !!draft;
     return (
       <View style={styles.pageHeader}>
         <TouchableOpacity
           style={styles.backBtn}
           onPress={handleBack}
           accessibilityRole="button"
-          accessibilityLabel={draft ? "Back to resume generator" : "Go back"}
+          accessibilityLabel={isEditorView ? "Back to resume generator" : "Go back"}
         >
           <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -1947,7 +2003,7 @@ export default function ResumeBuilderScreen() {
             <Text style={styles.pageSubtitle}>Craft your professional story with AI precision.</Text>
           </View>
         </View>
-        {draft && (
+        {isEditorView && (
           <View style={styles.modeToggleContainer}>
             <TouchableOpacity style={[styles.modeToggleBtn, isEditMode && styles.modeToggleBtnActive]} onPress={() => setIsEditMode(true)}>
               <Ionicons name="document-text-outline" size={18} color={colors.primary} />

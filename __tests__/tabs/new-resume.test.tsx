@@ -347,7 +347,12 @@ describe('Resume Builder (new-resume) — user stories', () => {
     });
   });
 
-  it('allows user to start over and generate a new resume from the editor view', async () => {
+  it('allows user to return to the first screen to change job description, and start over to create a new resume', async () => {
+    let alertButtons: any[] = [];
+    jest.spyOn(Alert, 'alert').mockImplementation((title, message, buttons) => {
+      alertButtons = buttons || [];
+    });
+
     router.__setMockParams({ id: 'resume-456' });
     mockSupabase.__mockHelpers.tables['resumes'] = [
       {
@@ -378,10 +383,38 @@ describe('Resume Builder (new-resume) — user stories', () => {
       expect(screen.getByText('Start Over & Create New Resume')).toBeTruthy();
     });
 
-    // Press the Top Return Arrow button -> takes user directly to the first screen of the page
+    // 1. Press the Top Return Arrow button -> takes user directly to the first screen of the page
     await fireEvent.press(screen.getByLabelText('Back to resume generator'));
 
-    // Should return back to the initial resume creation form state
+    // Should return back to the first screen (Step 1) where they can change job description
+    await waitFor(() => {
+      expect(screen.getByText('1. Target Job Description (Optional)')).toBeTruthy();
+      expect(screen.getByText('2. Choose a Template')).toBeTruthy();
+      expect(screen.getByText('Continue Editing Current Resume')).toBeTruthy();
+    });
+
+    // 2. Return to editor view
+    await fireEvent.press(screen.getByText('Continue Editing Current Resume'));
+    await waitFor(() => {
+      expect(screen.getByText('Start Over & Create New Resume')).toBeTruthy();
+    });
+
+    // 3. Press Start Over & Create New Resume
+    await fireEvent.press(screen.getByText('Start Over & Create New Resume'));
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Start Over & Create New Resume?',
+      expect.any(String),
+      expect.any(Array)
+    );
+
+    // Confirm Start Over in Alert dialog
+    const startOverBtn = alertButtons.find(b => b.text === 'Start Over');
+    expect(startOverBtn).toBeTruthy();
+    act(() => {
+      startOverBtn.onPress();
+    });
+
+    // Should reset to brand new resume creation state
     await waitFor(() => {
       expect(screen.getByText('1. Target Job Description (Optional)')).toBeTruthy();
       expect(screen.getByText('2. Choose a Template')).toBeTruthy();
