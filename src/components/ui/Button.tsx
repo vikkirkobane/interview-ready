@@ -27,6 +27,7 @@ interface ButtonProps {
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  testID?: string;
 }
 
 export function Button({
@@ -40,6 +41,7 @@ export function Button({
   icon,
   style,
   textStyle,
+  testID,
 }: ButtonProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { colors, isDark } = useTheme();
@@ -117,6 +119,7 @@ export function Button({
 
   return (
     <MotiPressable
+      testID={testID}
       onPress={onPress}
       disabled={isDisabled}
       style={containerStyles as any}

@@ -1,73 +1,8 @@
--- Migration: Update Email Provider to Spaceship (Spacemail)
--- Description: Switches default email provider to Spaceship SMTP across logs, RPCs, and templates
--- Date: 2026-08-30
+-- Migration 026: Update waitlist confirmation email template with simple clean wording and website link only
 
--- 1. Update default provider in email_logs table
-ALTER TABLE public.email_logs ALTER COLUMN provider SET DEFAULT 'spaceship';
-
--- 2. Update log_email RPC function to use 'spaceship' by default
-CREATE OR REPLACE FUNCTION public.log_email(
-  p_user_id UUID,
-  p_email_to TEXT,
-  p_email_type TEXT,
-  p_subject TEXT,
-  p_template_id TEXT DEFAULT NULL,
-  p_metadata JSONB DEFAULT '{}'::JSONB,
-  p_status TEXT DEFAULT 'pending',
-  p_provider TEXT DEFAULT 'spaceship',
-  p_provider_message_id TEXT DEFAULT NULL
-)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-  v_log_id UUID;
-BEGIN
-  INSERT INTO public.email_logs (
-    user_id,
-    email_to,
-    email_type,
-    subject,
-    template_id,
-    metadata,
-    status,
-    provider,
-    provider_message_id,
-    sent_at
-  )
-  VALUES (
-    p_user_id,
-    p_email_to,
-    p_email_type,
-    p_subject,
-    p_template_id,
-    p_metadata,
-    p_status,
-    p_provider,
-    p_provider_message_id,
-    CASE WHEN p_status = 'sent' THEN NOW() ELSE NULL END
-  )
-  RETURNING id INTO v_log_id;
-  
-  RETURN v_log_id;
-END;
-$$;
-
--- 3. Add Waitlist Confirmation Template
-INSERT INTO public.email_templates (
-  template_key,
-  name,
-  subject,
-  html_body,
-  text_body,
-  variables,
-  is_active
-) VALUES (
-  'waitlist_confirmation',
-  'Waitlist Confirmation',
-  'You''re on the VIP Waitlist! 🚀 - Interview Ready',
-  '<!DOCTYPE html>
+UPDATE public.email_templates
+SET 
+  html_body = '<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -121,13 +56,17 @@ INSERT INTO public.email_templates (
   </div>
 </body>
 </html>',
-  'Hi {{first_name}},\n\nYou are on the VIP waitlist for Interview Ready!\n\nQueue Position: #{{queue_position}}\nBonus Credits: 10 AI Credits Reserved\n\nWe have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.\n\nVisit: https://appinterviewready.top\n\nInterview Ready Team',
-  '["first_name", "user_name", "queue_position", "app_url"]'::JSONB,
-  true
-) ON CONFLICT (template_key) DO UPDATE SET
-  name = EXCLUDED.name,
-  subject = EXCLUDED.subject,
-  html_body = EXCLUDED.html_body,
-  text_body = EXCLUDED.text_body,
-  variables = EXCLUDED.variables,
-  is_active = EXCLUDED.is_active;
+  text_body = 'Hi {{first_name}},
+
+You are on the VIP waitlist for Interview Ready!
+
+Queue Position: #{{queue_position}}
+Bonus Credits: 10 AI Credits Reserved
+
+We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.
+
+Visit: https://appinterviewready.top
+
+Interview Ready Team',
+  updated_at = NOW()
+WHERE template_key = 'waitlist_confirmation';

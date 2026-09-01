@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import * as Linking from 'expo-linking';
-import { supabase, supabaseUrl } from '../src/lib/supabase';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../src/lib/supabase';
+import { Button } from '../src/components/ui';
 
 export default function ContactScreen() {
   const router = useRouter();
@@ -42,11 +43,15 @@ export default function ContactScreen() {
     try {
       setLoading(true);
 
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       const response = await fetch(`${supabaseUrl}/functions/v1/contact-send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          apikey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${token || supabaseAnonKey}`,
         },
         body: JSON.stringify({
           name: name.trim(),
@@ -155,17 +160,20 @@ export default function ContactScreen() {
               <Text style={[styles.successSubtitle, { color: colors.textMuted }]}>
                 We've received your request and will get back to you at {email} as soon as possible.
               </Text>
-              <Pressable 
-                style={[styles.submitBtn, { backgroundColor: colors.primary, marginTop: Spacing.md }]}
-                onPress={() => {
-                  setSubmitted(false);
-                  setName('');
-                  setEmail('');
-                  setMessage('');
-                }}
-              >
-                <Text style={[styles.submitBtnText, { color: colors.textInverse }]}>Send Another Message</Text>
-              </Pressable>
+              <View style={{ width: '100%', maxWidth: 300, marginTop: Spacing.lg }}>
+                <Button
+                  title="Send Another Message"
+                  onPress={() => {
+                    setSubmitted(false);
+                    setName('');
+                    setEmail('');
+                    setMessage('');
+                  }}
+                  variant="primary"
+                  fullWidth
+                  testID="send-another-message-btn"
+                />
+              </View>
             </View>
           ) : (
             <>
@@ -207,20 +215,17 @@ export default function ContactScreen() {
                 />
               </View>
 
-              <Pressable 
-                style={[styles.submitBtn, { backgroundColor: colors.primary }, loading && { opacity: 0.7 }]}
-                onPress={handleSubmit}
-                disabled={loading}
-                testID="submit-contact-btn"
-                accessibilityRole="button"
-                accessibilityLabel="Send Message"
-              >
-                {loading ? (
-                  <ActivityIndicator color={colors.textInverse} size="small" />
-                ) : (
-                  <Text style={[styles.submitBtnText, { color: colors.textInverse }]}>Send Message</Text>
-                )}
-              </Pressable>
+              <View style={{ marginTop: Spacing.sm }}>
+                <Button
+                  title="Send Message"
+                  onPress={handleSubmit}
+                  loading={loading}
+                  disabled={loading}
+                  variant="primary"
+                  fullWidth
+                  testID="submit-contact-btn"
+                />
+              </View>
             </>
           )}
         </View>
@@ -335,18 +340,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.sm,
     ...Typography.bodyMd,
-  },
-  submitBtn: {
-    height: 50,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.sm,
-    ...Shadow.sm,
-  },
-  submitBtnText: {
-    ...Typography.bodyMd,
-    fontWeight: '700',
   },
   successBox: {
     alignItems: 'center',

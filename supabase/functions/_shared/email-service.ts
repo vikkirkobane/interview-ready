@@ -293,20 +293,19 @@ export async function sendEmail({
           <div class="info-item"><strong>Waitlist Position:</strong> #{{queue_position}}</div>
           <div class="info-item"><strong>Status:</strong> Confirmed</div>
         </div>
-        <p>We will notify you at this email address when access becomes available.</p>
-        <p>If you have any questions, reply to this email at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
+        <p>We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.</p>
+        <p>You can visit our website at <a href="https://appinterviewready.top">appinterviewready.top</a>.</p>
         <p>Best regards,<br>The Interview Ready Team</p>
       </div>
       <div class="footer">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a></p>
-        <p>To unsubscribe, reply with subject: unsubscribe.</p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
 </body>
 </html>`;
-        templateText = `Hello {{first_name}},\n\nThank you for joining the waitlist for Interview Ready. Your spot has been confirmed.\n\nWaitlist Position: #{{queue_position}}\nStatus: Confirmed\n\nWe will notify you at this email address when access becomes available.\n\nIf you have any questions, reply to info@appinterviewready.top.\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top\nTo unsubscribe, reply with subject: unsubscribe.`;
+        templateText = `Hello {{first_name}},\n\nThank you for joining the waitlist for Interview Ready. Your spot has been confirmed.\n\nWaitlist Position: #{{queue_position}}\nStatus: Confirmed\n\nWe have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.\n\nVisit our website: https://appinterviewready.top\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top`;
       } else if (templateKey === 'welcome') {
         templateSubj = "Welcome to Interview Ready - Your Account Details";
         templateHtml = `<!DOCTYPE html>

@@ -337,6 +337,9 @@ export async function triggerWaitlistConfirmationEmail(
       <p style="font-size: 15px; color: #475569; line-height: 1.6;">
         You have secured your spot on the priority access waitlist for <strong>Interview Ready</strong>.
       </p>
+      <p style="font-size: 15px; color: #475569; line-height: 1.6;">
+        We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.
+      </p>
       <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #EDF2F7; margin: 20px 0;">
         <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">What You Get on Day 1:</p>
         <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.6;">
@@ -346,9 +349,9 @@ export async function triggerWaitlistConfirmationEmail(
         </ul>
       </div>
     `,
-    ctaText: 'Visit Web Platform',
-    ctaUrl: appUrl,
-    proTip: 'Interview Ready is a high-performance web app accessible on any browser at appinterviewready.top.',
+    ctaText: 'Visit Website',
+    ctaUrl: 'https://appinterviewready.top',
+    proTip: 'Interview Ready is accessible on any browser at appinterviewready.top.',
   });
 
   const text = [
@@ -357,8 +360,9 @@ export async function triggerWaitlistConfirmationEmail(
     `You are on the VIP waitlist for Interview Ready (Queue Position: #${queuePosition})!`,
     'We have reserved 10 bonus AI credits for your account.',
     '',
-    `Visit: ${appUrl}`,
-    'Support: info@appinterviewready.top',
+    'We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.',
+    '',
+    'Visit the website: https://appinterviewready.top',
     '',
     '- The Interview Ready Team',
   ].join('\n');
