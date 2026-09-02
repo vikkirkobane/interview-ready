@@ -4,7 +4,7 @@ date: 2025-09-02
 tags: [resume, career advice, interview preparation, African students, Interview Ready]
 ---
 
-![Resume building illustration](/blog/images/resume-building-year1.png)
+![Resume building illustration](/blog/images/resume-building-year1.jpg)
 
 # Why Building Your Resume in Year 1 of College Sets You Up for Interview Success (Especially for African Students)
 
