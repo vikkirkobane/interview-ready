@@ -11,8 +11,7 @@ import React, { useState, useEffect } from 'react';
 
 import * as Clipboard from 'expo-clipboard';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Card, Button, ScoreRing } from '../../src/components/ui';
+import { Card, Button, ScoreRing, AdBanner } from '../../src/components/ui';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useNotificationStore } from '../../src/stores/notification-store';
@@ -278,11 +277,12 @@ export default function CompanyResearchScreen() {
             </Text>
           </View>
         )}
-        </ScrollView>
-        <View style={{ height: bottomNavPadding }} />
-    
-</View>);
-  }
+        {!isPro && <AdBanner mode="inline" style={{ marginTop: Spacing.lg }} />}
+      </ScrollView>
+      <View style={{ height: bottomNavPadding }} />
+    </View>
+  );
+}
 
   // ── Results Screen ────────────────────────────────────────────────────────
   const TABS: { id: ResultTab; label: string; icon: string }[] = [
@@ -605,9 +605,10 @@ export default function CompanyResearchScreen() {
           )}
         </Pressable>
 
-        </ScrollView>
+        {!isPro && <AdBanner mode="inline" style={{ marginTop: Spacing.lg }} />}
+      </ScrollView>
 
-        <View style={{ height: bottomNavPadding }} />
+      <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

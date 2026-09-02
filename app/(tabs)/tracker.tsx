@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Pressable, View, Text, StyleSheet, ScrollView, Dimensions, Modal, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { Typography, Spacing, Radius, Shadow, useTheme } from "../../src/theme";
-import { ScoreRing } from "../../src/components/ui";
+import { ScoreRing, AdBanner } from "../../src/components/ui";
 import { useAuthStore } from "../../src/stores/auth-store";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useJobApplicationsListQuery, useCreateJobApplicationMutation, useUpdateJobApplicationStatusMutation, useDeleteJobApplicationMutation } from "../../src/hooks/useApi";
@@ -350,6 +350,7 @@ export default function TrackerScreen() {
             })}
           </ScrollView>
         )}
+        {!isPro && <AdBanner mode="inline" style={{ marginTop: Spacing.sm }} />}
         <View style={{ height: bottomNavPadding }} />
       </View>
     </View>

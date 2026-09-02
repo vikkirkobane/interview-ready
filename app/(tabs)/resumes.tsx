@@ -10,7 +10,7 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing } from '../../src/components/ui';
+import { ScoreRing, AdBanner } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { useResumesListQuery } from '../../src/hooks/useApi';
 import { Ionicons } from '@expo/vector-icons';
@@ -130,8 +130,10 @@ export default function ResumesScreen() {
             ))
           )}
         </View>
-        </ScrollView>
-        <View style={{ height: bottomNavPadding }} />
+
+        {!isPro && <AdBanner mode="inline" style={{ marginTop: Spacing.lg }} />}
+      </ScrollView>
+      <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

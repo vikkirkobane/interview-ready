@@ -108,6 +108,8 @@ export default function PreviewScreen() {
         )}
       </View>
 
+      {!isPro && <AdBanner mode="inline" style={{ paddingHorizontal: Spacing.md }} />}
+
       <View style={[
         styles.footer, 
         { 
@@ -128,7 +130,6 @@ export default function PreviewScreen() {
           style={styles.flex1}
         />
       </View>
-      {!isPro && <AdBanner />}
     </SafeAreaView>
   );
 }

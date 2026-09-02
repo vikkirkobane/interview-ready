@@ -12,6 +12,7 @@ export { SideMenu } from './SideMenu';
 export { ShimmerEffect } from './ShimmerEffect';
 export { toastConfig } from './ToastConfig';
 export { AdBanner } from './AdBanner';
+export { AdSideGutters } from './AdSideGutters';
 export { CreditBadge } from './CreditBadge';
 export { CreditCostBadge } from './CreditCostBadge';
 export { EarnCreditsButton } from './EarnCreditsButton';

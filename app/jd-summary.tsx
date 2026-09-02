@@ -247,7 +247,7 @@ export default function JdSummaryScreen() {
           </View>
         )}
 
-        {!isPro && <AdBanner />}
+        {!isPro && <AdBanner mode="inline" style={{ marginTop: Spacing.lg }} />}
       </ScrollView>
     </View>
   );

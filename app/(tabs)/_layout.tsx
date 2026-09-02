@@ -11,7 +11,6 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { AdBanner } from '../../src/components/ui/AdBanner';
 
 // Custom Animated Icon Component for Bottom Tabs
 const AnimatedTabIcon = ({ focused, color, size, name, isMaterial }: { focused: boolean, color: ColorValue, size: number, name: any, isMaterial?: boolean }) => {
@@ -233,7 +232,6 @@ export default function TabLayout() {
         <Tabs.Screen name="notifications" options={{ href: null }} />
         <Tabs.Screen name="company-research" options={{ href: null }} />
       </Tabs>
-      {!isPro && <AdBanner />}
       <SideMenu />
     </>
   );

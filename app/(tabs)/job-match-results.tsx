@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Pressable,  View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Colors, Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
-import { ScoreRing } from '../../src/components/ui';
+import { ScoreRing, AdBanner } from '../../src/components/ui';
 import { useBreakpoint } from '../../src/hooks/useBreakpoint';
 import { useJobApplicationQuery, useDeleteJobApplicationMutation, useGenerateRoadmapMutation } from '../../src/hooks/useApi';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -249,6 +249,8 @@ export default function JobMatchResultsScreen() {
             </View>
           </View>
         </View>
+
+        {!isPro && <AdBanner mode="inline" style={{ marginVertical: Spacing.md }} />}
 
         {/* Detailed Inventory Section */}
         <View style={[styles.inventorySection, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>

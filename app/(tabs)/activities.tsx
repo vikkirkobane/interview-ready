@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { Typography, Spacing, Radius, useTheme } from '../../src/theme';
+import { AdBanner } from '../../src/components/ui';
 import { useRecentActivitiesQuery } from '../../src/hooks/useApi';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -72,8 +73,10 @@ export default function AllActivitiesScreen() {
         ) : (
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent activities found.</Text>
         )}
-        </ScrollView>
-        <View style={{ height: bottomNavPadding }} />
+
+        {!isPro && <AdBanner mode="inline" style={{ marginTop: Spacing.lg }} />}
+      </ScrollView>
+      <View style={{ height: bottomNavPadding }} />
     </View>
   );
 }

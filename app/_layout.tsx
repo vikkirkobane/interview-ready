@@ -6,7 +6,7 @@ import { queryClient } from '../src/lib/query-client';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, ActivityIndicator, View, Text, Pressable } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { toastConfig } from '../src/components/ui';
+import { toastConfig, AdSideGutters } from '../src/components/ui';
 import { useAuthStore } from '../src/stores/auth-store';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useTheme } from '../src/theme';
@@ -407,6 +407,7 @@ export default function RootLayout() {
           <Stack.Screen name="contact" options={{ headerShown: false }} />
         </Stack>
         <PWAInstallBanner />
+        <AdSideGutters />
         <Toast config={toastConfig} />
       </QueryClientProvider>
     </GestureHandlerRootView>
