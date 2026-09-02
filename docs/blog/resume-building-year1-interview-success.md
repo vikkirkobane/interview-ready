@@ -4,6 +4,8 @@ date: 2025-09-02
 tags: [resume, career advice, interview preparation, African students, Interview Ready]
 ---
 
+![Resume building illustration](/blog/images/Designer%20%284%29.png)
+
 # Why Building Your Resume in Year 1 of College Sets You Up for Interview Success (Especially for African Students)
 
 Many African students wait until their second or third year—sometimes even until graduation—to start thinking about their resumes. This common habit often leads to last‑minute scrambling, generic applications, and missed opportunities. The truth is, recruiters don’t just look at your degree; they want to see evidence of initiative, interests, and community impact from your college years【https://resumewabi.substack.com/p/the-importance-of-creating-your-resume】. Starting your resume in the first year isn’t just about having a document ready—it’s a strategic move that directly improves your interview performance and job‑search confidence later on.
