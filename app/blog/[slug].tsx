@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Markdown from 'react-native-markdown-display';
 import { getBlogPostBySlug } from '../../src/data/blog-posts';
+import * as Clipboard from 'expo-clipboard';
+import Toast from 'react-native-toast-message';
 
 export default function BlogPostScreen() {
   const router = useRouter();
@@ -128,7 +130,7 @@ export default function BlogPostScreen() {
 
   if (!post) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+      <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
         <View
           style={[
             styles.header,
@@ -167,7 +169,7 @@ export default function BlogPostScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+    <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
       {/* Header */}
       <View
         style={[
@@ -217,6 +219,81 @@ export default function BlogPostScreen() {
               <Text style={[styles.tagText, { color: colors.primary }]}>{tag}</Text>
             </View>
           ))}
+        </View>
+
+        {/* Share */}
+        <View style={styles.shareSection}>
+          <Text style={[styles.shareLabel, { color: colors.textMuted }]}>Share this article</Text>
+          <View style={styles.shareButtons}>
+            <Pressable
+              style={[styles.shareBtn, { backgroundColor: '#1DA1F2' }]}
+              onPress={() =>
+                Platform.OS === 'web'
+                  ? window.open(
+                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}`,
+                      '_blank'
+                    )
+                  : null
+              }
+              accessibilityLabel="Share on Twitter"
+            >
+              <Ionicons name="logo-twitter" size={18} color="#FFFFFF" />
+            </Pressable>
+            <Pressable
+              style={[styles.shareBtn, { backgroundColor: '#1877F2' }]}
+              onPress={() =>
+                Platform.OS === 'web'
+                  ? window.open(
+                      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`,
+                      '_blank'
+                    )
+                  : null
+              }
+              accessibilityLabel="Share on Facebook"
+            >
+              <Ionicons name="logo-facebook" size={18} color="#FFFFFF" />
+            </Pressable>
+            <Pressable
+              style={[styles.shareBtn, { backgroundColor: '#0A66C2' }]}
+              onPress={() =>
+                Platform.OS === 'web'
+                  ? window.open(
+                      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
+                      '_blank'
+                    )
+                  : null
+              }
+              accessibilityLabel="Share on LinkedIn"
+            >
+              <Ionicons name="logo-linkedin" size={18} color="#FFFFFF" />
+            </Pressable>
+            <Pressable
+              style={[styles.shareBtn, { backgroundColor: '#25D366' }]}
+              onPress={() =>
+                Platform.OS === 'web'
+                  ? window.open(
+                      `https://api.whatsapp.com/send?text=${encodeURIComponent(`${post.title} ${window.location.href}`)}`,
+                      '_blank'
+                    )
+                  : null
+              }
+              accessibilityLabel="Share on WhatsApp"
+            >
+              <Ionicons name="chatbubble-outline" size={16} color="#FFFFFF" />
+            </Pressable>
+            <Pressable
+              style={[styles.shareBtn, { backgroundColor: `${colors.primary}` }]}
+              onPress={async () => {
+                if (Platform.OS === 'web') {
+                  await Clipboard.setStringAsync(window.location.href);
+                  Toast.show({ type: 'success', text1: 'Link copied', text2: 'Blog post URL copied to clipboard' });
+                }
+              }}
+              accessibilityLabel="Copy link"
+            >
+              <Ionicons name="link-outline" size={18} color="#FFFFFF" />
+            </Pressable>
+          </View>
         </View>
 
         {/* Markdown Content */}
@@ -308,7 +385,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.xs,
+    marginBottom: Spacing.lg,
+  },
+  shareSection: {
     marginBottom: Spacing.xl,
+    paddingBottom: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  shareLabel: {
+    ...Typography.bodySm,
+    fontWeight: '600',
+    marginBottom: Spacing.sm,
+  },
+  shareButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  shareBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tag: {
     paddingHorizontal: Spacing.sm,

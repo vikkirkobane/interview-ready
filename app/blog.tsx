@@ -13,7 +13,7 @@ export default function BlogIndexScreen() {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bgPrimary }]}>
+    <View style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
       {/* Header */}
       <View
         style={[
