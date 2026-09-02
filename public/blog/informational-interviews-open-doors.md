@@ -4,7 +4,7 @@ date: 2025-09-02
 tags: [informational interview, career advice, networking, African professionals, Interview Ready]
 ---
 
-n![Informational interview illustration](/blog/images/Designer%20%285%29.png)
+![Informational interview illustration](/blog/images/informational-interviews.png)
 
 # Why Informational Interviews Open Doors a Job Application Never Will
 
