@@ -80,18 +80,6 @@
       "destination": "/_expo/:match*"
     },
     {
-      "source": "/blog/:match*",
-      "destination": "/blog/:match*"
-    },
-    {
-      "source": "/blog/images/:match*",
-      "destination": "/blog/images/:match*"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1.html"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

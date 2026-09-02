@@ -278,6 +278,9 @@ export default function LandingPage() {
                 <Pressable onPress={() => scrollToSection('faq')} style={styles.navLinkItem}>
                   <Text style={styles.navLinkText}>FAQ</Text>
                 </Pressable>
+                <Pressable onPress={() => router.push('/blog' as any)} style={styles.navLinkItem}>
+                  <Text style={styles.navLinkText}>Blog</Text>
+                </Pressable>
               </View>
             )}
           </View>
@@ -346,6 +349,10 @@ export default function LandingPage() {
             </Pressable>
             <Pressable style={styles.mobileNavItem} onPress={() => scrollToSection('faq')}>
               <Text style={styles.mobileNavText}>FAQ</Text>
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </Pressable>
+            <Pressable style={styles.mobileNavItem} onPress={() => { setMobileMenuOpen(false); router.push('/blog' as any); }}>
+              <Text style={styles.mobileNavText}>Blog</Text>
               <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
             </Pressable>
             {!session && (

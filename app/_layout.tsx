@@ -106,7 +106,8 @@ function AuthGuard() {
       firstSegment === 'privacy' ||
       firstSegment === 'terms' ||
       firstSegment === 'about' ||
-      firstSegment === 'contact';
+      firstSegment === 'contact' ||
+      firstSegment === 'blog';
     if (isPublicRoute && !session) return;
 
     // CRITICAL: Don't redirect to welcome if an OAuth deep link is still
@@ -405,6 +406,8 @@ export default function RootLayout() {
           <Stack.Screen name="terms" options={{ headerShown: false }} />
           <Stack.Screen name="about" options={{ headerShown: false }} />
           <Stack.Screen name="contact" options={{ headerShown: false }} />
+          <Stack.Screen name="blog" options={{ headerShown: false }} />
+          <Stack.Screen name="blog/[slug]" options={{ headerShown: false }} />
         </Stack>
         <PWAInstallBanner />
         <AdSideGutters />
