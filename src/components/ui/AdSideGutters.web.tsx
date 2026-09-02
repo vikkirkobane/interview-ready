@@ -47,22 +47,26 @@ export const AdSideGutters: React.FC = () => {
   useEffect(() => {
     if (isPro || hasError || isExcludedRoute || !isDesktopWide) return;
 
-    try {
-      if (typeof window !== 'undefined') {
-        window.adsbygoogle = window.adsbygoogle || [];
-        if (!leftPushedRef.current) {
-          window.adsbygoogle.push({});
-          leftPushedRef.current = true;
+    const timer = setTimeout(() => {
+      try {
+        if (typeof window !== 'undefined') {
+          window.adsbygoogle = window.adsbygoogle || [];
+          if (!leftPushedRef.current) {
+            window.adsbygoogle.push({});
+            leftPushedRef.current = true;
+          }
+          if (!rightPushedRef.current) {
+            window.adsbygoogle.push({});
+            rightPushedRef.current = true;
+          }
         }
-        if (!rightPushedRef.current) {
-          window.adsbygoogle.push({});
-          rightPushedRef.current = true;
-        }
+      } catch (e) {
+        console.warn('[AdSense] Side gutters push failed:', e);
+        setHasError(true);
       }
-    } catch (e) {
-      console.warn('[AdSense] Side gutters push failed:', e);
-      setHasError(true);
-    }
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [isPro, hasError, isExcludedRoute, isDesktopWide]);
 
   if (isPro || hasError || isExcludedRoute || !isDesktopWide) {
@@ -79,7 +83,6 @@ export const AdSideGutters: React.FC = () => {
             display: 'block',
             width: '160px',
             height: '600px',
-            overflow: 'hidden',
           }}
           data-ad-client={AdUnits.client}
           data-ad-slot={AdUnits.banner}
@@ -95,7 +98,6 @@ export const AdSideGutters: React.FC = () => {
             display: 'block',
             width: '160px',
             height: '600px',
-            overflow: 'hidden',
           }}
           data-ad-client={AdUnits.client}
           data-ad-slot={AdUnits.banner}
@@ -116,7 +118,6 @@ const styles = StyleSheet.create({
     zIndex: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
   rightGutter: {
     position: 'fixed' as any,
@@ -127,6 +128,6 @@ const styles = StyleSheet.create({
     zIndex: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
 });
+

@@ -40,16 +40,22 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   useEffect(() => {
     if (isPro || hasError || isPushedRef.current) return;
 
-    try {
-      if (typeof window !== 'undefined') {
-        window.adsbygoogle = window.adsbygoogle || [];
-        window.adsbygoogle.push({});
-        isPushedRef.current = true;
+    // Small timeout to allow DOM node attachment and layout calculation in SPA
+    const timer = setTimeout(() => {
+      try {
+        if (typeof window !== 'undefined') {
+          // Ensure adsbygoogle array exists
+          window.adsbygoogle = window.adsbygoogle || [];
+          window.adsbygoogle.push({});
+          isPushedRef.current = true;
+        }
+      } catch (e) {
+        console.warn('[AdSense] Failed to push ad unit:', e);
+        setHasError(true);
       }
-    } catch (e) {
-      console.warn('[AdSense] Failed to push ad unit:', e);
-      setHasError(true);
-    }
+    }, 50);
+
+    return () => clearTimeout(timer);
   }, [isPro, hasError]);
 
   if (isPro || hasError) {
@@ -68,9 +74,8 @@ export const AdBanner: React.FC<AdBannerProps> = ({
         style={{
           display: 'block',
           width: '100%',
-          minHeight: 50,
+          minHeight: 90,
           textAlign: 'center',
-          overflow: 'hidden',
         }}
         data-ad-client={adClient}
         data-ad-slot={adSlot}
@@ -84,17 +89,18 @@ export const AdBanner: React.FC<AdBannerProps> = ({
 const styles = StyleSheet.create({
   inlineContainer: {
     width: '100%',
+    minHeight: 90,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.md,
     backgroundColor: 'transparent',
-    overflow: 'hidden',
   },
   anchoredContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 80,
+    minHeight: 90,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
@@ -103,4 +109,5 @@ const styles = StyleSheet.create({
     elevation: 40,
   },
 });
+
 
