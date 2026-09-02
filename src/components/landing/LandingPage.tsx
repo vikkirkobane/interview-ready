@@ -1147,7 +1147,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
-    backdropFilter: 'blur(12px)',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(12px)' } : {}),
   },
   navbarInner: {
     maxWidth: 1120,
