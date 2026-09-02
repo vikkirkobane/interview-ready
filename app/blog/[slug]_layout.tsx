@@ -1,6 +1,6 @@
 import React from 'react';
 import { Slot } from 'expo-router';
-import { Head } from 'expo-router/head';
+import Head from 'expo-router/head';
 import { useLocalSearchParams } from 'expo-router';
 import { getBlogPostBySlug } from '../../src/data/blog-posts';
 

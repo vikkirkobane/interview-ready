@@ -234,19 +234,19 @@ export default function BlogPostScreen() {
           <Text style={styles.shareLabel}>Share this article</Text>
           <View style={styles.shareButtons}>
             <Pressable
-              style={[styles.shareBtn, { backgroundColor: '#1DA1F2' }]}
+              style={[styles.shareBtn, { backgroundColor: '#000000' }]}
               onPress={() =>
                 Platform.OS === 'web'
                   ? window.open(
-                      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(currentUrl)}`,
+                      `https://x.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(currentUrl)}`,
                       '_blank',
                       'noopener,noreferrer'
                     )
                   : null
               }
-              accessibilityLabel="Share on Twitter"
+              accessibilityLabel="Share on X"
             >
-              <Ionicons name="logo-twitter" size={18} color="#FFFFFF" />
+              <Text style={styles.xIcon}>X</Text>
             </Pressable>
             <Pressable
               style={[styles.shareBtn, { backgroundColor: '#1877F2' }]}
@@ -621,6 +621,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  xIcon: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    fontFamily: Platform.OS === 'web' ? "'Inter', sans-serif" : undefined,
   },
 
   // ─── States ───
