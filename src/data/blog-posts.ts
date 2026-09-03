@@ -26,6 +26,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/informational-interviews.jpg',
     tags: ['informational interview', 'career advice', 'networking', 'African professionals'],
   },
+  {
+    slug: 'get-uncomfortable-career-growth',
+    title: 'Why Getting a Little Uncomfortable Is the Next Right Career Move (Even When It Feels Risky)',
+    date: '2025-09-02',
+    description:
+      'Career risk doesn\'t have to mean blowing everything up. It can be one conversation, one application, one small experiment. Sometimes the next right move simply asks us to get a little uncomfortable.',
+    coverImage: '/blog/images/get-uncomfortable-career-growth.jpg',
+    tags: ['career growth', 'comfort zone', 'growth mindset', 'career advice', 'African professionals'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {
