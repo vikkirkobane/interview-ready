@@ -21,6 +21,7 @@ interface OnboardingState {
   jdUrl: string;
   analysisId: string | null;
   resumeId: string | null;
+  selectedTemplateId: string;
 
   // Referral
   referralCode: string | null;        // Deep link referral code
@@ -46,6 +47,7 @@ interface OnboardingState {
   setJdUrl: (url: string) => void;
   setAnalysisId: (id: string) => void;
   setResumeId: (id: string) => void;
+  setSelectedTemplateId: (id: string) => void;
   setReferralCode: (code: string | null) => void;
   clearReferralCode: () => void;
   setReferralCodeSkipped: (skipped: boolean) => void;
@@ -72,6 +74,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       jdUrl: '',
       analysisId: null,
       resumeId: null,
+      selectedTemplateId: 'executive',
       referralCode: null,
       referralCodeSkipped: false,
 
@@ -98,6 +101,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       setJdUrl: (url) => set({ jdUrl: url }),
       setAnalysisId: (id) => set({ analysisId: id }),
       setResumeId: (id) => set({ resumeId: id }),
+      setSelectedTemplateId: (id) => set({ selectedTemplateId: id }),
       setReferralCode: (code) => set({ referralCode: code }),
       clearReferralCode: () => set({ referralCode: null }),
       setReferralCodeSkipped: (skipped) => set({ referralCodeSkipped: skipped }),
@@ -115,12 +119,13 @@ export const useOnboardingStore = create<OnboardingState>()(
         location: '',
         phone: '',
         skills: [],
-        jdText: '',
-        jdUrl: '',
-        analysisId: null,
-        resumeId: null,
-        referralCode: null,
-        referralCodeSkipped: false,
+      jdText: '',
+      jdUrl: '',
+      analysisId: null,
+      resumeId: null,
+      selectedTemplateId: 'executive',
+      referralCode: null,
+      referralCodeSkipped: false,
       }),
     }),
     {

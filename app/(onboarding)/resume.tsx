@@ -29,8 +29,9 @@ import { ResumeContent } from '../../src/types/schemas';
 import { Ionicons } from '@expo/vector-icons';
 
 /**
- * Normalizes any raw resume structure (from Realtime broadcast, Supabase DB, or onboarding profile)
- * into a complete, valid ResumeContent object with 1-page ATS formatting.
+ * Normalizes any raw resume structure into a ResumeContent object.
+ * Uses server-generated content faithfully — no fake filler content.
+ * Matches the resume builder's data pipeline for consistent output.
  */
 function normalizeToResumeContent(
   raw: any,
@@ -65,59 +66,29 @@ function normalizeToResumeContent(
   const subtitle = h.subtitle || content.subtitle || '';
 
   const summaryText =
-    typeof content.summary === 'string' && content.summary.trim().length > 30
+    typeof content.summary === 'string' && content.summary.trim()
       ? content.summary.trim()
-      : content.summary?.text && content.summary.text.trim().length > 30
+      : content.summary?.text && content.summary.text.trim()
       ? content.summary.text.trim()
-      : fallbackMeta?.role && fallbackMeta?.years
-      ? `${title} with ${fallbackMeta.years}+ years of experience spearheading end-to-end execution, optimizing cross-functional workflows, and delivering high-impact solutions. Proven track record in translating strategic vision into scalable, measurable operational success. Adept at driving cross-organizational collaboration to accelerate business outcomes.`
-      : `${title} with proven expertise in leading strategic initiatives, cross-functional execution, and delivering high-value solutions. Accomplished track record of driving process optimization, mentoring high-performing teams, and achieving measurable results in dynamic environments.`;
+      : '';
 
-  // Skills normalization with 3-tier category standard
+  // Skills normalization — use server data faithfully
   let skillsList: { category: string; items: string[] }[] = [];
   if (Array.isArray(content.skills) && content.skills.length > 0) {
     skillsList = content.skills.map((s: any) => {
-      if (typeof s === 'string') return { category: 'Core Competencies', items: [s] };
-      const cat = s.category || s.name || 'Core Competencies';
+      if (typeof s === 'string') return { category: 'Skills', items: [s] };
+      const cat = s.category || s.name || 'Skills';
       const items = Array.isArray(s.items) ? s.items : Array.isArray(s.skills) ? s.skills : typeof s.items === 'string' ? [s.items] : [];
       return { category: cat, items };
     }).filter((s: any) => s.items.length > 0);
+  } else if (fallbackMeta?.skills && fallbackMeta.skills.length > 0) {
+    skillsList = [{ category: 'Skills', items: fallbackMeta.skills }];
   }
 
-  // Ensure minimum 3 categorized groups for professional page density
-  if (skillsList.length === 0) {
-    const rawSkills = fallbackMeta?.skills || [];
-    skillsList = [
-      {
-        category: 'Core Competencies & Strategy',
-        items: rawSkills.length > 0 ? rawSkills.slice(0, 6) : ['Strategic Planning', 'Cross-Functional Leadership', 'Project Execution', 'Process Optimization', 'Stakeholder Alignment'],
-      },
-      {
-        category: 'Technical & Methodologies',
-        items: ['Agile / Scrum', 'Data-Driven Decision Making', 'Systems Architecture', 'Quality Assurance', 'Performance Benchmarking'],
-      },
-      {
-        category: 'Tools & Platforms',
-        items: ['Enterprise Cloud Systems', 'Analytics & Reporting', 'Collaboration Tooling', 'Workflow Automation'],
-      },
-    ];
-  } else if (skillsList.length === 1) {
-    skillsList.push(
-      {
-        category: 'Methodologies & Frameworks',
-        items: ['Agile / Scrum', 'Continuous Improvement', 'Risk Mitigation', 'Cross-Functional Collaboration'],
-      },
-      {
-        category: 'Tools & Technologies',
-        items: ['Cloud Platforms', 'Workflow Automation', 'Data Analytics', 'Reporting Suites'],
-      }
-    );
-  }
-
-  // Experience normalization (Ensures 4-5 bullets for primary role, 3-4 for secondary role)
+  // Experience normalization — use server data faithfully, same as resume builder
   let expList: any[] = [];
   if (Array.isArray(content.experience) && content.experience.length > 0) {
-    expList = content.experience.map((e: any, idx: number) => {
+    expList = content.experience.map((e: any) => {
       let rawBullets: string[] = [];
       if (Array.isArray(e.bullets) && e.bullets.length > 0) {
         rawBullets = e.bullets;
@@ -125,71 +96,25 @@ function normalizeToResumeContent(
         rawBullets = e.description.split('\n').map((b: string) => b.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
       }
 
-      // Ensure single-role or sparse-role profiles have adequate depth to fill the page
-      if (rawBullets.length < 3 && idx === 0) {
-        rawBullets = [
-          ...rawBullets,
-          'Spearheaded key strategic initiatives resulting in measurable efficiency and performance improvements.',
-          'Collaborated across cross-functional stakeholders to define roadmaps and optimize delivery pipelines.',
-          'Mentored team members and instituted industry best practices ensuring high output quality.',
-        ].slice(0, 5);
-      }
-
       return {
         title: e.title || e.role || title,
-        company: e.company || e.organization || fallbackMeta?.company || 'Organization',
-        date_range: e.date_range || e.dates || '2021 – Present',
-        location: e.location || (location ? location : ''),
+        company: e.company || e.organization || fallbackMeta?.company || '',
+        date_range: e.date_range || e.dates || '',
+        location: e.location || '',
         bullets: rawBullets,
       };
     });
-  } else {
-    expList = [
-      {
-        title: fallbackMeta?.role || title,
-        company: fallbackMeta?.company || 'Organization',
-        date_range: '2021 – Present',
-        location: location || '',
-        bullets: [
-          'Spearheaded end-to-end execution of core organizational initiatives, delivering 35%+ efficiency gains.',
-          'Architected and implemented optimized workflows reducing turnaround latency by 40% across departments.',
-          'Led cross-functional teams of 8+ contributors through high-velocity delivery sprints and milestone reviews.',
-          'Analyzed key operational metrics and customer insights to drive data-informed decision-making.',
-          'Mentored team members and established scalable documentation and engineering standards.',
-        ],
-      },
-      {
-        title: `${title} Specialist`,
-        company: 'Innovate Group',
-        date_range: '2018 – 2021',
-        location: location || '',
-        bullets: [
-          'Delivered mission-critical platform features adopted across 500+ enterprise stakeholders.',
-          'Optimized core infrastructure and resource utilization, decreasing operational costs by 22%.',
-          'Collaborated closely with product and executive teams to prioritize high-impact roadmap requirements.',
-        ],
-      },
-    ];
   }
 
-  // Education normalization
+  // Education normalization — use server data faithfully
   let eduList: any[] = [];
   if (Array.isArray(content.education) && content.education.length > 0) {
     eduList = content.education.map((e: any) => ({
-      degree: e.degree || e.degree_name || 'Bachelor of Science',
-      institution: e.institution || e.school || 'University of California, Berkeley',
-      year: e.year || e.graduation_year || '2018',
-      note: e.note || 'Honors Graduate',
+      degree: e.degree || e.degree_name || '',
+      institution: e.institution || e.school || '',
+      year: e.year || e.graduation_year || '',
+      note: e.note || '',
     }));
-  } else {
-    eduList = [
-      {
-        degree: 'Bachelor of Science in Information Systems & Management',
-        institution: 'University of California, Berkeley',
-        year: '2018',
-        note: 'Dean’s Honor List Graduate',
-      },
-    ];
   }
 
   const certsList = (content.certifications || []).map((c: any) =>
@@ -201,20 +126,15 @@ function normalizeToResumeContent(
   ).filter(Boolean);
 
   let proj = content.featured_project || (Array.isArray(content.projects) ? content.projects[0] : null);
-  if (!proj || !proj.name) {
-    proj = {
-      include: true,
-      name: 'Enterprise Workflow & Systems Modernization',
-      tech_stack: 'Cloud Infrastructure, Agile Methodologies, Automation Pipelines',
-      bullet: 'Architected and deployed unified workflow engine serving 50k+ active users, achieving 99.9% uptime.',
-    };
-  } else {
+  if (proj && (proj.name || proj.title)) {
     proj = {
       include: proj.include !== false,
-      name: proj.name || proj.title || 'Core Platform Initiative',
+      name: proj.name || proj.title || '',
       tech_stack: proj.tech_stack || '',
       bullet: proj.bullet || proj.description || '',
     };
+  } else {
+    proj = null;
   }
 
   return {
@@ -244,12 +164,12 @@ function normalizeToResumeContent(
     certifications: certsList,
     languages: content.languages || [],
     recognition: awardsList,
-    sections_to_include: {
-      summary: true,
-      skills: true,
-      experience: true,
+    sections_to_include: content.sections_to_include || {
+      summary: !!summaryText,
+      skills: skillsList.length > 0,
+      experience: expList.length > 0,
       featured_project: !!(proj?.include && proj?.name),
-      education: true,
+      education: eduList.length > 0,
       certifications: certsList.length > 0,
       languages: (content.languages || []).length > 0,
       recognition: awardsList.length > 0,
@@ -286,6 +206,7 @@ export default function ResumeGenScreen() {
     analysisId,
     resumeId,
     setResumeId,
+    selectedTemplateId,
   } = useOnboardingStore();
 
   const createResume = useCreateResumeMutation();
@@ -313,8 +234,8 @@ export default function ResumeGenScreen() {
 
   const previewHtml = useMemo(() => {
     if (!activeResume || !activeResume.header) return '';
-    return buildResumeHTML(activeResume, 'executive');
-  }, [activeResume]);
+    return buildResumeHTML(activeResume, selectedTemplateId);
+  }, [activeResume, selectedTemplateId]);
 
   useEffect(() => {
     let channel: any;
@@ -341,6 +262,7 @@ export default function ResumeGenScreen() {
       try {
         const { resume_id, stream_channel } = await createResume.mutateAsync({
           title: targetRole || 'My Resume',
+          template_id: selectedTemplateId,
           job_analysis_id: analysisId || undefined,
         });
 
@@ -443,7 +365,7 @@ export default function ResumeGenScreen() {
     if (!activeResume) return;
     setIsExporting(true);
     try {
-      await exportResumePDF(activeResume, 'executive');
+      await exportResumePDF(activeResume, selectedTemplateId);
       Toast.show({ type: 'success', text1: 'PDF Downloaded!', text2: 'Check your downloads folder' });
       addNotification({
         title: 'Resume Downloaded',
@@ -465,7 +387,7 @@ export default function ResumeGenScreen() {
     if (!activeResume) return;
     setIsExporting(true);
     try {
-      await exportResumeDOCX(activeResume, 'executive');
+      await exportResumeDOCX(activeResume, selectedTemplateId);
       Toast.show({ type: 'success', text1: 'DOCX Downloaded!', text2: 'Check your downloads folder' });
       addNotification({
         title: 'Resume Downloaded',
@@ -604,7 +526,7 @@ export default function ResumeGenScreen() {
                 style={[styles.previewFullBtn, { backgroundColor: `${colors.primary}12`, borderColor: `${colors.primary}33` }]}
                 onPress={() => {
                   if (activeResume && previewHtml) {
-                    usePreviewStore.getState().setPreview('resume', activeResume, previewHtml, 'executive');
+                    usePreviewStore.getState().setPreview('resume', activeResume, previewHtml, selectedTemplateId);
                     router.push('/preview');
                   }
                 }}

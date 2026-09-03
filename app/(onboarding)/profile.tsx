@@ -25,6 +25,13 @@ const SUGGESTED_SKILLS = [
   'Team Collaboration', 'Adaptability', 'Critical Thinking'
 ];
 
+const TEMPLATES = [
+  { id: 'executive', name: 'Executive', description: 'Clean single-column, leadership-focused', isPremium: false },
+  { id: 'minimal', name: 'Minimal', description: 'Whitespace-heavy, typography-driven', isPremium: false },
+  { id: 'tech-stack', name: 'Tech Stack', description: 'Projects-first, developer-focused', isPremium: false },
+  { id: 'academic', name: 'Academic', description: 'Publications and research focus', isPremium: true },
+];
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
@@ -34,6 +41,7 @@ export default function ProfileScreen() {
     location, setLocation,
     phone, setPhone,
     skills, addSkill, removeSkill, setSkills,
+    selectedTemplateId, setSelectedTemplateId,
   } = useOnboardingStore();
 
   const [hasResume, setHasResume] = useState(false);
@@ -305,6 +313,30 @@ export default function ProfileScreen() {
               </View>
             </View>
 
+            {/* Resume Template Selector */}
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Resume Template</Text>
+              <View style={styles.templateGrid}>
+                {TEMPLATES.map(t => (
+                  <Pressable
+                    key={t.id}
+                    style={[styles.templateCard, { backgroundColor: colors.bgSecondary, borderColor: selectedTemplateId === t.id ? colors.primary : colors.border }, selectedTemplateId === t.id && { borderWidth: 2 }]}
+                    onPress={() => setSelectedTemplateId(t.id)}
+                  >
+                    <Ionicons name="document-text-outline" size={22} color={selectedTemplateId === t.id ? colors.primary : colors.textMuted} />
+                    <Text style={[styles.templateName, { color: selectedTemplateId === t.id ? colors.primary : colors.textPrimary }]}>{t.name}</Text>
+                    <Text style={[styles.templateDesc, { color: colors.textMuted }]}>{t.description}</Text>
+                    {t.isPremium && (
+                      <View style={[styles.premiumBadge, { backgroundColor: `${colors.warning}1A` }]}>
+                        <Ionicons name="star" size={10} color={colors.warning} />
+                        <Text style={[styles.premiumText, { color: colors.warning }]}>Pro</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
             {/* CTA Section */}
             <View style={styles.ctaSection}>
               <Pressable 
@@ -468,6 +500,43 @@ const styles = StyleSheet.create({
   },
   skillChipTextInactive: {
     ...Typography.label,
+  },
+  templateGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  templateCard: {
+    flex: 1,
+    minWidth: '45%',
+    padding: Spacing.md,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    gap: 4,
+  },
+  templateName: {
+    ...Typography.label,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  templateDesc: {
+    ...Typography.bodySm,
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radius.full,
+    marginTop: 2,
+  },
+  premiumText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   ctaSection: {
     paddingTop: Spacing.lg,
