@@ -192,14 +192,8 @@ export default function BlogPostScreen() {
         ]}
       >
         <Pressable
-          style={[styles.backButton, { backgroundColor: '#EFF6FF' }]}
-          onPress={() => {
-            if (Platform.OS === 'web' && window.history.length > 1) {
-              window.history.back();
-            } else {
-              router.replace('/blog');
-            }
-          }}
+          style={[styles.backButton, { backgroundColor: '#EFF6FF', cursor: 'pointer' as any }]}
+          onPress={() => router.replace('/blog')}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -529,6 +523,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
+    zIndex: 51,
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
     width: 36,

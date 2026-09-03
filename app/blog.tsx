@@ -82,8 +82,8 @@ export default function BlogIndexScreen() {
         ]}
       >
         <Pressable
-          style={[styles.backButton, { backgroundColor: '#EFF6FF' }]}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+          style={[styles.backButton, { backgroundColor: '#EFF6FF', cursor: 'pointer' as any }]}
+          onPress={() => router.replace('/')}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
@@ -252,6 +252,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
+    zIndex: 51,
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
     width: 36,
