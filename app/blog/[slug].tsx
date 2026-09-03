@@ -40,7 +40,17 @@ export default function BlogPostScreen() {
         const res = await fetch(`/blog/${slug}.md`);
         if (!res.ok) throw new Error('Not found');
         const text = await res.text();
-        const cleaned = text.replace(/^---[\s\S]*?---\s*/, '');
+        let cleaned = text.replace(/^---[\s\S]*?---\s*/, '');
+        // Remove the Image Generation Prompt section (internal-only, not for readers)
+        cleaned = cleaned.replace(/## Image Generation Prompt[\s\S]*?(?=## Takeaway|$)/i, '');
+        // Replace long dashes with natural alternatives to reduce AI-slop feel
+        cleaned = cleaned
+          .replace(/ — /g, ', ')
+          .replace(/ – /g, ', ')
+          .replace(/\u2014/g, ',')
+          .replace(/\u2013/g, ',')
+          .replace(/—/g, ',')
+          .replace(/–/g, ',');
         if (!cancelled) setContent({ markdown: cleaned, loading: false, error: false });
       } catch {
         if (!cancelled) setContent({ markdown: '', loading: false, error: true });
@@ -157,7 +167,7 @@ export default function BlogPostScreen() {
           </Text>
           <Pressable
             style={styles.backBtn}
-            onPress={() => router.replace('/blog' as any)}
+            onPress={() => router.replace('/blog')}
           >
             <Text style={styles.backBtnText}>Back to Blog</Text>
           </Pressable>
@@ -183,7 +193,13 @@ export default function BlogPostScreen() {
       >
         <Pressable
           style={[styles.backButton, { backgroundColor: '#EFF6FF' }]}
-          onPress={() => router.canGoBack() ? router.back() : router.replace('/blog' as any)}
+          onPress={() => {
+            if (Platform.OS === 'web' && window.history.length > 1) {
+              window.history.back();
+            } else {
+              router.replace('/blog');
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
