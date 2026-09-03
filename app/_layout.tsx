@@ -84,8 +84,9 @@ function AuthGuard() {
   useEffect(() => {
     if (!initialized) return;
 
-    const firstSegment = segments[0] as string;
-    const secondSegment = segments[1] as string;
+    const segs = segments as string[];
+    const firstSegment = segs[0] as string;
+    const secondSegment = segs[1] as string;
 
     const inAuthGroup =
       firstSegment === '(auth)' || firstSegment === 'auth';

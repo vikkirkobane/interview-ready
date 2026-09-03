@@ -29,8 +29,9 @@ export const AdSideGutters: React.FC = () => {
     user?.user_metadata?.subscription === 'pro';
 
   // Determine current route safety
-  const firstSegment = segments[0] as string | undefined;
-  const secondSegment = segments[1] as string | undefined;
+  const segs = segments as (string | undefined)[];
+  const firstSegment = segs[0] as string | undefined;
+  const secondSegment = segs[1] as string | undefined;
 
   // Never show side gutter ads on landing, auth, onboarding, mock interview, or payment
   const isExcludedRoute =
