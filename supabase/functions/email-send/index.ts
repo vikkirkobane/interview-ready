@@ -72,6 +72,19 @@ serve(async (req: any) => {
       throw new Error('Missing required fields: to, emailType');
     }
 
+    // Allowlist: only these email addresses can receive test emails
+    const ALLOWED_RECIPIENTS = [
+      'victorchogo37@gmail.com',
+      'victorchogo48@gmail.com',
+    ];
+
+    const recipientEmail = to.toLowerCase();
+    if (!ALLOWED_RECIPIENTS.includes(recipientEmail)) {
+      throw new Error(
+        `Sending to ${to} is not allowed. Only approved test recipients can receive emails.`
+      );
+    }
+
     const result = await sendEmail({
       to,
       subject,

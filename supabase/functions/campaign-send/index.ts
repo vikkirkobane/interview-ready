@@ -202,6 +202,19 @@ serve(async (req: any) => {
       throw new Error('Missing required field: html');
     }
 
+    // Allowlist: only these email addresses can receive test emails
+    const ALLOWED_RECIPIENTS = [
+      'victorchogo37@gmail.com',
+      'victorchogo48@gmail.com',
+    ];
+
+    const blockedRecipients = to.filter((email) => !ALLOWED_RECIPIENTS.includes(email.toLowerCase()));
+    if (blockedRecipients.length > 0) {
+      throw new Error(
+        `Sending to ${blockedRecipients.join(', ')} is not allowed. Only approved test recipients can receive emails.`
+      );
+    }
+
     const defaultFrom = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <info@appinterviewready.top>';
     const senderEmail = from || defaultFrom;
 
