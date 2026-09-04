@@ -70,6 +70,8 @@
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^14.0.1",
     "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.0",
+    "@vercel/node": "^5.1.0",
     "@types/react": "~19.2.14",
     "babel-plugin-transform-imports": "^2.0.0",
     "eslint": "^9.0.0",

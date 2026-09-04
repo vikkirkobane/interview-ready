@@ -4,6 +4,12 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    {
+      "path": "/api/email/tick",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/_expo/static/(.*)",
