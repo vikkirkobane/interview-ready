@@ -11,7 +11,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'questions-job-seekers-ask-before-interview',
     title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them',
-    date: '2025-09-03',
+    date: '2026-09-04',
     description:
       'The questions job seekers ask most before an interview — from "Tell me about yourself" to salary expectations — and how to answer each one with confidence.',
     coverImage: '/blog/images/questions-job-seekers-ask-before-interview.jpg',

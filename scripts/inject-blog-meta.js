@@ -21,7 +21,7 @@ const POSTS = [
     description:
       'The questions job seekers ask most before an interview — from "Tell me about yourself" to salary expectations — and how to answer each one with confidence.',
     image: '/blog/images/questions-job-seekers-ask-before-interview.jpg',
-    date: '2025-09-03',
+    date: '2026-09-04',
     tags: ['interview preparation', 'career advice', 'common questions', 'African professionals'],
   },
   {
