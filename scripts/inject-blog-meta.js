@@ -21,7 +21,7 @@ const POSTS = [
     description:
       'The questions job seekers ask most before an interview — from "Tell me about yourself" to salary expectations — and how to answer each one with confidence.',
     image: '/blog/images/questions-job-seekers-ask-before-interview.jpg',
-    date: '2025-09-02',
+    date: '2025-09-03',
     tags: ['interview preparation', 'career advice', 'common questions', 'African professionals'],
   },
   {
@@ -30,7 +30,7 @@ const POSTS = [
     description:
       'Many African students wait until their second or third year to start thinking about their resumes. Starting in year one is a strategic move that directly improves interview performance and job-search confidence.',
     image: '/blog/images/resume-building-year1.jpg',
-    date: '2025-09-02',
+    date: '2025-08-15',
     tags: ['resume', 'career advice', 'interview preparation', 'African students'],
   },
   {
@@ -39,7 +39,7 @@ const POSTS = [
     description:
       'Informational interviews can open doors a job application never will. A single short chat can bring clarity about a role, forge a genuine connection, and surface opportunities you never knew existed.',
     image: '/blog/images/informational-interviews.jpg',
-    date: '2025-09-02',
+    date: '2025-08-22',
     tags: ['informational interview', 'career advice', 'networking', 'African professionals'],
   },
   {

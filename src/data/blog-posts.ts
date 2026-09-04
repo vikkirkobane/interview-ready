@@ -11,7 +11,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'questions-job-seekers-ask-before-interview',
     title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them',
-    date: '2025-09-02',
+    date: '2025-09-03',
     description:
       'The questions job seekers ask most before an interview — from "Tell me about yourself" to salary expectations — and how to answer each one with confidence.',
     coverImage: '/blog/images/questions-job-seekers-ask-before-interview.jpg',
@@ -20,7 +20,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'resume-building-year1-interview-success',
     title: 'Why Building Your Resume in Year 1 of College Sets You Up for Interview Success',
-    date: '2025-09-02',
+    date: '2025-08-15',
     description:
       'Many African students wait until their second or third year to start thinking about their resumes. Starting in year one is a strategic move that directly improves interview performance and job-search confidence.',
     coverImage: '/blog/images/resume-building-year1.jpg',
@@ -29,7 +29,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'informational-interviews-open-doors',
     title: 'Why Informational Interviews Open Doors a Job Application Never Will',
-    date: '2025-09-02',
+    date: '2025-08-22',
     description:
       'Informational interviews can open doors a job application never will. A single short chat can bring clarity about a role, forge a genuine connection, and surface opportunities you never knew existed.',
     coverImage: '/blog/images/informational-interviews.jpg',
