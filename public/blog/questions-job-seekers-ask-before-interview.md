@@ -1,6 +1,6 @@
 ---
 title: "The Questions Job Seekers Ask Most Before an Interview and How to Answer Them"
-date: 2025-09-02
+date: 2026-09-04
 tags: [interview preparation, career advice, common questions, African professionals, Interview Ready]
 ---
 
@@ -8,13 +8,13 @@ tags: [interview preparation, career advice, common questions, African professio
 
 # The Questions Job Seekers Ask Most Before an Interview and How to Answer Them
 
-Over on the support desk, we hear the same handful of questions from job seekers every single week — usually the night before an interview, at 10 p.m., with a hint of panic in the message. What do I say when they ask about my salary expectations? How do I answer "Tell me about yourself" without rambling? What if I don't have much experience yet? These are not silly questions. They are the moments where good preparation turns into confidence, and confidence turns into offers.
+Over on the support desk, we hear the same handful of questions from job seekers every single week, usually the night before an interview, at 10 p.m., with a hint of panic in the message. What do I say when they ask about my salary expectations? How do I answer "Tell me about yourself" without rambling? What if I don't have much experience yet? These are not silly questions. They are the moments where good preparation turns into confidence, and confidence turns into offers.
 
-Here are the questions our users ask most before an interview — and how to answer each one well.
+Here are the questions our users ask most before an interview, and how to answer each one well.
 
 ## 1. "How do I answer 'Tell me about yourself'?"
 
-This is almost always the opening question, and it sets the tone for everything that follows. The mistake most people make is treating it as a request for their life story. It is not. Interviewers want a condensed, relevant version of your professional story — your background, where you are now, and where you are headed — in about two minutes【https://indeed.com/career-advice/interviewing/interview-question-tell-me-about-yourself】.
+This is almost always the opening question, and it sets the tone for everything that follows. The mistake most people make is treating it as a request for their life story. It is not. Interviewers want a condensed, relevant version of your professional story, your background, where you are now, and where you are headed, in about two minutes【https://indeed.com/career-advice/interviewing/interview-question-tell-me-about-yourself】.
 
 A simple structure that works: past, present, future. Briefly connect your background to the role, talk about what you are doing now, and finish with why this opportunity is the natural next step. Avoid the two biggest traps: reciting your resume line by line, and giving the same canned answer you use for every company【https://indeed.com/career-advice/interviewing/tell-me-about-yourself-answers-to-avoid】. If the interviewer wanted a list of job titles, they would have read your CV — which is exactly why tailoring your answer to the specific role matters.
 
@@ -26,7 +26,7 @@ The key is preparation, not evasion. Research typical salary bands for the role 
 
 ## 3. "What if I don't have enough experience?"
 
-This is the fear underneath many of the other questions we receive — especially from students and recent graduates. The good news is that interviewers rarely expect a fresh graduate to have five years of corporate experience. What they are looking for is evidence of potential: relevant projects, internships, volunteer work, leadership in student organisations, and the ability to learn fast【https://indeed.com/career-advice/interviewing/entry-level-interview-questions】.
+This is the fear underneath many of the other questions we receive, especially from students and recent graduates. The good news is that interviewers rarely expect a fresh graduate to have five years of corporate experience. What they are looking for is evidence of potential: relevant projects, internships, volunteer work, leadership in student organisations, and the ability to learn fast【https://indeed.com/career-advice/interviewing/entry-level-interview-questions】.
 
 Prepare stories that demonstrate transferable skills — teamwork, problem-solving, communication — even if they come from outside the workplace. Organising a campus career fair, leading a church or community group project, or freelancing for local small businesses all count. Frame them with the STAR method (Situation, Task, Action, Result) so your answer shows impact, not just activity.
 
@@ -38,13 +38,13 @@ This is where practising under realistic conditions helps more than reading tips
 
 ## 5. "How do I explain a gap in my CV?"
 
-Gaps are far more common than most job seekers believe — time off for further study, caregiving, illness, a business that did not work out, or the long stretches of unemployment that many African graduates know all too well. You do not need to hide them, and you should never lie about them. Prepare a short, honest explanation that focuses on what you did with the time and what you are ready to do next.
+Gaps are far more common than most job seekers believe, time off for further study, caregiving, illness, a business that did not work out, or the long stretches of unemployment that many African graduates know all too well. You do not need to hide them, and you should never lie about them. Prepare a short, honest explanation that focuses on what you did with the time and what you are ready to do next.
 
 If you studied, volunteered, freelanced, or built skills during the gap, say so plainly. Interviewers respect honesty and resilience. What they penalise is vagueness or defensiveness — so practise saying your explanation once or twice until it sounds matter-of-fact rather than apologetic.
 
 ## 6. "What should I ask them at the end?"
 
-Almost every interview ends with "Do you have any questions for us?" — and "No, I think you covered everything" is one of the weakest answers you can give. It signals low interest. Prepare two or three genuine questions beforehand: about the team's priorities for the first six months, the biggest challenges facing the role, or what success looks like in the position. This shows you are thinking like someone who already works there, not just someone hoping for any offer.
+Almost every interview ends with "Do you have any questions for us?", and "No, I think you covered everything" is one of the weakest answers you can give. It signals low interest. Prepare two or three genuine questions beforehand: about the team's priorities for the first six months, the biggest challenges facing the role, or what success looks like in the position. This shows you are thinking like someone who already works there, not just someone hoping for any offer.
 
 ## Turning Panic into Preparation
 
