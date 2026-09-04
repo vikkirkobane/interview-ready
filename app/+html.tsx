@@ -100,7 +100,14 @@ export default function Root({ children }: PropsWithChildren) {
                 padding-left: env(safe-area-inset-left);
                 padding-right: env(safe-area-inset-right);
               }
-              /* Modern, distinct scrollbars for web / desktop */
+              /* AdSense: automatically collapse unfilled ad slots without displacement */
+              ins.adsbygoogle[data-ad-status="unfilled"] {
+                display: none !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+/* Modern, distinct scrollbars for web / desktop */
               * {
                 scrollbar-width: thin !important;
                 scrollbar-color: rgba(51, 119, 255, 0.45) rgba(255, 255, 255, 0.04);

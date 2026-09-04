@@ -16,6 +16,7 @@ export interface AdBannerProps {
   adLayoutKey?: string;
   fullWidthResponsive?: boolean;
   style?: StyleProp<ViewStyle>;
+  onStatusChange?: (status: 'filled' | 'unfilled') => void;
 }
 
 export const AdBanner: React.FC<AdBannerProps> = ({

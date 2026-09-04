@@ -10,9 +10,10 @@ describe('Website Blog Ads Components', () => {
     resetAllStores();
   });
 
-  it('renders InFeedAd with sponsored badge for free users', async () => {
+  it('keeps InFeedAd badge hidden while unfilled to prevent empty placeholder displacement', async () => {
     const screen = await renderWithProviders(<InFeedAd />);
-    expect(screen.getByText('SPONSORED')).toBeTruthy();
+    // Badge is not shown until Google AdSense confirms filled status
+    expect(screen.queryByText('SPONSORED')).toBeNull();
   });
 
   it('hides InFeedAd for Pro users', async () => {
@@ -28,9 +29,10 @@ describe('Website Blog Ads Components', () => {
     expect(screen.queryByText('SPONSORED')).toBeNull();
   });
 
-  it('renders InArticleAd with advertisement badge for free users', async () => {
+  it('keeps InArticleAd badge hidden while unfilled to prevent empty placeholder displacement', async () => {
     const screen = await renderWithProviders(<InArticleAd />);
-    expect(screen.getByText('ADVERTISEMENT')).toBeTruthy();
+    // Badge is not shown until Google AdSense confirms filled status
+    expect(screen.queryByText('ADVERTISEMENT')).toBeNull();
   });
 
   it('hides InArticleAd for Pro users', async () => {

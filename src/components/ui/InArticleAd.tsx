@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { AdBanner } from './AdBanner';
 import { AdUnits } from '../../lib/adUnits';
@@ -12,8 +12,9 @@ export interface InArticleAdProps {
 }
 
 /**
- * InArticleAd component for inserting ads inside long-form articles (such as blog posts).
- * Formats according to Google AdSense in-article fluid specifications.
+ * InArticleAd component for inserting ads inside long-form articles.
+ * Collapses completely to 0-height without displacement when unfilled,
+ * and renders clean styling and ADVERTISEMENT tag only when filled.
  */
 export const InArticleAd: React.FC<InArticleAdProps> = ({
   style,
@@ -21,32 +22,42 @@ export const InArticleAd: React.FC<InArticleAdProps> = ({
   showBadge = true,
 }) => {
   const { user } = useAuthStore();
+  const [isFilled, setIsFilled] = useState(false);
+  const [isUnfilled, setIsUnfilled] = useState(false);
 
   const isPro =
     user?.user_metadata?.is_pro === true ||
     user?.user_metadata?.plan === 'pro' ||
     user?.user_metadata?.subscription === 'pro';
 
-  if (isPro) {
+  if (isPro || isUnfilled) {
     return null;
   }
 
   const adSlot = slot || (AdUnits as any).inArticle || AdUnits.banner;
 
   return (
-    <View style={[styles.container, style]}>
-      {showBadge && (
+    <View style={[isFilled ? styles.container : styles.hiddenWrapper, style]}>
+      {isFilled && showBadge && (
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>ADVERTISEMENT</Text>
         </View>
       )}
-      <View style={styles.adWrapper}>
+      <View style={isFilled ? styles.adWrapper : styles.adWrapperHidden}>
         <AdBanner
           mode="inline"
           adSlot={adSlot}
           adFormat="fluid"
           adLayout="in-article"
-          fullWidthResponsive={true}
+          onStatusChange={(status) => {
+            if (status === 'filled') {
+              setIsFilled(true);
+              setIsUnfilled(false);
+            } else if (status === 'unfilled') {
+              setIsUnfilled(true);
+              setIsFilled(false);
+            }
+          }}
           style={styles.adBannerStyle}
         />
       </View>
@@ -69,6 +80,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  hiddenWrapper: {
+    width: '100%',
+    minHeight: 0,
+    height: 0,
+    marginVertical: 0,
+    padding: 0,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
   badgeContainer: {
     alignSelf: 'center',
     marginBottom: Spacing.xs,
@@ -85,6 +106,12 @@ const styles = StyleSheet.create({
     minHeight: 90,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  adWrapperHidden: {
+    width: '100%',
+    height: 0,
+    minHeight: 0,
+    overflow: 'hidden',
   },
   adBannerStyle: {
     paddingVertical: 0,

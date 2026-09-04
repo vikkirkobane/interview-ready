@@ -14,6 +14,7 @@ export interface AdBannerProps {
   fullWidthResponsive?: boolean;
   style?: StyleProp<ViewStyle>;
   size?: any;
+  onStatusChange?: (status: 'filled' | 'unfilled') => void;
 }
 
 declare global {
@@ -31,24 +32,71 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   adLayoutKey,
   fullWidthResponsive = true,
   style,
+  onStatusChange,
 }) => {
   const { user } = useAuthStore();
   const [hasError, setHasError] = useState(false);
+  const [adStatus, setAdStatus] = useState<'pending' | 'filled' | 'unfilled'>('pending');
   const isPushedRef = useRef(false);
+  const insRef = useRef<HTMLElement | null>(null);
 
   const isPro =
     user?.user_metadata?.is_pro === true ||
     user?.user_metadata?.plan === 'pro' ||
     user?.user_metadata?.subscription === 'pro';
 
+  // Listen for AdSense slot status changes
+  useEffect(() => {
+    const node = insRef.current;
+    if (!node || typeof window === 'undefined') return;
+
+    const evaluateStatus = () => {
+      const status = node.getAttribute('data-ad-status');
+      const adsbygoogleStatus = node.getAttribute('data-adsbygoogle-status');
+
+      if (status === 'unfilled') {
+        setAdStatus('unfilled');
+        onStatusChange?.('unfilled');
+      } else if (status === 'filled' || (adsbygoogleStatus === 'done' && node.querySelector('iframe'))) {
+        setAdStatus('filled');
+        onStatusChange?.('filled');
+      }
+    };
+
+    evaluateStatus();
+
+    if ('MutationObserver' in window) {
+      const observer = new MutationObserver(() => {
+        evaluateStatus();
+      });
+
+      observer.observe(node, {
+        attributes: true,
+        attributeFilter: ['data-ad-status', 'data-adsbygoogle-status'],
+        childList: true,
+      });
+
+      // Fallback: If after 4.5s AdSense hasn't filled the unit (e.g. adblocker or no fill), mark as unfilled
+      const timeout = setTimeout(() => {
+        if (node.getAttribute('data-ad-status') !== 'filled' && !node.querySelector('iframe')) {
+          setAdStatus('unfilled');
+          onStatusChange?.('unfilled');
+        }
+      }, 4500);
+
+      return () => {
+        observer.disconnect();
+        clearTimeout(timeout);
+      };
+    }
+  }, [onStatusChange]);
+
   useEffect(() => {
     if (isPro || hasError || isPushedRef.current) return;
 
-    // Small timeout to allow DOM node attachment and layout calculation in SPA
     const timer = setTimeout(() => {
       try {
         if (typeof window !== 'undefined') {
-          // Ensure adsbygoogle array exists
           window.adsbygoogle = window.adsbygoogle || [];
           window.adsbygoogle.push({});
           isPushedRef.current = true;
@@ -56,30 +104,38 @@ export const AdBanner: React.FC<AdBannerProps> = ({
       } catch (e) {
         console.warn('[AdSense] Failed to push ad unit:', e);
         setHasError(true);
+        setAdStatus('unfilled');
+        onStatusChange?.('unfilled');
       }
     }, 50);
 
     return () => clearTimeout(timer);
-  }, [isPro, hasError]);
+  }, [isPro, hasError, onStatusChange]);
 
-  if (isPro || hasError) {
+  // Hide completely if Pro, has error, or determined unfilled
+  if (isPro || hasError || adStatus === 'unfilled') {
     return null;
   }
+
+  const isFilled = adStatus === 'filled';
 
   return (
     <View
       style={[
         mode === 'anchored' ? styles.anchoredContainer : styles.inlineContainer,
+        !isFilled && styles.pendingContainer,
         style,
       ]}
     >
       <ins
+        ref={insRef as any}
         className="adsbygoogle"
         style={{
           display: 'block',
           width: '100%',
-          minHeight: adFormat === 'fluid' ? 60 : 90,
+          minHeight: isFilled ? (adFormat === 'fluid' ? 60 : 90) : 0,
           textAlign: 'center',
+          overflow: isFilled ? 'visible' : 'hidden',
         }}
         data-ad-client={adClient}
         data-ad-slot={adSlot}
@@ -116,6 +172,10 @@ const styles = StyleSheet.create({
     zIndex: 40,
     elevation: 40,
   },
+  pendingContainer: {
+    minHeight: 0,
+    paddingVertical: 0,
+    height: 0,
+    overflow: 'hidden',
+  },
 });
-
-
