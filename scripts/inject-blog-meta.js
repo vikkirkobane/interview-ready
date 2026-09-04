@@ -16,6 +16,15 @@ const SITE_NAME = 'Interview Ready';
 // Blog post metadata (must stay in sync with src/data/blog-posts.ts)
 const POSTS = [
   {
+    slug: 'questions-job-seekers-ask-before-interview',
+    title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them',
+    description:
+      'The questions job seekers ask most before an interview — from "Tell me about yourself" to salary expectations — and how to answer each one with confidence.',
+    image: '/blog/images/questions-job-seekers-ask-before-interview.jpg',
+    date: '2025-09-02',
+    tags: ['interview preparation', 'career advice', 'common questions', 'African professionals'],
+  },
+  {
     slug: 'resume-building-year1-interview-success',
     title: 'Why Building Your Resume in Year 1 of College Sets You Up for Interview Success',
     description:
