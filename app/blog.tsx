@@ -6,6 +6,7 @@ import { Typography, Spacing, Radius, Shadow } from '../src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { blogPosts } from '../src/data/blog-posts';
+import { InFeedAd } from '../src/components/ui';
 
 const NAVBAR_BG = 'rgba(255, 255, 255, 0.95)';
 const NAVBAR_BORDER = '#E2E8F0';
@@ -102,37 +103,42 @@ export default function BlogIndexScreen() {
           Practical advice to help you ace interviews and advance your career.
         </Text>
 
-        {blogPosts.map((post) => (
-          <Pressable
-            key={post.slug}
-            style={styles.card}
-            onPress={() => router.push(`/blog/${post.slug}` as any)}
-          >
-            <Image
-              source={{ uri: post.coverImage }}
-              style={styles.cardImage}
-              contentFit="cover"
-              transition={300}
-            />
-            <View style={styles.cardBody}>
-              <View style={styles.cardMeta}>
-                <Ionicons name="calendar-outline" size={12} color="#94A3B8" />
-                <Text style={styles.cardDate}>{post.date}</Text>
+        {blogPosts.map((post, index) => (
+          <React.Fragment key={post.slug}>
+            <Pressable
+              style={styles.card}
+              onPress={() => router.push(`/blog/${post.slug}` as any)}
+            >
+              <Image
+                source={{ uri: post.coverImage }}
+                style={styles.cardImage}
+                contentFit="cover"
+                transition={300}
+              />
+              <View style={styles.cardBody}>
+                <View style={styles.cardMeta}>
+                  <Ionicons name="calendar-outline" size={12} color="#94A3B8" />
+                  <Text style={styles.cardDate}>{post.date}</Text>
+                </View>
+                <Text style={styles.cardTitle}>{post.title}</Text>
+                <Text style={styles.cardDescription} numberOfLines={3}>
+                  {post.description}
+                </Text>
+                <View style={styles.cardTags}>
+                  {post.tags.slice(0, 3).map((tag) => (
+                    <View key={tag} style={styles.tag}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.readMore}>Read more →</Text>
               </View>
-              <Text style={styles.cardTitle}>{post.title}</Text>
-              <Text style={styles.cardDescription} numberOfLines={3}>
-                {post.description}
-              </Text>
-              <View style={styles.cardTags}>
-                {post.tags.slice(0, 3).map((tag) => (
-                  <View key={tag} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.readMore}>Read more →</Text>
-            </View>
-          </Pressable>
+            </Pressable>
+            {/* AdSense In-Feed Ad inserted between editorial posts */}
+            {(index === 1 || (index > 1 && (index + 1) % 3 === 0)) && (
+              <InFeedAd />
+            )}
+          </React.Fragment>
         ))}
       </ScrollView>
     </View>

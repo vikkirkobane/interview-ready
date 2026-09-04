@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Markdown from 'react-native-markdown-display';
 import { getBlogPostBySlug, blogPosts } from '../../src/data/blog-posts';
+import { InArticleAd } from '../../src/components/ui';
 import * as Clipboard from 'expo-clipboard';
 import Toast from 'react-native-toast-message';
 
@@ -332,6 +333,9 @@ export default function BlogPostScreen() {
         ) : (
           <Markdown style={markdownStyles}>{markdown}</Markdown>
         )}
+
+        {/* AdSense In-Article Ad unit */}
+        <InArticleAd />
 
         {/* ─── CTA at the bottom ─── */}
         <View style={styles.ctaCard}>

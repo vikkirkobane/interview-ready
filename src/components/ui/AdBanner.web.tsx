@@ -9,6 +9,8 @@ export interface AdBannerProps {
   adSlot?: string;
   adClient?: string;
   adFormat?: 'auto' | 'fluid' | 'rectangle' | 'horizontal' | 'vertical';
+  adLayout?: 'in-article' | string;
+  adLayoutKey?: string;
   fullWidthResponsive?: boolean;
   style?: StyleProp<ViewStyle>;
   size?: any;
@@ -25,6 +27,8 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   adSlot = AdUnits.banner,
   adClient = AdUnits.client,
   adFormat = 'auto',
+  adLayout,
+  adLayoutKey,
   fullWidthResponsive = true,
   style,
 }) => {
@@ -74,12 +78,14 @@ export const AdBanner: React.FC<AdBannerProps> = ({
         style={{
           display: 'block',
           width: '100%',
-          minHeight: 90,
+          minHeight: adFormat === 'fluid' ? 60 : 90,
           textAlign: 'center',
         }}
         data-ad-client={adClient}
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
+        {...(adLayout ? { 'data-ad-layout': adLayout } : {})}
+        {...(adLayoutKey ? { 'data-ad-layout-key': adLayoutKey } : {})}
         data-full-width-responsive={fullWidthResponsive ? 'true' : 'false'}
       />
     </View>

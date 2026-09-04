@@ -1,0 +1,95 @@
+import React from 'react';
+import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { AdBanner } from './AdBanner';
+import { AdUnits } from '../../lib/adUnits';
+import { useAuthStore } from '../../stores/auth-store';
+import { Radius, Spacing } from '../../theme';
+
+export interface InArticleAdProps {
+  style?: StyleProp<ViewStyle>;
+  slot?: string;
+  showBadge?: boolean;
+}
+
+/**
+ * InArticleAd component for inserting ads inside long-form articles (such as blog posts).
+ * Formats according to Google AdSense in-article fluid specifications.
+ */
+export const InArticleAd: React.FC<InArticleAdProps> = ({
+  style,
+  slot,
+  showBadge = true,
+}) => {
+  const { user } = useAuthStore();
+
+  const isPro =
+    user?.user_metadata?.is_pro === true ||
+    user?.user_metadata?.plan === 'pro' ||
+    user?.user_metadata?.subscription === 'pro';
+
+  if (isPro) {
+    return null;
+  }
+
+  const adSlot = slot || (AdUnits as any).inArticle || AdUnits.banner;
+
+  return (
+    <View style={[styles.container, style]}>
+      {showBadge && (
+        <View style={styles.badgeContainer}>
+          <Text style={styles.badgeText}>ADVERTISEMENT</Text>
+        </View>
+      )}
+      <View style={styles.adWrapper}>
+        <AdBanner
+          mode="inline"
+          adSlot={adSlot}
+          adFormat="fluid"
+          adLayout="in-article"
+          fullWidthResponsive={true}
+          style={styles.adBannerStyle}
+        />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: Radius.md,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#F1F5F9',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    marginVertical: Spacing.xl,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  badgeContainer: {
+    alignSelf: 'center',
+    marginBottom: Spacing.xs,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#94A3B8',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  adWrapper: {
+    width: '100%',
+    minHeight: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adBannerStyle: {
+    paddingVertical: 0,
+    width: '100%',
+  },
+});
+
+export default InArticleAd;

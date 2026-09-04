@@ -12,6 +12,8 @@ export interface AdBannerProps {
   adSlot?: string;
   adClient?: string;
   adFormat?: string;
+  adLayout?: string;
+  adLayoutKey?: string;
   fullWidthResponsive?: boolean;
   style?: StyleProp<ViewStyle>;
 }
