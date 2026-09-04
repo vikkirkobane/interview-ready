@@ -51,6 +51,33 @@ const POSTS = [
     date: '2025-09-02',
     tags: ['career growth', 'comfort zone', 'growth mindset', 'career advice', 'African professionals'],
   },
+  {
+    slug: 'choose-your-lane-specialization-growth',
+    title: "Why Narrow Isn't Limited: The Career Growth Power of Choosing a Lane",
+    description:
+      'Being everything to everyone can quietly dilute the expertise you worked so hard to build. There is real power in choosing a lane, going deeper, and becoming known for something specific — narrow doesn\'t mean limited.',
+    image: '/blog/images/choose-your-lane-specialization-growth.jpg',
+    date: '2026-09-04',
+    tags: ['career growth', 'specialization', 'personal branding', 'African professionals'],
+  },
+  {
+    slug: 'ai-mock-interview-practice-guide',
+    title: 'AI Mock Interview: How to Practice Common Questions and Get Feedback That Actually Improves Your Answers',
+    description:
+      'Candidates who complete five or more realistic mock interviews convert offers at roughly 2.4x the rate of those who skip them. Here is how to use an AI mock interview the right way.',
+    image: '/blog/images/ai-mock-interview-practice-guide.jpg',
+    date: '2026-09-04',
+    tags: ['AI mock interview', 'interview practice', 'interview preparation app', 'freshers'],
+  },
+  {
+    slug: 'free-ats-resume-checker-guide',
+    title: 'Free ATS Resume Checker: Does Your Fresher Resume Pass the 6-Second Test?',
+    description:
+      'ATS software filters out roughly 75% of resumes before a human sees them. Learn how a free ATS resume checker can show you exactly what is wrong — and how to fix it.',
+    image: '/blog/images/free-ats-resume-checker-guide.jpg',
+    date: '2026-09-04',
+    tags: ['ATS resume checker', 'fresher resume', 'applicant tracking system', 'resume keywords'],
+  },
 ];
 
 for (const post of POSTS) {
