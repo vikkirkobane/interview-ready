@@ -1,0 +1,6 @@
+{
+  "name": "interview-ready-api",
+  "private": true,
+  "type": "module",
+  "description": "Scopes ESM to the serverless functions only. Vercel resolves the nearest package.json for each api/* function; the root package.json stays CommonJS for the Expo/Metro/babel toolchain (babel.config.js, metro.config.js, scripts/*.js are CJS). Without this, functions fail at runtime with 'Cannot use import statement outside a module'."
+}
