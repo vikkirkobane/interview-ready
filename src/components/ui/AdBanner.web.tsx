@@ -86,7 +86,9 @@ export const AdBanner: React.FC<AdBannerProps> = ({
         data-ad-format={adFormat}
         {...(adLayout ? { 'data-ad-layout': adLayout } : {})}
         {...(adLayoutKey ? { 'data-ad-layout-key': adLayoutKey } : {})}
-        data-full-width-responsive={fullWidthResponsive ? 'true' : 'false'}
+        {...(adFormat !== 'fluid'
+          ? { 'data-full-width-responsive': fullWidthResponsive ? 'true' : 'false' }
+          : {})}
       />
     </View>
   );
