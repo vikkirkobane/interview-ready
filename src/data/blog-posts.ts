@@ -71,6 +71,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/free-ats-resume-checker-guide.jpg',
     tags: ['ATS resume checker', 'fresher resume', 'applicant tracking system', 'resume keywords'],
   },
+  {
+    slug: 'tell-me-about-yourself-freshers',
+    title: "'Tell Me About Yourself' Answer Examples for Freshers: 3 Scripts That Actually Work",
+    date: '2026-09-04',
+    description:
+      'The first question in almost every interview — and for freshers with no work history it can feel like a trap. Here is how to answer it with confidence, plus three scripts you can adapt.',
+    coverImage: '/blog/images/tell-me-about-yourself-freshers.jpg',
+    tags: ['tell me about yourself', 'interview answers', 'freshers', 'self introduction'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {

@@ -78,6 +78,15 @@ const POSTS = [
     date: '2026-09-04',
     tags: ['ATS resume checker', 'fresher resume', 'applicant tracking system', 'resume keywords'],
   },
+  {
+    slug: 'tell-me-about-yourself-freshers',
+    title: "'Tell Me About Yourself' Answer Examples for Freshers: 3 Scripts That Actually Work",
+    description:
+      'The first question in almost every interview — and for freshers with no work history it can feel like a trap. Here is how to answer it with confidence, plus three scripts you can adapt.',
+    image: '/blog/images/tell-me-about-yourself-freshers.jpg',
+    date: '2026-09-04',
+    tags: ['tell me about yourself', 'interview answers', 'freshers', 'self introduction'],
+  },
 ];
 
 for (const post of POSTS) {
