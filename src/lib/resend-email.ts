@@ -26,7 +26,7 @@ export interface CampaignEmailResult {
   error?: string;
 }
 
-const DEFAULT_FROM = 'Interview Ready <info@appinterviewready.top>';
+const DEFAULT_FROM = 'Interview Ready <noreply@appinterviewready.top>';
 const RESEND_EDGE_FUNCTION = 'campaign-send';
 
 /**

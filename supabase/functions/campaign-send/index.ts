@@ -215,7 +215,7 @@ serve(async (req: any) => {
       );
     }
 
-    const defaultFrom = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <info@appinterviewready.top>';
+    const defaultFrom = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <noreply@appinterviewready.top>';
     const senderEmail = from || defaultFrom;
 
     let result;
