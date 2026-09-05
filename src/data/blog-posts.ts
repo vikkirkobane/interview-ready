@@ -74,7 +74,7 @@ export const blogPosts: BlogPost[] = [
   {
     slug: 'tell-me-about-yourself-freshers',
     title: "'Tell Me About Yourself' Answer Examples for Freshers: 3 Scripts That Actually Work",
-    date: '2026-09-04',
+    date: '2026-09-05',
     description:
       'The first question in almost every interview, and for freshers with no work history it can feel like a trap. Here is how to answer it with confidence, plus three scripts you can adapt.',
     coverImage: '/blog/images/tell-me-about-yourself-freshers.jpg',
