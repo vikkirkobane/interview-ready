@@ -9,7 +9,8 @@ const corsHeaders = {
 };
 
 // Default fallback domain when custom domain is not verified
-const DEFAULT_RESEND_DOMAIN = 'onboarding@resend.dev';
+// Verified domain: noreply.appinterviewready.top
+const DEFAULT_RESEND_FROM = 'noreply@noreply.appinterviewready.top';
 
 interface CampaignEmailRequest {
   to: string[];
@@ -77,20 +78,6 @@ async function sendViaResend({
   if (!response.ok) {
     const errorMessage = result?.message || result?.error || `Resend API error: ${response.status}`;
 
-    // If domain not verified, retry with default Resend domain
-    if (errorMessage.includes('domain is not verified') && from !== DEFAULT_RESEND_DOMAIN) {
-      console.warn(`[Resend] Domain not verified, retrying with default: ${DEFAULT_RESEND_DOMAIN}`);
-      return sendViaResend({
-        to,
-        from: DEFAULT_RESEND_DOMAIN,
-        subject,
-        html,
-        text,
-        replyTo,
-        tags,
-      });
-    }
-
     throw new Error(errorMessage);
   }
 
@@ -139,13 +126,6 @@ async function sendBatchViaResend(
 
   if (!response.ok) {
     const errorMessage = result?.message || result?.error || `Resend batch API error: ${response.status}`;
-
-    // If domain not verified, retry with default domain
-    if (errorMessage.includes('domain is not verified')) {
-      console.warn(`[Resend] Domain not verified in batch, retrying with default: ${DEFAULT_RESEND_DOMAIN}`);
-      const fallbackEmails = emails.map((e) => ({ ...e, from: DEFAULT_RESEND_DOMAIN }));
-      return sendBatchViaResend(fallbackEmails);
-    }
 
     throw new Error(errorMessage);
   }
@@ -215,7 +195,7 @@ serve(async (req: any) => {
       );
     }
 
-    const defaultFrom = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <noreply@appinterviewready.top>';
+    const defaultFrom = Deno.env.get('RESEND_FROM_EMAIL') || `Interview Ready <${DEFAULT_RESEND_FROM}>`;
     const senderEmail = from || defaultFrom;
 
     let result;
