@@ -55,7 +55,7 @@ const POSTS = [
     slug: 'choose-your-lane-specialization-growth',
     title: "Why Narrow Isn't Limited: The Career Growth Power of Choosing a Lane",
     description:
-      'Being everything to everyone can quietly dilute the expertise you worked so hard to build. There is real power in choosing a lane, going deeper, and becoming known for something specific — narrow doesn\'t mean limited.',
+      'Being everything to everyone can quietly dilute the expertise you worked so hard to build. There is real power in choosing a lane, going deeper, and becoming known for something specific, narrow doesn\'t mean limited.',
     image: '/blog/images/choose-your-lane-specialization-growth.jpg',
     date: '2026-09-04',
     tags: ['career growth', 'specialization', 'personal branding', 'African professionals'],
@@ -73,7 +73,7 @@ const POSTS = [
     slug: 'free-ats-resume-checker-guide',
     title: 'Free ATS Resume Checker: Does Your Fresher Resume Pass the 6-Second Test?',
     description:
-      'ATS software filters out roughly 75% of resumes before a human sees them. Learn how a free ATS resume checker can show you exactly what is wrong — and how to fix it.',
+      'ATS software filters out roughly 75% of resumes before a human sees them. Learn how a free ATS resume checker can show you exactly what is wrong, and how to fix it.',
     image: '/blog/images/free-ats-resume-checker-guide.jpg',
     date: '2026-09-04',
     tags: ['ATS resume checker', 'fresher resume', 'applicant tracking system', 'resume keywords'],
@@ -82,7 +82,7 @@ const POSTS = [
     slug: 'tell-me-about-yourself-freshers',
     title: "'Tell Me About Yourself' Answer Examples for Freshers: 3 Scripts That Actually Work",
     description:
-      'The first question in almost every interview — and for freshers with no work history it can feel like a trap. Here is how to answer it with confidence, plus three scripts you can adapt.',
+      'The first question in almost every interview, and for freshers with no work history it can feel like a trap. Here is how to answer it with confidence, plus three scripts you can adapt.',
     image: '/blog/images/tell-me-about-yourself-freshers.jpg',
     date: '2026-09-04',
     tags: ['tell me about yourself', 'interview answers', 'freshers', 'self introduction'],
