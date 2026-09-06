@@ -3,6 +3,7 @@ import {
   generateEmailHtmlTemplate, 
   sendEmailNotification,
   triggerWaitlistConfirmationEmail,
+  triggerLoginNotificationEmail,
 } from '../../src/lib/emailNotificationService';
 
 jest.mock('../../src/lib/supabase', () => ({
@@ -26,10 +27,10 @@ describe('Email Notification Service', () => {
   });
 
   describe('generateEmailHtmlTemplate', () => {
-    it('generates HTML with provided props and branding', () => {
+    it('generates HTML with provided props and branding without em-dashes', () => {
       const html = generateEmailHtmlTemplate({
         preheader: 'Welcome preheader',
-        title: 'Welcome Aboard!',
+        title: 'Welcome to Interview Ready!',
         subtitle: 'Start your prep today',
         userName: 'Alex',
         bodyContent: '<p>Body content test</p>',
@@ -39,13 +40,15 @@ describe('Email Notification Service', () => {
       });
 
       expect(html).toContain('Welcome preheader');
-      expect(html).toContain('Welcome Aboard!');
+      expect(html).toContain('Welcome to Interview Ready!');
       expect(html).toContain('Hello Alex,');
       expect(html).toContain('Body content test');
       expect(html).toContain('Open Platform');
       expect(html).toContain('https://appinterviewready.top');
       expect(html).toContain('Add to home screen');
       expect(html).toContain('Interview Ready');
+      expect(html.includes('\u2014')).toBe(false);
+      expect(html.includes('&' + 'mdash;')).toBe(false);
     });
 
     it('defaults to "there" when userName is omitted', () => {
@@ -122,24 +125,47 @@ describe('Email Notification Service', () => {
     });
   });
 
+  describe('triggerLoginNotificationEmail', () => {
+    it('returns false if email is missing', async () => {
+      const result = await triggerLoginNotificationEmail('');
+      expect(result).toBe(false);
+    });
+
+    it('dispatches login notification for valid user email', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+      const result = await triggerLoginNotificationEmail('candidate@example.com', 'Sarah');
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/functions/v1/email-send'),
+        expect.objectContaining({
+          body: expect.stringContaining('New login to your Interview Ready account'),
+        })
+      );
+    });
+  });
+
   describe('triggerWaitlistConfirmationEmail', () => {
     it('returns false if email is missing', async () => {
       const result = await triggerWaitlistConfirmationEmail('');
       expect(result).toBe(false);
     });
 
-    it('dispatches waitlist confirmation email with queue position', async () => {
+    it('dispatches account confirmation email without waitlist references', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: true }),
       });
 
-      const result = await triggerWaitlistConfirmationEmail('waitlist@example.com', 'David', 42);
+      const result = await triggerWaitlistConfirmationEmail('user@example.com', 'David', 42);
       expect(result).toBe(true);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/functions/v1/email-send'),
         expect.objectContaining({
-          body: expect.stringContaining('Waitlist Confirmed'),
+          body: expect.stringContaining('Account Confirmed'),
         })
       );
     });

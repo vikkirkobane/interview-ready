@@ -9,7 +9,7 @@ import { triggerWelcomeEmail } from '../../src/lib/emailNotificationService';
 import { syncUserToAirtable } from '../../src/lib/airtableService';
 
 /**
- * OAuth callback screen — shown while the deep-link code exchange is in progress.
+ * OAuth callback screen  -  shown while the deep-link code exchange is in progress.
  *
  * Flow:
  *  1. Supabase redirects to interviewready://auth/callback?code=... (or web URL)
@@ -125,16 +125,15 @@ export default function AuthCallbackScreen() {
       const email = session.user?.email;
       const name = session.user?.user_metadata?.full_name || session.user?.user_metadata?.first_name;
       if (email) {
-        syncUserToAirtable({ email, name, status: 'Confirmed' }).catch(() => {});
-        triggerWelcomeEmail(email, name).catch(() => {});
+        syncUserToAirtable({ email, name, status: 'Confirmed', sendConfirmationEmail: false }).catch(() => {});
       }
 
       const isCompleted = session.user?.user_metadata?.onboarding_completed;
       if (isCompleted) {
-        console.log('[AuthCallback] Onboarding complete — navigating to tabs');
+        console.log('[AuthCallback] Onboarding complete  -  navigating to tabs');
         router.replace('/(tabs)');
       } else {
-        console.log('[AuthCallback] Onboarding incomplete — navigating to onboarding');
+        console.log('[AuthCallback] Onboarding incomplete  -  navigating to onboarding');
         router.replace('/(onboarding)/referral-code' as any);
       }
     }
@@ -147,7 +146,7 @@ export default function AuthCallbackScreen() {
     const fallbackTimer = setTimeout(() => {
       const { session: currentSession } = useAuthStore.getState();
       if (!currentSession) {
-        console.warn('[AuthCallback] Timed out after 15s — redirecting to welcome.');
+        console.warn('[AuthCallback] Timed out after 15s  -  redirecting to welcome.');
         router.replace('/(auth)/welcome');
       }
     }, 15000);

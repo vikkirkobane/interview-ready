@@ -32,7 +32,7 @@ serve(async (req: any) => {
       name, 
       status = 'Confirmed', 
       waitlistSpot,
-      sendConfirmationEmail = true,
+      sendConfirmationEmail = false,
     } = body;
 
     if (!email || !email.includes('@')) {
@@ -66,7 +66,6 @@ serve(async (req: any) => {
                 {
                   fields: {
                     'Email': cleanEmail,
-                    'Waitlist Spot': spot,
                     'Submitted At': nowIso,
                     'Status': status,
                     'Welcome Sent': true,
@@ -94,24 +93,22 @@ serve(async (req: any) => {
       airtableSuccess = true;
     }
 
-    // 2. Dispatch VIP Waitlist / Welcome Email via Spaceship
+    // 2. Dispatch Welcome / Account notification email if requested
     let emailSent = false;
     if (sendConfirmationEmail) {
       try {
         await sendEmail({
           to: cleanEmail,
-          templateKey: 'waitlist_confirmation',
+          templateKey: 'welcome',
           templateVariables: {
             first_name: name || 'there',
             user_name: name || 'there',
-            queue_position: spot.toString(),
             app_url: 'https://appinterviewready.top',
           },
-          emailType: 'waitlist_confirmation',
+          emailType: 'welcome',
           metadata: {
-            source: 'airtable_waitlist_sync',
+            source: 'airtable_sync',
             airtable_record_id: airtableRecordId,
-            waitlist_spot: spot,
           },
         });
         emailSent = true;

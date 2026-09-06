@@ -21,8 +21,8 @@ export interface AirtableSyncResult {
 }
 
 /**
- * Synchronize candidate / user email to Airtable Base app5axaWoe4MblFFS / Table tbl0y0reK4q7PvA1t
- * and trigger the Spaceship confirmation email.
+ * Synchronize candidate / user email to Airtable Base app5axaWoe4MblFFS / Table tbl0y0reK4q7PvA1t.
+ * Does not send waitlist confirmation emails.
  */
 export async function syncUserToAirtable(options: AirtableSyncOptions): Promise<AirtableSyncResult> {
   if (!options.email || !options.email.includes('@')) {
@@ -41,7 +41,7 @@ export async function syncUserToAirtable(options: AirtableSyncOptions): Promise<
         name: options.name?.trim(),
         status: options.status || 'Confirmed',
         waitlistSpot: options.waitlistSpot,
-        sendConfirmationEmail: options.sendConfirmationEmail ?? true,
+        sendConfirmationEmail: options.sendConfirmationEmail ?? false,
       }),
     });
 

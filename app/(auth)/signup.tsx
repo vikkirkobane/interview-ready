@@ -24,7 +24,7 @@ export default function SignupScreen() {
   const [error, setError] = useState('');
   const [successNotice, setSuccessNotice] = useState('');
 
-  // Route as soon as a session lands — covers OAuth flows (LinkedIn/Google)
+  // Route as soon as a session lands  -  covers OAuth flows (LinkedIn/Google)
   // where the session is delivered asynchronously via deep-link callback.
   useEffect(() => {
     if (session) {
@@ -69,10 +69,10 @@ export default function SignupScreen() {
       setError(authError);
     } else {
       // Sync candidate email to Airtable & trigger rich welcome email in background
-      syncUserToAirtable({ email: trimmedEmail, status: 'Confirmed' }).catch(() => {});
+      syncUserToAirtable({ email: trimmedEmail, status: 'Confirmed', sendConfirmationEmail: false }).catch(() => {});
       triggerWelcomeEmail(trimmedEmail).catch(() => {});
 
-      // If email confirmation is required, no session is returned yet — the
+      // If email confirmation is required, no session is returned yet  -  the
       // user must verify their email before signing in.
       const hasSession = !!useAuthStore.getState().session;
       if (hasSession) {
@@ -94,7 +94,8 @@ export default function SignupScreen() {
         syncUserToAirtable({ 
           email: activeUser.email, 
           name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name,
-          status: 'Confirmed' 
+          status: 'Confirmed',
+          sendConfirmationEmail: false
         }).catch(() => {});
       }
       const isCompleted = activeUser?.user_metadata?.onboarding_completed;
@@ -117,7 +118,8 @@ export default function SignupScreen() {
         syncUserToAirtable({ 
           email: activeUser.email, 
           name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name,
-          status: 'Confirmed' 
+          status: 'Confirmed',
+          sendConfirmationEmail: false
         }).catch(() => {});
       }
     }

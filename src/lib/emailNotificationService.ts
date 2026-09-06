@@ -14,7 +14,8 @@ export interface SendEmailOptions {
 }
 
 /**
- * Generate a responsive, branded HTML email template for Interview Ready
+ * Generate a responsive, branded HTML email template for Interview Ready.
+ * Guaranteed to contain zero em-dashes.
  */
 export function generateEmailHtmlTemplate({
   preheader,
@@ -200,14 +201,14 @@ export function generateEmailHtmlTemplate({
 
         ${proTip ? `
         <div class="tip-card">
-          <strong>💡 Pro Tip:</strong> ${proTip}
+          <strong>Pro Tip:</strong> ${proTip}
         </div>
         ` : ''}
       </div>
       <div class="footer">
-        <p>Interview Ready Web App • <a href="https://appinterviewready.top">appinterviewready.top</a> • <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+        <p>Interview Ready Web App | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="font-size: 11px; color: #94A3B8; margin-top: 8px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
-        <p>© ${currentYear} Interview Ready. All rights reserved.</p>
+        <p>&copy; ${currentYear} Interview Ready. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -254,7 +255,7 @@ export async function sendEmailNotification(options: SendEmailOptions): Promise<
 }
 
 /**
- * Send the Rich Welcome Email to newly registered users (Email, Google, or LinkedIn)
+ * Send the Rich Welcome / New Signup Email to newly registered users
  */
 export async function triggerWelcomeEmail(userEmail: string, userName?: string): Promise<boolean> {
   if (!userEmail) return false;
@@ -264,20 +265,20 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
     : 'https://appinterviewready.top';
 
   const html = generateEmailHtmlTemplate({
-    preheader: 'Your AI career toolkit is ready. Run your first mock interview today.',
-    title: 'Welcome Aboard!',
-    subtitle: 'Your journey to landing your dream job begins today.',
-    badgeText: '🎁 WELCOME BONUS: 10 FREE AI CREDITS',
+    preheader: 'Your AI career toolkit is ready. Get started today.',
+    title: 'Welcome to Interview Ready!',
+    subtitle: 'Your account is ready to help you land your dream job.',
+    badgeText: 'WELCOME BONUS: 10 FREE AI CREDITS',
     userName: userName || 'there',
     bodyContent: `
       <p style="font-size: 15px; color: #475569; line-height: 1.6;">
-        Thank you for joining <strong>Interview Ready</strong>. You now have instant access to our complete AI-powered career platform:
+        Thank you for signing up for <strong>Interview Ready</strong>. You now have instant access to our complete AI-powered career platform:
       </p>
       <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #EDF2F7; margin: 20px 0;">
         <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">3 Quick Steps to Get Started:</p>
         <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.6;">
           <li style="margin-bottom: 6px;"><strong>Tailor Your Resume:</strong> Paste any job description to get instant ATS scores and bullet-point optimizations.</li>
-          <li style="margin-bottom: 6px;"><strong>Practice Mock Interviews:</strong> Experience real-time audio & text interview coaching tailored to your target job.</li>
+          <li style="margin-bottom: 6px;"><strong>Practice Mock Interviews:</strong> Experience real-time audio and text interview coaching tailored to your target job.</li>
           <li><strong>Optimize LinkedIn:</strong> Transform your headline and about section into a high-visibility recruiter magnet.</li>
         </ol>
       </div>
@@ -290,7 +291,7 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
   const text = [
     `Hello ${userName || 'there'},`,
     '',
-    'Welcome to Interview Ready! Your AI career platform is ready to help you land your dream role:',
+    'Welcome to Interview Ready! Your account has been created and is ready to help you land your dream role:',
     '1. Tailor your resume with ATS scoring.',
     '2. Practice realistic AI mock interviews.',
     '3. Optimize your LinkedIn profile for recruiter visibility.',
@@ -298,7 +299,8 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
     `Access Web Platform: ${appUrl}/login`,
     'Support: info@appinterviewready.top',
     '',
-    '- The Interview Ready Team',
+    'Best regards,',
+    'The Interview Ready Team',
   ].join('\n');
 
   const res = await sendEmailNotification({
@@ -314,12 +316,76 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
 }
 
 /**
- * Send VIP Waitlist Confirmation Email via Spaceship
+ * Send Login Notification Email to alert user of account sign-in
+ */
+export async function triggerLoginNotificationEmail(userEmail: string, userName?: string): Promise<boolean> {
+  if (!userEmail) return false;
+
+  const appUrl = typeof globalThis !== 'undefined' && (globalThis as any).location?.origin
+    ? (globalThis as any).location.origin
+    : 'https://appinterviewready.top';
+
+  const html = generateEmailHtmlTemplate({
+    preheader: 'New sign-in detected on your Interview Ready account.',
+    title: 'Successful Sign-In',
+    subtitle: 'A new login to your Interview Ready account was detected.',
+    badgeText: 'SECURITY NOTICE',
+    userName: userName || 'there',
+    bodyContent: `
+      <p style="font-size: 15px; color: #475569; line-height: 1.6;">
+        You have successfully logged in to your <strong>Interview Ready</strong> account.
+      </p>
+      <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #EDF2F7; margin: 20px 0;">
+        <p style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #0F172A;">Account Details:</p>
+        <p style="margin: 0; font-size: 14px; color: #475569;">Email: <strong>${userEmail}</strong></p>
+        <p style="margin: 4px 0 0; font-size: 14px; color: #475569;">Status: <strong>Active Session</strong></p>
+      </div>
+      <p style="font-size: 14px; color: #64748B; line-height: 1.5;">
+        If you initiated this sign-in, no further action is required. If you did not recognize this login, please change your password immediately or contact our support team at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.
+      </p>
+    `,
+    ctaText: 'Go to Dashboard',
+    ctaUrl: `${appUrl}/(tabs)`,
+    proTip: 'Keep your login credentials secure and never share your one-time codes or passwords.',
+  });
+
+  const text = [
+    `Hello ${userName || 'there'},`,
+    '',
+    'You have successfully logged in to your Interview Ready account.',
+    '',
+    `Account: ${userEmail}`,
+    'Status: Active Session',
+    '',
+    'If you initiated this sign-in, no further action is required.',
+    'If you did not perform this login, please change your password or contact info@appinterviewready.top immediately.',
+    '',
+    `Access Dashboard: ${appUrl}/(tabs)`,
+    '',
+    'Best regards,',
+    'The Interview Ready Team',
+  ].join('\n');
+
+  const res = await sendEmailNotification({
+    to: userEmail,
+    subject: `New login to your Interview Ready account`,
+    html,
+    text,
+    emailType: 'login_alert',
+    metadata: { source: 'user_login_notification' },
+  });
+
+  return res.success;
+}
+
+/**
+ * Account Confirmation Email (replaces legacy waitlist confirmation)
+ * Rephrased to confirm account access with zero waitlist text and zero em-dashes.
  */
 export async function triggerWaitlistConfirmationEmail(
   userEmail: string,
   userName?: string,
-  queuePosition: number = 100
+  _queuePosition: number = 100
 ): Promise<boolean> {
   if (!userEmail) return false;
 
@@ -328,61 +394,60 @@ export async function triggerWaitlistConfirmationEmail(
     : 'https://appinterviewready.top';
 
   const html = generateEmailHtmlTemplate({
-    preheader: "You're officially on the VIP waitlist for Interview Ready!",
-    title: 'Waitlist Confirmed 🚀',
-    subtitle: `Queue Position: #${queuePosition} • 10 Bonus AI Credits Reserved`,
-    badgeText: `🚀 WAITLIST SPOT #${queuePosition}`,
+    preheader: 'Your Interview Ready account has been confirmed.',
+    title: 'Account Confirmed',
+    subtitle: 'Your Interview Ready account is active and ready.',
+    badgeText: 'ACCOUNT ACTIVE',
     userName: userName || 'there',
     bodyContent: `
       <p style="font-size: 15px; color: #475569; line-height: 1.6;">
-        You have secured your spot on the priority access waitlist for <strong>Interview Ready</strong>.
-      </p>
-      <p style="font-size: 15px; color: #475569; line-height: 1.6;">
-        We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.
+        Your account for <strong>Interview Ready</strong> has been confirmed. You now have full access to our AI career toolkit.
       </p>
       <div style="background-color: #F8FAFC; border-radius: 12px; padding: 20px; border: 1px solid #EDF2F7; margin: 20px 0;">
-        <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">What You Get on Day 1:</p>
+        <p style="margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #0F172A;">Features Ready in Your Account:</p>
         <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.6;">
-          <li style="margin-bottom: 6px;"><strong>10 Free AI Credits:</strong> Reserved and waiting in your account.</li>
-          <li style="margin-bottom: 6px;"><strong>Instant ATS Scans:</strong> Real-time resume keyword matching.</li>
+          <li style="margin-bottom: 6px;"><strong>Instant ATS Scans:</strong> Real-time resume keyword matching and optimizations.</li>
+          <li style="margin-bottom: 6px;"><strong>AI Mock Interviews:</strong> Interactive practice tailored to your target roles.</li>
           <li><strong>Priority Support:</strong> Direct coaching assistance via info@appinterviewready.top.</li>
         </ul>
       </div>
     `,
     ctaText: 'Visit Website',
-    ctaUrl: 'https://appinterviewready.top',
+    ctaUrl: appUrl,
     proTip: 'Interview Ready is accessible on any browser at appinterviewready.top.',
   });
 
   const text = [
     `Hello ${userName || 'there'},`,
     '',
-    `You are on the VIP waitlist for Interview Ready (Queue Position: #${queuePosition})!`,
-    'We have reserved 10 bonus AI credits for your account.',
+    'Your account for Interview Ready has been confirmed.',
     '',
-    'We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.',
+    'You now have full access to our AI career toolkit:',
+    '- Instant ATS resume scans and keyword matching.',
+    '- Real-time AI mock interviews.',
+    '- LinkedIn profile optimizer.',
     '',
-    'Visit the website: https://appinterviewready.top',
+    `Visit the website: ${appUrl}`,
     '',
-    '- The Interview Ready Team',
+    'Best regards,',
+    'The Interview Ready Team',
   ].join('\n');
 
-  // Sync to Airtable table (Submissions) in background
+  // Sync to Airtable in background with sendConfirmationEmail=false
   syncUserToAirtable({
     email: userEmail,
     name: userName,
     status: 'Confirmed',
-    waitlistSpot: queuePosition,
-    sendConfirmationEmail: false, // already dispatched below
+    sendConfirmationEmail: false,
   }).catch(() => {});
 
   const res = await sendEmailNotification({
     to: userEmail,
-    subject: `Waitlist Confirmed: Your Interview Ready Access Details`,
+    subject: `Account Confirmed: Your Interview Ready Access Details`,
     html,
     text,
     emailType: 'general',
-    metadata: { source: 'waitlist_signup', queue_position: queuePosition },
+    metadata: { source: 'account_confirmation' },
   });
 
   return res.success;

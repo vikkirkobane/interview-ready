@@ -272,10 +272,10 @@ export async function sendEmail({
       // ignore db error, proceed to fallback
     }
 
-    // Built-in VIP template fallback if not in DB
+    // Built-in template fallbacks if not in DB
     if (!templateHtml) {
-      if (templateKey === 'waitlist_confirmation') {
-        templateSubj = "Interview Ready: Waitlist Confirmation";
+      if (templateKey === 'login_alert' || templateKey === 'login_notification') {
+        templateSubj = "New login to your Interview Ready account";
         templateHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -290,8 +290,10 @@ export async function sendEmail({
     .body { padding: 28px 24px; }
     .body p { font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 16px 0; }
     .info-box { background-color: #f8fafc; border-radius: 8px; padding: 16px 20px; border: 1px solid #edf2f7; margin: 20px 0; }
-    .info-item { margin-bottom: 10px; font-size: 14px; color: #334155; }
+    .info-item { margin-bottom: 8px; font-size: 14px; color: #334155; }
     .info-item:last-child { margin-bottom: 0; }
+    .btn-container { text-align: center; margin: 28px 0; }
+    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 30px; border-radius: 6px; display: inline-block; }
     .footer { padding: 20px 24px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; color: #64748b; line-height: 1.5; text-align: center; }
     .footer a { color: #2563EB; text-decoration: none; }
   </style>
@@ -304,13 +306,15 @@ export async function sendEmail({
       </div>
       <div class="body">
         <p>Hello {{first_name}},</p>
-        <p>Thank you for joining the waitlist for <strong>Interview Ready</strong>. Your spot has been confirmed.</p>
+        <p>You have successfully logged in to your <strong>Interview Ready</strong> account.</p>
         <div class="info-box">
-          <div class="info-item"><strong>Waitlist Position:</strong> #{{queue_position}}</div>
-          <div class="info-item"><strong>Status:</strong> Confirmed</div>
+          <div class="info-item"><strong>Account:</strong> {{email}}</div>
+          <div class="info-item"><strong>Status:</strong> Active Session</div>
         </div>
-        <p>We have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.</p>
-        <p>You can visit our website at <a href="https://appinterviewready.top">appinterviewready.top</a>.</p>
+        <div class="btn-container">
+          <a href="https://appinterviewready.top" class="btn">Open Interview Ready</a>
+        </div>
+        <p>If you did not initiate this login, please secure your account immediately or contact us at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
         <p>Best regards,<br>The Interview Ready Team</p>
       </div>
       <div class="footer">
@@ -321,9 +325,10 @@ export async function sendEmail({
   </div>
 </body>
 </html>`;
-        templateText = `Hello {{first_name}},\n\nThank you for joining the waitlist for Interview Ready. Your spot has been confirmed.\n\nWaitlist Position: #{{queue_position}}\nStatus: Confirmed\n\nWe have also sent you an email to confirm your account. If you did not see the confirmation email in your inbox, please check your spam folder.\n\nVisit our website: https://appinterviewready.top\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top`;
-      } else if (templateKey === 'welcome') {
-        templateSubj = "Welcome to Interview Ready - Your Account Details";
+        templateText = `Hello {{first_name}},\n\nYou have successfully logged in to your Interview Ready account.\n\nAccount: {{email}}\nStatus: Active Session\n\nOpen Interview Ready: https://appinterviewready.top\n\nIf you did not initiate this login, please secure your account or contact info@appinterviewready.top immediately.\n\nBest regards,\nThe Interview Ready Team\n\nInterview Ready | appinterviewready.top`;
+      } else {
+        // Welcome and signup confirmation template
+        templateSubj = "Welcome to Interview Ready - Your Account Is Active";
         templateHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -351,7 +356,7 @@ export async function sendEmail({
       </div>
       <div class="body">
         <p>Hello {{first_name}},</p>
-        <p>Welcome to <strong>Interview Ready</strong>. Your account is active and ready to use.</p>
+        <p>Welcome to <strong>Interview Ready</strong>. Your account has been created and is ready to use.</p>
         <div class="btn-container">
           <a href="https://appinterviewready.top" class="btn">Access Your Account</a>
         </div>
