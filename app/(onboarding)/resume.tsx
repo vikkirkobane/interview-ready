@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -164,7 +165,7 @@ function normalizeToResumeContent(
     certifications: certsList,
     languages: content.languages || [],
     recognition: awardsList,
-    sections_to_include: content.sections_to_include || {
+    sections_to_include: content.sections_to_include || content.contact?.sections_to_include || content.custom_sections?.[0]?.sections_to_include || {
       summary: !!summaryText,
       skills: skillsList.length > 0,
       experience: expList.length > 0,
@@ -210,6 +211,7 @@ export default function ResumeGenScreen() {
     selectedTemplateId,
   } = useOnboardingStore();
 
+  const queryClient = useQueryClient();
   const createResume = useCreateResumeMutation();
   const { data: resumeData } = useResumeQuery(isDone ? resumeId : null);
 
@@ -240,12 +242,28 @@ export default function ResumeGenScreen() {
 
   useEffect(() => {
     let channel: any;
-    let t1: any, t2: any, t3: any, fallbackTimer: any;
+    let t1: any, t2: any, t3: any;
+    let pollInterval: any;
+    let timeoutTimer: any;
     let isMounted = true;
     let loopAnimation: any;
 
     const finishGeneration = (content?: any) => {
       if (!isMounted) return;
+      if (pollInterval) clearInterval(pollInterval);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      if (channel) {
+        try {
+          channel.unsubscribe();
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
+      }
+
       if (content) {
         setGeneratedResume(content);
       }
@@ -271,15 +289,17 @@ export default function ResumeGenScreen() {
         if (!isMounted) return;
         setResumeId(resume_id);
 
+        // 1. Listen for Realtime broadcast
         channel = supabase
           .channel(stream_channel)
           .on('broadcast', { event: 'generation_complete' }, async (payload) => {
-            if (fallbackTimer) clearTimeout(fallbackTimer);
             const content = payload?.payload?.content || (payload as any)?.content;
+            queryClient.invalidateQueries({ queryKey: ['resume', resume_id] });
             finishGeneration(content);
           })
           .on('broadcast', { event: 'generation_failed' }, (payload) => {
-            if (fallbackTimer) clearTimeout(fallbackTimer);
+            if (pollInterval) clearInterval(pollInterval);
+            if (timeoutTimer) clearTimeout(timeoutTimer);
             clearTimeout(t1);
             clearTimeout(t2);
             clearTimeout(t3);
@@ -292,30 +312,54 @@ export default function ResumeGenScreen() {
           });
         channel.subscribe();
 
-        // Sequence simulated stages for engaging visual feedback
-        t1 = setTimeout(() => setStage(1), 1500);
-        t2 = setTimeout(() => setStage(2), 3500);
-        t3 = setTimeout(() => setStage(3), 5500);
+        // 2. Realistic visual stage pacing matching actual LLM completion (~15-25s)
+        t1 = setTimeout(() => { if (isMounted) setStage(1); }, 3000);   // Matching & tailoring
+        t2 = setTimeout(() => { if (isMounted) setStage(2); }, 8000);   // Writing achievements & summary
+        t3 = setTimeout(() => { if (isMounted) setStage(3); }, 15000);  // Formatting & ATS styling
 
-        // Fallback: If Realtime event is delayed, transition gracefully after 7.5s
-        fallbackTimer = setTimeout(async () => {
+        // 3. Reliable DB Polling (every 2.5s starting at 5s) to guarantee catching completion
+        let pollAttempts = 0;
+        const maxPollAttempts = 24; // 24 * 2.5s = 60s
+        setTimeout(() => {
           if (!isMounted) return;
-          try {
-            if (resume_id) {
-              const { data: dbResume } = await supabase
-                .from('resumes')
-                .select('*, resume_contents(*)')
-                .eq('id', resume_id)
-                .single();
-              const dbContent = dbResume?.resume_contents?.[0];
-              finishGeneration(dbContent || null);
-            } else {
-              finishGeneration(null);
+          pollInterval = setInterval(async () => {
+            if (!isMounted) return;
+            pollAttempts++;
+            try {
+              if (resume_id) {
+                const { data: dbResume } = await supabase
+                  .from('resumes')
+                  .select('*, resume_contents(*)')
+                  .eq('id', resume_id)
+                  .single();
+
+                const dbContent = dbResume?.resume_contents?.[0];
+                if (dbResume?.status === 'READY' && dbContent) {
+                  clearInterval(pollInterval);
+                  queryClient.invalidateQueries({ queryKey: ['resume', resume_id] });
+                  finishGeneration(dbContent);
+                }
+              }
+            } catch (err) {
+              console.warn('[OnboardingResume] Polling check:', err);
             }
-          } catch {
-            finishGeneration(null);
-          }
-        }, 7500);
+
+            if (pollAttempts >= maxPollAttempts) {
+              clearInterval(pollInterval);
+            }
+          }, 2500);
+        }, 5000);
+
+        // 4. Safety timeout at 65s
+        timeoutTimer = setTimeout(() => {
+          if (!isMounted) return;
+          if (pollInterval) clearInterval(pollInterval);
+          Toast.show({
+            type: 'error',
+            text1: 'Generation taking longer than expected',
+            text2: 'Please try again or check your saved resumes.',
+          });
+        }, 65000);
 
       } catch (error: any) {
         Toast.show({
@@ -354,20 +398,48 @@ export default function ResumeGenScreen() {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      if (fallbackTimer) clearTimeout(fallbackTimer);
+      if (pollInterval) clearInterval(pollInterval);
+      if (timeoutTimer) clearTimeout(timeoutTimer);
       if (channel) {
-        channel.unsubscribe();
-        supabase.removeChannel(channel);
+        try {
+          channel.unsubscribe();
+          supabase.removeChannel(channel);
+        } catch {
+          // ignore
+        }
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDownloadPDF = async () => {
-    if (!activeResume) return;
+    let resumeToExport = activeResume;
+    if ((!resumeToExport || (!resumeToExport.experience?.length && !resumeToExport.summary?.text)) && resumeId) {
+      try {
+        const { data: dbResume } = await supabase
+          .from('resumes')
+          .select('*, resume_contents(*)')
+          .eq('id', resumeId)
+          .single();
+        const dbContent = dbResume?.resume_contents?.[0];
+        if (dbContent) {
+          resumeToExport = normalizeToResumeContent(dbContent, {
+            name: candidateFullName,
+            role: targetRole || currentRole || 'Senior Professional',
+            email: user?.email || undefined,
+            phone: phone.trim() || undefined,
+            location: location.trim() || undefined,
+          });
+        }
+      } catch {
+        // fallback to activeResume
+      }
+    }
+
+    if (!resumeToExport) return;
     setIsExporting(true);
     try {
-      await exportResumePDF(activeResume, selectedTemplateId);
+      await exportResumePDF(resumeToExport, selectedTemplateId);
       Toast.show({ type: 'success', text1: 'PDF Downloaded!', text2: 'Check your downloads folder' });
       addNotification({
         title: 'Resume Downloaded',
@@ -386,10 +458,33 @@ export default function ResumeGenScreen() {
   };
 
   const handleDownloadDOCX = async () => {
-    if (!activeResume) return;
+    let resumeToExport = activeResume;
+    if ((!resumeToExport || (!resumeToExport.experience?.length && !resumeToExport.summary?.text)) && resumeId) {
+      try {
+        const { data: dbResume } = await supabase
+          .from('resumes')
+          .select('*, resume_contents(*)')
+          .eq('id', resumeId)
+          .single();
+        const dbContent = dbResume?.resume_contents?.[0];
+        if (dbContent) {
+          resumeToExport = normalizeToResumeContent(dbContent, {
+            name: candidateFullName,
+            role: targetRole || currentRole || 'Senior Professional',
+            email: user?.email || undefined,
+            phone: phone.trim() || undefined,
+            location: location.trim() || undefined,
+          });
+        }
+      } catch {
+        // fallback to activeResume
+      }
+    }
+
+    if (!resumeToExport) return;
     setIsExporting(true);
     try {
-      await exportResumeDOCX(activeResume, selectedTemplateId);
+      await exportResumeDOCX(resumeToExport, selectedTemplateId);
       Toast.show({ type: 'success', text1: 'DOCX Downloaded!', text2: 'Check your downloads folder' });
       addNotification({
         title: 'Resume Downloaded',
