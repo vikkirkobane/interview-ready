@@ -314,17 +314,78 @@ export default function AnalyzeScreen() {
               <View style={styles.scoreRingsGrid}>
                 <View style={[styles.scoreRingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                   <ScoreRing score={analysisResult?.recommendation_level === 'GREAT_FIT' ? 95 : analysisResult?.recommendation_level === 'GOOD_FIT' ? 75 : 50} size="sm" color={colors.success} animate={true} />
-                  <Text style={[styles.scoreRingLabel, { color: colors.textSecondary }]}>Fit Score</Text>
+                  <Text style={[styles.scoreRingLabel, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">Fit Score</Text>
                 </View>
                 <View style={[styles.scoreRingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                   <ScoreRing score={Math.min(100, (analysisResult?.required_skills?.length || 0) * 10)} size="sm" color={colors.primary} animate={true} />
-                  <Text style={[styles.scoreRingLabel, { color: colors.textSecondary }]}>Skills Reqs</Text>
+                  <Text style={[styles.scoreRingLabel, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">Skills Reqs</Text>
                 </View>
                 <View style={[styles.scoreRingCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
                   <ScoreRing score={Math.min(100, (analysisResult?.nice_to_haves?.length || 0) * 15)} size="sm" color={colors.warning} animate={true} />
-                  <Text style={[styles.scoreRingLabel, { color: colors.textSecondary }]}>Bonus</Text>
+                  <Text style={[styles.scoreRingLabel, { color: colors.textSecondary }]} numberOfLines={1} ellipsizeMode="tail">Bonus</Text>
                 </View>
               </View>
+
+              {/* Recommendation Callout Banner */}
+              {(analysisResult?.recommendation_reason || analysisResult?.recommendation_level) ? (
+                <View style={[styles.recommendationCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
+                  <View style={styles.recommendationHeader}>
+                    <View style={[
+                      styles.recommendationBadge,
+                      {
+                        backgroundColor:
+                          analysisResult?.recommendation_level === 'GREAT_FIT'
+                            ? colors.successLight
+                            : analysisResult?.recommendation_level === 'GOOD_FIT'
+                            ? `${colors.primary}1A`
+                            : colors.warningLight,
+                      }
+                    ]}>
+                      <Ionicons
+                        name={
+                          analysisResult?.recommendation_level === 'GREAT_FIT'
+                            ? 'sparkles'
+                            : analysisResult?.recommendation_level === 'GOOD_FIT'
+                            ? 'thumbs-up'
+                            : 'trending-up'
+                        }
+                        size={13}
+                        color={
+                          analysisResult?.recommendation_level === 'GREAT_FIT'
+                            ? colors.success
+                            : analysisResult?.recommendation_level === 'GOOD_FIT'
+                            ? colors.primary
+                            : colors.warning
+                        }
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text style={[
+                        styles.recommendationBadgeText,
+                        {
+                          color:
+                            analysisResult?.recommendation_level === 'GREAT_FIT'
+                              ? colors.success
+                              : analysisResult?.recommendation_level === 'GOOD_FIT'
+                              ? colors.primary
+                              : colors.warning,
+                        }
+                      ]}>
+                        {analysisResult?.recommendation_level === 'GREAT_FIT'
+                          ? 'Great Match'
+                          : analysisResult?.recommendation_level === 'GOOD_FIT'
+                          ? 'Strong Potential'
+                          : 'Stretch Goal'}
+                      </Text>
+                    </View>
+                    <Text style={[styles.recommendationHeading, { color: colors.textPrimary }]}>AI Recommendation</Text>
+                  </View>
+                  {analysisResult?.recommendation_reason ? (
+                    <Text style={[styles.recommendationText, { color: colors.textBody }]}>
+                      {analysisResult.recommendation_reason}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
 
               {/* Skill Tags Bento Block */}
               <View style={[styles.bentoBlock, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
@@ -334,11 +395,15 @@ export default function AnalyzeScreen() {
                     <Text style={[styles.bentoTitle, { color: colors.textPrimary }]}>Required Skills</Text>
                   </View>
                   <View style={styles.pillContainer}>
-                    {analysisResult?.required_skills?.slice(0, 6).map((skillObj: any, i: number) => (
-                      <View key={i} style={[styles.pill, styles.pillSuccess, { backgroundColor: colors.successLight }]}>
-                        <Text style={[styles.pillTextSuccess, { color: colors.success }]}>{skillObj.skill || skillObj}</Text>
-                      </View>
-                    ))}
+                    {analysisResult?.required_skills?.slice(0, 6).map((skillObj: any, i: number) => {
+                      const text = skillObj?.skill || (typeof skillObj === 'string' ? skillObj : '');
+                      if (!text) return null;
+                      return (
+                        <View key={i} style={[styles.pill, styles.pillSuccess, { backgroundColor: colors.successLight }]}>
+                          <Text style={[styles.pillTextSuccess, { color: colors.success }]}>{text}</Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 </View>
 
@@ -350,11 +415,15 @@ export default function AnalyzeScreen() {
                     <Text style={[styles.bentoTitle, { color: colors.textPrimary }]}>{analysisResult?.red_flags?.length > 0 ? 'Red Flags' : 'Missing/Bonus'}</Text>
                   </View>
                   <View style={styles.pillContainer}>
-                    {(analysisResult?.red_flags?.length > 0 ? analysisResult?.red_flags : analysisResult?.nice_to_haves)?.slice(0, 6).map((item: string, i: number) => (
-                      <View key={i} style={[styles.pill, styles.pillError, { backgroundColor: colors.errorLight }]}>
-                        <Text style={[styles.pillTextError, { color: colors.error }]}>{item}</Text>
-                      </View>
-                    ))}
+                    {(analysisResult?.red_flags?.length > 0 ? analysisResult?.red_flags : analysisResult?.nice_to_haves)?.slice(0, 6).map((item: any, i: number) => {
+                      const text = typeof item === 'string' ? item : item?.skill || '';
+                      if (!text) return null;
+                      return (
+                        <View key={i} style={[styles.pill, styles.pillError, { backgroundColor: colors.errorLight }]}>
+                          <Text style={[styles.pillTextError, { color: colors.error }]}>{text}</Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 </View>
               </View>
@@ -444,6 +513,9 @@ const styles = StyleSheet.create({
     ...Shadow.md,
     borderWidth: 1,
     marginBottom: Spacing.xl,
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   formContainer: {
     width: '100%',
@@ -557,14 +629,16 @@ const styles = StyleSheet.create({
   },
   resultsSection: {
     width: '100%',
+    maxWidth: '100%',
     marginTop: Spacing.xl,
-    gap: Spacing.lg,
+    gap: Spacing.md,
+    overflow: 'hidden',
   },
   resultsDivider: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   dividerLine: {
     flex: 1,
@@ -576,59 +650,127 @@ const styles = StyleSheet.create({
   },
   scoreRingsGrid: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: '100%',
   },
   scoreRingCard: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
+    minWidth: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 14,
     borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
     ...Shadow.sm,
   },
   scoreRingLabel: {
     ...Typography.label,
-    marginTop: 8,
+    fontSize: 11,
+    marginTop: 6,
+    textAlign: 'center',
+    width: '100%',
+  },
+  recommendationCard: {
+    width: '100%',
+    maxWidth: '100%',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: Spacing.md,
+    overflow: 'hidden',
+    gap: Spacing.xs,
+  },
+  recommendationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flexWrap: 'wrap',
+    width: '100%',
+  },
+  recommendationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    flexShrink: 0,
+  },
+  recommendationBadgeText: {
+    ...Typography.label,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  recommendationHeading: {
+    ...Typography.headingSm,
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
+  recommendationText: {
+    ...Typography.bodySm,
+    lineHeight: 20,
+    marginTop: 4,
+    flexShrink: 1,
+    width: '100%',
+    maxWidth: '100%',
   },
   bentoBlock: {
-    padding: Spacing.lg,
+    width: '100%',
+    maxWidth: '100%',
+    padding: Spacing.md,
     borderRadius: 16,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   bentoSection: {
-    //
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   bentoHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    width: '100%',
+    maxWidth: '100%',
   },
   bentoTitle: {
-    ...Typography.headingMd,
+    ...Typography.headingSm,
+    flexShrink: 1,
   },
   pillContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
   },
   pill: {
-    paddingHorizontal: 12,
+    maxWidth: '100%',
+    flexShrink: 1,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  pillSuccess: {
-  },
-  pillError: {
-  },
+  pillSuccess: {},
+  pillError: {},
   pillTextSuccess: {
     ...Typography.label,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
   },
   pillTextError: {
     ...Typography.label,
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
   },
   bentoDivider: {
     height: 1,
