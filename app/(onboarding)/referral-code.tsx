@@ -14,6 +14,7 @@ import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useReferral } from '../../src/hooks/useReferral';
 import { useProfileStore } from '../../src/stores/profile-store';
+import { useCreditStore } from '../../src/stores/credit-store';
 import Toast from 'react-native-toast-message';
 import { getUserFriendlyErrorMessage } from '../../src/lib/errorHandler';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,13 +27,13 @@ export default function ReferralCodeScreen() {
   const { applyReferralCode } = useReferral();
   const { referralCode: deepLinkCode, clearReferralCode } = useOnboardingStore();
 
-  // Pre-fill from deep link or web URL search params (?ref=... or ?code=...)
+  // Pre-fill from deep link or web URL search params (?promo=... or ?ref=... or ?code=...)
   React.useEffect(() => {
     let prefillCode = deepLinkCode;
     if (!prefillCode && Platform.OS === 'web' && typeof globalThis !== 'undefined' && (globalThis as any).location?.search) {
       try {
         const params = new URLSearchParams((globalThis as any).location.search);
-        prefillCode = params.get('ref') || params.get('code') || '';
+        prefillCode = params.get('promo') || params.get('ref') || params.get('code') || '';
       } catch {
         // ignore
       }
@@ -71,8 +72,9 @@ export default function ReferralCodeScreen() {
           clearReferralCode();
         }
 
-        // Refresh user profile to sync credits immediately
+        // Refresh both user profile and credit balance to sync immediately
         useProfileStore.getState().fetchProfile().catch(() => {});
+        useCreditStore.getState().fetchBalance(true).catch(() => {});
 
         // Mark step 0 as passed and move to step 1 (role screen)
         useOnboardingStore.getState().setReferralCodeSkipped(true);
@@ -81,7 +83,7 @@ export default function ReferralCodeScreen() {
       } else {
         Toast.show({
           type: 'error',
-          text1: 'Invalid Code',
+          text1: result.error?.includes('already redeemed') ? 'Tier Limit Reached' : 'Invalid Code',
           text2: result.error || 'Please check the code and try again.',
         });
       }
@@ -171,6 +173,8 @@ export default function ReferralCodeScreen() {
               autoCorrect={false}
               maxLength={20}
               keyboardType="ascii-capable"
+              returnKeyType="done"
+              onSubmitEditing={handleApplyCode}
             />
           </View>
 
