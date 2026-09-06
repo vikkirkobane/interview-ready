@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, View, Text, StyleSheet, ScrollView, ActivityIndicator, Share, TextInput, Platform } from 'react-native';
+import { Pressable, View, Text, StyleSheet, ScrollView, ActivityIndicator, Share, TextInput, Platform, useWindowDimensions } from 'react-native';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { Button } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -13,6 +13,8 @@ import { useRouter } from 'expo-router';
 export default function ReferralScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 480;
   const { stats, loading, applyReferralCode } = useReferral();
   const [inputCode, setInputCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -140,8 +142,8 @@ export default function ReferralScreen() {
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl }}>
-          <View style={{ flex: 1 }}>
+        <View style={[styles.actionRow, isSmallScreen && styles.actionRowSmall]}>
+          <View style={[styles.actionBtnWrapper, isSmallScreen && styles.actionBtnWrapperSmall]}>
             <Button 
               title="Share Invite Link"
               onPress={handleShare}
@@ -149,7 +151,7 @@ export default function ReferralScreen() {
               disabled={!stats?.referralCode}
             />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={[styles.actionBtnWrapper, isSmallScreen && styles.actionBtnWrapperSmall]}>
             <Button 
               title="Copy Link"
               variant="outline"
@@ -197,11 +199,15 @@ export default function ReferralScreen() {
           </View>
         )}
 
-        <View style={[styles.submitCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }]}>
-          <Text style={[styles.submitTitle, { color: colors.textPrimary }]}>Have a referral or promo code?</Text>
-          <View style={styles.submitRow}>
+        <View style={[styles.submitCard, { backgroundColor: colors.bgPrimary, borderColor: colors.border }, isSmallScreen && styles.submitCardSmall]}>
+          <Text style={[styles.submitTitle, { color: colors.textPrimary }, isSmallScreen && styles.submitTitleSmall]}>Have a referral or promo code?</Text>
+          <View style={[styles.submitRow, isSmallScreen && styles.submitRowSmall]}>
             <TextInput
-              style={[styles.input, { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary }]}
+              style={[
+                styles.input,
+                { color: colors.textPrimary, borderColor: colors.border, backgroundColor: colors.bgSecondary },
+                isSmallScreen && styles.inputSmall,
+              ]}
               placeholder="e.g. LINKEDIN20 or JOHN1234"
               placeholderTextColor={colors.textMuted}
               value={inputCode}
@@ -214,7 +220,8 @@ export default function ReferralScreen() {
               onPress={handleSubmitCode} 
               loading={submitting}
               disabled={!inputCode.trim() || submitting}
-              style={styles.submitBtn}
+              style={[styles.submitBtn, isSmallScreen && styles.submitBtnSmall]}
+              fullWidth={isSmallScreen}
             />
           </View>
         </View>
@@ -394,31 +401,76 @@ const styles = StyleSheet.create({
   statLabel: {
     ...Typography.bodyMd,
   },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.xl,
+    width: '100%',
+  },
+  actionRowSmall: {
+    flexDirection: 'column',
+    gap: Spacing.sm,
+  },
+  actionBtnWrapper: {
+    flex: 1,
+  },
+  actionBtnWrapperSmall: {
+    flex: undefined,
+    width: '100%',
+  },
   submitCard: {
     padding: Spacing.xl,
     borderRadius: Radius.xl,
     borderWidth: 1,
     marginBottom: Spacing.xl,
     ...Shadow.sm,
+    width: '100%',
+    boxSizing: 'border-box' as any,
+  },
+  submitCardSmall: {
+    padding: Spacing.md,
   },
   submitTitle: {
     ...Typography.headingLg,
     marginBottom: Spacing.md,
   },
+  submitTitleSmall: {
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: Spacing.sm,
+  },
   submitRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.md,
+    width: '100%',
+  },
+  submitRowSmall: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: Spacing.sm,
   },
   input: {
     flex: 1,
+    minWidth: 0,
     minHeight: 48,
     borderWidth: 1,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     ...Typography.bodyMd,
   },
+  inputSmall: {
+    flex: undefined,
+    width: '100%',
+    minHeight: 46,
+  },
   submitBtn: {
     minWidth: 100,
+    flexShrink: 0,
+  },
+  submitBtnSmall: {
+    minWidth: '100%',
+    width: '100%',
   },
   listCard: {
     padding: Spacing.xl,
