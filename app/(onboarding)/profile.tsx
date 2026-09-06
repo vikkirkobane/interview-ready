@@ -9,6 +9,7 @@ import { Pressable ,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography, Spacing, Radius, Shadow, useTheme } from '../../src/theme';
 import { useOnboardingStore } from '../../src/stores/onboarding-store';
 import { useAuthStore } from '../../src/stores/auth-store';
@@ -35,6 +36,7 @@ const TEMPLATES = [
 export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const {
     currentRole, setCurrentRole,
     company, setCompany,
@@ -178,7 +180,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.bgSecondary }]}>      
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={Platform.OS === 'web'}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 16) + Spacing.xxl * 2 }]} showsVerticalScrollIndicator={Platform.OS === 'web'}>
         
         {/* Progress Indicator */}  
         <View style={styles.progressContainer}>
@@ -320,8 +322,15 @@ export default function ProfileScreen() {
                 {TEMPLATES.map(t => (
                   <Pressable
                     key={t.id}
-                    style={[styles.templateCard, { backgroundColor: colors.bgSecondary, borderColor: selectedTemplateId === t.id ? colors.primary : colors.border }, selectedTemplateId === t.id && { borderWidth: 2 }]}
+                    style={[
+                      styles.templateCard,
+                      { backgroundColor: colors.bgSecondary, borderColor: selectedTemplateId === t.id ? colors.primary : colors.border },
+                      selectedTemplateId === t.id && { borderWidth: 2 },
+                      Platform.OS === 'web' && { cursor: 'pointer' },
+                    ]}
                     onPress={() => setSelectedTemplateId(t.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${t.name} template`}
                   >
                     <Ionicons name="document-text-outline" size={22} color={selectedTemplateId === t.id ? colors.primary : colors.textMuted} />
                     <Text style={[styles.templateName, { color: selectedTemplateId === t.id ? colors.primary : colors.textPrimary }]}>{t.name}</Text>
@@ -340,10 +349,16 @@ export default function ProfileScreen() {
             {/* CTA Section */}
             <View style={styles.ctaSection}>
               <Pressable 
-                style={[styles.continueBtn, { backgroundColor: colors.primary }, updateProfile.isPending && [styles.continueBtnDisabled, { backgroundColor: colors.textMuted }]]}
+                style={[
+                  styles.continueBtn,
+                  { backgroundColor: colors.primary },
+                  updateProfile.isPending && [styles.continueBtnDisabled, { backgroundColor: colors.textMuted }],
+                  Platform.OS === 'web' && { cursor: 'pointer' },
+                ]}
                 onPress={handleContinue}
-                
                 disabled={updateProfile.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Continue to Step 3"
               >
                 {updateProfile.isPending ? (
                   <ActivityIndicator color="#fff" />
@@ -504,15 +519,17 @@ const styles = StyleSheet.create({
   templateGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: Spacing.sm,
+    width: '100%',
   },
   templateCard: {
-    flex: 1,
-    minWidth: '45%',
+    width: '48%',
     padding: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
   },
   templateName: {
@@ -539,7 +556,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   ctaSection: {
-    paddingTop: Spacing.lg,
+    width: '100%',
+    paddingTop: Spacing.md,
+    marginTop: Spacing.xs,
     gap: Spacing.sm,
   },
   continueBtn: {
