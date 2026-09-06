@@ -449,6 +449,7 @@ export default function ResumeBuilderScreen() {
         title: (jobDescription.trim().length > 10 || finalJobUrl.length > 5) ? 'Tailored Resume' : 'Base Resume',
         template_id: selectedTemplateId,
         job_analysis_id,
+        job_description: finalJobDescription.length > 10 ? finalJobDescription : undefined,
         is_base: jobDescription.trim().length === 0 && jdFileText.trim().length === 0 && finalJobUrl.length === 0
       });
 
@@ -761,7 +762,8 @@ export default function ResumeBuilderScreen() {
       if (!data) return;
       
       const htmlString = buildResumeHTML(data, draft.templateId);
-      usePreviewStore.getState().setPreview('resume', data, htmlString, draft.templateId);
+      const currentResumeId = (typeof id === 'string' && id ? id : null) || aiGeneratedContent?.id || null;
+      usePreviewStore.getState().setPreview('resume', data, htmlString, draft.templateId, currentResumeId);
       router.push('/preview' as any);
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Preview generation failed', text2: getUserFriendlyErrorMessage(e.message, 'Please try again.') });

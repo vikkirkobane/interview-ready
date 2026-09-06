@@ -203,6 +203,7 @@ export default function ResumeGenScreen() {
     phone,
     skills,
     yearsExperience,
+    jdText,
     analysisId,
     resumeId,
     setResumeId,
@@ -264,6 +265,7 @@ export default function ResumeGenScreen() {
           title: targetRole || 'My Resume',
           template_id: selectedTemplateId,
           job_analysis_id: analysisId || undefined,
+          job_description: jdText ? jdText.trim() : undefined,
         });
 
         if (!isMounted) return;
@@ -526,7 +528,7 @@ export default function ResumeGenScreen() {
                 style={[styles.previewFullBtn, { backgroundColor: `${colors.primary}12`, borderColor: `${colors.primary}33` }]}
                 onPress={() => {
                   if (activeResume && previewHtml) {
-                    usePreviewStore.getState().setPreview('resume', activeResume, previewHtml, selectedTemplateId);
+                    usePreviewStore.getState().setPreview('resume', activeResume, previewHtml, selectedTemplateId, resumeId || (activeResume as any)?.id || null);
                     router.push('/preview');
                   }
                 }}

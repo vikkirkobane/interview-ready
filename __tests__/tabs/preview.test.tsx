@@ -74,4 +74,70 @@ describe('Document Preview — user stories', () => {
     expect(usePreviewStore.getState().documentType).toBeNull();
     expect(router.back).toHaveBeenCalled();
   });
+
+  it('renders feedback widget on resume preview and handles thumbs up rating', async () => {
+    usePreviewStore.getState().setPreview(
+      'resume',
+      { id: 'res-123', header: { name: 'Jane' } },
+      '<html><body>Preview</body></html>',
+      'executive',
+      'res-123'
+    );
+
+    const screen = await renderWithProviders(<PreviewScreen />);
+    expect(screen.getByText('How does this resume look?')).toBeTruthy();
+    expect(screen.getByLabelText('Looks good')).toBeTruthy();
+    expect(screen.getByLabelText('Needs improvement')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Looks good'));
+    await waitFor(() => {
+      expect(screen.getByText('Glad you like it!')).toBeTruthy();
+    });
+  });
+
+  it('handles negative feedback with tag selection and submission', async () => {
+    usePreviewStore.getState().setPreview(
+      'resume',
+      { id: 'res-123', header: { name: 'Jane' } },
+      '<html><body>Preview</body></html>',
+      'executive',
+      'res-123'
+    );
+
+    const screen = await renderWithProviders(<PreviewScreen />);
+    await fireEvent.press(screen.getByLabelText('Needs improvement'));
+
+    await waitFor(() => {
+      expect(screen.getByText('What could be improved?')).toBeTruthy();
+    });
+
+    // Select a tag
+    await fireEvent.press(screen.getByLabelText('Too short'));
+
+    // Submit feedback
+    await fireEvent.press(screen.getByLabelText('Submit feedback'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Thank you for your feedback!')).toBeTruthy();
+    });
+  });
+
+  it('allows dismissing the feedback widget', async () => {
+    usePreviewStore.getState().setPreview(
+      'resume',
+      { id: 'res-123', header: { name: 'Jane' } },
+      '<html><body>Preview</body></html>',
+      'executive',
+      'res-123'
+    );
+
+    const screen = await renderWithProviders(<PreviewScreen />);
+    expect(screen.getByText('How does this resume look?')).toBeTruthy();
+
+    await fireEvent.press(screen.getByLabelText('Dismiss feedback'));
+
+    await waitFor(() => {
+      expect(screen.queryByText('How does this resume look?')).toBeNull();
+    });
+  });
 });

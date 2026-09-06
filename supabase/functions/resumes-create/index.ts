@@ -5,6 +5,7 @@ import { UnauthorizedError, NotFoundError, InsufficientCreditsError, ValidationE
 import { aiClient } from '../_shared/ai-client.ts';
 import { RESUME_CONTENT_SCHEMA } from '../_shared/zod-schemas.ts';
 import { deductCredits } from '../_shared/credits.ts';
+import { buildResumeHTML } from '../_shared/resume-html.ts';
 import { z } from 'npm:zod@3.22.4';
 
 const app = new Hono();
@@ -15,6 +16,7 @@ const CreateResumeInput = z.object({
   title: z.string().min(1).max(100),
   template_id: z.string().min(1).optional(),
   job_analysis_id: z.string().uuid().optional(),
+  job_description: z.string().optional(),
   is_base: z.boolean().default(false),
 });
 
@@ -167,7 +169,11 @@ app.post('/*', async (c: any) => {
       throw new NotFoundError('User profile not found. Complete profile first.');
     }
 
-    let jobAnalysis = null;
+    let jobAnalysis: any = null;
+    let targetJobDescription = input.job_description?.trim() || '';
+    let targetJobTitle = '';
+    let targetCompany = '';
+
     if (input.job_analysis_id) {
       const { data: job } = await client
         .from('job_applications')
@@ -176,7 +182,12 @@ app.post('/*', async (c: any) => {
         .eq('user_id', user.id)
         .single();
 
-      jobAnalysis = job;
+      if (job) {
+        jobAnalysis = job;
+        targetJobDescription = job.raw_jd || job.description || targetJobDescription;
+        targetJobTitle = job.job_title || '';
+        targetCompany = job.company || '';
+      }
     }
 
     // Resolve template slug — keep the original slug for the AI prompt
@@ -217,7 +228,17 @@ app.post('/*', async (c: any) => {
       throw new Error(`Failed to create resume: ${createError?.message}`);
     }
 
-    const bgTask = generateResumeContentAsync(user.id, resume.id, profile, jobAnalysis, templateSlug);
+    const bgTask = generateResumeContentAsync(
+      user.id,
+      resume.id,
+      profile,
+      jobAnalysis,
+      templateSlug,
+      targetJobDescription,
+      targetJobTitle,
+      targetCompany,
+      input.job_analysis_id
+    );
 
     if ((globalThis as any).EdgeRuntime?.waitUntil) {
       (globalThis as any).EdgeRuntime.waitUntil(bgTask);
@@ -256,7 +277,11 @@ async function generateResumeContentAsync(
   resumeId: string,
   profile: any,
   jobAnalysis: any,
-  templateSlug: string
+  templateSlug: string,
+  targetJobDescription: string = '',
+  targetJobTitle: string = '',
+  targetCompany: string = '',
+  jobAnalysisId?: string
 ) {
   const serviceClient = createServiceClient();
 
@@ -272,8 +297,9 @@ async function generateResumeContentAsync(
     // Build the template-specific system prompt — primary content quality driver
     const systemPrompt = getTemplateSystemPrompt(templateSlug);
 
-    const jobContext = jobAnalysis
-      ? `\n\nTARGET JOB DESCRIPTION:\n${jobAnalysis.raw_jd || JSON.stringify(jobAnalysis.analysis_data)}`
+    const resolvedJd = targetJobDescription || (jobAnalysis ? (jobAnalysis.raw_jd || JSON.stringify(jobAnalysis.analysis_data)) : '');
+    const jobContext = resolvedJd
+      ? `\n\nTARGET JOB DESCRIPTION:\n${resolvedJd}`
       : '';
 
     const promptProfile = { ...profile, email: userEmail };
@@ -284,12 +310,14 @@ async function generateResumeContentAsync(
 
     const userPrompt = `CANDIDATE INFORMATION:\n\nProfile Data:\n${JSON.stringify(promptProfile, null, 2)}${jobContext}${templateHint}${densityInstruction}`;
 
+    const generationStartTime = Date.now();
     const resumeContent: any = await aiClient.callWithJson(
       systemPrompt,
       userPrompt,
       RESUME_CONTENT_SCHEMA,
       { temperature: 0.3, max_tokens: 4000 }
     );
+    const generationDurationMs = Date.now() - generationStartTime;
 
     // Ensure candidate's profile data is preserved for hidden sections in the resume builder
     if (!resumeContent.sections_to_include) {
@@ -372,6 +400,84 @@ async function generateResumeContentAsync(
         updated_at: new Date().toISOString(),
       })
       .eq('id', resumeId);
+
+    // ── Internal Storage & Generation Snapshot ────────────────────────────────
+    try {
+      const renderedHtml = buildResumeHTML(resumeContent, templateSlug);
+      const htmlStoragePath = `${userId}/${resumeId}/resume.html`;
+      const jsonStoragePath = `${userId}/${resumeId}/ai_output.json`;
+
+      // Upload HTML snapshot to storage bucket
+      await serviceClient.storage
+        .from('resume-snapshots')
+        .upload(htmlStoragePath, new Blob([renderedHtml], { type: 'text/html' }), {
+          contentType: 'text/html',
+          upsert: true,
+        });
+
+      // Upload raw AI JSON snapshot
+      await serviceClient.storage
+        .from('resume-snapshots')
+        .upload(jsonStoragePath, new Blob([JSON.stringify(resumeContent, null, 2)], { type: 'application/json' }), {
+          contentType: 'application/json',
+          upsert: true,
+        });
+
+      // Upload Job Description snapshot if present
+      if (resolvedJd) {
+        const jdStoragePath = `${userId}/${resumeId}/job_description.txt`;
+        await serviceClient.storage
+          .from('resume-snapshots')
+          .upload(jdStoragePath, new Blob([resolvedJd], { type: 'text/plain' }), {
+            contentType: 'text/plain',
+            upsert: true,
+          });
+      }
+
+      // Calculate metadata
+      const textParts = [
+        resumeContent.summary?.text || '',
+        ...(resumeContent.experience || []).flatMap((e: any) => [e.title || '', e.company || '', ...(e.bullets || [])]),
+        ...(resumeContent.skills || []).flatMap((s: any) => s.items || []),
+        ...(resumeContent.education || []).map((ed: any) => `${ed.degree || ''} ${ed.institution || ''}`),
+      ].join(' ');
+      const wordCount = textParts.split(/\s+/).filter(Boolean).length;
+      const sectionCount = Object.values(resumeContent.sections_to_include || {}).filter(Boolean).length;
+      const atsKeywordsCount = resumeContent.meta?.ats_keywords_used?.length || 0;
+
+      // Log generation for internal inspection, storage, and retrieval
+      await serviceClient.from('resume_generation_logs').insert({
+        resume_id: resumeId,
+        user_id: userId,
+        template_slug: templateSlug,
+        job_description: resolvedJd || null,
+        job_title: targetJobTitle || jobAnalysis?.job_title || null,
+        job_company: targetCompany || jobAnalysis?.company || null,
+        job_analysis_id: jobAnalysisId || null,
+        ai_raw_output: resumeContent,
+        rendered_html_path: htmlStoragePath,
+        rendered_html: renderedHtml,
+        word_count: wordCount,
+        section_count: sectionCount,
+        ats_keywords_count: atsKeywordsCount,
+        generation_duration_ms: generationDurationMs,
+        prompt_version: 'v2',
+      });
+
+      // Pre-create feedback entry ready for rating/signals
+      await serviceClient.from('resume_feedback').upsert(
+        {
+          resume_id: resumeId,
+          user_id: userId,
+          rating: null,
+          edited_after_generation: false,
+          downloaded: false,
+        },
+        { onConflict: 'resume_id' }
+      );
+    } catch (snapshotErr) {
+      console.warn(`[resumes-create] Internal snapshot capture warning for ${resumeId}:`, snapshotErr);
+    }
 
     const supabase = createServiceClient();
     await supabase.channel(`resume:${resumeId}`).send({

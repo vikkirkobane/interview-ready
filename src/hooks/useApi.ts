@@ -127,7 +127,7 @@ export const useGenerateRoadmapMutation = () => {
  */
 export const useCreateResumeMutation = () => {
   return useMutation({
-    mutationFn: async (payload: { title: string; template_id?: string; job_analysis_id?: string; is_base?: boolean }) => {
+    mutationFn: async (payload: { title: string; template_id?: string; job_analysis_id?: string; job_description?: string; is_base?: boolean }) => {
       const response = await apiCall('resumes-create', 'POST', payload);
       if (response.error) throw new Error(response.error);
       return response.data; // { resume_id: string, message: string, stream_channel: string }

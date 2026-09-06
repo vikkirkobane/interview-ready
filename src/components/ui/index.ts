@@ -20,3 +20,4 @@ export { FileAttachmentBadge } from './FileAttachmentBadge';
 export { CountryFlag } from './CountryFlag';
 export { InFeedAd } from './InFeedAd';
 export { InArticleAd } from './InArticleAd';
+export { ResumeFeedbackWidget } from './ResumeFeedbackWidget';

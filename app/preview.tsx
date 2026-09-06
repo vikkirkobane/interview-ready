@@ -10,10 +10,11 @@ import { exportResumePDF, exportResumeDOCX } from '../src/lib/resumeExport';
 import { exportCoverLetterPDF, exportCoverLetterDOCX } from '../src/lib/coverLetterExport';
 import Toast from 'react-native-toast-message';
 import { getUserFriendlyErrorMessage } from '../src/lib/errorHandler';
-import { Button, AdBanner } from '../src/components/ui';
+import { Button, AdBanner, ResumeFeedbackWidget } from '../src/components/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../src/stores/auth-store';
 import { useNotificationStore } from '../src/stores/notification-store';
+import { supabase } from '../src/lib/supabase';
 
 export default function PreviewScreen() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function PreviewScreen() {
   const { colors, isDark } = useTheme();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insets = useSafeAreaInsets();
-  const { documentType, documentData, htmlPreview, templateId, clearPreview } = usePreviewStore();
+  const { documentType, documentData, htmlPreview, templateId, resumeId, clearPreview } = usePreviewStore();
   const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const isPro = user?.user_metadata?.is_pro === true || user?.user_metadata?.plan === 'pro' || user?.user_metadata?.subscription === 'pro';
@@ -46,6 +47,15 @@ export default function PreviewScreen() {
     try {
       if (documentType === 'resume') {
         await exportResumePDF(documentData, templateId || undefined);
+        const activeId = resumeId || documentData?.id;
+        if (activeId && user?.id) {
+          supabase.from('resume_feedback').upsert({
+            resume_id: activeId,
+            user_id: user.id,
+            downloaded: true,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'resume_id' }).then();
+        }
       } else {
         await exportCoverLetterPDF(documentData);
       }
@@ -64,6 +74,15 @@ export default function PreviewScreen() {
     try {
       if (documentType === 'resume') {
         await exportResumeDOCX(documentData, templateId || undefined);
+        const activeId = resumeId || documentData?.id;
+        if (activeId && user?.id) {
+          supabase.from('resume_feedback').upsert({
+            resume_id: activeId,
+            user_id: user.id,
+            downloaded: true,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'resume_id' }).then();
+        }
       } else {
         await exportCoverLetterDOCX(documentData);
       }
@@ -107,6 +126,13 @@ export default function PreviewScreen() {
           />
         )}
       </View>
+
+      {documentType === 'resume' && (
+        <ResumeFeedbackWidget
+          resumeId={resumeId || documentData?.id}
+          templateId={templateId}
+        />
+      )}
 
       {!isPro && <AdBanner mode="inline" style={{ paddingHorizontal: Spacing.md }} />}
 

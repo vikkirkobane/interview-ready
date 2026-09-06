@@ -7,7 +7,8 @@ interface PreviewState {
   documentData: any | null; // Raw CoverLetter or DraftResume
   htmlPreview: string | null;
   templateId?: string | null;
-  setPreview: (type: DocumentType, data: any, html: string, templateId?: string) => void;
+  resumeId?: string | null;
+  setPreview: (type: DocumentType, data: any, html: string, templateId?: string, resumeId?: string | null) => void;
   clearPreview: () => void;
 }
 
@@ -16,6 +17,7 @@ export const usePreviewStore = create<PreviewState>((set) => ({
   documentData: null,
   htmlPreview: null,
   templateId: null,
-  setPreview: (type, data, html, templateId) => set({ documentType: type, documentData: data, htmlPreview: html, templateId }),
-  clearPreview: () => set({ documentType: null, documentData: null, htmlPreview: null, templateId: null }),
+  resumeId: null,
+  setPreview: (type, data, html, templateId, resumeId) => set({ documentType: type, documentData: data, htmlPreview: html, templateId, resumeId: resumeId || null }),
+  clearPreview: () => set({ documentType: null, documentData: null, htmlPreview: null, templateId: null, resumeId: null }),
 }));
