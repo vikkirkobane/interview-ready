@@ -239,13 +239,24 @@ async function sendSpaceshipSmtp({
     messageBody += `Date: ${dateHeader}\r\n`;
     messageBody += `Message-ID: ${messageId}\r\n`;
     messageBody += `MIME-Version: 1.0\r\n`;
+    messageBody += `List-Unsubscribe: <mailto:info@appinterviewready.top?subject=unsubscribe>\r\n`;
+    messageBody += `List-Unsubscribe-Post: List-Unsubscribe=One-Click\r\n`;
+    messageBody += `Auto-Submitted: auto-generated\r\n`;
+    messageBody += `X-Auto-Response-Suppress: All\r\n`;
+
+    const normalizedText = (text || '')
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/\n/g, '\r\n');
 
     if (html && text) {
       messageBody += `Content-Type: multipart/alternative; boundary="${boundary}"\r\n\r\n`;
       messageBody += `--${boundary}\r\n`;
       messageBody += `Content-Type: text/plain; charset=UTF-8\r\n`;
       messageBody += `Content-Transfer-Encoding: 8bit\r\n\r\n`;
-      messageBody += `${text}\r\n\r\n`;
+      messageBody += `${normalizedText}\r\n\r\n`;
       messageBody += `--${boundary}\r\n`;
       messageBody += `Content-Type: text/html; charset=UTF-8\r\n`;
       messageBody += `Content-Transfer-Encoding: 8bit\r\n\r\n`;
@@ -258,7 +269,7 @@ async function sendSpaceshipSmtp({
     } else {
       messageBody += `Content-Type: text/plain; charset=UTF-8\r\n`;
       messageBody += `Content-Transfer-Encoding: 8bit\r\n\r\n`;
-      messageBody += `${text || ''}\r\n`;
+      messageBody += `${normalizedText}\r\n`;
     }
 
     messageBody += '\r\n.';
@@ -474,6 +485,10 @@ export async function sendEmail({
     }
   }
 
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  let providerUsed = resendApiKey ? 'resend' : 'spaceship';
+  let result: { messageId: string } | null = null;
+
   // Log email attempt with PII sanitization
   const { data: logData, error: logError } = await supabase.rpc('log_email', {
     p_user_id: userId,
@@ -491,10 +506,6 @@ export async function sendEmail({
   }
 
   const logId = logData;
-
-  const resendApiKey = Deno.env.get('RESEND_API_KEY');
-  let providerUsed = 'spaceship';
-  let result: { messageId: string } | null = null;
 
   try {
     if (resendApiKey) {
