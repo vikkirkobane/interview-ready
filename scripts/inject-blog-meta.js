@@ -84,8 +84,17 @@ const POSTS = [
     description:
       'The first question in almost every interview, and for freshers with no work history it can feel like a trap. Here is how to answer it with confidence, plus three scripts you can adapt.',
     image: '/blog/images/tell-me-about-yourself-freshers.jpg',
-    date: '2026-09-05',
+    date: '2026-09-04',
     tags: ['tell me about yourself', 'interview answers', 'freshers', 'self introduction'],
+  },
+  {
+    slug: 'record-yourself-speaking-daily',
+    title: 'Record Yourself Speaking 3 Minutes a Day: The Practice Habit That Makes You Confident in Interviews and Presentations',
+    description:
+      'Use the webcam and record yourself speaking for three minutes every day. Tell stories, talk about your product, talk about your CV, and learn to say it well.',
+    image: '/blog/images/record-yourself-speaking-daily.jpg',
+    date: '2026-09-06',
+    tags: ['public speaking', 'communication skills', 'interview preparation', 'recording yourself'],
   },
 ];
 
