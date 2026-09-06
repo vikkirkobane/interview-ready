@@ -102,14 +102,15 @@ function AuthGuard() {
 
     // Allow public landing, informational, and compliance pages without authentication
     const isLandingOrIndex = !firstSegment || firstSegment === 'index';
-    const isPublicRoute =
-      isLandingOrIndex ||
+    const isPublicInfoRoute =
       firstSegment === 'privacy' ||
       firstSegment === 'terms' ||
       firstSegment === 'about' ||
       firstSegment === 'contact' ||
       firstSegment === 'blog';
-    if (isPublicRoute && !session) return;
+
+    if (isPublicInfoRoute && !session) return;
+    if (isLandingOrIndex && !session) return;
 
     // CRITICAL: Don't redirect to welcome if an OAuth deep link is still
     // being processed. The code exchange is async and may not have completed yet.
@@ -118,16 +119,21 @@ function AuthGuard() {
       return;
     }
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !isLandingOrIndex && !isPublicInfoRoute) {
       router.replace('/(auth)/welcome');
     } else if (session) {
       const isCompleted = session.user?.user_metadata?.onboarding_completed;
       const inOnboarding = firstSegment === '(onboarding)';
       
-      if (!isCompleted && !inOnboarding && !isLandingOrIndex) {
+      // If authenticated user is on the root landing page or in auth group, route to home (tabs) or onboarding
+      if (isLandingOrIndex || inAuthGroup) {
+        if (isCompleted) {
+          router.replace('/(tabs)');
+        } else if (!inOnboarding) {
+          router.replace('/(onboarding)/referral-code' as any);
+        }
+      } else if (!isCompleted && !inOnboarding && !isPublicInfoRoute) {
         router.replace('/(onboarding)/referral-code' as any);
-      } else if (isCompleted && inAuthGroup) {
-        router.replace('/(tabs)');
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

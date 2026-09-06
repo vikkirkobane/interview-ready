@@ -25,7 +25,7 @@ describe('Landing Page & Root Index — user stories', () => {
     router.__resetMockRouter();
   });
 
-  it('renders all core landing page sections at root index', async () => {
+  it('renders all core landing page sections at root index for guest users', async () => {
     const screen = await renderWithProviders(<IndexScreen />);
 
     // Brand and Hero
@@ -49,6 +49,19 @@ describe('Landing Page & Root Index — user stories', () => {
     expect(screen.getByText('Three Steps to Your Next Callback')).toBeTruthy();
     expect(screen.getByText('Frequently Asked Questions')).toBeTruthy();
     expect(screen.getByText('Your next opportunity is one application away.')).toBeTruthy();
+  });
+
+  it('automatically redirects authenticated users from root index to tabs', async () => {
+    const session = buildSession({
+      user_metadata: { onboarding_completed: true },
+    });
+    mockLoggedInSession(mockSupabase, session);
+
+    await renderWithProviders(<IndexScreen />);
+
+    await waitFor(() => {
+      expect(router.replace).toHaveBeenCalledWith('/(tabs)');
+    });
   });
 
   it('navigates to the welcome screen when clicking Get Started as a guest', async () => {
@@ -85,21 +98,21 @@ describe('Landing Page & Root Index — user stories', () => {
     });
 
     // Check that Lagos location or nurse keywords appear
-    expect(screen.getAllByText('Lagos, Nigeria').length).toBeGreaterThan(0);
-  });
+    await waitFor(() => {
+      expect(screen.getAllByText('Lagos, Nigeria').length).toBeGreaterThan(0);
+    });
+  }, 10000);
 
-  it('renders Go to Dashboard CTA when user is already authenticated', async () => {
+  it('redirects to dashboard when user is already authenticated on LandingPage', async () => {
     const session = buildSession({
       user_metadata: { onboarding_completed: true },
     });
     mockLoggedInSession(mockSupabase, session);
 
-    const screen = await renderWithProviders(<LandingPage />);
+    await renderWithProviders(<LandingPage />);
 
-    const dashboardBtns = screen.getAllByText(/Go to Dashboard|Launch Dashboard/i);
-    expect(dashboardBtns.length).toBeGreaterThan(0);
-
-    await fireEvent.press(dashboardBtns[0]);
-    expect(router.push).toHaveBeenCalledWith('/(tabs)');
+    await waitFor(() => {
+      expect(router.replace).toHaveBeenCalledWith('/(tabs)');
+    });
   });
 });

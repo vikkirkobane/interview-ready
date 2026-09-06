@@ -124,6 +124,18 @@ const TESTIMONIALS = [
 export default function LandingPage() {
   const router = useRouter();
   const { session } = useAuthStore();
+
+  // Redirect authenticated users directly to dashboard
+  useEffect(() => {
+    if (session) {
+      const isCompleted = session.user?.user_metadata?.onboarding_completed;
+      if (isCompleted) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(onboarding)/referral-code' as any);
+      }
+    }
+  }, [session, router]);
   const { width } = useWindowDimensions();
   const isDesktop = width >= 860;
 
