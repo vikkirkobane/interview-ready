@@ -7,7 +7,7 @@ import { useTheme } from '../../src/theme/useTheme';
 import { Button, Input } from '../../src/components/ui';
 import { useAuthStore } from '../../src/stores/auth-store';
 import { Ionicons } from '@expo/vector-icons';
-import * as Linking from 'expo-linking';
+import { triggerLoginNotificationEmail } from '../../src/lib/emailNotificationService';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -55,7 +55,14 @@ export default function LoginScreen() {
     if (authError) {
       setError(authError);
     } else {
-      const isCompleted = useAuthStore.getState().user?.user_metadata?.onboarding_completed;
+      const currentUser = useAuthStore.getState().user;
+      const userName = currentUser?.user_metadata?.full_name || currentUser?.user_metadata?.first_name || trimmedEmail.split('@')[0];
+      // Dispatch security notification email asynchronously in background
+      triggerLoginNotificationEmail(trimmedEmail, userName).catch((err) => {
+        console.warn('[Login] Failed to send login notification email:', err);
+      });
+
+      const isCompleted = currentUser?.user_metadata?.onboarding_completed;
       if (isCompleted) {
         router.replace('/(tabs)');
       } else {

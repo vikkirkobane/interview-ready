@@ -1,3 +1,5 @@
+// @ts-nocheck
+declare const Deno: any;
 import { Hono } from 'npm:hono@4.0.0';
 import { cors } from 'npm:hono@4.0.0/cors';
 import { createAuthClient, createServiceClient } from '../_shared/supabase-client.ts';
@@ -259,9 +261,9 @@ app.post('/*', async (c) => {
       if (user.email) {
         await sendEmail({
           to: user.email,
-          subject: '🎉 Referral Bonus Activated! - Interview Ready',
+          subject: 'Referral Bonus Activated - Interview Ready',
           html: `<p>Hi ${userName},</p><p>You successfully used referral code <strong>${normalizedCode}</strong>! We have added <strong>${creditsGranted} bonus credits</strong> to your account.</p><p><a href="https://appinterviewready.top">Start Preparing</a></p>`,
-          text: `Hi ${userName},\n\nYou successfully used referral code ${normalizedCode}! We have added ${creditsGranted} bonus credits to your account.\n\nStart now: https://appinterviewready.top`,
+          text: `Hi ${userName},\r\n\r\nYou successfully used referral code ${normalizedCode}! We have added ${creditsGranted} bonus credits to your account.\r\n\r\nStart now: https://appinterviewready.top`,
           emailType: 'referral_bonus_received',
           metadata: {
             user_id: user.id,
