@@ -13,24 +13,115 @@ app.use('/*', cors());
 
 const CreateResumeInput = z.object({
   title: z.string().min(1).max(100),
-  template_id: z.string().min(1).optional(), // Template name e.g. 'executive', 'minimal'
-  job_analysis_id: z.string().uuid().optional(), // If tailoring to specific job
+  template_id: z.string().min(1).optional(),
+  job_analysis_id: z.string().uuid().optional(),
   is_base: z.boolean().default(false),
 });
 
 type CreateResumeInputType = z.infer<typeof CreateResumeInput>;
 
-/**
- * POST /resumes/create
- * Generate a new tailored resume for user
- * Streams content section-by-section via Supabase Realtime for real-time UX
- */
+function getTemplateSystemPrompt(templateId: string): string {
+  const outputSchema = `
+OUTPUT FORMAT
+You output ONLY a single, valid JSON object — no markdown wrapping, no explanation, no preamble, no trailing text.
+
+You MUST output exactly this JSON structure:
+{
+  "meta": { "candidate_name": "string", "profession": "string", "target_role": "string", "generated_at": "string", "ats_keywords_used": ["string"], "page_fit_estimate": "comfortable" },
+  "header": { "name": "string", "title": "string", "subtitle": "string", "email": "string", "phone": "string", "linkedin": "string", "portfolio": "string", "location": "string" },
+  "summary": { "text": "string" },
+  "skills": [ { "category": "string", "items": ["string"] } ],
+  "experience": [ { "title": "string", "company": "string", "date_range": "string", "location": "string", "bullets": ["string"] } ],
+  "featured_project": { "name": "string", "tech_stack": "string", "bullet": "string", "include": true },
+  "education": [ { "degree": "string", "institution": "string", "year": "string", "note": "string" } ],
+  "certifications": [ { "name": "string", "issuer": "string", "year": "string" } ],
+  "languages": [ { "language": "string", "proficiency": "string" } ],
+  "recognition": [ { "name": "string", "issuer": "string", "year": "string" } ],
+  "sections_to_include": { "summary": true, "skills": true, "experience": true, "featured_project": true, "education": true, "certifications": true, "languages": false, "recognition": false }
+}`;
+
+  const contactRule = `CONTACT ACCURACY: ONLY use contact info explicitly provided. If location, phone, or linkedin is missing/empty, set that field to "" — never invent placeholder data.`;
+
+  switch (templateId) {
+    case 'minimal':
+      return `You are a precision resume writer specializing in clean, editorial-quality minimal resumes. Produce a high-signal, aesthetically balanced resume where every word earns its place.
+
+MINIMAL TEMPLATE RULES:
+1. PAGE DENSITY MANDATE: Every resume MUST fill a minimum of 1 full standard page (approx 450 to 600 words). NEVER output a sparse half-page resume. Even with minimalist design and clean whitespace, provide rich, substantial career substance so the document is complete.
+2. HEADER: title = exact target role from JD. subtitle = high-impact specialization phrase.
+3. SUMMARY: 3 sharp, compelling sentences: (a) professional title + years of experience + primary specialization, (b) key quantified career impact directly aligned with target role, (c) unique value proposition for the employer.
+4. SKILLS: Exactly 3 distinct, well-organized categories (e.g. "Core Expertise & Strategy", "Tools & Methodologies", "Leadership & Operations"). 6 to 8 tight, high-value ATS keywords per category.
+5. EXPERIENCE: 4 to 5 crisp, impact-driven bullets for the primary role, and 3 to 4 bullets for earlier roles. Every bullet MUST follow: Action Verb + Context + Measurable Result (quantify with %, numbers, scale whenever possible).
+6. FEATURED PROJECT (ALWAYS include=true): Include a standout project. name = descriptive title. tech_stack = key tools/methods. bullet = 2 to 3 sentences detailing problem, implementation, and measurable result.
+7. EDUCATION: Comprehensive Degree + Institution + Year + relevant honor or specialization note.
+8. sections_to_include: summary=true, skills=true, experience=true, featured_project=true, education=true, certifications=true (if certs exist), recognition=false unless distinguished.
+
+${contactRule}
+
+${outputSchema}`;
+
+    case 'tech-stack':
+      return `You are an elite technical resume writer for software engineers, developers, and technical professionals. Produce a technically rigorous, project-forward resume.
+
+TECH STACK TEMPLATE RULES:
+1. PAGE DENSITY MANDATE: Every resume MUST comfortably fill at least 1 full standard page (approx 500 to 650 words). Never output a brief or sparse technical resume.
+2. HEADER: title = exact technical role from JD. subtitle = primary tech specialization (e.g. "Senior Full Stack Distributed Systems Engineer"). portfolio = GitHub or technical portfolio link if provided.
+3. SUMMARY: 3 rich technical sentences: (a) technical title + years + core engineering stack, (b) key architecture or system scale accomplishment (throughput, users, latency, cloud efficiency), (c) target focus aligned with JD requirements.
+4. SKILLS (CRITICAL): Exactly 4 rich, distinct technical categories: "Languages & Runtimes", "Frameworks & Libraries", "Cloud & Infrastructure / DevOps", "Databases & Data Architecture". 7 to 10 specific ATS technical keywords per category.
+5. FEATURED PROJECT (FLAGSHIP - ALWAYS include=true): Highlight an impressive engineering project. name = technical project title. tech_stack = 5 to 7 specific technologies. bullet = 2 to 3 sentences covering architectural challenge, solution built, and measurable scale metrics (e.g. "Architected event-driven microservices processing 15M+ daily requests with 99.99% uptime, cutting latency by 45%").
+6. EXPERIENCE: 4 to 5 rigorous bullets for the most recent role, 3 to 4 for earlier roles. Every bullet must include what was engineered + technologies utilized + quantified business/performance impact. Use power technical verbs: "Architected", "Refactored", "Optimized", "Migrated", "Shipped", "Instrumented".
+7. EDUCATION: Degree + Institution + Year + relevant STEM coursework or GPA if 3.7+.
+8. sections_to_include: featured_project=true ALWAYS, certifications=true if cloud/technical certs exist, recognition=false.
+
+${contactRule}
+
+${outputSchema}`;
+
+    case 'academic':
+      return `You are an expert academic CV writer. Produce a scholarly, education-forward resume following academic hiring conventions.
+
+ACADEMIC TEMPLATE RULES:
+1. PAGE DENSITY MANDATE: Every academic CV/resume MUST fill at least 1 full standard page (approx 500 to 700 words) with scholarly depth and rigor. Never output a brief or sparse CV.
+2. HEADER: title = academic/research target title (e.g. "Postdoctoral Research Fellow", "Senior Research Scientist"). subtitle = specialized research domain. portfolio = Google Scholar, ORCID, or academic profile URL if provided.
+3. SUMMARY: 3 to 4 scholarly sentences: (a) academic title + years + research domain, (b) key methodologies and theoretical contributions, (c) research impact (publications, grant funding, research groups led), (d) institutional alignment. Tone: formal, scholarly, precise.
+4. EDUCATION (CRITICAL - LIST ALL DEGREES): Full degree + institution + year + thesis title if available + advisor if applicable. GPA if 3.8+ or Latin honors. Academic awards per degree.
+5. SKILLS: Exactly 4 categories: "Research Methodologies & Protocols", "Technical & Computational Tools", "Domain Subject Expertise", "Teaching & Pedagogy". 6 to 8 items per category.
+6. EXPERIENCE: Frame as "Research & Professional Experience". 4 to 5 bullets per role. Focus: research questions, methodologies, findings, publications, grants, students supervised. Verbs: "Investigated", "Designed", "Conducted", "Published", "Supervised", "Presented".
+7. FEATURED PROJECT: Landmark research study or key publication. name = project/paper title. tech_stack = research tools/methods. bullet = research question + methodology + contribution/findings.
+8. RECOGNITION: Set recognition array with fellowships, grants, prizes, scholarships. sections_to_include.recognition = true.
+9. sections_to_include: education=true, experience=true, skills=true, featured_project=true, recognition=true, certifications=true for research ethics/teaching certs.
+
+${contactRule}
+
+${outputSchema}`;
+
+    case 'executive':
+    default:
+      return `You are an elite, ATS-first executive resume writer and career architect. Produce a comprehensive, commanding, fully populated resume that passes ATS at 95%+ and captivates hiring managers.
+
+EXECUTIVE TEMPLATE RULES:
+1. PAGE DENSITY MANDATE: Every resume MUST fill at least 1 full standard page (approx 500 to 700 words). Zero sparse outputs.
+2. ADAPTIVE DENSITY:
+   - Sparse profile (1-2 jobs, few skills): Expand primary role to 5 to 6 quantified bullets. Synthesize 4 rich skill categories with 7 to 9 keywords each. Generate a high-impact Featured Project. Write a 3 to 4 sentence executive summary.
+   - Rich profile (4+ jobs): Select accomplishments most relevant to JD. 4 to 5 bullets for most recent role, 3 to 4 for second, 2 for earlier. Group top 20 to 28 skills into 4 categories.
+3. HEADER: title = EXACT target job title from JD. subtitle = compelling specialization phrase (e.g. "Enterprise SaaS & Global Growth Operations Leader").
+4. SUMMARY: 3 to 4 authoritative, metric-dense sentences: (a) executive title + years + core domain, (b) quantified career milestones (revenue growth, cost reduction, market share), (c) cross-functional leadership or organizational scale, (d) strategic value for the hiring organization.
+5. SKILLS: 4 executive categories ("Executive Leadership & Strategy", "Revenue & P&L Operations", "Technical & Systems Innovation", "Governance & Stakeholder Relations"). 7 to 10 ATS keywords per category.
+6. EXPERIENCE: Use Google X-Y-Z formula. Quantify with percentages, revenue, latency, user scale, team size, budget. Use power verbs: "Spearheaded", "Architected", "Orchestrated", "Transformed".
+7. FEATURED PROJECT (ALWAYS include=true): High-impact enterprise initiative with problem, implementation, and measurable business results.
+8. sections_to_include: summary=true, skills=true, experience=true, featured_project=true, education=true, certifications=true if relevant, recognition=true if awards exist.
+
+${contactRule}
+
+${outputSchema}`;
+  }
+}
+
 app.post('/*', async (c: any) => {
   try {
     const client = createAuthClient(c.req.raw);
     const serviceClient = createServiceClient();
 
-    // Get current user
     const {
       data: { user },
       error: authError,
@@ -39,7 +130,7 @@ app.post('/*', async (c: any) => {
     if (authError || !user) {
       throw new UnauthorizedError('No active session');
     }
-    // Parse and validate input
+
     const body = await c.req.json();
     let input: CreateResumeInputType;
 
@@ -54,7 +145,6 @@ app.post('/*', async (c: any) => {
       throw error;
     }
 
-    // Deduct 3 credits BEFORE generation
     try {
       await deductCredits(user.id, 'RESUME_GENERATION', {
         resume_title: input.title,
@@ -67,7 +157,6 @@ app.post('/*', async (c: any) => {
       throw new Error(`Credit deduction failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    // Get user profile (required for resume generation)
     const { data: profile, error: profileError } = await serviceClient
       .from('user_profiles')
       .select('*')
@@ -78,7 +167,6 @@ app.post('/*', async (c: any) => {
       throw new NotFoundError('User profile not found. Complete profile first.');
     }
 
-    // Get job analysis if provided (for context/tailoring)
     let jobAnalysis = null;
     if (input.job_analysis_id) {
       const { data: job } = await client
@@ -91,19 +179,22 @@ app.post('/*', async (c: any) => {
       jobAnalysis = job;
     }
 
-    // Get template (resolve slug to UUID or use default)
+    // Resolve template slug — keep the original slug for the AI prompt
+    const templateSlug = (input.template_id && !/^[0-9a-fA-F]{8}-/.test(input.template_id))
+      ? input.template_id
+      : 'executive';
+
     let templateId = input.template_id;
     const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(templateId || '');
-    
+
     if (!templateId || !isUuid) {
-      const slugToQuery = templateId && !isUuid ? templateId : 'executive';
       const { data: defaultTemplate } = await serviceClient
         .from('resume_templates')
         .select('id')
-        .eq('slug', slugToQuery)
+        .eq('slug', templateSlug)
         .eq('is_active', true)
         .single();
-      
+
       templateId = defaultTemplate?.id;
     }
 
@@ -116,7 +207,6 @@ app.post('/*', async (c: any) => {
     if (templateId) insertPayload.template_id = templateId;
     if (input.job_analysis_id) insertPayload.job_application_id = input.job_analysis_id;
 
-    // Create resume record
     const { data: resume, error: createError } = await serviceClient
       .from('resumes')
       .insert(insertPayload)
@@ -127,25 +217,21 @@ app.post('/*', async (c: any) => {
       throw new Error(`Failed to create resume: ${createError?.message}`);
     }
 
-    // Generate resume content via AI (asynchronous, stream updates via Realtime)
-    const bgTask = generateResumeContentAsync(user.id, resume.id, profile, jobAnalysis, templateId || '');
-    
-    // Register background task with Deno EdgeRuntime so the isolate doesn't terminate early
+    const bgTask = generateResumeContentAsync(user.id, resume.id, profile, jobAnalysis, templateSlug);
+
     if ((globalThis as any).EdgeRuntime?.waitUntil) {
       (globalThis as any).EdgeRuntime.waitUntil(bgTask);
     } else {
-      // In local testing or environments where EdgeRuntime is not attached, await directly
       await bgTask;
     }
 
-    // Return immediately with resume ID (content will be streamed)
     return c.json(
       {
         resume_id: resume.id,
         message: 'Resume creation started. Streaming content...',
         stream_channel: `resume:${resume.id}`,
       },
-      202 // 202 Accepted (processing)
+      202
     );
   } catch (error: any) {
     if (
@@ -165,21 +251,15 @@ app.post('/*', async (c: any) => {
   }
 });
 
-/**
- * Generate resume content asynchronously
- * Streams updates via Supabase Realtime for real-time UI updates
- */
 async function generateResumeContentAsync(
   userId: string,
   resumeId: string,
   profile: any,
   jobAnalysis: any,
-  templateId: string
+  templateSlug: string
 ) {
   const serviceClient = createServiceClient();
 
-  // Fetch the user's auth email so the generated resume header includes it.
-  // user_profiles has no email column, so we pull it from auth.users.
   let userEmail = '';
   try {
     const { data: authUser } = await serviceClient.auth.admin.getUserById(userId);
@@ -189,143 +269,8 @@ async function generateResumeContentAsync(
   }
 
   try {
-    const systemPrompt = `You are an elite, ATS-first executive resume writer and career architect. Your mission is to produce a comprehensive, commanding, and fully populated resume that:
-1. Passes every ATS filter with a score of 95%+
-2. Captivates recruiters and hiring managers with substantive, metric-dense accomplishments
-3. Is laser-aligned to the TARGET JOB DESCRIPTION provided
-4. Substantively fills the majority of a standard page (or more) with zero sparse or empty sections
-
-════════════════════════════════════════════
-EXECUTIVE RESUME CREATION STANDARDS (ADAPTIVE DENSITY)
-════════════════════════════════════════════
-
-1. ADAPTIVE CONTENT BALANCING (THE FULL-PAGE STANDARD)
-- CASE A: SPARSE / MINIMAL CANDIDATE INPUT (e.g. only 1 or 2 jobs, few skills, or minimal details):
-  * You MUST synthesize and expand the candidate's experience into a rich, recruiter-grade resume.
-  * Expand the primary role into 5 to 6 comprehensive, quantified accomplishment bullets.
-  * Synthesize 3 to 4 rich, categorized skill domains with 6 to 8 keywords each based on the target role/JD.
-  * Generate a relevant, high-impact "Featured Project" detailing technical problem-solving and outcomes.
-  * Provide an expansive 3 to 4 sentence executive summary.
-  * Guarantee that even the most minimal user profile produces a commanding resume that fills 90–100% of a standard page.
-- CASE B: EXTENSIVE / RICH CANDIDATE INPUT (e.g. 4+ jobs, dozens of skills, multiple degrees):
-  * Select and highlight the accomplishments most relevant to the target JD.
-  * Group the top 18–24 skills into 3–4 clean categories without clutter.
-  * Allocate 4–5 bullets for the most recent role, 3–4 for the second role, and 2 for earlier roles.
-  * Ensure the content flows cleanly and fills 1 full page (or 2 pages for 10+ year careers) with zero awkward orphans.
-
-2. PROFESSIONAL TITLE & HEADER (STRICT ANTI-HALLUCINATION FOR CONTACT DETAILS)
-- Set header.title to the EXACT target job title from the job description (e.g. "Senior Full Stack Engineer", "Principal Product Manager")
-- Never use weak qualifiers ("Aspiring", "Seeking", "Junior") unless explicitly in the JD
-- Include a compelling subtitle that encapsulates specialization (e.g. "Distributed Systems & Cloud Architecture Specialist")
-- CONTACT INFORMATION ACCURACY (CRITICAL):
-  * ONLY use the candidate's real location, phone number, email, and linkedin/portfolio if provided in the CANDIDATE INFORMATION.
-  * If location or phone or linkedin is NOT provided or is empty in CANDIDATE INFORMATION, set that field in the header to an empty string "" — DO NOT invent, hallucinate, or default to placeholder cities (such as "San Francisco, CA") or fake phone numbers (such as "+1 (555)...").
-  * Do NOT add fake addresses, phone numbers, or fabricated locations to any role or header.
-
-3. EXECUTIVE SUMMARY (MANDATORY: 3 TO 4 SUBSTANTIVE SENTENCES)
-- Write an authoritative, metric-dense 3 to 4 sentence executive summary:
-  a) Sentence 1: Strong opening with target title, years of experience, and core specialization
-  b) Sentence 2: Major quantified career milestones and technical/domain expertise aligned to the JD
-  c) Sentence 3: Demonstrated leadership, cross-functional collaboration, or systems-level impact
-  d) Sentence 4: Definite, high-value proposition for the prospective employer (never "hoping" or "looking for")
-
-4. SKILLS & COMPETENCIES (MANDATORY: 3 TO 4 RICH CATEGORIES)
-- Organize skills into 3 to 4 distinct, structured categories (e.g., "Core Specialization & Strategy", "Technical & Methodologies", "Tools, Frameworks & Platforms", "Leadership & Operations")
-- Include 6 to 10 high-value ATS keywords per category
-- Infer complementary industry-standard technologies and methodologies from the candidate's background to thoroughly match the target JD
-
-5. PROFESSIONAL EXPERIENCE (DEEPLY QUANTIFIED & EXPANSIVE)
-- KEEP real employer names and date ranges provided; never fabricate dates or employers
-- FREELY rewrite every bullet point to be powerful, outcome-oriented, and quantified using the Google X-Y-Z formula: "Accomplished [X] as measured by [Y], by doing [Z]"
-- QUANTIFY heavily: Include percentages, revenue impact, latency reductions, user scale, team size, budget, or throughput (e.g. "Spearheaded...", "Architected...", "Optimized p99 latency by 42% across 10M+ daily requests...")
-- Bullet Allocation:
-  * 1–2 total past roles: 5 to 6 comprehensive bullets per role
-  * 3+ past roles: 4–5 bullets for primary role, 3–4 for secondary role, 2–3 for prior roles
-
-6. FEATURED / STANDOUT PROJECT
-- Provide a high-impact featured project relevant to the target role with:
-  * name: Project title
-  * tech_stack: Key technologies, architectures, or methodologies used
-  * bullet: 1 to 2 sentences detailing the problem solved, implementation, and measurable results
-  * include: true
-
-7. EDUCATION, CERTIFICATIONS & CREDENTIALS
-- Keep real educational background intact; include relevant coursework, honors, or academic focus if helpful
-- Include relevant industry certifications and credentials when available
-
-8. PAGE DENSITY MANDATE
-- Every generated resume MUST populate the majority of 1 full page (or more). Sparse or brief outputs are strictly prohibited.
-
-OUTPUT FORMAT
-You output ONLY a single, valid JSON object — no markdown wrapping, no explanation, no preamble, no trailing text.
-
-You MUST output exactly this JSON structure:
-{
-  "meta": {
-    "candidate_name": "string",
-    "profession": "string",
-    "target_role": "string",
-    "generated_at": "string",
-    "ats_keywords_used": ["string"],
-    "page_fit_estimate": "comfortable"
-  },
-  "header": {
-    "name": "string",
-    "title": "string",
-    "subtitle": "string",
-    "email": "string",
-    "phone": "string",
-    "linkedin": "string",
-    "portfolio": "string",
-    "location": "string"
-  },
-  "summary": { "text": "string" },
-  "skills": [
-    { "category": "string", "items": ["string"] }
-  ],
-  "experience": [
-    {
-      "title": "string",
-      "company": "string",
-      "date_range": "string",
-      "location": "string",
-      "bullets": ["string"]
-    }
-  ],
-  "featured_project": {
-    "name": "string",
-    "tech_stack": "string",
-    "bullet": "string",
-    "include": true
-  },
-  "education": [
-    {
-      "degree": "string",
-      "institution": "string",
-      "year": "string",
-      "note": "string"
-    }
-  ],
-  "certifications": [
-    { "name": "string", "issuer": "string", "year": "string" }
-  ],
-  "languages": [
-    { "language": "string", "proficiency": "string" }
-  ],
-  "recognition": [
-    { "name": "string", "issuer": "string", "year": "string" }
-  ],
-  "sections_to_include": {
-    "summary": true,
-    "skills": true,
-    "experience": true,
-    "featured_project": true,
-    "education": true,
-    "certifications": true,
-    "languages": false,
-    "recognition": false
-  }
-}`;
+    // Build the template-specific system prompt — primary content quality driver
+    const systemPrompt = getTemplateSystemPrompt(templateSlug);
 
     const jobContext = jobAnalysis
       ? `\n\nTARGET JOB DESCRIPTION:\n${jobAnalysis.raw_jd || JSON.stringify(jobAnalysis.analysis_data)}`
@@ -333,9 +278,12 @@ You MUST output exactly this JSON structure:
 
     const promptProfile = { ...profile, email: userEmail };
 
-    const userPrompt = `CANDIDATE INFORMATION:\n\nProfile Data:\n${JSON.stringify(promptProfile, null, 2)}${jobContext}`;
+    const templateHint = `\n\nSELECTED TEMPLATE: ${templateSlug.toUpperCase()}\nApply ALL template-specific rules for this template as described in your system prompt above.`;
 
-    // Call AI to generate resume content
+    const densityInstruction = `\n\nCRITICAL PAGE DENSITY REQUIREMENT:\nEnsure the resume content comfortably fills at least 1 full standard page (minimum 450 to 650 words, comprehensive achievement bullets, complete skill categories, and project). Tailor the content to the target job description while showcasing the candidate's career depth.`;
+
+    const userPrompt = `CANDIDATE INFORMATION:\n\nProfile Data:\n${JSON.stringify(promptProfile, null, 2)}${jobContext}${templateHint}${densityInstruction}`;
+
     const resumeContent: any = await aiClient.callWithJson(
       systemPrompt,
       userPrompt,
@@ -343,17 +291,65 @@ You MUST output exactly this JSON structure:
       { temperature: 0.3, max_tokens: 4000 }
     );
 
-    // Save resume content mapped to DB schema
+    // Ensure candidate's profile data is preserved for hidden sections in the resume builder
+    if (!resumeContent.sections_to_include) {
+      resumeContent.sections_to_include = {
+        summary: true,
+        skills: true,
+        experience: true,
+        featured_project: true,
+        education: true,
+        certifications: false,
+        languages: false,
+        recognition: false,
+      };
+    }
+
+    // Pre-fill certifications from candidate profile if AI omitted them
+    if ((!resumeContent.certifications || resumeContent.certifications.length === 0) && Array.isArray(profile.certifications) && profile.certifications.length > 0) {
+      resumeContent.certifications = profile.certifications.map((c: any) => typeof c === 'string' ? { name: c, issuer: '', year: '' } : c);
+      if (resumeContent.sections_to_include.certifications === undefined) {
+        resumeContent.sections_to_include.certifications = false;
+      }
+    }
+
+    // Pre-fill recognition/awards from candidate profile if AI omitted them
+    const profileAwards = Array.isArray(profile.awards) ? profile.awards : Array.isArray(profile.recognition) ? profile.recognition : [];
+    if ((!resumeContent.recognition || resumeContent.recognition.length === 0) && profileAwards.length > 0) {
+      resumeContent.recognition = profileAwards.map((a: any) => typeof a === 'string' ? { name: a, issuer: '', year: '' } : a);
+      if (resumeContent.sections_to_include.recognition === undefined) {
+        resumeContent.sections_to_include.recognition = false;
+      }
+    }
+
+    // Pre-fill featured project from candidate profile if AI omitted it
+    if ((!resumeContent.featured_project || !resumeContent.featured_project.name) && Array.isArray(profile.projects) && profile.projects.length > 0) {
+      const pProj = profile.projects[0];
+      if (pProj) {
+        resumeContent.featured_project = {
+          name: pProj.name || pProj.title || '',
+          tech_stack: pProj.tech_stack || '',
+          bullet: pProj.bullet || pProj.description || '',
+          include: false,
+        };
+      }
+    }
+
+    const contactWithMeta = {
+      ...resumeContent.header,
+      sections_to_include: resumeContent.sections_to_include,
+    };
+
     await serviceClient.from('resume_contents').insert({
       resume_id: resumeId,
       name: resumeContent.header.name,
       title: resumeContent.header.title,
-      contact: resumeContent.header,
+      contact: contactWithMeta,
       summary: resumeContent.summary.text,
       experience: resumeContent.experience,
       education: resumeContent.education,
       skills: resumeContent.skills,
-      projects: (resumeContent.featured_project && resumeContent.featured_project.include) ? [resumeContent.featured_project] : [],
+      projects: (resumeContent.featured_project && (resumeContent.featured_project.include || resumeContent.featured_project.name)) ? [resumeContent.featured_project] : [],
       certifications: (resumeContent.certifications || []).map((c: any) => ({
         id: crypto.randomUUID(),
         name: c.name || '',
@@ -366,9 +362,9 @@ You MUST output exactly this JSON structure:
         issuer: a.issuer || '',
         year: a.year || ''
       })),
+      custom_sections: [{ type: 'config', sections_to_include: resumeContent.sections_to_include }],
     });
 
-    // Update resume status to READY
     await serviceClient
       .from('resumes')
       .update({
@@ -377,7 +373,6 @@ You MUST output exactly this JSON structure:
       })
       .eq('id', resumeId);
 
-    // Notify client via Realtime channel that generation is complete
     const supabase = createServiceClient();
     await supabase.channel(`resume:${resumeId}`).send({
       type: 'broadcast',
@@ -389,20 +384,18 @@ You MUST output exactly this JSON structure:
       },
     });
 
-    console.log(`Resume ${resumeId} generated successfully`);
+    console.log(`Resume ${resumeId} generated successfully (template: ${templateSlug})`);
   } catch (error: any) {
-    console.error(`Failed to generate resume ${resumeId}:`, error);
+    console.error(`Failed to generate resume ${resumeId} (template: ${templateSlug}):`, error);
 
-    // Update resume status to FAILED
     await serviceClient
       .from('resumes')
       .update({
-        status: 'DRAFT', // Keep as draft so user can retry
+        status: 'DRAFT',
         updated_at: new Date().toISOString(),
       })
       .eq('id', resumeId);
 
-    // Notify client of failure
     const supabase = createServiceClient();
     await supabase.channel(`resume:${resumeId}`).send({
       type: 'broadcast',
@@ -415,10 +408,6 @@ You MUST output exactly this JSON structure:
   }
 }
 
-/**
- * GET /resumes/:resumeId
- * Retrieve resume with content
- */
 app.get('/:resumeId', async (c: any) => {
   try {
     const client = createAuthClient(c.req.raw);
@@ -434,7 +423,6 @@ app.get('/:resumeId', async (c: any) => {
 
     const resumeId = c.req.param('resumeId');
 
-    // Get resume with content
     const { data: resume, error: resumeError } = await client
       .from('resumes')
       .select('*, resume_contents(*)')
@@ -460,10 +448,6 @@ app.get('/:resumeId', async (c: any) => {
   }
 });
 
-/**
- * GET /resumes
- * List all resumes for current user
- */
 app.get('/*', async (c: any) => {
   try {
     const client = createAuthClient(c.req.raw);

@@ -217,6 +217,133 @@ const aiResume = (templateId: string | null): DraftResume => ({
 // ─── Utility ──────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
 
+function buildDraftWithProfileFallbacks(
+  content: any,
+  templateId: string,
+  profile: any
+): DraftResume {
+  const summaryText = typeof content.summary === 'string'
+    ? content.summary
+    : (content.summary?.text || profile?.summary || '');
+
+  // 1. Featured Project
+  const hasAiProject = !!(
+    (content.featured_project && (content.featured_project.name || content.featured_project.title)) ||
+    (content.featuredProject && (content.featuredProject.name || content.featuredProject.title)) ||
+    (Array.isArray(content.projects) && content.projects.length > 0)
+  );
+  let projectData = content.featured_project || content.featuredProject || (Array.isArray(content.projects) && content.projects[0]);
+
+  let isProfileProject = false;
+  if ((!projectData || (!projectData.name && !projectData.title)) && Array.isArray(profile?.projects) && profile.projects.length > 0) {
+    const pProj = profile.projects[0];
+    projectData = {
+      name: pProj.name || pProj.title || '',
+      tech_stack: pProj.tech_stack || '',
+      bullet: pProj.bullet || pProj.description || '',
+      include: false,
+    };
+    isProfileProject = true;
+  }
+  if (!projectData) {
+    projectData = { include: false, name: '', tech_stack: '', bullet: '' };
+  }
+
+  // 2. Certifications
+  let certs = (content.certifications || []).map((c: any) =>
+    typeof c === 'string' ? { id: uid(), name: c, issuer: '', year: '' } : { ...c, id: c.id || uid() }
+  );
+  if (certs.length === 0 && Array.isArray(profile?.certifications) && profile.certifications.length > 0) {
+    certs = profile.certifications.map((c: any) =>
+      typeof c === 'string' ? { id: uid(), name: c, issuer: '', year: '' } : { id: uid(), name: c.name || '', issuer: c.issuer || '', year: c.year || '' }
+    );
+  }
+
+  // 3. Awards / Recognition
+  let awards = (content.awards || content.recognition || []).map((a: any) =>
+    typeof a === 'string' ? { id: uid(), name: a, issuer: '', year: '' } : { ...a, id: a.id || uid() }
+  );
+  if (awards.length === 0 && (Array.isArray(profile?.awards) || Array.isArray(profile?.recognition))) {
+    const pAwards = profile?.awards || profile?.recognition || [];
+    awards = pAwards.map((a: any) =>
+      typeof a === 'string' ? { id: uid(), name: a, issuer: '', year: '' } : { id: uid(), name: a.name || '', issuer: a.issuer || '', year: a.year || '' }
+    );
+  }
+
+  // 4. Education
+  let education = (content.education || []).map((e: any) => ({ ...e, id: e.id || uid() }));
+  if (education.length === 0 && Array.isArray(profile?.education) && profile.education.length > 0) {
+    education = profile.education.map((e: any) => ({
+      id: uid(),
+      degree: e.degree || e.degree_name || '',
+      institution: e.institution || e.school || '',
+      year: e.year || e.graduation_year || '',
+      note: e.note || '',
+    }));
+  }
+
+  // 5. Experience
+  let experience = (content.experience || []).map((e: any) => ({
+    ...e,
+    id: e.id || uid(),
+    bullets: Array.isArray(e.bullets) ? e.bullets : (typeof e.description === 'string' && e.description.trim() ? [e.description] : []),
+  }));
+  if (experience.length === 0 && Array.isArray(profile?.work_history) && profile.work_history.length > 0) {
+    experience = profile.work_history.map((w: any) => ({
+      id: uid(),
+      title: w.title || w.role || '',
+      company: w.company || w.organization || '',
+      date_range: w.date_range || w.dates || '',
+      location: w.location || '',
+      bullets: Array.isArray(w.bullets) ? w.bullets : (typeof w.description === 'string' ? [w.description] : []),
+    }));
+  }
+
+  // 6. Sections to include
+  const rawSections = content.sections_to_include ||
+    content.contact?.sections_to_include ||
+    content.custom_sections?.find?.((s: any) => s.type === 'config')?.sections_to_include;
+
+  const sections_to_include = {
+    summary: rawSections?.summary !== undefined ? rawSections.summary : !!summaryText,
+    skills: rawSections?.skills !== undefined ? rawSections.skills : (content.skills || []).length > 0,
+    experience: rawSections?.experience !== undefined ? rawSections.experience : experience.length > 0,
+    featured_project: rawSections?.featured_project !== undefined
+      ? rawSections.featured_project
+      : (hasAiProject && !isProfileProject && projectData.include !== false),
+    education: rawSections?.education !== undefined ? rawSections.education : education.length > 0,
+    certifications: rawSections?.certifications !== undefined ? rawSections.certifications : (certs.length > 0 && !content.certifications?.length ? false : certs.length > 0),
+    recognition: rawSections?.recognition !== undefined ? rawSections.recognition : (awards.length > 0 && !content.awards?.length && !content.recognition?.length ? false : awards.length > 0),
+  };
+
+  return {
+    templateId: templateId || 'executive',
+    header: content.header || content.contact || {
+      name: profile?.name || '',
+      title: profile?.current_role || '',
+      subtitle: '',
+      email: profile?.email || '',
+      phone: profile?.phone || '',
+      linkedin: profile?.linkedin_url || '',
+      portfolio: profile?.portfolio_url || profile?.github_url || '',
+      location: profile?.location || '',
+    },
+    summary: summaryText,
+    experience,
+    skills: (content.skills || []).map((s: any) => ({ ...s, id: s.id || uid(), items: s.items || [] })),
+    education,
+    certifications: certs,
+    awards,
+    featuredProject: {
+      include: projectData.include !== false && (hasAiProject || !isProfileProject),
+      name: projectData.name || projectData.title || '',
+      tech_stack: projectData.tech_stack || '',
+      bullet: projectData.bullet || (Array.isArray(projectData.bullets) ? projectData.bullets.join(' ') : '') || '',
+    },
+    sections_to_include,
+  };
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ResumeBuilderScreen() {
@@ -334,41 +461,8 @@ export default function ResumeBuilderScreen() {
       // Helper to populate draft from AI content returned by the server.
       const applyGeneratedContent = (content: any) => {
         setAiGeneratedContent(content);
-        const hasFeaturedProject = !!(
-          (content.featured_project && (content.featured_project.name || content.featured_project.title)) ||
-          (Array.isArray(content.projects) && content.projects.length > 0)
-        );
-        const projectData = content.featured_project || (Array.isArray(content.projects) && content.projects[0]) || { include: false, name: '', tech_stack: '', bullet: '' };
-
-        setDraft({
-          templateId: selectedTemplateId || 'executive',
-          header: content.header || { name: '', title: '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
-          summary: typeof content.summary === 'string' ? content.summary : (content.summary?.text || ''),
-          experience: (content.experience || []).map((e: any) => ({
-            ...e,
-            id: e.id || uid(),
-            bullets: Array.isArray(e.bullets) ? e.bullets : (typeof e.description === 'string' && e.description.trim() ? [e.description] : []),
-          })),
-          skills: (content.skills || []).map((s: any) => ({ ...s, id: s.id || uid(), items: s.items || [] })),
-          education: (content.education || []).map((e: any) => ({ ...e, id: e.id || uid() })),
-          certifications: (content.certifications || []).map((c: any) => typeof c === 'string' ? { id: uid(), name: c, issuer: '', year: '' } : { ...c, id: c.id || uid() }),
-          awards: (content.recognition || content.awards || []).map((a: any) => typeof a === 'string' ? { id: uid(), name: a, issuer: '', year: '' } : { ...a, id: a.id || uid() }),
-          featuredProject: {
-            include: projectData.include !== false && hasFeaturedProject,
-            name: projectData.name || projectData.title || '',
-            tech_stack: projectData.tech_stack || '',
-            bullet: projectData.bullet || (Array.isArray(projectData.bullets) ? projectData.bullets.join(' ') : '') || '',
-          },
-          sections_to_include: content.sections_to_include || {
-            summary: true,
-            skills: (content.skills || []).length > 0,
-            experience: (content.experience || []).length > 0,
-            featured_project: hasFeaturedProject,
-            education: (content.education || []).length > 0,
-            certifications: (content.certifications?.length || 0) > 0,
-            recognition: (content.recognition?.length || content.awards?.length || 0) > 0,
-          }
-        });
+        const newDraft = buildDraftWithProfileFallbacks(content, selectedTemplateId || 'executive', profile);
+        setDraft(newDraft);
         setCurrentStep('editor');
         setIsGenerating(false);
         Toast.show({ type: 'success', text1: 'Resume generated!' });
@@ -460,6 +554,87 @@ export default function ResumeBuilderScreen() {
 
   const [draft, setDraft] = useState<DraftResume | null>(null);
 
+  // Identify past roles in user profile that were not selected in active experience
+  const unaddedWorkHistory = React.useMemo(() => {
+    if (!profile?.work_history || !Array.isArray(profile.work_history)) return [];
+    const currentTitles = (draft?.experience || []).map(e => (e.title || '').toLowerCase().trim());
+    const currentCompanies = (draft?.experience || []).map(e => (e.company || '').toLowerCase().trim());
+    return profile.work_history.filter((w: any) => {
+      const wTitle = (w.title || w.role || '').toLowerCase().trim();
+      const wComp = (w.company || w.organization || '').toLowerCase().trim();
+      return !currentTitles.some((t, i) => t === wTitle && currentCompanies[i] === wComp);
+    });
+  }, [profile?.work_history, draft?.experience]);
+
+  // Count hidden sections available to add/restore
+  const hiddenSectionsCount = React.useMemo(() => {
+    if (!draft?.sections_to_include) return 0;
+    let count = 0;
+    if (draft.sections_to_include.summary === false) count++;
+    if (draft.sections_to_include.experience === false) count++;
+    if (draft.sections_to_include.skills === false) count++;
+    if (draft.sections_to_include.education === false) count++;
+    if (draft.sections_to_include.featured_project === false) count++;
+    if (draft.sections_to_include.certifications === false) count++;
+    if (draft.sections_to_include.recognition === false) count++;
+    return count;
+  }, [draft?.sections_to_include]);
+
+  const hasHiddenSections = hiddenSectionsCount > 0;
+
+  // Realtime Page Density & Length estimation
+  const pageDensityMetrics = React.useMemo(() => {
+    if (!draft) return { wordCount: 0, status: 'sparse', label: 'Incomplete', color: colors.textMuted };
+    let words = 0;
+    if (draft.sections_to_include?.summary !== false && draft.summary) {
+      words += draft.summary.split(/\s+/).filter(Boolean).length;
+    }
+    if (draft.sections_to_include?.experience !== false) {
+      for (const exp of draft.experience || []) {
+        words += (exp.title + ' ' + exp.company).split(/\s+/).filter(Boolean).length;
+        for (const b of exp.bullets || []) {
+          words += b.split(/\s+/).filter(Boolean).length;
+        }
+      }
+    }
+    if (draft.sections_to_include?.skills !== false) {
+      for (const s of draft.skills || []) {
+        words += s.category.split(/\s+/).filter(Boolean).length;
+        for (const it of s.items || []) {
+          words += it.split(/\s+/).filter(Boolean).length;
+        }
+      }
+    }
+    if (draft.sections_to_include?.featured_project !== false && draft.featuredProject?.include) {
+      words += (draft.featuredProject.name + ' ' + draft.featuredProject.tech_stack + ' ' + draft.featuredProject.bullet).split(/\s+/).filter(Boolean).length;
+    }
+    if (draft.sections_to_include?.education !== false) {
+      for (const edu of draft.education || []) {
+        words += (edu.degree + ' ' + edu.institution + ' ' + (edu.note || '')).split(/\s+/).filter(Boolean).length;
+      }
+    }
+    if (draft.sections_to_include?.certifications !== false) {
+      for (const c of draft.certifications || []) {
+        words += (c.name + ' ' + c.issuer).split(/\s+/).filter(Boolean).length;
+      }
+    }
+    if (draft.sections_to_include?.recognition !== false) {
+      for (const a of draft.awards || []) {
+        words += (a.name + ' ' + a.issuer).split(/\s+/).filter(Boolean).length;
+      }
+    }
+
+    if (words >= 400 && words <= 750) {
+      return { wordCount: words, status: 'optimal', label: '1 Full Page (Optimal Density)', color: colors.success };
+    } else if (words > 750) {
+      return { wordCount: words, status: 'multi-page', label: '1.5–2 Pages (Executive Length)', color: colors.primary };
+    } else if (words >= 260) {
+      return { wordCount: words, status: 'comfortable', label: '1 Full Page (Standard Fit)', color: colors.success };
+    } else {
+      return { wordCount: words, status: 'sparse', label: 'Under 1 Page (Add sections below)', color: '#f59e0b' };
+    }
+  }, [draft, colors]);
+
   useEffect(() => {
     return () => {
       if (generationChannelRef.current) {
@@ -474,44 +649,8 @@ export default function ResumeBuilderScreen() {
   // Sync from remote when loaded
   React.useEffect(() => {
     if (currentResumeId && !hasStartedOver && remoteResume && !draft && (remoteResume.header || remoteResume.summary || remoteResume.experience)) {
-      const summaryText = typeof remoteResume.summary === 'string' ? remoteResume.summary : (remoteResume.summary?.text || '');
-      const hasFeaturedProject = !!(
-        (remoteResume.featuredProject && (remoteResume.featuredProject.name || remoteResume.featuredProject.title)) ||
-        (remoteResume.featured_project && (remoteResume.featured_project.name || remoteResume.featured_project.title)) ||
-        (Array.isArray(remoteResume.projects) && remoteResume.projects.length > 0)
-      );
-      const projectData = remoteResume.featuredProject || (Array.isArray(remoteResume.projects) && remoteResume.projects[0]) || remoteResume.featured_project || { include: false, name: '', tech_stack: '', bullet: '' };
-
-      setDraft({
-        templateId: remoteResume.templateId || 'executive',
-        header: remoteResume.header || remoteResume.contact || { name: remoteResume.name || '', title: remoteResume.title || '', subtitle: '', email: '', phone: '', linkedin: '', portfolio: '', location: '' },
-        summary: summaryText,
-        experience: (remoteResume.experience || []).map((e: any) => ({ ...e, id: e.id || uid(), bullets: e.bullets || [] })),
-        skills: (remoteResume.skills || []).map((s: any) => ({ ...s, id: s.id || uid(), items: s.items || [] })),
-        education: (remoteResume.education || []).map((e: any) => ({ ...e, id: e.id || uid() })),
-        certifications: (remoteResume.certifications || []).map((c: any) => {
-          if (typeof c === 'string') {
-            return { id: uid(), name: c, issuer: '', year: '' };
-          }
-          return { ...c, id: c.id || uid() };
-        }),
-        awards: (remoteResume.awards || remoteResume.recognition || []).map((a: any) => ({ ...a, id: a.id || uid() })),
-        featuredProject: {
-          include: projectData.include !== false && hasFeaturedProject,
-          name: projectData.name || projectData.title || '',
-          tech_stack: projectData.tech_stack || '',
-          bullet: projectData.bullet || (Array.isArray(projectData.bullets) ? projectData.bullets.join(' ') : '') || '',
-        },
-        sections_to_include: remoteResume.sections_to_include || {
-          summary: true,
-          skills: (remoteResume.skills || []).length > 0,
-          experience: (remoteResume.experience || []).length > 0,
-          featured_project: hasFeaturedProject,
-          education: (remoteResume.education || []).length > 0,
-          certifications: (remoteResume.certifications?.length || 0) > 0,
-          recognition: (remoteResume.awards?.length || remoteResume.recognition?.length || 0) > 0,
-        }
-      });
+      const newDraft = buildDraftWithProfileFallbacks(remoteResume, remoteResume.templateId || selectedTemplateId || 'executive', profile);
+      setDraft(newDraft);
       if (remoteResume.templateId) {
         setSelectedTemplateId(remoteResume.templateId);
       }
@@ -1430,6 +1569,38 @@ export default function ResumeBuilderScreen() {
                   )}
                 </View>
               )}
+              {isEditMode && unaddedWorkHistory.length > 0 && (
+                <View style={{ marginTop: 12, padding: 12, backgroundColor: `${colors.primary}0D`, borderRadius: 8, borderWidth: 1, borderColor: `${colors.primary}26` }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 }}>
+                    💡 Additional Roles from Profile ({unaddedWorkHistory.length} available):
+                  </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {unaddedWorkHistory.map((role: any, ri: number) => (
+                      <TouchableOpacity
+                        key={ri}
+                        style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bgPrimary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: colors.border }}
+                        onPress={() => {
+                          const newRole: ExperienceEntry = {
+                            id: uid(),
+                            title: role.title || role.role || 'Role',
+                            company: role.company || role.organization || '',
+                            date_range: role.date_range || role.dates || '',
+                            location: role.location || '',
+                            bullets: Array.isArray(role.bullets) ? role.bullets : (typeof role.description === 'string' ? [role.description] : []),
+                          };
+                          setDraft(p => p ? { ...p, experience: [...p.experience, newRole] } : p);
+                          Toast.show({ type: 'success', text1: 'Added to resume', text2: `${role.title} at ${role.company}` });
+                        }}
+                      >
+                        <Ionicons name="add-circle-outline" size={16} color={colors.primary} style={{ marginRight: 4 }} />
+                        <Text style={{ fontSize: 12, color: colors.textPrimary, fontWeight: '500' }}>
+                          + {role.title || 'Role'} ({role.company || ''})
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
           ))}
         </View>
@@ -1873,51 +2044,105 @@ export default function ResumeBuilderScreen() {
         </View>
         )}
 
-        {/* Add Sections Area */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, marginBottom: 20 }}>
-          {draft?.sections_to_include?.summary === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, summary: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Summary</Text>
-            </TouchableOpacity>
-          )}
-          {draft?.sections_to_include?.experience === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, experience: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Experience</Text>
-            </TouchableOpacity>
-          )}
-          {draft?.sections_to_include?.skills === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, skills: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Skills</Text>
-            </TouchableOpacity>
-          )}
-          {draft?.sections_to_include?.education === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, education: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Education</Text>
-            </TouchableOpacity>
-          )}
-          {draft?.sections_to_include?.featured_project === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, featured_project: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Project</Text>
-            </TouchableOpacity>
-          )}
-          {draft?.sections_to_include?.certifications === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, certifications: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Certifications</Text>
-            </TouchableOpacity>
-          )}
-          {draft?.sections_to_include?.recognition === false && (
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, recognition: true } } as any : p)}>
-              <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={[styles.outlineBtnText, { fontSize: 13 }]}>Awards</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Add / Restore Hidden Sections Card */}
+        {hasHiddenSections && (
+          <View style={[styles.sectionCard, { backgroundColor: `${colors.primary}08`, borderColor: `${colors.primary}26`, borderWidth: 1 }]}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionHeaderLeft}>
+                <Ionicons name="layers-outline" size={18} color={colors.primary} />
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Hidden / Excluded Sections</Text>
+              </View>
+              <View style={{ backgroundColor: `${colors.primary}18`, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                  {hiddenSectionsCount} Available
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 12, lineHeight: 18 }}>
+              These sections contain your profile information and can be added to lengthen or customize your resume:
+            </Text>
+
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {draft?.sections_to_include?.summary === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, summary: true } } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>+ Summary</Text>
+                </TouchableOpacity>
+              )}
+              {draft?.sections_to_include?.experience === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, experience: true } } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>
+                    + Experience {draft?.experience?.length ? `(${draft.experience.length})` : ''}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {draft?.sections_to_include?.skills === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, skills: true } } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>+ Skills</Text>
+                </TouchableOpacity>
+              )}
+              {draft?.sections_to_include?.education === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, education: true } } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>
+                    + Education {draft?.education?.length ? `(${draft.education.length})` : ''}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {draft?.sections_to_include?.featured_project === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? {
+                    ...p,
+                    sections_to_include: { ...p.sections_to_include, featured_project: true },
+                    featuredProject: p.featuredProject ? { ...p.featuredProject, include: true } : { include: true, name: '', tech_stack: '', bullet: '' }
+                  } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>
+                    + Featured Project {draft?.featuredProject?.name ? `(${draft.featuredProject.name})` : ''}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {draft?.sections_to_include?.certifications === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, certifications: true } } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>
+                    + Certifications {draft?.certifications?.length ? `(${draft.certifications.length} available)` : ''}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {draft?.sections_to_include?.recognition === false && (
+                <TouchableOpacity
+                  style={[styles.outlineBtn, { backgroundColor: colors.bgPrimary }]}
+                  onPress={() => setDraft(p => p ? { ...p, sections_to_include: { ...p.sections_to_include, recognition: true } } as any : p)}
+                >
+                  <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.outlineBtnText, { fontSize: 13, marginLeft: 4 }]}>
+                    + Awards {draft?.awards?.length ? `(${draft.awards.length} available)` : ''}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Action Buttons */}
         <View style={styles.actionRow}>
@@ -2004,15 +2229,41 @@ export default function ResumeBuilderScreen() {
           </View>
         </View>
         {isEditorView && (
-          <View style={styles.modeToggleContainer}>
-            <TouchableOpacity style={[styles.modeToggleBtn, isEditMode && styles.modeToggleBtnActive]} onPress={() => setIsEditMode(true)}>
-              <Ionicons name="document-text-outline" size={18} color={colors.primary} />
-              <Text style={[styles.modeToggleText, isEditMode && styles.modeToggleTextActive]}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.modeToggleBtn, !isEditMode && styles.modeToggleBtnActive]} onPress={() => setIsEditMode(false)}>
-              <Ionicons name="person-outline" size={18} color={colors.primary} />
-              <Text style={[styles.modeToggleText, !isEditMode && styles.modeToggleTextActive]}>Preview</Text>
-            </TouchableOpacity>
+          <View style={{ marginTop: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <View style={styles.modeToggleContainer}>
+                <TouchableOpacity style={[styles.modeToggleBtn, isEditMode && styles.modeToggleBtnActive]} onPress={() => setIsEditMode(true)}>
+                  <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.modeToggleText, isEditMode && styles.modeToggleTextActive]}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modeToggleBtn, !isEditMode && styles.modeToggleBtnActive]} onPress={() => setIsEditMode(false)}>
+                  <Ionicons name="person-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.modeToggleText, !isEditMode && styles.modeToggleTextActive]}>Preview</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Page Density & Length Indicator */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: `${pageDensityMetrics.color}15`,
+                borderColor: `${pageDensityMetrics.color}40`,
+                borderWidth: 1,
+                borderRadius: 20,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+              }}>
+                <Ionicons
+                  name={pageDensityMetrics.status === 'sparse' ? 'alert-circle-outline' : 'checkmark-circle'}
+                  size={16}
+                  color={pageDensityMetrics.color}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: pageDensityMetrics.color }}>
+                  {pageDensityMetrics.label}
+                </Text>
+              </View>
+            </View>
           </View>
         )}
       </View>

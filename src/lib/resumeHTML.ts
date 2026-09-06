@@ -1,6 +1,8 @@
 import { ResumeContent } from '../types/schemas';
 import { formatPersonName } from './exportUtils';
 
+// ─── Template CSS per template (colors, fonts, accent styles) ─────────────────
+
 function getTemplateCSS(template: string): string {
   const templates: Record<string, string> = {
     // 1. Executive: Classic Corporate Navy & Slate
@@ -303,8 +305,9 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     return { category: cat, items };
   }).filter((s: any) => s.items.length > 0);
 
+  const skillsHeader = template === 'minimal' ? 'Skills' : 'Skills &amp; Competencies';
   const skills = shouldInclude('skills', normalizedSkills.length > 0) ? `
-    <div class="section-header">Skills & Competencies</div>
+    <div class="section-header">${skillsHeader}</div>
     <table class="skills-table">
       ${normalizedSkills.map((s: any) => `
         <tr>
@@ -315,7 +318,6 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     </table>
   ` : '';
 
-  // Comprehensive experience renderer
   const rawExp = r.experience || [];
   const normalizedExp = rawExp.map((e: any) => {
     const title = e.title || e.role || e.position || '';
@@ -326,11 +328,16 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     return { title, company, date_range, location, bullets };
   }).filter((e: any) => e.title || e.company || e.bullets.length > 0);
 
+  const expHeader = template === 'academic'
+    ? 'Research &amp; Work Experience'
+    : template === 'tech-stack'
+      ? 'Work Experience'
+      : 'Professional Experience';
+
   const experience = shouldInclude('experience', normalizedExp.length > 0) ? `
-    <div class="section-header">Professional Experience</div>
+    <div class="section-header">${expHeader}</div>
     ${normalizedExp.map((e: any) => {
       const bullets = Array.isArray(e.bullets) ? e.bullets : [];
-
       return `
         <div class="role-block">
           <div class="role-line">
@@ -347,10 +354,11 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     }).join('')}
   ` : '';
 
+  const projHeaderLabel = template === 'academic' ? 'Research Project' : 'Featured Project';
   const proj = r.featured_project || (Array.isArray((r as any).projects) && (r as any).projects[0]) || null;
   const projHasContent = proj && (proj.name || proj.title);
   const project = shouldInclude('featured_project', !!projHasContent && (proj.include !== false || !r.sections_to_include)) ? `
-    <div class="section-header">Featured Project</div>
+    <div class="section-header">${projHeaderLabel}</div>
     <div class="role-block">
       <div class="role-title">${esc(proj.name || proj.title)}</div>
       ${proj.tech_stack ? `<div class="tech-stack">${esc(proj.tech_stack)}</div>` : ''}
@@ -375,8 +383,8 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
   const hasEdu = shouldInclude('education', normalizedEdu.length > 0);
   const hasCerts = shouldInclude('certifications', normalizedCerts.length > 0);
 
-  const education = (hasEdu || hasCerts) ? `
-    <div class="section-header">${hasEdu && hasCerts ? 'Education & Certifications' : hasEdu ? 'Education' : 'Certifications'}</div>
+  const educationBlock = (hasEdu || hasCerts) ? `
+    <div class="section-header">${hasEdu && hasCerts ? 'Education &amp; Certifications' : hasEdu ? 'Education' : 'Certifications'}</div>
     ${hasEdu ? normalizedEdu.map((e: any) => `
       <div class="edu-line">
         <span class="edu-degree">${esc(e.degree)}</span>
@@ -409,14 +417,24 @@ export function buildResumeHTML(r: ResumeContent, templateId?: string): string {
     return [item.name || item.title, item.issuer, item.year].filter(Boolean).join(' - ');
   }).filter(Boolean);
 
+  const recHeader = template === 'academic' ? 'Publications &amp; Recognition' : 'Recognition &amp; Awards';
   const recognition = shouldInclude('recognition', normalizedRec.length > 0) ? `
-    <div class="section-header">Recognition & Awards</div>
+    <div class="section-header">${recHeader}</div>
     <ul>${normalizedRec.map((item: string) => `<li>${esc(item)}</li>`).join('')}</ul>
   ` : '';
+
+  let bodyContent: string;
+  if (template === 'tech-stack') {
+    bodyContent = `${header}${summary}${skills}${project}${experience}${educationBlock}${languages}${recognition}`;
+  } else if (template === 'academic') {
+    bodyContent = `${header}${educationBlock}${summary}${skills}${experience}${project}${recognition}${languages}`;
+  } else {
+    bodyContent = `${header}${summary}${skills}${experience}${project}${educationBlock}${languages}${recognition}`;
+  }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>${esc(candidateName)}</title>
     <style>${css}</style></head><body>
-    ${header}${summary}${skills}${experience}${project}${education}${languages}${recognition}
+    ${bodyContent}
   </body></html>`;
 }

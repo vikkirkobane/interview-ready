@@ -410,7 +410,7 @@ describe('Resume Builder (new-resume) — user stories', () => {
     // Confirm Start Over in Alert dialog
     const startOverBtn = alertButtons.find(b => b.text === 'Start Over');
     expect(startOverBtn).toBeTruthy();
-    act(() => {
+    await act(async () => {
       startOverBtn.onPress();
     });
 
