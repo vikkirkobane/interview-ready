@@ -38,6 +38,59 @@ function sanitizeMetadata(metadata: Record<string, any>): Record<string, any> {
  * Native SMTP over TLS client for Spaceship (Spacemail)
  * Connects directly to mail.spacemail.com:465
  */
+/**
+ * Send email via Resend HTTP API for optimal deliverability
+ */
+async function sendResendHttp({
+  to,
+  from = Deno.env.get('RESEND_FROM_EMAIL') || 'Interview Ready <welcome@noreply.appinterviewready.top>',
+  replyTo = 'info@appinterviewready.top',
+  subject,
+  html,
+  text,
+  apiKey = Deno.env.get('RESEND_API_KEY') || '',
+}: {
+  to: string;
+  from?: string;
+  replyTo?: string;
+  subject: string;
+  html?: string;
+  text?: string;
+  apiKey?: string;
+}): Promise<{ messageId: string }> {
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY not configured');
+  }
+
+  const payload: Record<string, any> = {
+    from,
+    to: [to],
+    subject,
+    reply_to: replyTo,
+    headers: {
+      'List-Unsubscribe': '<mailto:info@appinterviewready.top?subject=unsubscribe>',
+    },
+  };
+  if (html) payload.html = html;
+  if (text) payload.text = text;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(`Resend send failed (${res.status}): ${body?.message || JSON.stringify(body)}`);
+  }
+
+  return { messageId: body?.id || 'resend_' + Date.now() };
+}
+
 async function sendSpaceshipSmtp({
   to,
   from,
@@ -430,7 +483,7 @@ export async function sendEmail({
     p_template_id: templateKey || null,
     p_metadata: sanitizeMetadata(metadata),
     p_status: 'pending',
-    p_provider: 'spaceship',
+    p_provider: providerUsed,
   });
 
   if (logError) {
@@ -439,16 +492,38 @@ export async function sendEmail({
 
   const logId = logData;
 
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  let providerUsed = 'spaceship';
+  let result: { messageId: string } | null = null;
+
   try {
-    // Send email via Spaceship (Spacemail SMTP)
-    const result = await sendSpaceshipSmtp({
-      to,
-      from: fromEmail,
-      replyTo,
-      subject: emailSubject,
-      html: emailHtml,
-      text: emailText,
-    });
+    if (resendApiKey) {
+      try {
+        result = await sendResendHttp({
+          to,
+          subject: emailSubject,
+          html: emailHtml,
+          text: emailText,
+          replyTo: replyTo || 'info@appinterviewready.top',
+          apiKey: resendApiKey,
+        });
+        providerUsed = 'resend';
+      } catch (resendErr: any) {
+        console.warn('[EmailService] Resend dispatch failed, attempting fallback to Spaceship SMTP:', resendErr?.message);
+      }
+    }
+
+    if (!result) {
+      result = await sendSpaceshipSmtp({
+        to,
+        from: fromEmail,
+        replyTo,
+        subject: emailSubject,
+        html: emailHtml,
+        text: emailText,
+      });
+      providerUsed = 'spaceship';
+    }
 
     // Update log with success
     if (logId) {

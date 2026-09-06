@@ -1,6 +1,7 @@
-import { Pressable ,
+import { Pressable,
   View,
   Text,
+  useWindowDimensions,
   StyleSheet,
   ScrollView,
   TextInput,
@@ -37,6 +38,10 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const isSmallScreen = windowWidth < 480;
+  const isVeryNarrow = windowWidth < 350;
+  const isMediumOrAbove = windowWidth >= 640;
   const {
     currentRole, setCurrentRole,
     company, setCompany,
@@ -93,7 +98,7 @@ export default function ProfileScreen() {
           // Get the file body to upload.
           // On mobile, fetch().blob() returns a blob with type='text/plain' on Android,
           // which causes Supabase Storage to store the wrong MIME type and can trigger
-          // bucket allowed_mime_types rejections. Using ArrayBuffer bypasses this —
+          // bucket allowed_mime_types rejections. Using ArrayBuffer bypasses this -
           // Supabase then uses the explicit contentType option we provide.
           let uploadBody: Blob | ArrayBuffer;
           if (payload.webFile) {
@@ -226,13 +231,20 @@ export default function ProfileScreen() {
         </Pressable>
 
         {/* Content Container */}
-        <View style={[styles.cardContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+        <View style={[
+          styles.cardContainer,
+          { 
+            backgroundColor: colors.bgCard,
+            borderColor: colors.border,
+            padding: isSmallScreen ? Spacing.md : Spacing.xl,
+          }
+        ]}>
           {/* Profile Form */}
           <View style={styles.formContainer}>
             
-            <View style={styles.rowGrid}>
+            <View style={[styles.rowGrid, { flexDirection: isMediumOrAbove ? 'row' : 'column' }]}>
               {/* Role Input */}
-              <View style={styles.fieldGroup}>
+              <View style={styles.fieldCol}>
                 <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Latest Role</Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
@@ -244,7 +256,7 @@ export default function ProfileScreen() {
               </View>
 
               {/* Company Input */}
-              <View style={styles.fieldGroup}>
+              <View style={styles.fieldCol}>
                 <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Company</Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
@@ -256,9 +268,9 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            <View style={styles.rowGrid}>
+            <View style={[styles.rowGrid, { flexDirection: isMediumOrAbove ? 'row' : 'column' }]}>
               {/* Location Input (Optional) */}
-              <View style={styles.fieldGroup}>
+              <View style={styles.fieldCol}>
                 <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Location (Optional)</Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
@@ -270,7 +282,7 @@ export default function ProfileScreen() {
               </View>
 
               {/* Phone Input (Optional) */}
-              <View style={styles.fieldGroup}>
+              <View style={styles.fieldCol}>
                 <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Phone (Optional)</Text>
                 <TextInput
                   style={[styles.textInput, { backgroundColor: colors.bgSecondary, borderColor: colors.border, color: colors.textPrimary }]}
@@ -284,7 +296,7 @@ export default function ProfileScreen() {
             </View>
 
             {/* Skills Tag Selector */}
-            <View style={styles.fieldGroup}>
+            <View style={styles.sectionGroup}>
               <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Top Skills</Text>
               <View style={styles.skillsWrapper}>
                 
@@ -293,7 +305,6 @@ export default function ProfileScreen() {
                     key={skill} 
                     style={[styles.skillChipActive, { backgroundColor: `${colors.primary}1A` }]}
                     onPress={() => removeSkill(skill)}
-                    
                   >
                     <Text style={[styles.skillChipTextActive, { color: colors.primary }]}>{skill}</Text>
                     <Ionicons name="close" size={14} color={colors.primary} />
@@ -305,7 +316,6 @@ export default function ProfileScreen() {
                     key={skill} 
                     style={[styles.skillChipInactive, { backgroundColor: colors.bgSecondary, borderColor: colors.border }]}
                     onPress={() => addSkill(skill)}
-                    
                   >
                     <Ionicons name="add" size={14} color={colors.textMuted} />
                     <Text style={[styles.skillChipTextInactive, { color: colors.textMuted }]}>{skill}</Text>
@@ -316,15 +326,22 @@ export default function ProfileScreen() {
             </View>
 
             {/* Resume Template Selector */}
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Resume Template</Text>
+            <View style={styles.sectionGroup}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.fieldLabel, { color: colors.textPrimary, marginBottom: 0 }]}>Resume Template</Text>
+                <Text style={[styles.sectionHint, { color: colors.textMuted }]}>Choose your layout style</Text>
+              </View>
               <View style={styles.templateGrid}>
                 {TEMPLATES.map(t => (
                   <Pressable
                     key={t.id}
                     style={[
                       styles.templateCard,
-                      { backgroundColor: colors.bgSecondary, borderColor: selectedTemplateId === t.id ? colors.primary : colors.border },
+                      {
+                        width: isVeryNarrow ? '100%' : '48.5%',
+                        backgroundColor: colors.bgSecondary,
+                        borderColor: selectedTemplateId === t.id ? colors.primary : colors.border,
+                      },
                       selectedTemplateId === t.id && { borderWidth: 2 },
                       Platform.OS === 'web' && { cursor: 'pointer' },
                     ]}
@@ -347,7 +364,7 @@ export default function ProfileScreen() {
             </View>
 
             {/* CTA Section */}
-            <View style={styles.ctaSection}>
+            <View style={[styles.ctaSection, { borderTopColor: colors.border }]}>
               <Pressable 
                 style={[
                   styles.continueBtn,
@@ -466,16 +483,31 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     width: '100%',
-    gap: Spacing.lg,
+    gap: Spacing.xl,
     zIndex: 10,
   },
   rowGrid: {
     width: '100%',
-    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
     gap: Spacing.md,
   },
-  fieldGroup: {
+  fieldCol: {
     flex: 1,
+    width: '100%',
+  },
+  sectionGroup: {
+    width: '100%',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: Spacing.sm,
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  sectionHint: {
+    ...Typography.bodySm,
+    fontSize: 12,
   },
   fieldLabel: {
     ...Typography.label,
@@ -520,12 +552,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: Spacing.sm,
+    rowGap: Spacing.md,
+    columnGap: Spacing.xs,
     width: '100%',
   },
   templateCard: {
-    width: '48%',
     padding: Spacing.md,
+    minHeight: 116,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
     alignItems: 'center',
@@ -541,6 +574,7 @@ const styles = StyleSheet.create({
     ...Typography.bodySm,
     fontSize: 11,
     textAlign: 'center',
+    lineHeight: 15,
   },
   premiumBadge: {
     flexDirection: 'row',
@@ -557,8 +591,9 @@ const styles = StyleSheet.create({
   },
   ctaSection: {
     width: '100%',
-    paddingTop: Spacing.md,
-    marginTop: Spacing.xs,
+    paddingTop: Spacing.lg,
+    marginTop: Spacing.md,
+    borderTopWidth: 1,
     gap: Spacing.sm,
   },
   continueBtn: {

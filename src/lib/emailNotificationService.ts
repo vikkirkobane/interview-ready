@@ -176,10 +176,16 @@ export function generateEmailHtmlTemplate({
       text-decoration: none;
       font-weight: 600;
     }
+    .preheader {
+      display: none;
+      max-height: 0;
+      overflow: hidden;
+      mso-hide: all;
+    }
   </style>
 </head>
 <body>
-  ${preheader ? `<div style="display:none;font-size:1px;color:#333333;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</div>` : ''}
+  ${preheader ? `<div class="preheader">${preheader}</div>` : ''}
   <div class="wrapper">
     <div class="card">
       <div class="header">
@@ -268,7 +274,7 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
     preheader: 'Your AI career toolkit is ready. Get started today.',
     title: 'Welcome to Interview Ready!',
     subtitle: 'Your account is ready to help you land your dream job.',
-    badgeText: 'WELCOME BONUS: 10 FREE AI CREDITS',
+    badgeText: 'ACCOUNT ACTIVATED: 10 PRACTICE CREDITS',
     userName: userName || 'there',
     bodyContent: `
       <p style="font-size: 15px; color: #475569; line-height: 1.6;">
@@ -279,7 +285,7 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
         <ol style="margin: 0; padding-left: 20px; font-size: 14px; color: #475569; line-height: 1.6;">
           <li style="margin-bottom: 6px;"><strong>Tailor Your Resume:</strong> Paste any job description to get instant ATS scores and bullet-point optimizations.</li>
           <li style="margin-bottom: 6px;"><strong>Practice Mock Interviews:</strong> Experience real-time audio and text interview coaching tailored to your target job.</li>
-          <li><strong>Optimize LinkedIn:</strong> Transform your headline and about section into a high-visibility recruiter magnet.</li>
+          <li><strong>Optimize LinkedIn:</strong> Transform your headline and about section into a high-visibility profile for recruiters.</li>
         </ol>
       </div>
     `,
@@ -305,7 +311,7 @@ export async function triggerWelcomeEmail(userEmail: string, userName?: string):
 
   const res = await sendEmailNotification({
     to: userEmail,
-    subject: `You're in! Welcome to Interview Ready`,
+    subject: 'Welcome to Interview Ready - Your Account Is Active',
     html,
     text,
     emailType: 'welcome',
