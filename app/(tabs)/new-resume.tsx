@@ -40,20 +40,25 @@ interface Header {
 interface ExperienceEntry {
   id: string; title: string; company: string;
   date_range: string; location?: string; bullets: string[];
+  hidden?: boolean;
+  hidden_bullets?: number[];
 }
 
-interface SkillCategory { id: string; category: string; items: string[]; }
+interface SkillCategory { id: string; category: string; items: string[]; hidden?: boolean; }
 
 interface EducationEntry {
   id: string; degree: string; institution: string; year: string; note?: string;
+  hidden?: boolean;
 }
 
 interface CertificationEntry {
   id: string; name: string; issuer: string; year: string;
+  hidden?: boolean;
 }
 
 interface AwardEntry {
   id: string; name: string; issuer: string; year: string;
+  hidden?: boolean;
 }
 
 interface FeaturedProject {
@@ -592,14 +597,17 @@ export default function ResumeBuilderScreen() {
     }
     if (draft.sections_to_include?.experience !== false) {
       for (const exp of draft.experience || []) {
+        if (exp.hidden) continue;
         words += (exp.title + ' ' + exp.company).split(/\s+/).filter(Boolean).length;
-        for (const b of exp.bullets || []) {
-          words += b.split(/\s+/).filter(Boolean).length;
+        for (let i = 0; i < (exp.bullets || []).length; i++) {
+          if (exp.hidden_bullets?.includes(i)) continue;
+          words += exp.bullets[i].split(/\s+/).filter(Boolean).length;
         }
       }
     }
     if (draft.sections_to_include?.skills !== false) {
       for (const s of draft.skills || []) {
+        if (s.hidden) continue;
         words += s.category.split(/\s+/).filter(Boolean).length;
         for (const it of s.items || []) {
           words += it.split(/\s+/).filter(Boolean).length;
@@ -611,16 +619,19 @@ export default function ResumeBuilderScreen() {
     }
     if (draft.sections_to_include?.education !== false) {
       for (const edu of draft.education || []) {
+        if (edu.hidden) continue;
         words += (edu.degree + ' ' + edu.institution + ' ' + (edu.note || '')).split(/\s+/).filter(Boolean).length;
       }
     }
     if (draft.sections_to_include?.certifications !== false) {
       for (const c of draft.certifications || []) {
+        if (c.hidden) continue;
         words += (c.name + ' ' + c.issuer).split(/\s+/).filter(Boolean).length;
       }
     }
     if (draft.sections_to_include?.recognition !== false) {
       for (const a of draft.awards || []) {
+        if (a.hidden) continue;
         words += (a.name + ' ' + a.issuer).split(/\s+/).filter(Boolean).length;
       }
     }
@@ -729,27 +740,29 @@ export default function ResumeBuilderScreen() {
         subtitle: draft.header?.subtitle || '',
       },
       summary: { text: summaryText },
-      experience: (draft.experience || []).map(e => ({
-        title: e.title || '',
-        company: e.company || '',
-        date_range: e.date_range || '',
-        location: e.location || '',
-        bullets: e.bullets || [],
-      })),
-      skills: draft.skills || [],
-      education: draft.education || [],
+      experience: (draft.experience || [])
+        .filter(e => !e.hidden)
+        .map(e => ({
+          title: e.title || '',
+          company: e.company || '',
+          date_range: e.date_range || '',
+          location: e.location || '',
+          bullets: (e.bullets || []).filter((_, i) => !e.hidden_bullets?.includes(i)),
+        })),
+      skills: (draft.skills || []).filter(s => !s.hidden),
+      education: (draft.education || []).filter(e => !e.hidden),
       featured_project: draft.featuredProject || (draft as any).featured_project,
-      certifications: (draft.certifications || []).map(c => typeof c === 'string' ? c : [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
-      recognition: (draft.awards || (draft as any).recognition || []).map(a => typeof a === 'string' ? a : [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
+      certifications: (draft.certifications || []).filter(c => !c.hidden).map(c => typeof c === 'string' ? c : [c.name, c.issuer, c.year].filter(Boolean).join(' - ')),
+      recognition: (draft.awards || (draft as any).recognition || []).filter(a => !a.hidden).map(a => typeof a === 'string' ? a : [a.name, a.issuer, a.year].filter(Boolean).join(' - ')),
       sections_to_include: {
         summary: draft.sections_to_include?.summary !== false && !!summaryText,
-        skills: draft.sections_to_include?.skills !== false && (draft.skills || []).length > 0,
-        experience: draft.sections_to_include?.experience !== false && (draft.experience || []).length > 0,
+        skills: draft.sections_to_include?.skills !== false && (draft.skills || []).filter(s => !s.hidden).length > 0,
+        experience: draft.sections_to_include?.experience !== false && (draft.experience || []).filter(e => !e.hidden).length > 0,
         featured_project: draft.sections_to_include?.featured_project !== false && !!(draft.featuredProject?.include && (draft.featuredProject?.name || draft.featuredProject?.tech_stack || draft.featuredProject?.bullet)),
-        education: draft.sections_to_include?.education !== false && (draft.education || []).length > 0,
-        certifications: draft.sections_to_include?.certifications !== false && (draft.certifications || []).length > 0,
+        education: draft.sections_to_include?.education !== false && (draft.education || []).filter(e => !e.hidden).length > 0,
+        certifications: draft.sections_to_include?.certifications !== false && (draft.certifications || []).filter(c => !c.hidden).length > 0,
         languages: false,
-        recognition: draft.sections_to_include?.recognition !== false && (draft.awards || (draft as any).recognition || []).length > 0,
+        recognition: draft.sections_to_include?.recognition !== false && (draft.awards || (draft as any).recognition || []).filter(a => !a.hidden).length > 0,
       }
     };
   };
@@ -1067,6 +1080,22 @@ export default function ResumeBuilderScreen() {
   const deleteExperience = (expId: string) => {
     setDraft(prev => prev ? { ...prev, experience: prev.experience.filter(e => e.id !== expId) } : prev);
   };
+  const toggleHideExperience = (expId: string) => {
+    setDraft(prev => {
+      if (!prev) return prev;
+      const target = prev.experience.find(e => e.id === expId);
+      const willHide = !target?.hidden;
+      Toast.show({
+        type: 'info',
+        text1: willHide ? 'Position hidden' : 'Position restored',
+        text2: willHide ? 'Excluded from exported resume.' : 'Included in resume again.',
+      });
+      return {
+        ...prev,
+        experience: prev.experience.map(e => e.id === expId ? { ...e, hidden: willHide } : e)
+      };
+    });
+  };
   const updateExp = (expId: string, field: keyof ExperienceEntry, value: string | string[]) => {
     setDraft(prev => {
       if (!prev) return prev;
@@ -1098,6 +1127,21 @@ export default function ResumeBuilderScreen() {
       return { ...prev, experience: prev.experience.map(e => e.id === expId ? { ...e, bullets: e.bullets.filter((_: string, i: number) => i !== idx) } : e) };
     });
   };
+  const toggleHideBullet = (expId: string, idx: number) => {
+    setDraft(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        experience: prev.experience.map(e => {
+          if (e.id !== expId) return e;
+          const currentHidden = e.hidden_bullets || [];
+          const isHidden = currentHidden.includes(idx);
+          const nextHidden = isHidden ? currentHidden.filter(i => i !== idx) : [...currentHidden, idx];
+          return { ...e, hidden_bullets: nextHidden };
+        })
+      };
+    });
+  };
 
   // ── Skill helpers ─────────────────────────────────────────────────────────
   const addSkill = () => {
@@ -1110,6 +1154,22 @@ export default function ResumeBuilderScreen() {
   };
   const deleteSkill = (skillId: string) => {
     setDraft(prev => prev ? { ...prev, skills: prev.skills.filter(s => s.id !== skillId) } : prev);
+  };
+  const toggleHideSkill = (skillId: string) => {
+    setDraft(prev => {
+      if (!prev) return prev;
+      const target = prev.skills.find(s => s.id === skillId);
+      const willHide = !target?.hidden;
+      Toast.show({
+        type: 'info',
+        text1: willHide ? 'Skill category hidden' : 'Skill category restored',
+        text2: willHide ? 'Excluded from exported resume.' : 'Included in resume again.',
+      });
+      return {
+        ...prev,
+        skills: prev.skills.map(s => s.id === skillId ? { ...s, hidden: willHide } : s)
+      };
+    });
   };
   const addSkillItem = (skillId: string) => {
     setDraft(prev => {
@@ -1153,6 +1213,22 @@ export default function ResumeBuilderScreen() {
   const deleteEducation = (eduId: string) => {
     setDraft(prev => prev ? { ...prev, education: prev.education.filter(e => e.id !== eduId) } : prev);
   };
+  const toggleHideEducation = (eduId: string) => {
+    setDraft(prev => {
+      if (!prev) return prev;
+      const target = prev.education.find(e => e.id === eduId);
+      const willHide = !target?.hidden;
+      Toast.show({
+        type: 'info',
+        text1: willHide ? 'Education entry hidden' : 'Education entry restored',
+        text2: willHide ? 'Excluded from exported resume.' : 'Included in resume again.',
+      });
+      return {
+        ...prev,
+        education: prev.education.map(e => e.id === eduId ? { ...e, hidden: willHide } : e)
+      };
+    });
+  };
   const updateEdu = (eduId: string, field: keyof EducationEntry, value: string) => {
     setDraft(prev => {
       if (!prev) return prev;
@@ -1169,6 +1245,22 @@ export default function ResumeBuilderScreen() {
   const deleteCertification = (certId: string) => {
     setDraft(prev => prev ? { ...prev, certifications: prev.certifications.filter(c => c.id !== certId) } : prev);
   };
+  const toggleHideCertification = (certId: string) => {
+    setDraft(prev => {
+      if (!prev) return prev;
+      const target = prev.certifications.find(c => c.id === certId);
+      const willHide = !target?.hidden;
+      Toast.show({
+        type: 'info',
+        text1: willHide ? 'Certification hidden' : 'Certification restored',
+        text2: willHide ? 'Excluded from exported resume.' : 'Included in resume again.',
+      });
+      return {
+        ...prev,
+        certifications: prev.certifications.map(c => c.id === certId ? { ...c, hidden: willHide } : c)
+      };
+    });
+  };
   const updateCertification = (certId: string, field: keyof CertificationEntry, value: string) => {
     setDraft(prev => {
       if (!prev) return prev;
@@ -1184,6 +1276,22 @@ export default function ResumeBuilderScreen() {
   };
   const deleteAward = (awardId: string) => {
     setDraft(prev => prev ? { ...prev, awards: prev.awards.filter(a => a.id !== awardId) } : prev);
+  };
+  const toggleHideAward = (awardId: string) => {
+    setDraft(prev => {
+      if (!prev) return prev;
+      const target = prev.awards.find(a => a.id === awardId);
+      const willHide = !target?.hidden;
+      Toast.show({
+        type: 'info',
+        text1: willHide ? 'Award hidden' : 'Award restored',
+        text2: willHide ? 'Excluded from exported resume.' : 'Included in resume again.',
+      });
+      return {
+        ...prev,
+        awards: prev.awards.map(a => a.id === awardId ? { ...a, hidden: willHide } : a)
+      };
+    });
   };
   const updateAward = (awardId: string, field: keyof AwardEntry, value: string) => {
     setDraft(prev => {
@@ -1491,15 +1599,36 @@ export default function ResumeBuilderScreen() {
           )}
 
           {(draft?.experience || []).map((exp, index) => (
-            <View key={exp.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
+            <View key={exp.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder, exp.hidden && styles.entryCardHidden]}>
               <TouchableOpacity style={styles.entryHeader} onPress={() => setExpandedExp(expandedExp === exp.id ? null : exp.id)} activeOpacity={0.7}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.entryTitle} numberOfLines={1}>{exp.title || 'New Position'}</Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <Text style={[styles.entryTitle, exp.hidden && { color: colors.textMuted }]} numberOfLines={1}>{exp.title || 'New Position'}</Text>
+                    {exp.hidden && (
+                      <View style={styles.hiddenBadge}>
+                        <Ionicons name="eye-off-outline" size={10} color={colors.textMuted} />
+                        <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.entrySub} numberOfLines={1}>{exp.company}{exp.date_range ? ' · ' + exp.date_range : ''}</Text>
                 </View>
                 <View style={styles.entryActions}>
                   {isEditMode && (
-                    <TouchableOpacity style={styles.iconBtn} onPress={() => deleteExperience(exp.id)}>
+                    <TouchableOpacity
+                      style={styles.iconBtn}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleHideExperience(exp.id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={exp.hidden ? "Unhide experience position" : "Hide experience position"}
+                    >
+                      <Ionicons name={exp.hidden ? "eye-outline" : "eye-off-outline"} size={16} color={exp.hidden ? colors.primary : colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                  {isEditMode && (
+                    <TouchableOpacity style={styles.iconBtn} onPress={() => deleteExperience(exp.id)} accessibilityRole="button" accessibilityLabel="Delete experience">
                       <Ionicons name="trash-outline" size={16} color={colors.error} />
                     </TouchableOpacity>
                   )}
@@ -1544,25 +1673,38 @@ export default function ResumeBuilderScreen() {
                       </TouchableOpacity>
                     )}
                   </View>
-                  {exp.bullets.map((bullet, bi) => (
-                    <View key={bi} style={styles.bulletRow}>
-                      <Text style={styles.bulletDot}>•</Text>
-                      <TextInput
-                        style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                        value={bullet}
-                        onChangeText={v => updateBullet(exp.id, bi, v)}
-                        placeholder="Describe an achievement..."
-                        placeholderTextColor={colors.textMuted}
-                        multiline
-                        editable={isEditMode}
-                      />
-                      {isEditMode && exp.bullets.length > 1 && (
-                        <TouchableOpacity style={styles.iconBtn} onPress={() => deleteBullet(exp.id, bi)}>
-                          <Ionicons name="close" size={16} color={colors.textMuted} />
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  ))}
+                  {exp.bullets.map((bullet, bi) => {
+                    const isBulletHidden = exp.hidden_bullets?.includes(bi);
+                    return (
+                      <View key={bi} style={[styles.bulletRow, isBulletHidden && { opacity: 0.5 }]}>
+                        <Text style={[styles.bulletDot, isBulletHidden && { color: colors.textMuted }]}>•</Text>
+                        <TextInput
+                          style={[styles.input, { flex: 1, marginBottom: 0 }, isBulletHidden && { color: colors.textMuted }]}
+                          value={bullet}
+                          onChangeText={v => updateBullet(exp.id, bi, v)}
+                          placeholder="Describe an achievement..."
+                          placeholderTextColor={colors.textMuted}
+                          multiline
+                          editable={isEditMode}
+                        />
+                        {isEditMode && (
+                          <TouchableOpacity
+                            style={styles.iconBtn}
+                            onPress={() => toggleHideBullet(exp.id, bi)}
+                            accessibilityRole="button"
+                            accessibilityLabel={isBulletHidden ? "Unhide bullet point" : "Hide bullet point"}
+                          >
+                            <Ionicons name={isBulletHidden ? "eye-outline" : "eye-off-outline"} size={16} color={isBulletHidden ? colors.primary : colors.textMuted} />
+                          </TouchableOpacity>
+                        )}
+                        {isEditMode && exp.bullets.length > 1 && (
+                          <TouchableOpacity style={styles.iconBtn} onPress={() => deleteBullet(exp.id, bi)} accessibilityRole="button" accessibilityLabel="Delete bullet">
+                            <Ionicons name="close" size={16} color={colors.textMuted} />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    );
+                  })}
                   {isEditMode && (
                     <TouchableOpacity style={styles.inlineAddBtn} onPress={() => addBullet(exp.id)}>
                       <Ionicons name="add" size={16} color={colors.primary} />
@@ -1640,14 +1782,22 @@ export default function ResumeBuilderScreen() {
             const itemCount = skill.items.length;
             const displaySub = itemCount > 0 ? `${itemCount} skill${itemCount !== 1 ? 's' : ''}` : 'Tap to add skills';
             return (
-              <View key={skill.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
+              <View key={skill.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder, skill.hidden && styles.entryCardHidden]}>
                 <TouchableOpacity 
                   style={styles.entryHeader} 
                   onPress={() => setExpandedSkill(expandedSkill === skill.id ? null : skill.id)} 
                   activeOpacity={0.7}
                 >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.entryTitle} numberOfLines={1}>{displayName}</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={[styles.entryTitle, skill.hidden && { color: colors.textMuted }]} numberOfLines={1}>{displayName}</Text>
+                      {skill.hidden && (
+                        <View style={styles.hiddenBadge}>
+                          <Ionicons name="eye-off-outline" size={10} color={colors.textMuted} />
+                          <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.entrySub} numberOfLines={1}>{displaySub}</Text>
                   </View>
                   <View style={styles.entryActions}>
@@ -1656,8 +1806,23 @@ export default function ResumeBuilderScreen() {
                         style={styles.iconBtn} 
                         onPress={(e) => {
                           e.stopPropagation();
+                          toggleHideSkill(skill.id);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={skill.hidden ? "Unhide skill category" : "Hide skill category"}
+                      >
+                        <Ionicons name={skill.hidden ? "eye-outline" : "eye-off-outline"} size={16} color={skill.hidden ? colors.primary : colors.textMuted} />
+                      </TouchableOpacity>
+                    )}
+                    {isEditMode && (
+                      <TouchableOpacity 
+                        style={styles.iconBtn} 
+                        onPress={(e) => {
+                          e.stopPropagation();
                           deleteSkill(skill.id);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Delete skill category"
                       >
                         <Ionicons name="trash-outline" size={16} color={colors.error} />
                       </TouchableOpacity>
@@ -1766,15 +1931,36 @@ export default function ResumeBuilderScreen() {
           )}
 
           {(draft?.education || []).map((edu, index) => (
-            <View key={edu.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
+            <View key={edu.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder, edu.hidden && styles.entryCardHidden]}>
               <TouchableOpacity style={styles.entryHeader} onPress={() => setExpandedEdu(expandedEdu === edu.id ? null : edu.id)} activeOpacity={0.7}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.entryTitle} numberOfLines={1}>{edu.degree || 'New Degree'}</Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <Text style={[styles.entryTitle, edu.hidden && { color: colors.textMuted }]} numberOfLines={1}>{edu.degree || 'New Degree'}</Text>
+                    {edu.hidden && (
+                      <View style={styles.hiddenBadge}>
+                        <Ionicons name="eye-off-outline" size={10} color={colors.textMuted} />
+                        <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.entrySub} numberOfLines={1}>{edu.institution}{edu.year ? ' · ' + edu.year : ''}</Text>
                 </View>
                 <View style={styles.entryActions}>
                   {isEditMode && (
-                    <TouchableOpacity style={styles.iconBtn} onPress={() => deleteEducation(edu.id)}>
+                    <TouchableOpacity
+                      style={styles.iconBtn}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        toggleHideEducation(edu.id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={edu.hidden ? "Unhide education" : "Hide education"}
+                    >
+                      <Ionicons name={edu.hidden ? "eye-outline" : "eye-off-outline"} size={16} color={edu.hidden ? colors.primary : colors.textMuted} />
+                    </TouchableOpacity>
+                  )}
+                  {isEditMode && (
+                    <TouchableOpacity style={styles.iconBtn} onPress={() => deleteEducation(edu.id)} accessibilityRole="button" accessibilityLabel="Delete education">
                       <Ionicons name="trash-outline" size={16} color={colors.error} />
                     </TouchableOpacity>
                   )}
@@ -1912,14 +2098,22 @@ export default function ResumeBuilderScreen() {
             const displayName = cert.name?.trim() || 'New Certification';
             const displaySub = [cert.issuer || '', cert.year || ''].filter(Boolean).join(' · ') || 'Tap to add details';
             acc.push(
-              <View key={cert.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
+              <View key={cert.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder, cert.hidden && styles.entryCardHidden]}>
                 <TouchableOpacity 
                   style={styles.entryHeader} 
                   onPress={() => setExpandedCert(expandedCert === cert.id ? null : cert.id)} 
                   activeOpacity={0.7}
                 >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.entryTitle} numberOfLines={1}>{displayName}</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={[styles.entryTitle, cert.hidden && { color: colors.textMuted }]} numberOfLines={1}>{displayName}</Text>
+                      {cert.hidden && (
+                        <View style={styles.hiddenBadge}>
+                          <Ionicons name="eye-off-outline" size={10} color={colors.textMuted} />
+                          <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.entrySub} numberOfLines={1}>{displaySub}</Text>
                   </View>
                   <View style={styles.entryActions}>
@@ -1928,8 +2122,23 @@ export default function ResumeBuilderScreen() {
                         style={styles.iconBtn} 
                         onPress={(e) => {
                           e.stopPropagation();
+                          toggleHideCertification(cert.id);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={cert.hidden ? "Unhide certification" : "Hide certification"}
+                      >
+                        <Ionicons name={cert.hidden ? "eye-outline" : "eye-off-outline"} size={16} color={cert.hidden ? colors.primary : colors.textMuted} />
+                      </TouchableOpacity>
+                    )}
+                    {isEditMode && (
+                      <TouchableOpacity 
+                        style={styles.iconBtn} 
+                        onPress={(e) => {
+                          e.stopPropagation();
                           deleteCertification(cert.id);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Delete certification"
                       >
                         <Ionicons name="trash-outline" size={16} color={colors.error} />
                       </TouchableOpacity>
@@ -1995,14 +2204,22 @@ export default function ResumeBuilderScreen() {
             const displayName = award.name?.trim() || 'New Award';
             const displaySub = [award.issuer || '', award.year || ''].filter(Boolean).join(' · ') || 'Tap to add details';
             acc.push(
-              <View key={award.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder]}>
+              <View key={award.id} style={[styles.entryCard, index > 0 && styles.entryCardBorder, award.hidden && styles.entryCardHidden]}>
                 <TouchableOpacity 
                   style={styles.entryHeader} 
                   onPress={() => setExpandedAward(expandedAward === award.id ? null : award.id)} 
                   activeOpacity={0.7}
                 >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.entryTitle} numberOfLines={1}>{displayName}</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      <Text style={[styles.entryTitle, award.hidden && { color: colors.textMuted }]} numberOfLines={1}>{displayName}</Text>
+                      {award.hidden && (
+                        <View style={styles.hiddenBadge}>
+                          <Ionicons name="eye-off-outline" size={10} color={colors.textMuted} />
+                          <Text style={styles.hiddenBadgeText}>Hidden</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.entrySub} numberOfLines={1}>{displaySub}</Text>
                   </View>
                   <View style={styles.entryActions}>
@@ -2011,8 +2228,23 @@ export default function ResumeBuilderScreen() {
                         style={styles.iconBtn} 
                         onPress={(e) => {
                           e.stopPropagation();
+                          toggleHideAward(award.id);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={award.hidden ? "Unhide award" : "Hide award"}
+                      >
+                        <Ionicons name={award.hidden ? "eye-outline" : "eye-off-outline"} size={16} color={award.hidden ? colors.primary : colors.textMuted} />
+                      </TouchableOpacity>
+                    )}
+                    {isEditMode && (
+                      <TouchableOpacity 
+                        style={styles.iconBtn} 
+                        onPress={(e) => {
+                          e.stopPropagation();
                           deleteAward(award.id);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Delete award"
                       >
                         <Ionicons name="trash-outline" size={16} color={colors.error} />
                       </TouchableOpacity>
@@ -2564,6 +2796,23 @@ const makeStyles = (colors: any) => StyleSheet.create({
   // Entry cards (experience, education)
   entryCard: { paddingTop: Spacing.sm },
   entryCardBorder: { borderTopWidth: 1, borderTopColor: colors.border, marginTop: Spacing.sm },
+  entryCardHidden: { opacity: 0.65 },
+  hiddenBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(156, 163, 175, 0.15)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(156, 163, 175, 0.25)',
+  },
+  hiddenBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginLeft: 3,
+  },
   entryHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: Spacing.sm },
   entryTitle: { ...Typography.headingMd, color: colors.textPrimary },
   entrySub: { ...Typography.bodySm, color: colors.textMuted, marginTop: 2 },

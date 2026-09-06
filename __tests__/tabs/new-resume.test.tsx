@@ -562,4 +562,81 @@ describe('Resume Builder (new-resume) — user stories', () => {
       );
     });
   });
+
+  it('allows user to hide and unhide specific parts where delete icons are present and excludes them from exports', async () => {
+    router.__setMockParams({ id: 'resume-hide-test' });
+    mockSupabase.__mockHelpers.tables['resumes'] = [
+      {
+        id: 'resume-hide-test',
+        user_id: 'test-user-id',
+        title: 'Full Stack Engineer Resume',
+        resume_contents: [
+          {
+            templateId: 'executive',
+            header: { name: 'Taylor Swift', title: 'Principal Engineer', email: 'taylor@example.com' },
+            summary: 'Experienced principal architect building scalable platforms.',
+            experience: [
+              { id: 'exp-1', title: 'Staff Engineer', company: 'Global Tech', bullets: ['Architected microservices'] },
+              { id: 'exp-2', title: 'Senior Developer', company: 'Startup Co', bullets: ['Built React Native app'] },
+            ],
+            skills: [{ id: 'sk-1', category: 'Backend', items: ['Go', 'PostgreSQL'] }],
+            education: [{ id: 'edu-1', degree: 'B.S. Software Engineering', institution: 'State University', year: '2016' }],
+            certifications: [],
+            awards: [],
+            sections_to_include: { summary: true, experience: true, skills: true, education: true },
+          },
+        ],
+      },
+    ];
+
+    const screen = await renderScreen();
+    await waitFor(() => {
+      expect(screen.getByText('Staff Engineer')).toBeTruthy();
+      expect(screen.getByText('Senior Developer')).toBeTruthy();
+    });
+
+    // Both positions should have a Hide button next to their Delete button
+    const hideExpButtons = screen.getAllByLabelText('Hide experience position');
+    expect(hideExpButtons.length).toBe(2);
+
+    // 1. Hide the first position ('Staff Engineer')
+    await fireEvent.press(hideExpButtons[0]);
+
+    await waitFor(() => {
+      // It should display the 'Hidden' badge and notification toast
+      expect(screen.getByText('Hidden')).toBeTruthy();
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'Position hidden' })
+      );
+    });
+
+    // 2. Open export modal and trigger PDF download
+    await fireEvent.press(screen.getByLabelText('Download resume'));
+    await waitFor(() => expect(screen.getByLabelText('Download PDF resume')).toBeTruthy());
+    await fireEvent.press(screen.getByLabelText('Download PDF resume'));
+
+    // Verify exported data excludes the hidden 'Staff Engineer' position and keeps 'Senior Developer'
+    await waitFor(() => {
+      expect(exportResumePDF).toHaveBeenCalledWith(
+        expect.objectContaining({
+          experience: [
+            expect.objectContaining({ title: 'Senior Developer' }),
+          ],
+        }),
+        'executive'
+      );
+    });
+
+    // 3. Unhide the position
+    const unhideExpButton = screen.getByLabelText('Unhide experience position');
+    await fireEvent.press(unhideExpButton);
+
+    await waitFor(() => {
+      expect(mockToast.show).toHaveBeenCalledWith(
+        expect.objectContaining({ text1: 'Position restored' })
+      );
+      // 'Hidden' badge should be gone
+      expect(screen.queryByText('Hidden')).toBeNull();
+    });
+  });
 });

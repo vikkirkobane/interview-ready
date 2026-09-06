@@ -50,3 +50,7 @@ interview-ready-landing/
 .vercel
 .freebuff/
 .env*
+
+# Documentation
+docs/
+
