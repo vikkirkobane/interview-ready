@@ -96,6 +96,15 @@ const POSTS = [
     date: '2026-09-06',
     tags: ['public speaking', 'communication skills', 'interview preparation', 'recording yourself'],
   },
+  {
+    slug: 'ai-resume-judgment',
+    title: 'AI Can Write Your Resume, But Only You Can Decide What Matters Most',
+    description:
+      'AI can help you write a stronger resume, but it cannot decide what matters most for you. That is the line worth understanding. The tools are genuinely useful: they format faster, match keywords, and surface language you might never have thought of. But the real work of a resume is knowing which experiences support the story you want to tell.',
+    image: '/blog/images/ai-resume-judgment.jpg',
+    date: '2026-09-07',
+    tags: ['AI resume', 'resume writing', 'career narrative', 'personal branding', 'judgment', 'Interview Ready'],
+  },
 ];
 
 for (const post of POSTS) {

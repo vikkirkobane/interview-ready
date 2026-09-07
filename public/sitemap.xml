@@ -71,8 +71,13 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://appinterviewready.top/blog/record-yourself-speaking-daily</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-</urlset>
+      <loc>https://appinterviewready.top/blog/record-yourself-speaking-daily</loc>
+      <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+    </url>
+    <url>
+      <loc>https://appinterviewready.top/blog/ai-resume-judgment</loc>
+      <changefreq>monthly</changefreq>
+      <priority>0.7</priority>
+    </url>
+  </urlset>
