@@ -98,6 +98,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/record-yourself-speaking-daily.jpg',
     tags: ['public speaking', 'communication skills', 'interview preparation', 'recording yourself'],
   },
+  {
+    slug: 'interview-silence-guide',
+    title: 'The Silence After an Interview Feels Worse Than Rejection: How to Handle It Without Losing Yourself',
+    date: '2026-09-08',
+    description:
+      'The silence after an interview can feel worse than the rejection itself. Learn how to manage the uncertainty, follow up strategically, and keep moving forward.',
+    coverImage: '/blog/images/interview-silence-guide.jpg',
+    tags: ['interview follow up', 'job search', 'post interview silence', 'career advice', 'uncertainty'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {

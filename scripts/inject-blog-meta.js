@@ -105,6 +105,15 @@ const POSTS = [
     date: '2026-09-07',
     tags: ['AI resume', 'resume writing', 'career narrative', 'personal branding', 'judgment', 'Interview Ready'],
   },
+  {
+    slug: 'interview-silence-guide',
+    title: 'The Silence After an Interview Feels Worse Than Rejection: How to Handle It Without Losing Yourself',
+    description:
+      'The silence after an interview can feel worse than the rejection itself. Learn how to manage the uncertainty, follow up strategically, and keep moving forward.',
+    image: '/blog/images/interview-silence-guide.jpg',
+    date: '2026-09-08',
+    tags: ['interview follow up', 'job search', 'post interview silence', 'career advice', 'uncertainty'],
+  },
 ];
 
 for (const post of POSTS) {
