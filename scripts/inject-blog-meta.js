@@ -114,6 +114,15 @@ const POSTS = [
     date: '2026-09-08',
     tags: ['interview follow up', 'job search', 'post interview silence', 'career advice', 'uncertainty'],
   },
+  {
+    slug: 'perseverance-change-direction',
+    title: 'Sometimes Perseverance Means Continuing. Sometimes It Means Changing Direction.',
+    description:
+      'Career growth is not about staying on the same road at all costs. It is about staying committed to yourself, even when that means choosing a different direction.',
+    image: '/blog/images/perseverance-change-direction.jpg',
+    date: '2026-09-08',
+    tags: ['career growth', 'perseverance', 'career pivot', 'self awareness'],
+  },
 ];
 
 for (const post of POSTS) {

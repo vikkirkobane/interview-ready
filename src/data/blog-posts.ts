@@ -107,6 +107,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/interview-silence-guide.jpg',
     tags: ['interview follow up', 'job search', 'post interview silence', 'career advice', 'uncertainty'],
   },
+  {
+    slug: 'perseverance-change-direction',
+    title: 'Sometimes Perseverance Means Continuing. Sometimes It Means Changing Direction.',
+    date: '2026-09-08',
+    description:
+      'Career growth is not about staying on the same road at all costs. It is about staying committed to yourself, even when that means choosing a different direction.',
+    coverImage: '/blog/images/perseverance-change-direction.jpg',
+    tags: ['career growth', 'perseverance', 'career pivot', 'self awareness'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {
