@@ -12,6 +12,7 @@ const path = require('path');
 
 const DIST_DIR = path.join(__dirname, '..', 'dist', 'blog');
 const SITE_NAME = 'Interview Ready';
+const SITE_URL = 'https://appinterviewready.top';
 
 // Blog post metadata (must stay in sync with src/data/blog-posts.ts)
 const POSTS = [
@@ -149,12 +150,12 @@ for (const post of POSTS) {
     `<meta property="og:type" content="article" />`,
     `<meta property="og:title" content="${post.title}" />`,
     `<meta property="og:description" content="${post.description}" />`,
-    `<meta property="og:image" content="${post.image}" />`,
+    `<meta property="og:image" content="${SITE_URL}${post.image}" />`,
     `<meta property="og:site_name" content="${SITE_NAME}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${post.title}" />`,
     `<meta name="twitter:description" content="${post.description}" />`,
-    `<meta name="twitter:image" content="${post.image}" />`,
+    `<meta name="twitter:image" content="${SITE_URL}${post.image}" />`,
     `<meta property="article:published_time" content="${post.date}" />`,
     ...post.tags.map((t) => `<meta property="article:tag" content="${t}" />`),
   ].join('\n    ');
