@@ -123,6 +123,15 @@ const POSTS = [
     date: '2026-09-08',
     tags: ['career growth', 'perseverance', 'career pivot', 'self awareness'],
   },
+  {
+    slug: 'why-did-you-leave',
+    title: 'Why Did You Leave? The Best Answers Tell Less of the Story, Not More',
+    description:
+      'A good answer to why you left is not about telling the whole story. It is about knowing what matters, what needs context, and what can be left behind.',
+    image: '/blog/images/why-did-you-leave.jpg',
+    date: '2026-09-11',
+    tags: ['interview questions', 'why did you leave', 'interview preparation', 'career advice'],
+  },
 ];
 
 for (const post of POSTS) {

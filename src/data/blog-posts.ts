@@ -116,6 +116,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/perseverance-change-direction.jpg',
     tags: ['career growth', 'perseverance', 'career pivot', 'self awareness'],
   },
+  {
+    slug: 'why-did-you-leave',
+    title: 'Why Did You Leave? The Best Answers Tell Less of the Story, Not More',
+    date: '2026-09-11',
+    description:
+      'A good answer to why you left is not about telling the whole story. It is about knowing what matters, what needs context, and what can be left behind.',
+    coverImage: '/blog/images/why-did-you-leave.jpg',
+    tags: ['interview questions', 'why did you leave', 'interview preparation', 'career advice'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {
