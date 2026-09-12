@@ -289,7 +289,7 @@ const PRICING = {
 // These entries give each indexable route a single, unique, <=60-char title.
 const META = {
   index: {
-    title: 'Interview Ready — AI Resume, Cover Letter & Interview Prep',
+    title: 'Interview Ready \u2014 AI Resume, Cover Letter and Interview Prep',
     description:
       'Tailor your CV and cover letter to any job description in seconds. ATS-optimised, recruiter-tested, with a free resume score. Built for Africa, used worldwide.',
   },

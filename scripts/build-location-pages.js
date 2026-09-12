@@ -32,6 +32,24 @@ const esc = (s) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+/**
+ * Entity-safe escaper. Location copy is written with \u2014 style escapes, so
+ * blindly escaping would render a literal "&amp;" on the page. Existing entities
+ * are held aside, the rest escaped, then the entities restored.
+ */
+const ENTITY_RE = /&(amp|lt|gt|quot|#39|apos|mdash|ndash|nbsp);/g;
+const escEntities = (s, proto = '\uE000') => {
+  const held = [];
+  const staged = String(s == null ? '' : s).replace(ENTITY_RE, (m) => {
+    held.push(m);
+    return `${proto}${held.length - 1}${proto}`;
+  });
+  return esc(staged).replace(
+    new RegExp(`${proto}(\\d+)${proto}`, 'g'),
+    (_, i) => held[Number(i)]
+  );
+};
+
 const locationNav = () =>
   LOCATIONS.map(
     (l) => `<a href="/careers/${l.slug}">Jobs in ${esc(l.country)}</a>`
@@ -689,7 +707,7 @@ function render(loc) {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${esc(loc.title)}</title>
+<title>${escEntities(loc.title)}</title>
 <meta name="description" content="${esc(loc.description)}"/>
 <link rel="canonical" href="${esc(url)}"/>
 <meta name="robots" content="index, follow, max-image-preview:large"/>

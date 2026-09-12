@@ -77,6 +77,19 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.appinterviewready.top"
+        }
+      ],
+      "destination": "https://appinterviewready.top/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
       {
         "source": "/verify-email",

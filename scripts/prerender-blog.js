@@ -89,6 +89,26 @@ const titleEsc = (s) =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
+/**
+ * Same as titleEsc, but entity-safe when the source data already contains an
+ * HTML entity. Location-page titles are written with \u2014 escapes, and the app
+ * shell title literally contains "&amp;"; blind escaping turned the latter into
+ * "&amp;amp;" in production. Substitute real entities for a placeholder first
+ * so they survive the pass untouched.
+ */
+const ENTITY_RE = /&(amp|lt|gt|quot|#39|apos|mdash|ndash|nbsp);/g;
+const titleEscEntities = (s, proto = '\uE000') => {
+  const held = [];
+  const staged = String(s == null ? '' : s).replace(ENTITY_RE, (m) => {
+    held.push(m);
+    return `${proto}${held.length - 1}${proto}`;
+  });
+  return titleEsc(staged).replace(
+    new RegExp(`${proto}(\\d+)${proto}`, 'g'),
+    (_, i) => held[Number(i)]
+  );
+};
+
 /** Strip YAML frontmatter, return { data, body }. */
 function splitFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
@@ -307,7 +327,7 @@ function page({ title, description, canonical, image, date, tags, bodyHtml, more
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${titleEsc(pageTitle(title))}</title>
+<title>${titleEscEntities(pageTitle(title))}</title>
 <meta name="description" content="${esc(description)}"/>
 <link rel="canonical" href="${esc(canonical)}"/>
 <meta name="robots" content="index, follow, max-image-preview:large"/>
