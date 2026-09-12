@@ -406,7 +406,7 @@ function main() {
         BLOG_LIST.h1
       )}</h1>\n<p>${esc(BLOG_LIST.intro)}</p>\n<h2>All guides</h2>\n<ul>${links
         .map((p) => `<li><a href="/blog/${esc(p.slug)}">${esc(p.title)}</a></li>`)
-        .join('')}</ul>\n<p><a href="/ats-score">Get your free resume score</a></p>\n</main></noscript>`;
+        .join('')}</ul>\n<p><a href="/ats-score">Get your free resume score</a> · <a href="/careers/kenya">CV help for jobs in Kenya</a></p>\n</main></noscript>`;
     } else if (INFO_PAGES[slug]) {
       bodyExtra = noscriptBlock(INFO_PAGES[slug]);
       headParts.push(ldScript(orgSchema()));
