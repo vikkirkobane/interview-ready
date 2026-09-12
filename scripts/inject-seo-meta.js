@@ -212,6 +212,12 @@ function inject(html, headExtra, bodyExtra) {
   out = out.replace(/<meta name="robots" content="[^"]*"\s*\/?>/gi, '');
   out = out.replace(/<script type="application\/ld\+json">\{"@context":"https:\/\/schema\.org"[\s\S]*?<\/script>/g, '');
   out = out.replace(/<noscript id="seo-static">[\s\S]*?<\/noscript>/g, '');
+  // remove ALL existing title tags and description/og/twitter duplicates so the
+  // page ends up with exactly one of each
+  out = out.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  out = out.replace(/<meta[^>]*name="description"[^>]*>/gi, '');
+  out = out.replace(/<meta[^>]*property="og:(title|description|url|site_name|image|type)"[^>]*>/gi, '');
+  out = out.replace(/<meta[^>]*name="twitter:(card|title|description|image)"[^>]*>/gi, '');
 
   if (headExtra) out = out.replace(/<\/head>/i, `${headExtra}\n</head>`);
   if (bodyExtra) out = out.replace(/<\/body>/i, `${bodyExtra}\n</body>`);
@@ -271,6 +277,62 @@ const PRICING = {
       a: 'Payments are processed securely by Paystack, with currency-aware pricing for local and international cards.',
     },
   ],
+};
+
+/* ------------------------------------------------------------------ */
+/* Per-route head metadata                                            */
+/* ------------------------------------------------------------------ */
+// The app shell ships the SAME <title> on every route (set once in
+// app/+html.tsx), and expo-router injects a second one — so app pages
+// currently emit two identical <title> tags and all share one title. Google
+// then picks arbitrarily and can never rank two pages for different queries.
+// These entries give each indexable route a single, unique, <=60-char title.
+const META = {
+  index: {
+    title: 'Interview Ready — AI Resume, Cover Letter & Interview Prep',
+    description:
+      'Tailor your CV and cover letter to any job description in seconds. ATS-optimised, recruiter-tested, with a free resume score. Built for Africa, used worldwide.',
+  },
+  'ats-score': {
+    title: 'Free ATS Resume Score — Check Your CV in 60 Seconds',
+    description:
+      'Paste your CV and a job description to get an instant ATS match score, the keywords you are missing, and a rewrite plan. Free, no credit card required.',
+  },
+  'ats-checklist': {
+    title: 'ATS Resume Checklist — What Recruiters Actually Screen For',
+    description:
+      'A practical ATS resume checklist: formatting that parses cleanly, the keywords screening software looks for, and the mistakes that get CVs filtered out.',
+  },
+  pricing: {
+    title: 'Interview Ready Pricing — Free to Start, Upgrade for Credits',
+    description:
+      'Core resume and cover letter formatting is free. Paid plans add AI credits for tailored resumes, cover letters, mock interviews and job-fit scoring.',
+  },
+  blog: {
+    title: 'Career Guides — Resumes, Applications and Interviews',
+    description:
+      'Practical guides on resumes, job applications, interviews and career growth for professionals applying in Africa and to remote roles worldwide.',
+  },
+  about: {
+    title: 'About Interview Ready — AI Career Tools for Job Seekers',
+    description:
+      'We build automated career utilities that help job seekers compete globally: ATS-optimised resumes, tailored cover letters and interview preparation.',
+  },
+  contact: {
+    title: 'Contact Interview Ready — Support and Feedback',
+    description:
+      'Get in touch with the Interview Ready team for billing, export, account or interview-prep questions. Email info@appinterviewready.top.',
+  },
+  privacy: {
+    title: 'Privacy Policy — Interview Ready',
+    description:
+      'What Interview Ready collects, why it is collected, how your career data is stored and secured, and the choices you have over your information.',
+  },
+  terms: {
+    title: 'Terms of Service — Interview Ready',
+    description:
+      'The terms covering use of Interview Ready, accounts and AI credits, acceptable use, and how updates to these terms are handled.',
+  },
 };
 
 const INFO_PAGES = {
@@ -389,6 +451,29 @@ function main() {
         ? '<meta name="robots" content="index, follow, max-image-preview:large"/>'
         : '<meta name="robots" content="noindex, follow"/>',
     ];
+
+    // Per-route unique title + description (fixes the duplicate/shared <title>)
+    const meta = META[slug];
+    if (meta) {
+      headParts.push(
+        `<title>${esc(meta.title)}</title>`,
+        `<meta name="description" content="${esc(meta.description)}"/>`,
+        `<meta property="og:type" content="website"/>`,
+        `<meta property="og:title" content="${esc(meta.title)}"/>`,
+        `<meta property="og:description" content="${esc(meta.description)}"/>`,
+        `<meta property="og:url" content="${esc(canonical)}"/>`,
+        `<meta property="og:site_name" content="${BRAND}"/>`,
+        `<meta name="twitter:card" content="summary_large_image"/>`,
+        `<meta name="twitter:title" content="${esc(meta.title)}"/>`,
+        `<meta name="twitter:description" content="${esc(meta.description)}"/>`
+      );
+    } else {
+      // Non-indexable app screen: still give the browser a sane tab title.
+      const label = slug
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      headParts.push(`<title>${esc(label)} — ${BRAND}</title>`);
+    }
 
     let bodyExtra = '';
     if (slug === 'index') {

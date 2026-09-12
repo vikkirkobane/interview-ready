@@ -78,6 +78,17 @@ const esc = (s) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+/**
+ * Inside <title>, &amp; and angle brackets must be escaped but apostrophes do
+ * not — escaping them to &#39; inflates the character count and eats into
+ * Google's ~60-char display budget.
+ */
+const titleEsc = (s) =>
+  String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
 /** Strip YAML frontmatter, return { data, body }. */
 function splitFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
@@ -107,21 +118,49 @@ function splitFrontmatter(raw) {
  */
 function parsePostsTs(ts) {
   const bySlug = {};
-  const S = "(?:[^'\\\\]|\\\\.)*";
-  const re = new RegExp(
-    `slug:\\s*'(${S})'[\\s\\S]*?title:\\s*'(${S})'[\\s\\S]*?date:\\s*'(${S})'[\\s\\S]*?` +
-      `description:\\s*\\n?\\s*'(${S})'[\\s\\S]*?coverImage:\\s*'(${S})'`,
-    'g'
-  );
-  let m;
-  while ((m = re.exec(ts)) !== null) {
-    bySlug[m[1]] = {
-      slug: m[1],
-      title: m[2].replace(/\\'/g, "'"),
-      date: m[3],
-      description: m[4].replace(/\\'/g, "'").replace(/\s+/g, ' ').trim(),
-      coverImage: m[5],
+  const str = (name) =>
+    new RegExp(
+      `${name}:\\s*(?:\\n\\s*)?(?:"((?:[^"\\\\]|\\\\.)*)"|'((?:[^'\\\\]|\\\\.)*)')`
+    );
+
+  const slugRe = /slug:\s*'([^']+)'/g;
+  const marks = [];
+  let sm;
+  while ((sm = slugRe.exec(ts)) !== null) {
+    marks.push({ slug: sm[1], start: sm.index });
+  }
+
+  for (let i = 0; i < marks.length; i++) {
+    const { slug, start } = marks[i];
+    // Bound the slice to this entry so a missing field cannot reach into the next
+    const stop = i + 1 < marks.length ? marks[i + 1].start : ts.length;
+    const chunk = ts.slice(start, stop);
+
+    const pick = (name) => {
+      const m = chunk.match(str(name));
+      if (!m) return null;
+      const raw = m[1] !== undefined ? m[1] : m[2];
+      return raw
+        .replace(/\\'/g, "'")
+        .replace(/\\"/g, '"')
+        .replace(/\s+/g, ' ')
+        .trim();
     };
+
+    bySlug[slug] = {
+      slug,
+      title: pick('title'),
+      date: pick('date'),
+      description: pick('description'),
+      coverImage: pick('coverImage'),
+    };
+  }
+
+  const incomplete = Object.values(bySlug).filter((x) => !x.title);
+  if (incomplete.length) {
+    console.warn(
+      `[prerender] WARNING: no title parsed for: ${incomplete.map((x) => x.slug).join(', ')}`
+    );
   }
   return bySlug;
 }
@@ -171,6 +210,22 @@ function careersFooterLinks() {
       return `<a href="/careers/${slug}">${label}</a>`;
     })
     .join('\n');
+}
+
+/**
+ * Build a <title> that fits Google's ~60-char display limit. Appending the brand
+ * to a full article headline routinely overshoots it, and a truncated title
+ * loses the words that actually match the query, so the brand suffix is dropped
+ * when it would not fit.
+ */
+function pageTitle(title) {
+  const withBrand = `${title} | ${BRAND}`;
+  if (withBrand.length <= 60) return withBrand;
+  if (title.length <= 60) return title;
+  // Trim on a word boundary and mark the cut
+  const cut = title.slice(0, 57);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 30 ? cut.slice(0, lastSpace) : cut).trim()}…`;
 }
 
 const CSS = `
@@ -252,7 +307,7 @@ function page({ title, description, canonical, image, date, tags, bodyHtml, more
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${esc(title)} | ${BRAND}</title>
+<title>${titleEsc(pageTitle(title))}</title>
 <meta name="description" content="${esc(description)}"/>
 <link rel="canonical" href="${esc(canonical)}"/>
 <meta name="robots" content="index, follow, max-image-preview:large"/>

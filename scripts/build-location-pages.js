@@ -183,7 +183,7 @@ const LOCATIONS = [
     slug: 'nigeria',
     country: 'Nigeria',
     h1: 'CV Help for Jobs in Nigeria: Beat the ATS and Get Shortlisted',
-    title: 'CV Help for Jobs in Nigeria — Graduate Trainee CVs That Pass the ATS',
+    title: 'CV Help for Jobs in Nigeria \u2014 Beat the ATS',
     description:
       'How to write an ATS-friendly CV for jobs in Nigeria: what Lagos and Abuja recruiters screen for, how NYSC service reads to employers, where entry-level roles are actually filled, and how to tailor your CV to each advert for free.',
     intro:
@@ -293,7 +293,7 @@ const LOCATIONS = [
     slug: 'remote-work-africa',
     country: 'Africa',
     h1: 'Remote Jobs from Africa: How to Compete for Global Roles',
-    title: 'Remote Jobs from Africa \u2014 How to Land Global Roles from Anywhere',
+    title: 'Remote Jobs from Africa \u2014 Land Global Roles',
     description:
       'How to get a remote job from Africa with UK, US, Canadian and Australian employers: where global roles are actually posted, how to present African experience to overseas recruiters, how payment and time zones work, and how to spot scams.',
     intro:
@@ -388,7 +388,7 @@ const LOCATIONS = [
     slug: 'ghana',
     country: 'Ghana',
     h1: 'CV Help for Jobs in Ghana: Get Past the ATS and Shortlisted',
-    title: 'CV Help for Jobs in Ghana \u2014 Beat the ATS and Get Shortlisted',
+    title: 'CV Help for Jobs in Ghana \u2014 Beat the ATS',
     description:
       'How to write an ATS-friendly CV for jobs in Ghana: what Accra recruiters screen for, how to turn National Service into real experience, why private-sector NSS placements convert into jobs, and how to tailor your CV to each advert for free.',
     intro:
@@ -499,7 +499,7 @@ const LOCATIONS = [
     slug: 'south-africa',
     country: 'South Africa',
     h1: 'CV Help for Jobs in South Africa: Beat the ATS and Get Shortlisted',
-    title: 'CV Help for Jobs in South Africa \u2014 Beat the ATS and Get Shortlisted',
+    title: 'CV Help for Jobs in South Africa \u2014 Beat the ATS',
     description:
       'How to write an ATS-friendly CV for jobs in South Africa: what Johannesburg and Cape Town recruiters screen for, how to handle qualifications and employment-equity information, and how to tailor your CV to each advert for free.',
     intro:

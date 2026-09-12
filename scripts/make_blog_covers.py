@@ -74,4 +74,7 @@ if __name__ == "__main__":
     make_image("free-ats-resume-checker-guide", "Pass the ATS. Get noticed.", (253, 230, 138))
     make_image("tell-me-about-yourself-freshers", "Own the first question.", (147, 197, 253))
     make_image("record-yourself-speaking-daily", "Three minutes a day.", (196, 181, 253))
+    make_image("ai-resume-judgment", "Your story, your call.", (253, 230, 138))
+    make_image("interview-silence-guide", "Silence is not a verdict.", (147, 197, 253))
+    make_image("perseverance-change-direction", "Quit the goal, not yourself.", (253, 230, 138))
     print("done")
