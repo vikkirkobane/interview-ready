@@ -402,11 +402,16 @@ function main() {
       bodyExtra = noscriptBlock(PRICING);
     } else if (slug === 'blog') {
       const links = blogIndexLinks();
+      const locLinks = locationLinks();
       bodyExtra = `<noscript id="seo-static"><main><h1>${esc(
         BLOG_LIST.h1
       )}</h1>\n<p>${esc(BLOG_LIST.intro)}</p>\n<h2>All guides</h2>\n<ul>${links
         .map((p) => `<li><a href="/blog/${esc(p.slug)}">${esc(p.title)}</a></li>`)
-        .join('')}</ul>\n<h2>Local job guides</h2>\n<ul><li><a href="/careers/kenya">CV help for jobs in Kenya</a></li><li><a href="/careers/nigeria">CV help for jobs in Nigeria</a></li><li><a href="/careers/remote-work-africa">Remote jobs from Africa</a></li></ul>\n<p><a href="/ats-score">Get your free resume score</a></p>\n</main></noscript>`;
+        .join('')}</ul>${
+        locLinks
+          ? `\n<h2>Local job guides</h2>\n<ul>${locLinks}</ul>`
+          : ''
+      }\n<p><a href="/ats-score">Get your free resume score</a></p>\n</main></noscript>`;
     } else if (INFO_PAGES[slug]) {
       bodyExtra = noscriptBlock(INFO_PAGES[slug]);
       headParts.push(ldScript(orgSchema()));
@@ -424,6 +429,28 @@ function main() {
   }
 
   console.log(`[seo] ${touched} HTML files processed; ${INDEXABLE.size} indexable routes, blog posts included via prerender-blog.js (${postCount} md files)`);
+}
+
+/** Links to every generated location page, for the blog index. */
+function locationLinks() {
+  const dir = path.join(ROOT, 'public', 'careers');
+  if (!fs.existsSync(dir)) return '';
+  const labels = {
+    kenya: 'CV help for jobs in Kenya',
+    nigeria: 'CV help for jobs in Nigeria',
+    ghana: 'CV help for jobs in Ghana',
+    'south-africa': 'CV help for jobs in South Africa',
+    'remote-work-africa': 'Remote jobs from Africa',
+  };
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => {
+      const slug = f.replace(/\.html$/, '');
+      const label = labels[slug] || `Jobs in ${slug.replace(/-/g, ' ')}`;
+      return `<li><a href="/careers/${slug}">${esc(label)}</a></li>`;
+    })
+    .join('');
 }
 
 /** Read the post list straight from the exported markdown filenames. */

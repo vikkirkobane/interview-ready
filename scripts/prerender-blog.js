@@ -156,6 +156,8 @@ function careersFooterLinks() {
   const labels = {
     kenya: 'Jobs in Kenya',
     nigeria: 'Jobs in Nigeria',
+    ghana: 'Jobs in Ghana',
+    'south-africa': 'Jobs in South Africa',
     'remote-work-africa': 'Remote Jobs from Africa',
   };
   return fs
@@ -163,7 +165,9 @@ function careersFooterLinks() {
     .filter((f) => f.endsWith('.html'))
     .map((f) => {
       const slug = f.replace(/\.html$/, '');
-      const label = labels[slug] || `Jobs in ${slug.replace(/-/g, ' ')}`;
+      const label =
+        labels[slug] ||
+        `Jobs in ${slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
       return `<a href="/careers/${slug}">${label}</a>`;
     })
     .join('\n');

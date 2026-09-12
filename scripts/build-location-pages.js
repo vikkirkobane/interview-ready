@@ -384,6 +384,227 @@ const LOCATIONS = [
       { slug: 'questions-job-seekers-ask-before-interview', title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them' },
     ],
   },
+  {
+    slug: 'ghana',
+    country: 'Ghana',
+    h1: 'CV Help for Jobs in Ghana: Get Past the ATS and Shortlisted',
+    title: 'CV Help for Jobs in Ghana \u2014 Beat the ATS and Get Shortlisted',
+    description:
+      'How to write an ATS-friendly CV for jobs in Ghana: what Accra recruiters screen for, how to turn National Service into real experience, why private-sector NSS placements convert into jobs, and how to tailor your CV to each advert for free.',
+    intro:
+      'Ghana produces far more graduates each year than the formal economy absorbs, and competition concentrates heavily on Accra. Most applications are filtered by software before a recruiter reads them. This guide covers what Ghanaian employers and applicant tracking systems actually look at, how to present National Service as evidence rather than filler, and where graduate roles are genuinely filled.',
+    stats: [
+      {
+        value: '~300,000',
+        label:
+          'graduates enter Ghana\u2019s labour market each year, and close to 60% fail to secure stable employment.',
+        source:
+          'Ghana Statistical Service figures cited by the Ministry of Employment and Labour Relations, reported by <a href="https://www.ecofinagency.com/news-services/0501-51764-ghana-faces-graduate-employment-crisis-as-60-remain-jobless" target="_blank" rel="noopener nofollow">Ecofin Agency</a>, 2025',
+      },
+      {
+        value: '32%',
+        label:
+          'youth unemployment among Ghanaians aged 15\u201324 in 2025, against a 13% national rate \u2014 and 49.3% in Greater Accra for the same age band.',
+        source:
+          'Ghana Statistical Service Quarterly Labour Statistics, 2025',
+      },
+    ],
+    sections: [
+      {
+        h2: 'Why good graduates still get filtered out',
+        paras: [
+          'Ghana\u2019s graduate market is defined by a mismatch: employers report a shortage of industry-ready talent while large numbers of qualified graduates struggle to find work. Both things are true at once, and they shape how hiring actually happens.',
+          'Because volume is high, employers and recruiters use applicant tracking systems \u2014 software that parses each CV, compares it to the job description, and filters or ranks candidates by keyword match before anyone shortlists. If your CV cannot be parsed cleanly, or does not use the employer\u2019s own vocabulary, it is discarded before a human ever sees it. That is a mechanical problem with a mechanical fix.',
+        ],
+      },
+      {
+        h2: 'What Ghanaian recruiters and screening software look for',
+        list: [
+          '<strong>Parseable formatting.</strong> Tables, columns, text boxes and graphics break CV parsing. Skill bars and icons are invisible to the software. A single-column layout with standard headings \u2014 Work Experience, Education, Skills, National Service \u2014 is read reliably.',
+          '<strong>A DOCX where the portal accepts it.</strong> If a PDF is required, export a text-based PDF rather than a scanned or image-heavy one the parser may read as blank.',
+          '<strong>Exact keyword matches.</strong> If the advert asks for "financial reporting" and your CV says "accounting duties", a keyword filter may not connect them. Mirror the employer\u2019s wording wherever it is honestly accurate.',
+          '<strong>Digital and technical keywords.</strong> Ghanaian employers and government assessments consistently flag gaps in practical, technical and digital skills. Naming the specific tools you genuinely use \u2014 Excel, SQL, Power BI, QuickBooks, Python, Canva \u2014 matches the filters employers are actually running.',
+          '<strong>Quantified achievements.</strong> "Helped with sales" says nothing. "Grew monthly sales for the Accra territory from GH\u20b518,000 to GH\u20b531,000 in two quarters" gives the software keywords and gives the human a reason to call.',
+        ],
+      },
+      {
+        h2: 'How to turn National Service into real experience',
+        paras: [
+          'Ghana\u2019s National Service Scheme places tens of thousands of tertiary graduates each year into twelve-month postings. Many graduates list it as one line \u2014 "National Service, 2024" \u2014 which reads as a gap rather than a job.',
+          'Written properly it is a year of documented work. Name the organisation, your actual role, and what you delivered, with numbers. If you managed records, ran a budget, taught, built a database, or coordinated a project, describe the outcome. Those are the keywords that match entry-level job descriptions.',
+          'National Service has quietly become an informal recruitment pipeline in Ghana: private-sector placements are heavily oversubscribed precisely because the chance of conversion to a full-time role is higher than in public postings. If you are still serving, list it as current experience and treat the posting as a twelve-month interview.',
+        ],
+      },
+      {
+        h2: 'Where graduate jobs in Ghana are actually filled',
+        paras: [
+          'Competition concentrates in Accra, where youth unemployment in the 15\u201324 band reached 49.3% \u2014 the highest recorded for that age group. That means the capital is where the roles are, and also where the queue is longest. Widening your search matters as much as perfecting your CV.',
+        ],
+        list: [
+          '<strong>Private-sector National Service placements.</strong> The most direct route. Competition is intense, but conversion into permanent employment is markedly more likely than from a public-sector posting.',
+          '<strong>Graduate and management trainee schemes.</strong> Banks, telecoms, insurance, FMCG and professional services firms run structured intakes. These are the most competitive and the ones where formatting and keyword discipline matter most.',
+          '<strong>MSMEs and funded startups.</strong> Small and medium enterprises make up the bulk of Ghanaian private-sector employment. They rarely advertise widely and often hire through referral or LinkedIn, which is where a keyword-rich profile earns its keep.',
+          '<strong>Public sector and agencies.</strong> Formal postings appear on official channels rather than aggregators, so check them directly. Public roles are heavily preferred in Ghana, which is precisely why the queue is longest there.',
+          '<strong>Regional markets.</strong> Kumasi, Takoradi and Tamale carry far less competition per vacancy than Accra. If you are mobile, the same CV converts better outside the capital.',
+        ],
+      },
+      {
+        h2: 'Remote and international roles from Ghana',
+        paras: [
+          'Remote work gives Ghanaian professionals direct access to employers in the United Kingdom, United States, Canada and across Africa, competing on skill rather than location. Ghana sits between UTC and UTC+1, which overlaps fully with European working hours and gives a genuine advantage over other regions.',
+          'International applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. State your location honestly, say you are available for remote work, and list your tools \u2014 software names travel better than local job titles.',
+        ],
+      },
+      {
+        h2: 'How Interview Ready helps',
+        paras: [
+          'Interview Ready reads the job advert you paste, works out which terms the screening software is most likely to match on, and rewrites your achievements around them while keeping your own voice. It exports a clean, parseable DOCX and a print-ready PDF.',
+          'Check where you stand before you apply: paste your current CV against the advert and get a free ATS score with the keyword gaps it finds. No credit card needed to start.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: 'What is an ATS-friendly CV in Ghana?',
+        a: 'An ATS-friendly CV is built so applicant tracking software can read it accurately: a single-column layout with standard headings, no tables, columns or text boxes, a text-based file rather than a scanned image, and the keywords from the job advert used naturally inside your achievements.',
+      },
+      {
+        q: 'How should I list National Service on my CV?',
+        a: 'Treat it as work experience, not a gap. Include the organisation, your role, and what you delivered, with numbers where you have them. Listing only "National Service" wastes a section that can otherwise carry real entry-level keywords and demonstrate a year of professional output.',
+      },
+      {
+        q: 'Why is it so hard to get a job in Ghana after graduating?',
+        a: 'Roughly 300,000 graduates enter the market each year and close to 60% do not secure stable employment, while employers simultaneously report a shortage of industry-ready talent. Competition concentrates in Accra, where youth unemployment for ages 15\u201324 reached 49.3%. Widening your search beyond the capital and matching employer keywords precisely both improve your odds.',
+      },
+      {
+        q: 'Should I include a photograph or personal details on my CV?',
+        a: 'Only if the employer specifically asks. Modern recruitment practice generally ignores this information, and it takes space that could carry achievements that actually match the job advert.',
+      },
+      {
+        q: 'Should I send my CV as PDF or Word?',
+        a: 'Use whichever format the employer requests. Where you have a choice, DOCX parses most reliably. If a PDF is required, export a text-based PDF rather than a scanned image, which screening software may read as blank.',
+      },
+      {
+        q: 'Is Interview Ready free to use?',
+        a: 'Your first ATS resume score is free and no credit card is required to create an account. Core resume and cover letter formatting is also free, with DOCX and PDF export.',
+      },
+    ],
+    related: [
+      { slug: 'free-ats-resume-checker-guide', title: 'Free ATS Resume Checker: Does Your Fresher Resume Pass the 6-Second Test?' },
+      { slug: 'resume-building-year1-interview-success', title: 'Why Building Your Resume in Year 1 of College Sets You Up for Interview Success' },
+      { slug: 'questions-job-seekers-ask-before-interview', title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them' },
+    ],
+  },
+  {
+    slug: 'south-africa',
+    country: 'South Africa',
+    h1: 'CV Help for Jobs in South Africa: Beat the ATS and Get Shortlisted',
+    title: 'CV Help for Jobs in South Africa \u2014 Beat the ATS and Get Shortlisted',
+    description:
+      'How to write an ATS-friendly CV for jobs in South Africa: what Johannesburg and Cape Town recruiters screen for, how to handle qualifications and employment-equity information, and how to tailor your CV to each advert for free.',
+    intro:
+      'South Africa has one of the highest youth unemployment rates in the world, and graduate applicants face the toughest competition of all. Most applications are filtered by software before a recruiter reads them. This guide covers what South African employers and applicant tracking systems actually look at, how qualifications and equity information should be handled, and how to make your CV survive the first pass.',
+    stats: [
+      {
+        value: '47.4%',
+        label:
+          'youth unemployment among South Africans aged 15\u201334, against a 33.6% national rate.',
+        source:
+          'Statistics South Africa Quarterly Labour Force Survey, Q2 2026',
+      },
+      {
+        value: '~1 in 2',
+        label:
+          'graduates are unemployed or underemployed within the first year of graduating.',
+        source:
+          'Reported by <a href="https://www.businessday.co.za/economy/2026-05-12-young-people-hit-hardest-as-unemployment-rises-to-327/" target="_blank" rel="noopener nofollow">Business Day</a>, citing Statistics South Africa, 2026',
+      },
+    ],
+    sections: [
+      {
+        h2: 'Why qualified graduates still get filtered out',
+        paras: [
+          'South Africa\u2019s youth unemployment is structural rather than a reflection of individual effort. Growth has been too slow to absorb new entrants, and for people aged 15\u201324 the absorption rate was just 10.1% \u2014 the lowest of any age group, meaning very few young people who want work are actually in it.',
+          'In a market that tight, a single advertised graduate role can attract hundreds or thousands of applications. Employers use applicant tracking systems to cope: software that parses each CV, scores it against the job description, and filters or ranks candidates by keyword match before a human shortlists. If your CV cannot be parsed, or does not mirror the advert\u2019s language, it is discarded at the first stage regardless of your ability.',
+        ],
+      },
+      {
+        h2: 'What South African recruiters and screening software look for',
+        list: [
+          '<strong>Parseable formatting.</strong> Multi-column designs, tables, text boxes and graphics break CV parsing. Skill bars, icons and infographics are invisible to the software. A single-column layout with standard headings \u2014 Work Experience, Education, Skills, Certifications \u2014 is read reliably.',
+          '<strong>Quantified achievements.</strong> "Responsible for the sales team" says nothing. "Led a five-person sales team that grew regional revenue 18% year on year" gives the software keywords and gives the human a reason to call.',
+          '<strong>Qualifications stated clearly and early.</strong> South Africa uses the National Qualifications Framework, and many employers and automated screens look for the qualification level and institution. State your qualification, level and institution plainly rather than burying it.',
+          '<strong>Specific hard skills and tools.</strong> Employers increasingly screen on digital skills. Name the tools you genuinely use \u2014 Excel, SQL, Power BI, Pastel, SAP, Python, Jira \u2014 because that is often how candidates are filtered.',
+          '<strong>Driver\u2019s licence, where relevant.</strong> For roles involving travel, client visits or field work, a valid code 8 or 10 licence is a common screening requirement. If you hold one, put it on the CV rather than in a covering paragraph.',
+        ],
+      },
+      {
+        h2: 'Employment equity information: what actually goes on your CV',
+        paras: [
+          'South Africa\u2019s Employment Equity Act requires designated employers to report on the demographic composition of their workforce and to work toward equitable representation. That is a real part of how hiring works here, and applicants often ask whether they should disclose demographic information.',
+          'The practical distinction: equity reporting is an employer obligation, and where an application form asks for demographic details for that purpose, disclosure is typically voluntary \u2014 you may answer "prefer not to say". But your CV itself does not need a race, gender or disability section. It should carry your qualifications, experience and skills, and your achievements should do the talking.',
+          'What matters far more is that the substance of your CV matches the advert. Equity considerations sit alongside the shortlist; they do not rescue a document the screening software cannot read.',
+        ],
+      },
+      {
+        h2: 'Where graduate jobs in South Africa are actually filled',
+        paras: [
+          'Publicly advertised roles are the most competitive channel of all. A large share of hiring happens before or alongside a formal posting.',
+        ],
+        list: [
+          '<strong>Graduate and internship programmes.</strong> Banks, insurers, mining houses, telecoms, retailers and professional services firms run structured annual intakes, often with an internship that converts to a permanent role. These are the most competitive and where keyword discipline matters most.',
+          '<strong>Smaller and mid-sized firms.</strong> These hire continuously and rarely advertise widely, often through LinkedIn or referral. Competition per vacancy is far lower than for graduate schemes.',
+          '<strong>Public sector and municipal roles.</strong> Posted on official channels rather than aggregators, so check them directly. These are a large source of formal employment and often overlooked by graduates.',
+          '<strong>LinkedIn as a search tool.</strong> Recruiters search by keyword and filter by location. A profile mirroring your target roles makes you findable, which is the same keyword logic as your CV applied to search.',
+        ],
+      },
+      {
+        h2: 'Remote and international roles from South Africa',
+        paras: [
+          'South Africa has an established remote-work market, and professionals compete directly for roles with employers in the United Kingdom, United States, Canada and Europe. The time zone works in your favour: South African Standard Time is only one hour ahead of Central European Time, giving a full overlap with European working hours and a useful early start over North American teams.',
+          'Two practical notes. International applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. And because South African recruiters legitimately need qualification levels while international employers often do not, keep two tailored versions of the same underlying CV rather than sending one document to both.',
+        ],
+      },
+      {
+        h2: 'How Interview Ready helps',
+        paras: [
+          'Interview Ready reads the job description you paste, works out which terms the screening software is most likely to match on, and rewrites your achievements around them while keeping your own voice. It exports a clean, parseable DOCX and a print-ready PDF.',
+          'Check where you stand before you apply: paste your current CV against the advert and get a free ATS score with the keyword gaps it finds. No credit card needed to start.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: 'What is an ATS-friendly CV in South Africa?',
+        a: 'An ATS-friendly CV is formatted so applicant tracking software can read it accurately: a single-column layout with standard headings, no tables, columns or text boxes, a text-based file rather than a scanned image, and the keywords from the job advert used naturally within your achievements.',
+      },
+      {
+        q: 'Should I put my race, gender or disability status on my CV?',
+        a: 'No. Your CV should carry your qualifications, experience, skills and achievements. Where an application form asks for demographic information for employment-equity reporting, that disclosure is typically voluntary and you may decline to answer.',
+      },
+      {
+        q: 'How long should a CV be in South Africa?',
+        a: 'One to two pages for most roles, and one page if you have under about five years of experience. Recruiters screening at high volume spend very little time per document, so relevance beats length.',
+      },
+      {
+        q: 'Why can I not get a job even with a degree?',
+        a: 'The problem is structural. Unemployment stands at 33.6% overall and 47.4% for ages 15\u201334, and the absorption rate for ages 15\u201324 was only 10.1%, meaning very few young people who want work are in it. With that much competition per vacancy, accurate keyword matching and applying beyond one channel are what move your application out of the pile.',
+      },
+      {
+        q: 'Should I send my CV as PDF or Word?',
+        a: 'Use whichever format the employer requests. Where you have a choice, DOCX parses most reliably. If a PDF is required, export a text-based PDF rather than a scanned image, which screening software may read as blank.',
+      },
+      {
+        q: 'Is Interview Ready free to use?',
+        a: 'Your first ATS resume score is free and no credit card is required to create an account. Core resume and cover letter formatting is also free, with DOCX and PDF export.',
+      },
+    ],
+    related: [
+      { slug: 'free-ats-resume-checker-guide', title: 'Free ATS Resume Checker: Does Your Fresher Resume Pass the 6-Second Test?' },
+      { slug: 'ai-mock-interview-practice-guide', title: 'AI Mock Interview: How to Practice Common Questions and Get Feedback That Actually Improves Your Answers' },
+      { slug: 'interview-silence-guide', title: 'What to Do When an Interviewer Goes Quiet' },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ */
