@@ -32,6 +32,11 @@ const esc = (s) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+const locationNav = () =>
+  LOCATIONS.map(
+    (l) => `<a href="/careers/${l.slug}">Jobs in ${esc(l.country)}</a>`
+  ).join('\n');
+
 /* Shared visual language with the prerendered blog pages. */
 const CSS = `
 :root{--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--brand:#0055ff;--bg:#fff;--soft:#f8fafc}
@@ -174,6 +179,211 @@ const LOCATIONS = [
       { slug: 'questions-job-seekers-ask-before-interview', title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them' },
     ],
   },
+  {
+    slug: 'nigeria',
+    country: 'Nigeria',
+    h1: 'CV Help for Jobs in Nigeria: Beat the ATS and Get Shortlisted',
+    title: 'CV Help for Jobs in Nigeria — Graduate Trainee CVs That Pass the ATS',
+    description:
+      'How to write an ATS-friendly CV for jobs in Nigeria: what Lagos and Abuja recruiters screen for, how NYSC service reads to employers, where entry-level roles are actually filled, and how to tailor your CV to each advert for free.',
+    intro:
+      'Nigeria produces far more graduates each year than the formal economy absorbs, so most applications are filtered by software before a recruiter reads them. This guide covers what Nigerian employers and applicant tracking systems actually look at, how to present NYSC service, and where entry-level roles are genuinely filled.',
+    stats: [
+      {
+        value: '1.7 million',
+        label:
+          'graduates leave Nigerian universities and polytechnics every year, into an economy that cannot absorb them.',
+        source:
+          'National Bureau of Statistics figures reported by <a href="https://insights.techcabal.com/nysc-reform-nigerias-graduate-unemployment-and-the-jobs-gap" target="_blank" rel="noopener nofollow">TechCabal Insights</a>, 2026',
+      },
+      {
+        value: '~35%',
+        label:
+          'of Nigerian university graduates remain unemployed for five years or more after completing NYSC.',
+        source:
+          'African Development Bank estimate, reported 2026',
+      },
+    ],
+    sections: [
+      {
+        h2: 'Why strong candidates still get filtered out',
+        paras: [
+          'A graduate trainee advert at a Lagos bank or an FMCG can draw thousands of applications. Employers cannot read them by hand, so they use applicant tracking systems \u2014 software that parses each CV, scores it against the job description, and filters or ranks candidates by keyword match before anyone shortlists.',
+          'That means rejection usually has nothing to do with your ability. If your CV cannot be parsed cleanly, or does not use the same vocabulary as the advert, it is discarded at the first stage. The good news is that these are mechanical problems with mechanical fixes.',
+        ],
+      },
+      {
+        h2: 'What Nigerian recruiters and screening software look for',
+        list: [
+          '<strong>Parseable formatting.</strong> Tables, columns, text boxes and graphics break CV parsing. Skill bars, icons and progress bars are invisible to the software. A single-column layout with standard headings \u2014 Work Experience, Education, Skills, Certifications \u2014 is read reliably.',
+          '<strong>A DOCX when the portal accepts it.</strong> If a PDF is required, export a text-based PDF, not a scanned or image-heavy one the parser may read as blank.',
+          '<strong>Exact keyword matches.</strong> If the advert asks for "customer relationship management" and your CV says "CRM tools", a keyword filter may not connect the two. Mirror the employer\u2019s own wording wherever it is honestly accurate.',
+          '<strong>Class of degree and institution.</strong> Many Nigerian graduate schemes still screen on grade heavily, so state your degree classification and institution plainly and early. Do not make a recruiter hunt for it.',
+          '<strong>Quantified achievements.</strong> "Handled sales" says nothing. "Grew monthly sales in my territory from \u20a62.1m to \u20a63.4m over two quarters" gives the software keywords and gives the human a reason to call you.',
+        ],
+      },
+      {
+        h2: 'How NYSC service reads to employers',
+        paras: [
+          'NYSC places a large cohort of graduates each year, and employers read it one of two ways depending on how you present it. Written as "NYSC \u2014 served", it looks like a gap. Written properly, it is real work experience.',
+          'Name the state, the organisation, your actual role and what you delivered. If you taught, ran a budget, managed records, or built anything, describe the outcome. Those are the keywords that match entry-level job descriptions.',
+          'If you are still serving, list it as current experience rather than waiting until it ends. Employers hire continuously and many graduate schemes open well before service finishes.',
+        ],
+      },
+      {
+        h2: 'Where entry-level jobs in Nigeria are actually filled',
+        paras: [
+          'A large share of entry-level roles are never publicly advertised for long, and many are filled through referrals or direct approaches before a posting goes live. Applying only to job boards means competing in the most crowded channel.',
+        ],
+        list: [
+          '<strong>Graduate trainee schemes.</strong> Banks, FMCG companies and the professional services firms run structured annual intakes. These are the most competitive, and the ones where formatting and keyword discipline matter most because the volume is enormous.',
+          '<strong>Funded startups and mid-sized companies.</strong> A fifty-person fintech does not run a graduate scheme. It needs a junior associate right now and hires in weeks, often through LinkedIn or a referral. A large share of first jobs come from this segment, and most graduates under-apply there.',
+          '<strong>Public sector and agencies.</strong> The civil service, parastatals and agencies such as CBN, FIRS, NCC, SEC, NPA and NIMASA hire graduates at competitive salaries. Postings appear on official channels, so check them directly rather than relying on aggregators.',
+          '<strong>LinkedIn and professional communities.</strong> Recruiters search for candidates by keyword. A profile that mirrors the roles you want makes you findable \u2014 the same keyword logic as your CV, applied to search.',
+        ],
+      },
+      {
+        h2: 'Remote and international roles from Nigeria',
+        paras: [
+          'Remote work gives Nigerian professionals direct access to employers in the United Kingdom, United States, Canada, Australia and the Gulf, competing on skill rather than location. Nigeria\u2019s digital economy is among the largest in Africa, and hundreds of millions of roles across Sub-Saharan Africa are projected to require digital skills by 2030.',
+          'Two practical notes. First, international applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. Second, list the digital tools you genuinely use \u2014 Excel, SQL, Figma, HubSpot, Python, whatever is true \u2014 because digital-skill keywords are among the most common filters on international adverts.',
+        ],
+      },
+      {
+        h2: 'How Interview Ready helps',
+        paras: [
+          'Interview Ready reads the job advert you paste, works out which terms the screening software is most likely to match on, and rewrites your achievements around them while keeping your own voice. It exports a clean, parseable DOCX and a print-ready PDF.',
+          'Check where you stand before you apply: paste your current CV against the advert and get a free ATS score with the keyword gaps it finds. No credit card needed to start.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: 'What is an ATS-friendly CV in Nigeria?',
+        a: 'An ATS-friendly CV is built so applicant tracking software can read it accurately: a single-column layout with standard headings, no tables, columns or text boxes, a text-based file rather than a scanned image, and the keywords from the job advert used naturally inside your achievements.',
+      },
+      {
+        q: 'How should I put NYSC on my CV?',
+        a: 'Treat it as work experience rather than a gap. Include the state, the organisation, your role, and what you actually delivered, with numbers where you have them. Listing only "NYSC" wastes a section that can otherwise carry real entry-level keywords.',
+      },
+      {
+        q: 'Should I include my class of degree on my CV?',
+        a: 'Yes, if you are applying to graduate schemes or early-career roles. Many Nigerian employers screen heavily on degree classification, so state it plainly and early rather than leaving a recruiter to search for it.',
+      },
+      {
+        q: 'How long should a CV be in Nigeria?',
+        a: 'One to three pages for most roles, and one page if you have under about five years of experience. Recruiters screening at volume spend very little time per document, so relevance beats length.',
+      },
+      {
+        q: 'Do Nigerian employers really use ATS software?',
+        a: 'Large employers, multinationals, banks and most funded startups do. Smaller firms may review manually, but they still read on screens and rank by relevance, so the same principles apply either way.',
+      },
+      {
+        q: 'Is Interview Ready free to use?',
+        a: 'Your first ATS resume score is free and no credit card is required to create an account. Core resume and cover letter formatting is also free, with DOCX and PDF export.',
+      },
+    ],
+    related: [
+      { slug: 'free-ats-resume-checker-guide', title: 'Free ATS Resume Checker: Does Your Fresher Resume Pass the 6-Second Test?' },
+      { slug: 'resume-building-year1-interview-success', title: 'Why Building Your Resume in Year 1 of College Sets You Up for Interview Success' },
+      { slug: 'tell-me-about-yourself-freshers', title: 'Tell Me About Yourself: A Fresher\u2019s Script That Actually Works' },
+    ],
+  },
+  {
+    slug: 'remote-work-africa',
+    country: 'Africa',
+    h1: 'Remote Jobs from Africa: How to Compete for Global Roles',
+    title: 'Remote Jobs from Africa \u2014 How to Land Global Roles from Anywhere',
+    description:
+      'How to get a remote job from Africa with UK, US, Canadian and Australian employers: where global roles are actually posted, how to present African experience to overseas recruiters, how payment and time zones work, and how to spot scams.',
+    intro:
+      'Remote work lets professionals across Africa apply directly to employers in London, Toronto, New York, Berlin and Sydney, competing on skill rather than location. This guide covers where those roles are genuinely advertised, how to present your experience to employers who may not know your market, and the practical questions about payment, time zones and legitimacy.',
+    sections: [
+      {
+        h2: 'Where global remote roles are actually advertised',
+        paras: [
+          'Most international remote hiring happens on the employer\u2019s own careers page and on a small number of specialised boards, rather than on the big local job sites. If you are only searching local boards, you are seeing a fraction of what is available.',
+        ],
+        list: [
+          '<strong>The employer\u2019s careers page, directly.</strong> This is the highest-signal channel. Roles appear here first and are often advertised nowhere else. If you have a target list of companies, check their pages on a schedule.',
+          '<strong>LinkedIn, used as a search tool.</strong> Recruiters search by keyword and filter by region. A profile that mirrors the roles you want makes you findable, and stating your location honestly while saying you are open to remote work in your headline avoids wasted conversations.',
+          '<strong>Remote-specific boards.</strong> Dedicated remote job boards aggregate distributed roles across function and seniority. Worth checking, but treat them as a supplement to direct applications rather than a substitute.',
+          '<strong>Communities and referrals.</strong> Professional Slack and Discord communities for your discipline frequently carry roles that never get posted publicly. Referrals convert far better than cold applications in every market.',
+        ],
+      },
+      {
+        h2: 'Presenting African experience to an overseas recruiter',
+        paras: [
+          'The most common avoidable mistake is assuming the reader knows your context. A recruiter in Manchester may not know what a given local bank, university or professional body is, and should not be expected to research it.',
+        ],
+        list: [
+          '<strong>Give context inside the achievement.</strong> "Managed operations at a mid-sized logistics firm serving 40 clients across two states" tells an overseas reader far more than a company name they have never heard.',
+          '<strong>State scale, currency and outcome.</strong> Team size, budget, user counts, revenue, percentages. Numbers translate across markets and are the signal a foreign reader can evaluate fastest.',
+          '<strong>Keep formatting conservative.</strong> International screening software is stricter than most local processes. Single column, standard headings, and no photograph, date of birth, marital status or ID number \u2014 many overseas employers screen those out entirely.',
+          '<strong>Name your tools plainly.</strong> Software and platform names are the most portable vocabulary you have. If you use Excel, Python, Figma, Salesforce, Jira or QuickBooks, list them \u2014 that is often how you match.',
+        ],
+      },
+      {
+        h2: 'Time zones are an advantage more often than a problem',
+        paras: [
+          'Most of Africa sits between UTC and UTC+3, which overlaps comfortably with European working hours and gives employers a useful head start over North American teams. Distributed teams routinely describe the extended shared window as a benefit rather than friction.',
+          'For United States employers the overlap is partial depending on where you are. Be explicit and confident about the hours you can genuinely cover, and consistent about it once hired. Vagueness about availability is one of the most common reasons remote offers fall through late in the process.',
+        ],
+      },
+      {
+        h2: 'Payment and getting paid',
+        paras: [
+          'Payment is a practical question employers will ask, so have a clear answer ready. Options vary by employer and country: some use international payroll and compliance platforms that employ you locally on the client\u2019s behalf, some pay through international transfer services, and some engage you as a contractor.',
+          'As a contractor you are usually responsible for your own tax and for invoicing. Confirm this explicitly before accepting, and ask how and when you will be paid, in which currency, and who bears transfer fees. Candidates who raise these questions professionally are treated as more credible, not less.',
+        ],
+      },
+      {
+        h2: 'How to tell a genuine remote role from a scam',
+        paras: ['Remote hiring attracts fraud, and the patterns are consistent enough to spot.'],
+        list: [
+          'You are asked to pay for training, equipment, software or a "registration fee" before starting. Genuine employers never charge you to work for them.',
+          'You are hired without any interview, or after nothing more than a chat-only exchange.',
+          'You are asked to receive money, buy gift cards, or move funds on the employer\u2019s behalf. That is money laundering, and you would be the one exposed.',
+          'The offer arrives from a free webmail address, or the domain does not match the company\u2019s real website.',
+          'The pay is far above market for the stated experience, and the process is rushed hard.',
+        ],
+      },
+      {
+        h2: 'How Interview Ready helps',
+        paras: [
+          'The same CV is rarely right for both a local advert and an overseas one, so Interview Ready lets you tailor for each: paste the job description, see the keywords the screening software is matching on, and rewrite your achievements around them while keeping your voice intact. Export DOCX for portals and PDF for direct email.',
+          'Start by checking where you stand. Your first ATS resume score is free, with no credit card required.',
+        ],
+      },
+    ],
+    faq: [
+      {
+        q: 'Can you get a remote job from Africa without experience?',
+        a: 'It is harder but achievable. Remote entry-level hiring rewards demonstrable proof over credentials, so build evidence first through projects, freelance work, volunteering or internships, then apply. Documenting that work with numbers is what moves you out of the pile of generic applications.',
+      },
+      {
+        q: 'Do I need to hide my location when applying for remote roles?',
+        a: 'No. Stating your location honestly while making clear in your headline that you are available for remote work avoids wasted interview cycles. Some roles are genuinely location-restricted; most distributed companies hire by skill and time-zone overlap.',
+      },
+      {
+        q: 'Will employers pay less because I am based in Africa?',
+        a: 'Pay practices vary widely. Some employers use location-based bands, others pay a single global rate for a role. Research the range before you interview, anchor on the value you deliver, and ask about the band explicitly rather than assuming.',
+      },
+      {
+        q: 'Should I remove personal details from my CV for international roles?',
+        a: 'Yes. Remove photographs, date of birth, marital status, religion and national identity numbers. Many overseas employers screen these out to comply with anti-discrimination practice, and their screening software does not need them.',
+      },
+      {
+        q: 'Is Interview Ready free to use?',
+        a: 'Your first ATS resume score is free with no credit card required. Core resume and cover letter formatting is free, and you can export DOCX and PDF files.',
+      },
+    ],
+    related: [
+      { slug: 'ai-mock-interview-practice-guide', title: 'AI Mock Interview: How to Practice Common Questions and Get Feedback That Actually Improves Your Answers' },
+      { slug: 'choose-your-lane-specialization-growth', title: 'Choose Your Lane: Why Specialization Accelerates Career Growth' },
+      { slug: 'questions-job-seekers-ask-before-interview', title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them' },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -306,7 +516,7 @@ ${faq}
 <a href="/">Home</a>
 <a href="/blog">Blog</a>
 <a href="/ats-score">Free ATS Score</a>
-<a href="/careers/kenya">Kenya</a>
+${locationNav()}
 <a href="/privacy">Privacy</a>
 <a href="/terms">Terms</a>
 <a href="https://www.linkedin.com/company/interview-ready-app/">LinkedIn</a>

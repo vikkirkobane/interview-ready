@@ -148,6 +148,27 @@ function humanDate(iso) {
 /* ------------------------------------------------------------------ */
 /* page template                                                      */
 /* ------------------------------------------------------------------ */
+
+/** Footer links to every generated location page, read from public/careers/. */
+function careersFooterLinks() {
+  const dir = path.join(ROOT, 'public', 'careers');
+  if (!fs.existsSync(dir)) return '';
+  const labels = {
+    kenya: 'Jobs in Kenya',
+    nigeria: 'Jobs in Nigeria',
+    'remote-work-africa': 'Remote Jobs from Africa',
+  };
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => {
+      const slug = f.replace(/\.html$/, '');
+      const label = labels[slug] || `Jobs in ${slug.replace(/-/g, ' ')}`;
+      return `<a href="/careers/${slug}">${label}</a>`;
+    })
+    .join('\n');
+}
+
 const CSS = `
 :root{--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--brand:#0055ff;--bg:#ffffff;--soft:#f8fafc}
 *{box-sizing:border-box}
@@ -280,7 +301,7 @@ ${
 <a href="/">Home</a>
 <a href="/blog">Blog</a>
 <a href="/ats-score">Free ATS Score</a>
-<a href="/careers/kenya">Jobs in Kenya</a>
+${careersFooterLinks()}
 <a href="/privacy">Privacy</a>
 <a href="/terms">Terms</a>
 <a href="https://www.linkedin.com/company/interview-ready-app/">LinkedIn</a>
