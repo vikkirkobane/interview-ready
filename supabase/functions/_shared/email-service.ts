@@ -345,6 +345,8 @@ export async function sendEmail({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
@@ -362,13 +364,13 @@ export async function sendEmail({
     .footer a { color: #2563EB; text-decoration: none; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1>Interview Ready</h1>
+<body style="margin:0;padding:0;background-color:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f8fafc;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#2563EB;padding:28px 24px;text-align:center;color:#ffffff;">
+        <h1 style="font-size:22px;font-weight:700;margin:0;color:#ffffff;">Interview Ready</h1>
       </div>
-      <div class="body">
+      <div class="body" style="padding:28px 24px;color:#334155;">
         <p>Hello {{first_name}},</p>
         <p>You have successfully logged in to your <strong>Interview Ready</strong> account.</p>
         <div class="info-box">
@@ -376,12 +378,12 @@ export async function sendEmail({
           <div class="info-item"><strong>Status:</strong> Active Session</div>
         </div>
         <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Open Interview Ready</a>
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:600;text-decoration:none;padding:12px 30px;border-radius:6px;display:inline-block;">Open Interview Ready</a>
         </div>
         <p>If you did not initiate this login, please secure your account immediately or contact us at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
         <p>Best regards,<br>The Interview Ready Team</p>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:20px 24px;background-color:#f8fafc;border-top:1px solid #f1f5f9;font-size:12px;color:#64748b;line-height:1.5;text-align:center;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
       </div>
@@ -398,6 +400,8 @@ export async function sendEmail({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
@@ -412,22 +416,22 @@ export async function sendEmail({
     .footer a { color: #2563EB; text-decoration: none; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1>Interview Ready</h1>
+<body style="margin:0;padding:0;background-color:#f8fafc;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f8fafc;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#2563EB;padding:28px 24px;text-align:center;color:#ffffff;">
+        <h1 style="font-size:22px;font-weight:700;margin:0;color:#ffffff;">Interview Ready</h1>
       </div>
-      <div class="body">
+      <div class="body" style="padding:28px 24px;color:#334155;">
         <p>Hello {{first_name}},</p>
         <p>Welcome to <strong>Interview Ready</strong>. Your account has been created and is ready to use.</p>
         <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Access Your Account</a>
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:600;text-decoration:none;padding:12px 30px;border-radius:6px;display:inline-block;">Access Your Account</a>
         </div>
         <p>If you have any questions, reply directly to this email at <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a>.</p>
         <p>Best regards,<br>The Interview Ready Team</p>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:20px 24px;background-color:#f8fafc;border-top:1px solid #f1f5f9;font-size:12px;color:#64748b;line-height:1.5;text-align:center;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a></p>
         <p>To unsubscribe, reply with subject: unsubscribe.</p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>

@@ -72,10 +72,9 @@ export function generateEmailHtmlTemplate({
       border-radius: 16px;
       overflow: hidden;
       border: 1px solid #E2E8F0;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
     }
     .header {
-      background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+      background-color: #1E40AF;
       padding: 36px 32px;
       text-align: center;
       color: #FFFFFF;
@@ -142,7 +141,7 @@ export function generateEmailHtmlTemplate({
       margin: 32px 0 16px 0;
     }
     .btn {
-      background: #2563EB;
+      background-color: #2563EB;
       color: #FFFFFF !important;
       font-size: 15px;
       font-weight: 700;
@@ -150,7 +149,6 @@ export function generateEmailHtmlTemplate({
       padding: 14px 36px;
       border-radius: 9999px;
       display: inline-block;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
     }
     .tip-card {
       background-color: #EFF6FF;
@@ -184,22 +182,22 @@ export function generateEmailHtmlTemplate({
     }
   </style>
 </head>
-<body>
+<body style="margin:0;padding:0;background-color:#F8FAFC;color:#1E293B;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased;">
   ${preheader ? `<div class="preheader">${preheader}</div>` : ''}
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Land Your Next Job Faster</div>
+  <div class="wrapper" style="width:100%;background-color:#F8FAFC;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#FFFFFF;border-radius:16px;overflow:hidden;border:1px solid #E2E8F0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#FFFFFF;">
+        <h1 class="header-logo" style="font-size:26px;font-weight:800;letter-spacing:-0.5px;margin:0;color:#FFFFFF;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#BFDBFE;">Land Your Next Job Faster</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         ${badgeText ? `<div class="badge">${badgeText}</div>` : ''}
         <h2>Hello ${userName},</h2>
         ${bodyContent}
 
         ${ctaText ? `
         <div class="btn-container">
-          <a href="${directWebUrl}" class="btn" target="_blank" rel="noopener noreferrer">
+          <a href="${directWebUrl}" class="btn" target="_blank" rel="noopener noreferrer" style="background-color:#2563EB;color:#FFFFFF !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">
             ${ctaText}
           </a>
         </div>
@@ -211,8 +209,8 @@ export function generateEmailHtmlTemplate({
         </div>
         ` : ''}
       </div>
-      <div class="footer">
-        <p>Interview Ready Web App | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
+      <div class="footer" style="padding:24px 32px;background-color:#F8FAFC;border-top:1px solid #F1F5F9;text-align:center;font-size:12px;color:#64748B;line-height:1.5;">
+        <p style="color:#64748B;">Interview Ready Web App | <a href="https://appinterviewready.top" style="color:#2563EB;text-decoration:none;font-weight:600;">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top" style="color:#2563EB;text-decoration:none;font-weight:600;">info@appinterviewready.top</a></p>
         <p style="font-size: 11px; color: #94A3B8; margin-top: 8px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; ${currentYear} Interview Ready. All rights reserved.</p>
       </div>

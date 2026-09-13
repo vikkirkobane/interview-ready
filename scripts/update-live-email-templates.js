@@ -35,12 +35,14 @@ const cleanTemplates = [
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Your Account is Active</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
-    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #1E40AF; padding: 36px 32px; text-align: center; color: #ffffff; }
     .header-logo { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
     .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
     .body { padding: 36px 32px; }
@@ -51,19 +53,19 @@ const cleanTemplates = [
     .feature-item { margin-bottom: 12px; font-size: 14px; color: #334155; }
     .feature-item:last-child { margin-bottom: 0; }
     .btn-container { text-align: center; margin: 32px 0 16px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .btn { background-color: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
     .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Land Your Next Job Faster</div>
+<body style="margin:0;padding:0;background-color:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f1f5f9;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#ffffff;">
+        <h1 class="header-logo" style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#bfdbfe;">Land Your Next Job Faster</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         <div class="badge">ACCOUNT CONFIRMED</div>
         <h2>Hello {{first_name}},</h2>
         <p>Your account for <strong>Interview Ready</strong> is active. You now have full access to our AI career toolkit to tailor your resume, calculate ATS job match scores, and practice mock interviews.</p>
@@ -72,11 +74,11 @@ const cleanTemplates = [
           <div class="feature-item"><strong>AI Mock Interviews:</strong> Interactive interview practice tailored to your target role.</div>
           <div class="feature-item"><strong>Job Fit Analytics:</strong> Instant score and gap analysis for every job posting.</div>
         </div>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Open Interview Ready</a>
+        <div class="btn-container" style="text-align:center;margin:32px 0 16px 0;">
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">Open Interview Ready</a>
         </div>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:24px 32px;background-color:#f8fafc;border-top:1px solid #f1f5f9;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="margin-top: 8px; font-size: 11px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
@@ -113,12 +115,14 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Promo Code Activated</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
-    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #1E40AF; padding: 36px 32px; text-align: center; color: #ffffff; }
     .header-logo { font-size: 26px; font-weight: 800; margin: 0; color: #ffffff; }
     .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
     .body { padding: 36px 32px; }
@@ -128,19 +132,19 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
     .highlight-box { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0; }
     .credits-num { font-size: 32px; font-weight: 800; color: #2563EB; margin: 4px 0; }
     .btn-container { text-align: center; margin: 32px 0 16px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .btn { background-color: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
     .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Promo Code Activated</div>
+<body style="margin:0;padding:0;background-color:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f1f5f9;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#ffffff;">
+        <h1 class="header-logo" style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#bfdbfe;">Promo Code Activated</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         <div class="badge">PROMO CODE APPLIED: {{promo_code}}</div>
         <h2>Hello {{user_name}},</h2>
         <p>Your promo code <strong>{{promo_code}}</strong> was successfully applied. We have added the following practice credits to your account:</p>
@@ -149,11 +153,11 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
           <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">Available immediately for resumes and interview practice</p>
         </div>
         <p>Use your credits to tailor your resume for your target roles, run ATS job-fit scans, and practice AI mock interviews.</p>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Launch Dashboard</a>
+        <div class="btn-container" style="text-align:center;margin:32px 0 16px 0;">
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">Launch Dashboard</a>
         </div>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:24px 32px;background-color:#f8fafc;border-top:1px solid #f1f5f9;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="margin-top: 8px; font-size: 11px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
@@ -188,12 +192,14 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Welcome to Interview Ready</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
-    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #1E40AF; padding: 36px 32px; text-align: center; color: #ffffff; }
     .header-logo { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0; color: #ffffff; }
     .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
     .body { padding: 36px 32px; }
@@ -204,19 +210,19 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
     .feature-item { margin-bottom: 12px; font-size: 14px; color: #334155; }
     .feature-item:last-child { margin-bottom: 0; }
     .btn-container { text-align: center; margin: 32px 0 16px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .btn { background-color: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
     .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Land Your Next Job Faster</div>
+<body style="margin:0;padding:0;background-color:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f1f5f9;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#ffffff;">
+        <h1 class="header-logo" style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#bfdbfe;">Land Your Next Job Faster</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         <div class="badge">ACCOUNT ACTIVATED: {{credits}} CREDITS</div>
         <h2>Hello {{first_name}},</h2>
         <p>Welcome to <strong>Interview Ready</strong>! Your account is active and ready to help you optimize your resume, prepare for interviews, and accelerate your job search.</p>
@@ -225,11 +231,11 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
           <div class="feature-item"><strong>AI Mock Interviews:</strong> Practice realistic questions tailored to your exact industry and target role.</div>
           <div class="feature-item"><strong>Job Fit Analytics:</strong> See exact match scores and recommendations before you apply.</div>
         </div>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Get Started Now</a>
+        <div class="btn-container" style="text-align:center;margin:32px 0 16px 0;">
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">Get Started Now</a>
         </div>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:24px 32px;background-color:#f8fafc;border-top:1px solid #f1f5f9;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="margin-top: 8px; font-size: 11px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
@@ -268,12 +274,14 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Referral Credits Added</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
-    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #1E40AF; padding: 36px 32px; text-align: center; color: #ffffff; }
     .header-logo { font-size: 26px; font-weight: 800; margin: 0; color: #ffffff; }
     .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
     .body { padding: 36px 32px; }
@@ -283,19 +291,19 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
     .stats-card { background: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; margin: 24px 0; }
     .stats-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
     .btn-container { text-align: center; margin: 32px 0 16px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .btn { background-color: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
     .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Referral Bonus</div>
+<body style="margin:0;padding:0;background-color:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f1f5f9;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#ffffff;">
+        <h1 class="header-logo" style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#bfdbfe;">Referral Bonus</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         <div class="badge">REFERRAL CONFIRMED</div>
         <h2>Hello {{user_name}},</h2>
         <p><strong>{{referred_user}}</strong> joined Interview Ready using your referral code <code>{{referral_code}}</code>. We have added credits to your account:</p>
@@ -304,11 +312,11 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
           <div class="stats-row"><span>Total Successful Referrals:</span><span><strong>{{total_referrals}}</strong></span></div>
         </div>
         <p>Keep sharing your code with colleagues and friends to build up your practice balance.</p>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">View Your Credits</a>
+        <div class="btn-container" style="text-align:center;margin:32px 0 16px 0;">
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">View Your Credits</a>
         </div>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:24px 32px;background-color:#f8fafc;border-top:1px solid #f1f5f9;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="margin-top: 8px; font-size: 11px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
@@ -343,12 +351,14 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Subscription Confirmed</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
-    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #1E40AF; padding: 36px 32px; text-align: center; color: #ffffff; }
     .header-logo { font-size: 26px; font-weight: 800; margin: 0; color: #ffffff; }
     .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
     .body { padding: 36px 32px; }
@@ -358,19 +368,19 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
     .plan-box { background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #edf2f7; margin: 24px 0; }
     .plan-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: #475569; }
     .btn-container { text-align: center; margin: 32px 0 16px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .btn { background-color: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
     .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Subscription Confirmed</div>
+<body style="margin:0;padding:0;background-color:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f1f5f9;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#ffffff;">
+        <h1 class="header-logo" style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#bfdbfe;">Subscription Confirmed</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         <div class="badge">ACTIVE PLAN: {{plan_name}}</div>
         <h2>Hello {{user_name}},</h2>
         <p>Thank you for subscribing to <strong>{{plan_name}}</strong>! Your subscription is active and your credits have been allocated.</p>
@@ -379,11 +389,11 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
           <div class="plan-row"><span>Monthly Credits:</span><span><strong>{{credits}} Credits</strong></span></div>
           <div class="plan-row"><span>Next Billing Date:</span><span><strong>{{next_billing_date}}</strong></span></div>
         </div>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Open Interview Ready</a>
+        <div class="btn-container" style="text-align:center;margin:32px 0 16px 0;">
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">Open Interview Ready</a>
         </div>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:24px 32px;background-color:#f8fafc;border-top:1px solid #f1f5f9;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="margin-top: 8px; font-size: 11px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
@@ -419,12 +429,14 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
   <title>Credits Reset</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; }
     .wrapper { width: 100%; background-color: #f8fafc; padding: 32px 16px; }
-    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); }
-    .header { background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%); padding: 36px 32px; text-align: center; color: #ffffff; }
+    .card { max-width: 580px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .header { background-color: #1E40AF; padding: 36px 32px; text-align: center; color: #ffffff; }
     .header-logo { font-size: 26px; font-weight: 800; margin: 0; color: #ffffff; }
     .header-tagline { font-size: 13px; font-weight: 500; opacity: 0.9; margin-top: 4px; letter-spacing: 0.5px; text-transform: uppercase; color: #dbeafe; }
     .body { padding: 36px 32px; }
@@ -434,19 +446,19 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
     .highlight-box { background: #eff6ff; border: 1px solid #dbeafe; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0; }
     .credits-num { font-size: 32px; font-weight: 800; color: #2563EB; margin: 4px 0; }
     .btn-container { text-align: center; margin: 32px 0 16px 0; }
-    .btn { background: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
-    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }
+    .btn { background-color: #2563EB; color: #ffffff !important; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 36px; border-radius: 9999px; display: inline-block; }
+    .footer { padding: 24px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center; font-size: 12px; color: #64748b; line-height: 1.5; }
     .footer a { color: #2563EB; text-decoration: none; font-weight: 600; }
   </style>
 </head>
-<body>
-  <div class="wrapper">
-    <div class="card">
-      <div class="header">
-        <h1 class="header-logo">Interview Ready</h1>
-        <div class="header-tagline">Monthly Balance Refresh</div>
+<body style="margin:0;padding:0;background-color:#f1f5f9;color:#1e293b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;">
+  <div class="wrapper" style="width:100%;background-color:#f1f5f9;padding:32px 16px;">
+    <div class="card" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e2e8f0;">
+      <div class="header" style="background-color:#1E40AF;padding:36px 32px;text-align:center;color:#ffffff;">
+        <h1 class="header-logo" style="margin:0;font-size:26px;font-weight:800;letter-spacing:-0.5px;color:#ffffff;">Interview Ready</h1>
+        <div class="header-tagline" style="font-size:13px;font-weight:500;margin-top:4px;letter-spacing:0.5px;text-transform:uppercase;color:#bfdbfe;">Monthly Balance Refresh</div>
       </div>
-      <div class="body">
+      <div class="body" style="padding:36px 32px;color:#334155;">
         <div class="badge">MONTHLY RESET</div>
         <h2>Hello {{first_name}},</h2>
         <p>Your monthly credits have been refreshed for your billing cycle:</p>
@@ -454,11 +466,11 @@ To unsubscribe, email info@appinterviewready.top with subject unsubscribe.`,
           <div class="credits-num">{{credits}} Credits Available</div>
           <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">Ready to use for ATS resume optimization and mock interviews</p>
         </div>
-        <div class="btn-container">
-          <a href="https://appinterviewready.top" class="btn">Launch Dashboard</a>
+        <div class="btn-container" style="text-align:center;margin:32px 0 16px 0;">
+          <a href="https://appinterviewready.top" class="btn" style="background-color:#2563EB;color:#ffffff !important;font-size:15px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:9999px;display:inline-block;">Launch Dashboard</a>
         </div>
       </div>
-      <div class="footer">
+      <div class="footer" style="padding:24px 32px;background-color:#f8fafc;border-top:1px solid #f1f5f9;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
         <p>Interview Ready | <a href="https://appinterviewready.top">appinterviewready.top</a> | <a href="mailto:info@appinterviewready.top">info@appinterviewready.top</a></p>
         <p style="margin-top: 8px; font-size: 11px;">You received this transactional email for your account at Interview Ready. <a href="mailto:info@appinterviewready.top?subject=unsubscribe">Unsubscribe</a></p>
         <p>&copy; 2026 Interview Ready. All rights reserved.</p>
