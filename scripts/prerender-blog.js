@@ -463,7 +463,6 @@ ${
 <nav>
 <a href="/">Home</a>
 <a href="/#features">Features</a>
-<a href="/pricing">Pricing</a>
 <a href="/blog">Blog</a>
 <a href="/blog/feed.xml">RSS</a>
 ${careersFooterLinks()}
