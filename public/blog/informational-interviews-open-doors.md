@@ -21,7 +21,6 @@ Because the conversation is exploratory, you can speak with people at various le
 ## Why Informational Interviews Beat a Standard Job Application
 
 1. **You Get Unfiltered, Real‑World Insight** 
-  Job descriptions are marketing copy; they list desired qualifications but rarely reveal the actual workload, team dynamics, or growth trajectory. In an informational interview you can ask: *“What does a typical Tuesday look like for you?”* or *“What surprised you most when you started?”*【https://www.indeed.com/career-advice/interviewing/what-to-expect-in-informational-interview】. The answers give you a realistic preview that helps you decide whether a role truly fits your skills and aspirations.
 
 2. **You Build a Genuine Connection Before You Need Anything** 
   Networking that feels transactional, reaching out only when you need a referral, often falls flat. By initiating a conversation purely to learn, you show respect for the other person’s time and expertise. This goodwill makes them more inclined to remember you when a relevant opening appears, or even to proactively share leads.

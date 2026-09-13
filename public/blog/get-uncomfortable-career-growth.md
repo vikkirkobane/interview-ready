@@ -30,9 +30,7 @@ These aren't reckless gambles. They're calculated, low-stakes moves that build m
 
 ## Why Discomfort Is a Signal, Not a Warning
 
-When you feel nervous about sending that message, applying for that role, or speaking up in that meeting, your brain often misinterprets the feeling as danger【https://empowerprocess.com/growth/the-power-of-discomfort-why-stepping-out-of-your-comfort-zone-drives-growth/】. But discomfort isn't a warning that you're doing something wrong, it's often a signal that you're entering growth territory.
 
-The flutter in your stomach before a job interview isn't a reason to back out; it's your body preparing you to perform. The uncertainty you feel when learning a new skill isn't proof you're incapable; it's your brain adapting to unfamiliar territory. Reframing discomfort as information rather than as a problem is one of the most powerful mindset shifts you can make【https://empowerprocess.com/growth/the-power-of-discomfort-why-stepping-out-of-your-comfort-zone-drives-growth/】.
 
 This is especially relevant for African professionals entering fast-growing sectors like fintech, tech, and consulting, where the landscape changes quickly. Those who can move through discomfort, rather than away from it, build the adaptability and resilience that today's employers actively seek【https://blog.ulliance.com/unlocking-potential-how-stepping-outside-comfort-zone-propel-career】.
 

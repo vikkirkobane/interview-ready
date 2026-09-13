@@ -165,6 +165,36 @@ export default function LandingPage() {
     };
   }, []);
 
+  // Deep links like /#features from the static blog and careers pages: once the
+  // section layouts have been measured, jump to the requested section. Sections
+  // report their positions via onLayout after mount, so poll briefly until the
+  // target section has a measured position before scrolling.
+  const [hashTarget, setHashTarget] = useState<string | null>(
+    Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hash
+      ? window.location.hash.replace(/^#/, '')
+      : null
+  );
+  useEffect(() => {
+    if (!hashTarget) return;
+    let tries = 0;
+    const id = setInterval(() => {
+      tries += 1;
+      const y = sectionPositions.current[hashTarget];
+      if (y !== undefined && scrollViewRef.current) {
+        clearInterval(id);
+        scrollViewRef.current.scrollTo({ x: 0, y: Math.max(0, y - 70), animated: false });
+        setHashTarget(null);
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      } else if (tries > 20) {
+        clearInterval(id);
+        setHashTarget(null);
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, [hashTarget]);
+
   const handleSelectDemo = (demo: ProfessionDemo) => {
     if (demo.id === activeDemo.id && !isOptimizing) return;
     if (timerRef.current) clearTimeout(timerRef.current);

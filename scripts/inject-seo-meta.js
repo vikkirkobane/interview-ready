@@ -38,6 +38,39 @@ const BRAND = 'Interview Ready';
 const LINKEDIN_CO = 'https://www.linkedin.com/company/interview-ready-app/';
 const LINKEDIN_PERSONAL = 'https://www.linkedin.com/in/victor-chogo/';
 
+/*
+ * Site-wide share image. 1200x630, generated once by scripts/make_og_image.py
+ * and committed to public/. Every indexable route advertises it so that links
+ * shared on WhatsApp, LinkedIn, X and Facebook - and the Google Discover feed -
+ * show a branded card instead of a blank one. Blog posts and location pages
+ * override this with their own artwork.
+ */
+const OG_IMAGE = `${SITE}/og-image.png`;
+const OG_IMAGE_W = 1200;
+const OG_IMAGE_H = 630;
+const OG_IMAGE_ALT = `${BRAND} - ATS-optimised resumes, cover letters and interview prep`;
+
+/* Fallback description for routes without a dedicated META entry. */
+const DEFAULT_DESC =
+  'Tailor your CV and cover letter to any job description in seconds. ATS-optimised, recruiter-tested, with a free resume score. Built for Africa, used worldwide.';
+
+/** Sane tab title for app-internal screens without a META entry. */
+function fallbackTitle(slug) {
+  if (slug === 'index') return `${BRAND}: AI Resume, Cover Letter and Interview Prep`;
+  const label = slug.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return `${label} | ${BRAND}`;
+}
+
+/*
+ * Search Console / webmaster verification. Supplied at build time through
+ * environment variables so no token is ever committed to the repository:
+ *   GOOGLE_SITE_VERIFICATION  -> <meta name="google-site-verification">
+ *   BING_SITE_VERIFICATION    -> <meta name="msvalidate.01">
+ * Set them in Vercel -> Settings -> Environment Variables, then redeploy.
+ */
+const GOOGLE_VERIFICATION = process.env.GOOGLE_SITE_VERIFICATION || '';
+const BING_VERIFICATION = process.env.BING_SITE_VERIFICATION || '';
+
 const esc = (s) =>
   String(s == null ? '' : s)
     .replace(/&/g, '&amp;')
@@ -51,15 +84,15 @@ const esc = (s) =>
 const HOME = {
   h1: 'ATS-Optimised Resumes, Cover Letters and Interview Prep',
   intro:
-    'Interview Ready writes, formats and exports professional resumes and cover letters in seconds. ATS-optimised, recruiter-tested and tailored to any job description you target — built for ambitious professionals in Africa and across the global job market.',
+    'Interview Ready writes, formats and exports professional resumes and cover letters in seconds. ATS-optimised, recruiter-tested and tailored to any job description you target. Built for ambitious professionals in Africa and across the global job market.',
   sections: [
     {
-      h2: 'Job applications are broken — we fix the part you cannot see',
+      h2: 'Job applications are broken. We fix the part you cannot see',
       body: 'Applicant Tracking Systems filter out up to 75% of submissions before a human recruiter ever sees them. If your resume lacks the exact keywords from the job description, it is rejected instantly. Interview Ready reads the job description you paste, then rewrites your achievements around the keywords that matter while keeping the language natural and human.',
     },
     {
       h2: 'AI resume tailoring in 30 seconds',
-      body: 'Paste your existing work history alongside your target job description. The engine immediately drafts a professional resume structured with correct keywords, strong metric-driven verbs and a clean summary — tailored resume drafts in 30 seconds instead of hours, meeting international ATS standards.',
+      body: 'Paste your existing work history alongside your target job description. The engine immediately drafts a professional resume structured with correct keywords, strong metric-driven verbs and a clean summary. Tailored resume drafts in 30 seconds instead of hours, meeting international ATS standards.',
     },
     {
       h2: 'Recruiter-tested cover letters',
@@ -107,7 +140,7 @@ const HOME = {
 };
 
 const ATS = {
-  h1: 'Free ATS Resume Score — Check Your Resume in 60 Seconds',
+  h1: 'Free ATS Resume Score: Check Your Resume in 60 Seconds',
   intro:
     'Paste your resume against any job description and get an instant ATS score, keyword gaps and a rewrite plan. Free, with no credit card required.',
   sections: [
@@ -185,6 +218,60 @@ function faqSchema(faq) {
   };
 }
 
+/** Blog entity plus an explicit ordered list of posts, for /blog. */
+function blogSchema(posts) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: `${BRAND} Career Guides`,
+    url: `${SITE}/blog`,
+    inLanguage: 'en',
+    publisher: { '@type': 'Organization', name: BRAND, url: `${SITE}/` },
+    blogPost: posts.map((p) => ({
+      '@type': 'BlogPosting',
+      headline: p.title,
+      url: `${SITE}/blog/${p.slug}`,
+    })),
+  };
+}
+
+function itemListSchema(posts) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Career guides',
+    itemListElement: posts.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: p.title,
+      url: `${SITE}/blog/${p.slug}`,
+    })),
+  };
+}
+
+function breadcrumbSchema(trail) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((t, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: t.name,
+      item: t.item,
+    })),
+  };
+}
+
+/* Search-engine ownership proof, only emitted when the env vars are set. */
+function verificationMeta() {
+  const out = [];
+  if (GOOGLE_VERIFICATION)
+    out.push(`<meta name="google-site-verification" content="${esc(GOOGLE_VERIFICATION)}"/>`);
+  if (BING_VERIFICATION)
+    out.push(`<meta name="msvalidate.01" content="${esc(BING_VERIFICATION)}"/>`);
+  return out;
+}
+
 /* ------------------------------------------------------------------ */
 /* helpers                                                            */
 /* ------------------------------------------------------------------ */
@@ -199,13 +286,28 @@ function noscriptBlock(cfg) {
     .map((f) => `<h3>${esc(f.q)}</h3>\n<p>${esc(f.a)}</p>`)
     .join('\n');
   const faqBlock = faq ? `\n<h2>Frequently Asked Questions</h2>\n${faq}` : '';
+  // Optional extra link list (used by the homepage to expose the local job
+  // guides, which would otherwise only be reachable from /blog).
+  const links = (cfg.links || []).length
+    ? `\n<h2>${esc(cfg.linksTitle || 'More resources')}</h2>\n<ul>${cfg.links
+        .map((l) => `<li><a href="${esc(l.href)}">${esc(l.label)}</a></li>`)
+        .join('')}</ul>`
+    : '';
   return `<noscript id="seo-static"><main><h1>${esc(cfg.h1)}</h1>\n<p>${esc(
     cfg.intro
-  )}</p>\n${body}${faqBlock}\n<p><a href="/ats-score">Get your free resume score</a> · <a href="/blog">Career guides</a></p>\n</main></noscript>`;
+  )}</p>\n${body}${faqBlock}${links}\n<p><a href="/ats-score">Get your free resume score</a> · <a href="/blog">Career guides</a></p>\n</main></noscript>`;
 }
 
-/** Inject markup just before </head> and before </body>. Idempotent. */
-function inject(html, headExtra, bodyExtra) {
+/**
+ * Inject markup at the very top of <head> (headTop), just before </head>
+ * (headExtra) and before </body> (bodyExtra). Idempotent.
+ *
+ * headTop exists because crawlers that time out or truncate a large HTML
+ * document may never reach a <title> sitting 30k bytes deep; Google then
+ * falls back to page text or shows "Untitled". The title must be among the
+ * first bytes of the document.
+ */
+function inject(html, headTop, headExtra, bodyExtra) {
   let out = html;
   // strip any previous run so re-running never duplicates
   out = out.replace(/<link rel="canonical" href="[^"]*"\s*\/?>/gi, '');
@@ -219,6 +321,26 @@ function inject(html, headExtra, bodyExtra) {
   out = out.replace(/<meta[^>]*property="og:(title|description|url|site_name|image|type)"[^>]*>/gi, '');
   out = out.replace(/<meta[^>]*name="twitter:(card|title|description|image)"[^>]*>/gi, '');
 
+  if (headTop) {
+    // Prefer placing headTop right after the charset meta (convention: charset
+    // first); fall back to directly after <head>.
+    const withTop =
+      out.replace(
+        /(<head[^>]*>\s*<meta[^>]*charset[^>]*>)/i,
+        (m) => `${m}\n${headTop}`
+      ) || out;
+    if (withTop !== out) {
+      out = withTop;
+    } else {
+      const afterHead = out.replace(/<head[^>]*>/i, (m) => `${m}\n${headTop}`);
+      if (afterHead !== out) {
+        out = afterHead;
+      } else if (headExtra) {
+        // defensive: no <head> tag found — degrade to appending before </head>
+        headExtra = `${headTop}\n${headExtra}`;
+      }
+    }
+  }
   if (headExtra) out = out.replace(/<\/head>/i, `${headExtra}\n</head>`);
   if (bodyExtra) out = out.replace(/<\/body>/i, `${bodyExtra}\n</body>`);
   return out;
@@ -246,11 +368,11 @@ const INDEXABLE = new Set([
 const BLOG_LIST = {
   h1: 'Career Guides for Job Seekers',
   intro:
-    'Practical, no-fluff guides on resumes, applications, interviews and career growth — written for professionals applying in Africa and to remote and international roles worldwide.',
+    'Practical, no-fluff guides on resumes, applications, interviews and career growth, written for professionals applying in Africa and to remote and international roles worldwide.',
 };
 
 const PRICING = {
-  h1: 'Interview Ready Pricing — Free to Start',
+  h1: 'Interview Ready Pricing: Free to Start',
   intro:
     'Core resume and cover letter formatting is free. Paid plans add more AI credits for resume tailoring, cover letter generation, mock interviews and job-fit analysis.',
   sections: [
@@ -264,7 +386,7 @@ const PRICING = {
     },
     {
       h2: 'Promo codes',
-      body: 'Signup credits and discount codes are available to new users — the LINKEDIN20 code adds bonus credits at checkout.',
+      body: 'Signup credits and discount codes are available to new users. The LINKEDIN20 code adds bonus credits at checkout.',
     },
   ],
   faq: [
@@ -289,47 +411,47 @@ const PRICING = {
 // These entries give each indexable route a single, unique, <=60-char title.
 const META = {
   index: {
-    title: 'Interview Ready \u2014 AI Resume, Cover Letter and Interview Prep',
+    title: 'Interview Ready: AI Resume, Cover Letter and Interview Prep',
     description:
       'Tailor your CV and cover letter to any job description in seconds. ATS-optimised, recruiter-tested, with a free resume score. Built for Africa, used worldwide.',
   },
   'ats-score': {
-    title: 'Free ATS Resume Score — Check Your CV in 60 Seconds',
+    title: 'Free ATS Resume Score: Check Your CV in 60 Seconds',
     description:
       'Paste your CV and a job description to get an instant ATS match score, the keywords you are missing, and a rewrite plan. Free, no credit card required.',
   },
   'ats-checklist': {
-    title: 'ATS Resume Checklist — What Recruiters Actually Screen For',
+    title: 'ATS Resume Checklist: What Recruiters Actually Screen For',
     description:
       'A practical ATS resume checklist: formatting that parses cleanly, the keywords screening software looks for, and the mistakes that get CVs filtered out.',
   },
   pricing: {
-    title: 'Interview Ready Pricing — Free to Start, Upgrade for Credits',
+    title: 'Interview Ready Pricing: Free to Start, Upgrade for Credits',
     description:
       'Core resume and cover letter formatting is free. Paid plans add AI credits for tailored resumes, cover letters, mock interviews and job-fit scoring.',
   },
   blog: {
-    title: 'Career Guides — Resumes, Applications and Interviews',
+    title: 'Career Guides: Resumes, Applications and Interviews',
     description:
       'Practical guides on resumes, job applications, interviews and career growth for professionals applying in Africa and to remote roles worldwide.',
   },
   about: {
-    title: 'About Interview Ready — AI Career Tools for Job Seekers',
+    title: 'About Interview Ready: AI Career Tools for Job Seekers',
     description:
       'We build automated career utilities that help job seekers compete globally: ATS-optimised resumes, tailored cover letters and interview preparation.',
   },
   contact: {
-    title: 'Contact Interview Ready — Support and Feedback',
+    title: 'Contact Interview Ready: Support and Feedback',
     description:
       'Get in touch with the Interview Ready team for billing, export, account or interview-prep questions. Email info@appinterviewready.top.',
   },
   privacy: {
-    title: 'Privacy Policy — Interview Ready',
+    title: 'Privacy Policy: Interview Ready',
     description:
       'What Interview Ready collects, why it is collected, how your career data is stored and secured, and the choices you have over your information.',
   },
   terms: {
-    title: 'Terms of Service — Interview Ready',
+    title: 'Terms of Service: Interview Ready',
     description:
       'The terms covering use of Interview Ready, accounts and AI credits, acceptable use, and how updates to these terms are handled.',
   },
@@ -357,7 +479,7 @@ const INFO_PAGES = {
   },
   contact: {
     h1: 'Contact Interview Ready',
-    intro: 'Questions, feedback or support requests are welcome — we read everything.',
+    intro: 'Questions, feedback or support requests are welcome. We read everything.',
     sections: [
       {
         h2: 'Email',
@@ -445,40 +567,63 @@ function main() {
 
     let html = fs.readFileSync(full, 'utf8');
 
-    const headParts = [
+    // Critical head tags go at the TOP of <head> so crawlers with byte budgets
+    // or timeouts always capture the title and canonical (Google showed
+    // "Untitled" when the title sat ~30k bytes deep in the document).
+    const headTop = [
+      `<title>${esc(META[slug]?.title ?? fallbackTitle(slug))}</title>`,
+      `<meta name="description" content="${esc(
+        META[slug]?.description ?? DEFAULT_DESC
+      )}"/>`,
       `<link rel="canonical" href="${canonical}"/>`,
       indexable
         ? '<meta name="robots" content="index, follow, max-image-preview:large"/>'
         : '<meta name="robots" content="noindex, follow"/>',
-    ];
+    ].join('\n');
+
+    const headParts = [];
 
     // Per-route unique title + description (fixes the duplicate/shared <title>)
     const meta = META[slug];
     if (meta) {
       headParts.push(
-        `<title>${esc(meta.title)}</title>`,
-        `<meta name="description" content="${esc(meta.description)}"/>`,
         `<meta property="og:type" content="website"/>`,
         `<meta property="og:title" content="${esc(meta.title)}"/>`,
         `<meta property="og:description" content="${esc(meta.description)}"/>`,
         `<meta property="og:url" content="${esc(canonical)}"/>`,
         `<meta property="og:site_name" content="${BRAND}"/>`,
+        `<meta property="og:image" content="${esc(OG_IMAGE)}"/>`,
+        `<meta property="og:image:width" content="${OG_IMAGE_W}"/>`,
+        `<meta property="og:image:height" content="${OG_IMAGE_H}"/>`,
+        `<meta property="og:image:alt" content="${esc(OG_IMAGE_ALT)}"/>`,
         `<meta name="twitter:card" content="summary_large_image"/>`,
         `<meta name="twitter:title" content="${esc(meta.title)}"/>`,
-        `<meta name="twitter:description" content="${esc(meta.description)}"/>`
+        `<meta name="twitter:description" content="${esc(meta.description)}"/>`,
+        `<meta name="twitter:image" content="${esc(OG_IMAGE)}"/>`,
+        `<meta name="twitter:image:alt" content="${esc(OG_IMAGE_ALT)}"/>`,
+        ...verificationMeta()
       );
     } else {
-      // Non-indexable app screen: still give the browser a sane tab title.
-      const label = slug
-        .replace(/[-_]/g, ' ')
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-      headParts.push(`<title>${esc(label)} — ${BRAND}</title>`);
+      // Non-indexable app screen: still give the browser a sane tab title
+      // (already emitted in headTop via fallbackTitle).
+      headParts.push(
+        `<meta property="og:type" content="website"/>`,
+        `<meta property="og:title" content="${esc(fallbackTitle(slug))}"/>`,
+        `<meta property="og:site_name" content="${BRAND}"/>`
+      );
     }
 
     let bodyExtra = '';
     if (slug === 'index') {
       headParts.push(ldScript(orgSchema()), ldScript(siteSchema()), ldScript(faqSchema(HOME.faq)));
-      bodyExtra = noscriptBlock(HOME);
+      // The homepage is the most authoritative page we have: link the local job
+      // guides from here so crawlers reach them at shallow depth instead of only
+      // via /blog.
+      bodyExtra = noscriptBlock({
+        ...HOME,
+        links: locationList(),
+        linksTitle: 'Local job guides',
+      });
     } else if (slug === 'ats-score') {
       headParts.push(ldScript(faqSchema(ATS.faq)));
       bodyExtra = noscriptBlock(ATS);
@@ -488,6 +633,19 @@ function main() {
     } else if (slug === 'blog') {
       const links = blogIndexLinks();
       const locLinks = locationLinks();
+      headParts.push(
+        ldScript(blogSchema(links)),
+        ldScript(itemListSchema(links)),
+        ldScript(
+          breadcrumbSchema([
+            { name: 'Home', item: `${SITE}/` },
+            { name: 'Blog', item: `${SITE}/blog` },
+          ])
+        ),
+        `<link rel="alternate" type="application/rss+xml" title="${esc(
+          BRAND
+        )} career guides" href="${SITE}/blog/feed.xml"/>`
+      );
       bodyExtra = `<noscript id="seo-static"><main><h1>${esc(
         BLOG_LIST.h1
       )}</h1>\n<p>${esc(BLOG_LIST.intro)}</p>\n<h2>All guides</h2>\n<ul>${links
@@ -504,7 +662,7 @@ function main() {
       headParts.push(ldScript(orgSchema()));
     }
 
-    html = inject(html, headParts.join('\n'), bodyExtra);
+    html = inject(html, headTop, headParts.join('\n'), bodyExtra);
     fs.writeFileSync(full, html, 'utf8');
     touched++;
 
@@ -516,10 +674,10 @@ function main() {
   console.log(`[seo] ${touched} HTML files processed; ${INDEXABLE.size} indexable routes, blog posts included via prerender-blog.js (${postCount} md files)`);
 }
 
-/** Links to every generated location page, for the blog index. */
-function locationLinks() {
+/** Every generated location page as {href,label}, newest list is derived from disk. */
+function locationList() {
   const dir = path.join(ROOT, 'public', 'careers');
-  if (!fs.existsSync(dir)) return '';
+  if (!fs.existsSync(dir)) return [];
   const labels = {
     kenya: 'CV help for jobs in Kenya',
     nigeria: 'CV help for jobs in Nigeria',
@@ -532,9 +690,17 @@ function locationLinks() {
     .filter((f) => f.endsWith('.html'))
     .map((f) => {
       const slug = f.replace(/\.html$/, '');
-      const label = labels[slug] || `Jobs in ${slug.replace(/-/g, ' ')}`;
-      return `<li><a href="/careers/${slug}">${esc(label)}</a></li>`;
-    })
+      return {
+        href: `/careers/${slug}`,
+        label: labels[slug] || `Jobs in ${slug.replace(/-/g, ' ')}`,
+      };
+    });
+}
+
+/** Links to every generated location page, for the blog index. */
+function locationLinks() {
+  return locationList()
+    .map((l) => `<li><a href="${esc(l.href)}">${esc(l.label)}</a></li>`)
     .join('');
 }
 

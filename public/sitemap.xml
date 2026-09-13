@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://appinterviewready.top/</loc>
     <changefreq>daily</changefreq>
@@ -17,8 +17,14 @@
   </url>
   <url>
     <loc>https://appinterviewready.top/blog</loc>
+    <lastmod>2026-09-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://appinterviewready.top/pricing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://appinterviewready.top/about</loc>
@@ -70,77 +76,129 @@
     <lastmod>2026-09-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/why-did-you-leave.jpg</image:loc>
+      <image:title>Why Did You Leave? The Best Answers Tell Less of the Story, Not More</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/interview-silence-guide</loc>
     <lastmod>2026-09-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/interview-silence-guide.jpg</image:loc>
+      <image:title>The Silence After an Interview Feels Worse Than Rejection: How to Handle It Without Losing Yourself</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/perseverance-change-direction</loc>
     <lastmod>2026-09-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/perseverance-change-direction.jpg</image:loc>
+      <image:title>Sometimes Perseverance Means Continuing. Sometimes It Means Changing Direction.</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/ai-resume-judgment</loc>
     <lastmod>2026-09-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/ai-resume-judgment.jpg</image:loc>
+      <image:title>AI Can Write Your Resume, But Only You Can Decide What Matters Most</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/record-yourself-speaking-daily</loc>
     <lastmod>2026-09-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/record-yourself-speaking-daily.jpg</image:loc>
+      <image:title>Record Yourself Speaking 3 Minutes a Day: The Practice Habit That Makes You Confident in Interviews and Presentations</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/tell-me-about-yourself-freshers</loc>
     <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/tell-me-about-yourself-freshers.jpg</image:loc>
+      <image:title>&apos;Tell Me About Yourself&apos; Answer Examples for Freshers: 3 Scripts That Actually Work</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/ai-mock-interview-practice-guide</loc>
     <lastmod>2026-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/ai-mock-interview-practice-guide.jpg</image:loc>
+      <image:title>AI Mock Interview: How to Practice Common Questions and Get Feedback That Actually Improves Your Answers</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/choose-your-lane-specialization-growth</loc>
     <lastmod>2026-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/choose-your-lane-specialization-growth.jpg</image:loc>
+      <image:title>Why Narrow Isn&apos;t Limited: The Career Growth Power of Choosing a Lane</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/free-ats-resume-checker-guide</loc>
     <lastmod>2026-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/free-ats-resume-checker-guide.jpg</image:loc>
+      <image:title>Free ATS Resume Checker: Does Your Fresher Resume Pass the 6-Second Test?</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/questions-job-seekers-ask-before-interview</loc>
     <lastmod>2026-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/questions-job-seekers-ask-before-interview.jpg</image:loc>
+      <image:title>The Questions Job Seekers Ask Most Before an Interview and How to Answer Them</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/get-uncomfortable-career-growth</loc>
     <lastmod>2025-09-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/get-uncomfortable-career-growth.jpg</image:loc>
+      <image:title>Why Getting a Little Uncomfortable Is the Next Right Career Move (Even When It Feels Risky)</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/informational-interviews-open-doors</loc>
     <lastmod>2025-08-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/informational-interviews.jpg</image:loc>
+      <image:title>Why Informational Interviews Open Doors a Job Application Never Will</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/resume-building-year1-interview-success</loc>
     <lastmod>2025-08-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/resume-building-year1.jpg</image:loc>
+      <image:title>Why Building Your Resume in Year 1 of College Sets You Up for Interview Success</image:title>
+    </image:image>
   </url>
 </urlset>

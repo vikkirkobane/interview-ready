@@ -26,7 +26,6 @@ The most effective answers follow a simple three-part arc that works for both fr
 2. **Evidence:** Two or three proof points, relevant skills, a project, an internship, or an achievement that backs up your claim
 3. **Intent:** Why you are excited about this specific role and company【https://goodspace.ai/blogs/7995/self-introduction-for-interview-15-sample-answers-for-freshers-with-scripts-2026】
 
-This flow works because it moves from who you are, to proof you can do the work, to why you want this job, exactly the arc an interviewer wants to hear. Aim to deliver it in 60 to 90 seconds using simple, straightforward language【https://ca.indeed.com/career-advice/interviewing/tell-me-about-yourself-no-experience】.
 
 ## Script 1: The 30-Second Version (For Screening Rounds)
 

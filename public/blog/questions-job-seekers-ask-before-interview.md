@@ -14,7 +14,6 @@ Here are the questions our users ask most before an interview, and how to answer
 
 ## 1. "How do I answer 'Tell me about yourself'?"
 
-This is almost always the opening question, and it sets the tone for everything that follows. The mistake most people make is treating it as a request for their life story. It is not. Interviewers want a condensed, relevant version of your professional story, your background, where you are now, and where you are headed, in about two minutes【https://indeed.com/career-advice/interviewing/interview-question-tell-me-about-yourself】.
 
 A simple structure that works: past, present, future. Briefly connect your background to the role, talk about what you are doing now, and finish with why this opportunity is the natural next step. Avoid the two biggest traps: reciting your resume line by line, and giving the same canned answer you use for every company【https://indeed.com/career-advice/interviewing/tell-me-about-yourself-answers-to-avoid】. If the interviewer wanted a list of job titles, they would have read your CV, which is exactly why tailoring your answer to the specific role matters.
 

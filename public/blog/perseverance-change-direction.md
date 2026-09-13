@@ -51,7 +51,6 @@ A direction change does not require blowing up your life. The most successful tr
 - **Test before you commit.** Talk to people who do the work you are considering. Take a course. Do a side project. Run a small experiment that gives you real exposure before you make a big move【https://www.wisgrowth.com/quit-job-or-not】.
 - **Use what you have built.** Most career capital transfers. Your communication skills, your discipline, your network, and your ability to learn do not vanish when you change fields. They become the foundation of the new direction【https://lifebylogic.com/crossroads-lab/career-pivot-decision-matrix/】.
 - **Make the move reversible where possible.** Before resigning from anything, build proof in the new direction. One conversation, one resume version, one small project, one application batch. Reduce the risk of the leap before you take it【https://www.wisgrowth.com/quit-job-or-not】.
-- **Be honest about what changed.** Sometimes the goal changed. Sometimes you changed. Both are legitimate reasons to adjust course. Naming the real reason keeps the decision honest instead of reactive【https://www.forbes.com/sites/cherylrobinson/2026/08/01/career-pivot-or-career-panic-heres-how-to-tell/】.
 
 ## The Same Commitment, A Different Direction
 

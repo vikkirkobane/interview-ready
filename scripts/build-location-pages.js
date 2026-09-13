@@ -55,23 +55,38 @@ const locationNav = () =>
     (l) => `<a href="/careers/${l.slug}">Jobs in ${esc(l.country)}</a>`
   ).join('\n');
 
-/* Shared visual language with the prerendered blog pages. */
+/* Shared visual language with the app landing page (see prerender-blog.js). */
 const CSS = `
-:root{--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--brand:#0055ff;--bg:#fff;--soft:#f8fafc}
+:root{--ink:#0F172A;--body:#1E293B;--muted:#64748B;--line:#E2E8F0;--brand:#1A4F8A;--brand-dark:#15406F;--soft:#F8FAFC;--bg:#fff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.brand-text,.nav-link,.signin,.cta{font-family:'Sora','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
 a{color:var(--brand)}
-header.site{border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+header.site{border-bottom:1px solid var(--line);background:rgba(255,255,255,.94);position:sticky;top:0;z-index:5}
+.navbar{max-width:1120px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:8px;text-decoration:none;flex-shrink:0}
+.brand img{width:30px;height:30px;display:block}
+.brand-text{font-size:18px;font-weight:800;letter-spacing:-.5px;color:var(--ink)}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-link{font-size:14px;font-weight:600;color:#475569;text-decoration:none;padding:6px 0}
+.nav-link:hover{color:var(--brand)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.signin{font-size:14px;font-weight:600;color:#334155;text-decoration:none}
+.signin:hover{color:var(--brand)}
+.cta{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:9px 18px;border-radius:12px;white-space:nowrap}
+.cta:hover{background:var(--brand-dark)}
+.menu-toggle{display:none;background:none;border:0;padding:8px;margin-right:-8px;cursor:pointer}
+.menu-toggle span{display:block;width:20px;height:2px;background:#0F172A;margin:4px 0;border-radius:2px}
+.mobile-menu{display:none;border-top:1px solid var(--line);background:#fff}
+.mobile-menu a{display:block;padding:13px 24px;font-size:15px;font-weight:600;color:#334155;text-decoration:none;border-bottom:1px solid var(--line)}
+.mobile-menu a:last-child{border-bottom:0}
 .wrap{max-width:760px;margin:0 auto;padding:0 20px}
-header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
-.brand{font-weight:800;font-size:17px;letter-spacing:-.2px;color:var(--ink);text-decoration:none}
-.brand span{color:var(--brand)}
-.cta{background:var(--brand);color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;white-space:nowrap;display:inline-block}
 main{padding:40px 0 24px}
-h1{font-size:34px;line-height:1.22;letter-spacing:-.5px;margin:8px 0 14px}
-h2{font-size:25px;line-height:1.3;margin:38px 0 10px}
-h3{font-size:19px;margin:28px 0 8px}
-p,li{color:#1e293b}
+h1{font-size:34px;line-height:1.22;letter-spacing:-.5px;margin:8px 0 14px;font-weight:800}
+h2{font-size:25px;line-height:1.3;margin:38px 0 10px;font-weight:700}
+h3{font-size:19px;margin:28px 0 8px;font-weight:600}
+p,li{color:var(--body)}
 ul,ol{padding-left:22px}
 blockquote{margin:22px 0;padding:2px 18px;border-left:4px solid var(--brand);background:var(--soft);color:var(--muted)}
 code{background:var(--soft);padding:2px 5px;border-radius:5px;font-size:.92em}
@@ -83,13 +98,15 @@ th{background:var(--soft)}
 .stat b{font-size:28px;display:block;line-height:1.2}
 .stat span{color:var(--muted);font-size:15px}
 .promo{margin:44px 0;padding:26px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
-.promo h3{margin:0 0 8px;font-size:19px}
+.promo h3{margin:0 0 8px;font-size:19px;font-weight:700}
 .promo p{margin:0 0 16px;color:var(--muted);font-size:15px}
 .src{font-size:13px;color:var(--muted)}
 footer.site{border-top:1px solid var(--line);margin-top:56px;padding:30px 0 46px;color:var(--muted);font-size:14px}
 footer.site nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:14px}
 footer.site a{color:var(--muted);text-decoration:none}
 footer.site a:hover{color:var(--brand);text-decoration:underline}
+@media(min-width:860px){.mobile-menu{display:none !important}}
+@media(max-width:859px){.nav-links,.signin{display:none}.menu-toggle{display:block}.brand img{width:26px;height:26px}.brand-text{font-size:16px;letter-spacing:-.3px}.cta{padding:7px 12px;border-radius:8px;font-size:13px}}
 @media(max-width:600px){h1{font-size:27px}h2{font-size:21px}main{padding-top:26px}}
 `;
 
@@ -101,7 +118,7 @@ const LOCATIONS = [
     slug: 'kenya',
     country: 'Kenya',
     h1: 'CV Help for Jobs in Kenya: Get Past the ATS and Shortlisted',
-    title: 'CV Help for Jobs in Kenya — Beat the ATS and Get Shortlisted',
+    title: 'CV Help for Jobs in Kenya: Beat the ATS and Get Shortlisted',
     description:
       'How to write an ATS-friendly CV for jobs in Kenya: what local recruiters screen for, how applicant tracking systems filter applications, and how to tailor your CV to each job description for free.',
     intro:
@@ -112,7 +129,7 @@ const LOCATIONS = [
         label:
           'young Kenyans enter the job market each year, against roughly 200,000 formal jobs created.',
         source:
-          'UN Resident Coordinator in Kenya, September 2026 — <a href="https://educationnews.co.ke/kenya-produces-one-million-job-seekers-yearly-but-creates-only-200000-jobs-un-warns" target="_blank" rel="noopener nofollow">Education News Kenya</a>',
+          'UN Resident Coordinator in Kenya, September 2026, <a href="https://educationnews.co.ke/kenya-produces-one-million-job-seekers-yearly-but-creates-only-200000-jobs-un-warns" target="_blank" rel="noopener nofollow">Education News Kenya</a>',
       },
     ],
     sections: [
@@ -120,7 +137,7 @@ const LOCATIONS = [
         h2: 'Why so many applications never reach a recruiter',
         paras: [
           'That gap between a million job seekers and two hundred thousand jobs explains the volume every Kenyan recruiter faces. A single graduate or entry-level advert on a major local job board routinely attracts hundreds of applications.',
-          'Faced with that volume, employers do not read every CV by hand. They use applicant tracking systems (ATS) — software that parses each CV, compares it to the job description, and ranks or filters candidates by keyword match before a human shortlists anyone. If your CV cannot be parsed, or does not contain the terms the employer searched for, it is rejected regardless of how strong your actual experience is.',
+          'Faced with that volume, employers do not read every CV by hand. They use applicant tracking systems (ATS), software that parses each CV, compares it to the job description, and ranks or filters candidates by keyword match before a human shortlists anyone. If your CV cannot be parsed, or does not contain the terms the employer searched for, it is rejected regardless of how strong your actual experience is.',
         ],
       },
       {
@@ -154,7 +171,7 @@ const LOCATIONS = [
         h2: 'Remote and international roles from Kenya',
         paras: [
           'Remote work has opened a second market. Kenyan professionals now apply directly for roles based in the United Kingdom, United States, Canada, Australia, the Gulf and South Africa, and compete there on skill rather than location.',
-          'International screening software is stricter about format and often about keyword density, because the applicant pool is global and larger. This is where a tailored document beats a generic one by the widest margin — and where the same CV that works for a local advert often needs a different framing for an overseas employer.',
+          'International screening software is stricter about format and often about keyword density, because the applicant pool is global and larger. This is where a tailored document beats a generic one by the widest margin, and where the same CV that works for a local advert often needs a different framing for an overseas employer.',
         ],
       },
       {
@@ -201,7 +218,7 @@ const LOCATIONS = [
     slug: 'nigeria',
     country: 'Nigeria',
     h1: 'CV Help for Jobs in Nigeria: Beat the ATS and Get Shortlisted',
-    title: 'CV Help for Jobs in Nigeria \u2014 Beat the ATS',
+    title: 'CV Help for Jobs in Nigeria: Beat the ATS',
     description:
       'How to write an ATS-friendly CV for jobs in Nigeria: what Lagos and Abuja recruiters screen for, how NYSC service reads to employers, where entry-level roles are actually filled, and how to tailor your CV to each advert for free.',
     intro:
@@ -226,14 +243,14 @@ const LOCATIONS = [
       {
         h2: 'Why strong candidates still get filtered out',
         paras: [
-          'A graduate trainee advert at a Lagos bank or an FMCG can draw thousands of applications. Employers cannot read them by hand, so they use applicant tracking systems \u2014 software that parses each CV, scores it against the job description, and filters or ranks candidates by keyword match before anyone shortlists.',
+          'A graduate trainee advert at a Lagos bank or an FMCG can draw thousands of applications. Employers cannot read them by hand, so they use applicant tracking systems, software that parses each CV, scores it against the job description, and filters or ranks candidates by keyword match before anyone shortlists.',
           'That means rejection usually has nothing to do with your ability. If your CV cannot be parsed cleanly, or does not use the same vocabulary as the advert, it is discarded at the first stage. The good news is that these are mechanical problems with mechanical fixes.',
         ],
       },
       {
         h2: 'What Nigerian recruiters and screening software look for',
         list: [
-          '<strong>Parseable formatting.</strong> Tables, columns, text boxes and graphics break CV parsing. Skill bars, icons and progress bars are invisible to the software. A single-column layout with standard headings \u2014 Work Experience, Education, Skills, Certifications \u2014 is read reliably.',
+          '<strong>Parseable formatting.</strong> Tables, columns, text boxes and graphics break CV parsing. Skill bars, icons and progress bars are invisible to the software. A single-column layout with standard headings (Work Experience, Education, Skills, Certifications) is read reliably.',
           '<strong>A DOCX when the portal accepts it.</strong> If a PDF is required, export a text-based PDF, not a scanned or image-heavy one the parser may read as blank.',
           '<strong>Exact keyword matches.</strong> If the advert asks for "customer relationship management" and your CV says "CRM tools", a keyword filter may not connect the two. Mirror the employer\u2019s own wording wherever it is honestly accurate.',
           '<strong>Class of degree and institution.</strong> Many Nigerian graduate schemes still screen on grade heavily, so state your degree classification and institution plainly and early. Do not make a recruiter hunt for it.',
@@ -243,7 +260,7 @@ const LOCATIONS = [
       {
         h2: 'How NYSC service reads to employers',
         paras: [
-          'NYSC places a large cohort of graduates each year, and employers read it one of two ways depending on how you present it. Written as "NYSC \u2014 served", it looks like a gap. Written properly, it is real work experience.',
+          'NYSC places a large cohort of graduates each year, and employers read it one of two ways depending on how you present it. Written as "NYSC, served", it looks like a gap. Written properly, it is real work experience.',
           'Name the state, the organisation, your actual role and what you delivered. If you taught, ran a budget, managed records, or built anything, describe the outcome. Those are the keywords that match entry-level job descriptions.',
           'If you are still serving, list it as current experience rather than waiting until it ends. Employers hire continuously and many graduate schemes open well before service finishes.',
         ],
@@ -257,14 +274,14 @@ const LOCATIONS = [
           '<strong>Graduate trainee schemes.</strong> Banks, FMCG companies and the professional services firms run structured annual intakes. These are the most competitive, and the ones where formatting and keyword discipline matter most because the volume is enormous.',
           '<strong>Funded startups and mid-sized companies.</strong> A fifty-person fintech does not run a graduate scheme. It needs a junior associate right now and hires in weeks, often through LinkedIn or a referral. A large share of first jobs come from this segment, and most graduates under-apply there.',
           '<strong>Public sector and agencies.</strong> The civil service, parastatals and agencies such as CBN, FIRS, NCC, SEC, NPA and NIMASA hire graduates at competitive salaries. Postings appear on official channels, so check them directly rather than relying on aggregators.',
-          '<strong>LinkedIn and professional communities.</strong> Recruiters search for candidates by keyword. A profile that mirrors the roles you want makes you findable \u2014 the same keyword logic as your CV, applied to search.',
+          '<strong>LinkedIn and professional communities.</strong> Recruiters search for candidates by keyword. A profile that mirrors the roles you want makes you findable, using the same keyword logic as your CV.',
         ],
       },
       {
         h2: 'Remote and international roles from Nigeria',
         paras: [
           'Remote work gives Nigerian professionals direct access to employers in the United Kingdom, United States, Canada, Australia and the Gulf, competing on skill rather than location. Nigeria\u2019s digital economy is among the largest in Africa, and hundreds of millions of roles across Sub-Saharan Africa are projected to require digital skills by 2030.',
-          'Two practical notes. First, international applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. Second, list the digital tools you genuinely use \u2014 Excel, SQL, Figma, HubSpot, Python, whatever is true \u2014 because digital-skill keywords are among the most common filters on international adverts.',
+          'Two practical notes. First, international applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. Second, list the digital tools you genuinely use (Excel, SQL, Figma, HubSpot, Python, whatever is true) because digital-skill keywords are among the most common filters on international adverts.',
         ],
       },
       {
@@ -311,7 +328,7 @@ const LOCATIONS = [
     slug: 'remote-work-africa',
     country: 'Africa',
     h1: 'Remote Jobs from Africa: How to Compete for Global Roles',
-    title: 'Remote Jobs from Africa \u2014 Land Global Roles',
+    title: 'Remote Jobs from Africa: Land Global Roles',
     description:
       'How to get a remote job from Africa with UK, US, Canadian and Australian employers: where global roles are actually posted, how to present African experience to overseas recruiters, how payment and time zones work, and how to spot scams.',
     intro:
@@ -337,8 +354,8 @@ const LOCATIONS = [
         list: [
           '<strong>Give context inside the achievement.</strong> "Managed operations at a mid-sized logistics firm serving 40 clients across two states" tells an overseas reader far more than a company name they have never heard.',
           '<strong>State scale, currency and outcome.</strong> Team size, budget, user counts, revenue, percentages. Numbers translate across markets and are the signal a foreign reader can evaluate fastest.',
-          '<strong>Keep formatting conservative.</strong> International screening software is stricter than most local processes. Single column, standard headings, and no photograph, date of birth, marital status or ID number \u2014 many overseas employers screen those out entirely.',
-          '<strong>Name your tools plainly.</strong> Software and platform names are the most portable vocabulary you have. If you use Excel, Python, Figma, Salesforce, Jira or QuickBooks, list them \u2014 that is often how you match.',
+          '<strong>Keep formatting conservative.</strong> International screening software is stricter than most local processes. Single column, standard headings, and no photograph, date of birth, marital status or ID number, because many overseas employers screen those out entirely.',
+          '<strong>Name your tools plainly.</strong> Software and platform names are the most portable vocabulary you have. If you use Excel, Python, Figma, Salesforce, Jira or QuickBooks, list them. That is often how you match.',
         ],
       },
       {
@@ -406,7 +423,7 @@ const LOCATIONS = [
     slug: 'ghana',
     country: 'Ghana',
     h1: 'CV Help for Jobs in Ghana: Get Past the ATS and Shortlisted',
-    title: 'CV Help for Jobs in Ghana \u2014 Beat the ATS',
+    title: 'CV Help for Jobs in Ghana: Beat the ATS',
     description:
       'How to write an ATS-friendly CV for jobs in Ghana: what Accra recruiters screen for, how to turn National Service into real experience, why private-sector NSS placements convert into jobs, and how to tailor your CV to each advert for free.',
     intro:
@@ -422,7 +439,7 @@ const LOCATIONS = [
       {
         value: '32%',
         label:
-          'youth unemployment among Ghanaians aged 15\u201324 in 2025, against a 13% national rate \u2014 and 49.3% in Greater Accra for the same age band.',
+          'youth unemployment among Ghanaians aged 15\u201324 in 2025, against a 13% national rate, and 49.3% in Greater Accra for the same age band.',
         source:
           'Ghana Statistical Service Quarterly Labour Statistics, 2025',
       },
@@ -432,23 +449,23 @@ const LOCATIONS = [
         h2: 'Why good graduates still get filtered out',
         paras: [
           'Ghana\u2019s graduate market is defined by a mismatch: employers report a shortage of industry-ready talent while large numbers of qualified graduates struggle to find work. Both things are true at once, and they shape how hiring actually happens.',
-          'Because volume is high, employers and recruiters use applicant tracking systems \u2014 software that parses each CV, compares it to the job description, and filters or ranks candidates by keyword match before anyone shortlists. If your CV cannot be parsed cleanly, or does not use the employer\u2019s own vocabulary, it is discarded before a human ever sees it. That is a mechanical problem with a mechanical fix.',
+          'Because volume is high, employers and recruiters use applicant tracking systems, software that parses each CV, compares it to the job description, and filters or ranks candidates by keyword match before anyone shortlists. If your CV cannot be parsed cleanly, or does not use the employer\u2019s own vocabulary, it is discarded before a human ever sees it. That is a mechanical problem with a mechanical fix.',
         ],
       },
       {
         h2: 'What Ghanaian recruiters and screening software look for',
         list: [
-          '<strong>Parseable formatting.</strong> Tables, columns, text boxes and graphics break CV parsing. Skill bars and icons are invisible to the software. A single-column layout with standard headings \u2014 Work Experience, Education, Skills, National Service \u2014 is read reliably.',
+          '<strong>Parseable formatting.</strong> Tables, columns, text boxes and graphics break CV parsing. Skill bars and icons are invisible to the software. A single-column layout with standard headings (Work Experience, Education, Skills, National Service) is read reliably.',
           '<strong>A DOCX where the portal accepts it.</strong> If a PDF is required, export a text-based PDF rather than a scanned or image-heavy one the parser may read as blank.',
           '<strong>Exact keyword matches.</strong> If the advert asks for "financial reporting" and your CV says "accounting duties", a keyword filter may not connect them. Mirror the employer\u2019s wording wherever it is honestly accurate.',
-          '<strong>Digital and technical keywords.</strong> Ghanaian employers and government assessments consistently flag gaps in practical, technical and digital skills. Naming the specific tools you genuinely use \u2014 Excel, SQL, Power BI, QuickBooks, Python, Canva \u2014 matches the filters employers are actually running.',
+          '<strong>Digital and technical keywords.</strong> Ghanaian employers and government assessments consistently flag gaps in practical, technical and digital skills. Naming the specific tools you genuinely use (Excel, SQL, Power BI, QuickBooks, Python, Canva) matches the filters employers are actually running.',
           '<strong>Quantified achievements.</strong> "Helped with sales" says nothing. "Grew monthly sales for the Accra territory from GH\u20b518,000 to GH\u20b531,000 in two quarters" gives the software keywords and gives the human a reason to call.',
         ],
       },
       {
         h2: 'How to turn National Service into real experience',
         paras: [
-          'Ghana\u2019s National Service Scheme places tens of thousands of tertiary graduates each year into twelve-month postings. Many graduates list it as one line \u2014 "National Service, 2024" \u2014 which reads as a gap rather than a job.',
+          'Ghana\u2019s National Service Scheme places tens of thousands of tertiary graduates each year into twelve-month postings. Many graduates list it as one line ("National Service, 2024") which reads as a gap rather than a job.',
           'Written properly it is a year of documented work. Name the organisation, your actual role, and what you delivered, with numbers. If you managed records, ran a budget, taught, built a database, or coordinated a project, describe the outcome. Those are the keywords that match entry-level job descriptions.',
           'National Service has quietly become an informal recruitment pipeline in Ghana: private-sector placements are heavily oversubscribed precisely because the chance of conversion to a full-time role is higher than in public postings. If you are still serving, list it as current experience and treat the posting as a twelve-month interview.',
         ],
@@ -456,7 +473,7 @@ const LOCATIONS = [
       {
         h2: 'Where graduate jobs in Ghana are actually filled',
         paras: [
-          'Competition concentrates in Accra, where youth unemployment in the 15\u201324 band reached 49.3% \u2014 the highest recorded for that age group. That means the capital is where the roles are, and also where the queue is longest. Widening your search matters as much as perfecting your CV.',
+          'Competition concentrates in Accra, where youth unemployment in the 15\u201324 band reached 49.3%, the highest recorded for that age group. That means the capital is where the roles are, and also where the queue is longest. Widening your search matters as much as perfecting your CV.',
         ],
         list: [
           '<strong>Private-sector National Service placements.</strong> The most direct route. Competition is intense, but conversion into permanent employment is markedly more likely than from a public-sector posting.',
@@ -470,7 +487,7 @@ const LOCATIONS = [
         h2: 'Remote and international roles from Ghana',
         paras: [
           'Remote work gives Ghanaian professionals direct access to employers in the United Kingdom, United States, Canada and across Africa, competing on skill rather than location. Ghana sits between UTC and UTC+1, which overlaps fully with European working hours and gives a genuine advantage over other regions.',
-          'International applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. State your location honestly, say you are available for remote work, and list your tools \u2014 software names travel better than local job titles.',
+          'International applicant pools are larger and their screening software is stricter about format, so tailoring matters more, not less. State your location honestly, say you are available for remote work, and list your tools. Software names travel better than local job titles.',
         ],
       },
       {
@@ -517,7 +534,7 @@ const LOCATIONS = [
     slug: 'south-africa',
     country: 'South Africa',
     h1: 'CV Help for Jobs in South Africa: Beat the ATS and Get Shortlisted',
-    title: 'CV Help for Jobs in South Africa \u2014 Beat the ATS',
+    title: 'CV Help for Jobs in South Africa: Beat the ATS',
     description:
       'How to write an ATS-friendly CV for jobs in South Africa: what Johannesburg and Cape Town recruiters screen for, how to handle qualifications and employment-equity information, and how to tailor your CV to each advert for free.',
     intro:
@@ -542,17 +559,17 @@ const LOCATIONS = [
       {
         h2: 'Why qualified graduates still get filtered out',
         paras: [
-          'South Africa\u2019s youth unemployment is structural rather than a reflection of individual effort. Growth has been too slow to absorb new entrants, and for people aged 15\u201324 the absorption rate was just 10.1% \u2014 the lowest of any age group, meaning very few young people who want work are actually in it.',
+          'South Africa\u2019s youth unemployment is structural rather than a reflection of individual effort. Growth has been too slow to absorb new entrants, and for people aged 15\u201324 the absorption rate was just 10.1%, the lowest of any age group, meaning very few young people who want work are actually in it.',
           'In a market that tight, a single advertised graduate role can attract hundreds or thousands of applications. Employers use applicant tracking systems to cope: software that parses each CV, scores it against the job description, and filters or ranks candidates by keyword match before a human shortlists. If your CV cannot be parsed, or does not mirror the advert\u2019s language, it is discarded at the first stage regardless of your ability.',
         ],
       },
       {
         h2: 'What South African recruiters and screening software look for',
         list: [
-          '<strong>Parseable formatting.</strong> Multi-column designs, tables, text boxes and graphics break CV parsing. Skill bars, icons and infographics are invisible to the software. A single-column layout with standard headings \u2014 Work Experience, Education, Skills, Certifications \u2014 is read reliably.',
+          '<strong>Parseable formatting.</strong> Multi-column designs, tables, text boxes and graphics break CV parsing. Skill bars, icons and infographics are invisible to the software. A single-column layout with standard headings (Work Experience, Education, Skills, Certifications) is read reliably.',
           '<strong>Quantified achievements.</strong> "Responsible for the sales team" says nothing. "Led a five-person sales team that grew regional revenue 18% year on year" gives the software keywords and gives the human a reason to call.',
           '<strong>Qualifications stated clearly and early.</strong> South Africa uses the National Qualifications Framework, and many employers and automated screens look for the qualification level and institution. State your qualification, level and institution plainly rather than burying it.',
-          '<strong>Specific hard skills and tools.</strong> Employers increasingly screen on digital skills. Name the tools you genuinely use \u2014 Excel, SQL, Power BI, Pastel, SAP, Python, Jira \u2014 because that is often how candidates are filtered.',
+          '<strong>Specific hard skills and tools.</strong> Employers increasingly screen on digital skills. Name the tools you genuinely use (Excel, SQL, Power BI, Pastel, SAP, Python, Jira) because that is often how candidates are filtered.',
           '<strong>Driver\u2019s licence, where relevant.</strong> For roles involving travel, client visits or field work, a valid code 8 or 10 licence is a common screening requirement. If you hold one, put it on the CV rather than in a covering paragraph.',
         ],
       },
@@ -560,7 +577,7 @@ const LOCATIONS = [
         h2: 'Employment equity information: what actually goes on your CV',
         paras: [
           'South Africa\u2019s Employment Equity Act requires designated employers to report on the demographic composition of their workforce and to work toward equitable representation. That is a real part of how hiring works here, and applicants often ask whether they should disclose demographic information.',
-          'The practical distinction: equity reporting is an employer obligation, and where an application form asks for demographic details for that purpose, disclosure is typically voluntary \u2014 you may answer "prefer not to say". But your CV itself does not need a race, gender or disability section. It should carry your qualifications, experience and skills, and your achievements should do the talking.',
+          'The practical distinction: equity reporting is an employer obligation, and where an application form asks for demographic details for that purpose, disclosure is typically voluntary, and you may answer "prefer not to say". But your CV itself does not need a race, gender or disability section. It should carry your qualifications, experience and skills, and your achievements should do the talking.',
           'What matters far more is that the substance of your CV matches the advert. Equity considerations sit alongside the shortlist; they do not rescue a document the screening software cannot read.',
         ],
       },
@@ -726,14 +743,42 @@ function render(loc) {
 <link rel="icon" type="image/png" href="/favicon.png"/>
 <link rel="apple-touch-icon" href="/apple-touch-icon.png"/>
 <link rel="manifest" href="/manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
 ${scriptTags}
 <style>${CSS}</style>
 </head>
 <body>
-<header class="site"><div class="wrap">
-<a class="brand" href="/">Interview<span>Ready</span></a>
-<a class="cta" href="/ats-score">Get Started Free</a>
-</div></header>
+<header class="site">
+<div class="navbar">
+<a class="brand" href="/">
+<img src="/logo.png" alt="Interview Ready logo" width="30" height="30"/>
+<span class="brand-text">Interview Ready</span>
+</a>
+<nav class="nav-links" aria-label="Main">
+<a class="nav-link" href="/#features">Features</a>
+<a class="nav-link" href="/#how-it-works">How It Works</a>
+<a class="nav-link" href="/#testimonials">Recruiter Tested</a>
+<a class="nav-link" href="/#faq">FAQ</a>
+<a class="nav-link" href="/blog">Blog</a>
+</nav>
+<div class="nav-right">
+<a class="signin" href="/login">Sign In</a>
+<a class="cta" href="/welcome">Get Started</a>
+<button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobileMenu"><span></span><span></span><span></span></button>
+</div>
+</div>
+<div class="mobile-menu" id="mobileMenu">
+<a href="/#features">Features</a>
+<a href="/#how-it-works">How It Works</a>
+<a href="/#testimonials">Recruiter Tested</a>
+<a href="/#faq">FAQ</a>
+<a href="/blog">Blog</a>
+<a href="/login">Sign In</a>
+<a href="/welcome">Get Started Free</a>
+</div>
+</header>
 <main><div class="wrap">
 <article>
 <h1>${esc(loc.h1)}</h1>
@@ -741,9 +786,9 @@ ${scriptTags}
 ${stats}
 ${body}
 <div class="promo">
-<h3>Check your CV against a real job advert — free</h3>
-<p>Paste your CV and the job description to see your ATS match score, the keywords you are missing, and a rewrite plan. No credit card required.</p>
-<a class="cta" href="/ats-score">Get my free CV score</a>
+<h3>Try Interview Ready free</h3>
+<p>Paste your CV and the job description to see your ATS match score, the keywords you are missing, and a rewrite plan. Create your account and try it free. No credit card required.</p>
+<a class="cta" href="/welcome">Get my free CV score</a>
 </div>
 ${related}
 <h2>Frequently Asked Questions</h2>
@@ -753,8 +798,9 @@ ${faq}
 <footer class="site"><div class="wrap">
 <nav>
 <a href="/">Home</a>
+<a href="/#features">Features</a>
+<a href="/pricing">Pricing</a>
 <a href="/blog">Blog</a>
-<a href="/ats-score">Free ATS Score</a>
 ${locationNav()}
 <a href="/privacy">Privacy</a>
 <a href="/terms">Terms</a>
@@ -762,6 +808,18 @@ ${locationNav()}
 </nav>
 <p>© ${new Date().getFullYear()} ${BRAND}. Built for ambitious professionals worldwide.</p>
 </div></footer>
+<script>
+(function(){
+var t=document.getElementById('menuToggle');
+var m=document.getElementById('mobileMenu');
+if(!t||!m)return;
+t.addEventListener('click',function(){
+var open=m.style.display==='block';
+m.style.display=open?'none':'block';
+t.setAttribute('aria-expanded',open?'false':'true');
+});
+})();
+</script>
 </body>
 </html>
 `;

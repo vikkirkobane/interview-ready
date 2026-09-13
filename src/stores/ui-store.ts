@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 interface UIState {
   // Theme — default is dark
@@ -35,8 +36,10 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      // Dark mode is the default
-      isDark: true,
+      // Dark mode is the default on native; web defaults to light because the
+      // marketing site, blog and static pages are light-themed, and the SPA's
+      // prerendered boot shell is what users see while JS loads.
+      isDark: Platform.OS !== 'web',
       setIsDark: (v) => set({ isDark: v }),
 
       // Notifications default to true

@@ -4,12 +4,13 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../src/lib/query-client';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, ActivityIndicator, View, Text, Pressable } from 'react-native';
+import { StyleSheet, ActivityIndicator, View, Text, Pressable, Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { toastConfig, AdSideGutters } from '../src/components/ui';
 import { useAuthStore } from '../src/stores/auth-store';
 import { useOnboardingStore } from '../src/stores/onboarding-store';
 import { useTheme } from '../src/theme';
+import { lightColors } from '../src/theme/tokens';
 import * as Font from 'expo-font';
 import * as Linking from 'expo-linking';
 import * as SplashScreen from 'expo-splash-screen';
@@ -90,6 +91,13 @@ function AuthGuard() {
 
     const inAuthGroup =
       firstSegment === '(auth)' || firstSegment === 'auth';
+    // (tabs) group members that are public marketing surfaces: the route
+    // segments are ['(tabs)', 'pricing'], so firstSegment is the group name.
+    const inTabsGroup = firstSegment === '(tabs)';
+    const secondIsPublic =
+      secondSegment === 'pricing' ||
+      secondSegment === 'ats-score' ||
+      secondSegment === 'ats-checklist';
     const onCallbackScreen =
       secondSegment === 'callback' ||
       (firstSegment === 'auth' && secondSegment === 'callback');
@@ -107,7 +115,13 @@ function AuthGuard() {
       firstSegment === 'terms' ||
       firstSegment === 'about' ||
       firstSegment === 'contact' ||
-      firstSegment === 'blog';
+      firstSegment === 'blog' ||
+      // Free tool landing pages are public marketing surfaces (also indexed by
+      // search engines); redirecting them to /welcome breaks inbound links.
+      firstSegment === 'ats-score' ||
+      firstSegment === 'ats-checklist' ||
+      firstSegment === 'pricing' ||
+      (inTabsGroup && secondIsPublic);
 
     if (isPublicInfoRoute && !session) return;
     if (isLandingOrIndex && !session) return;
@@ -377,9 +391,15 @@ export default function RootLayout() {
 
   // Wait for both session restore and font loading
   if (!initialized || !fontsLoaded || isChecking) {
+    // Light background on web: this shell is server-rendered into the static
+    // export, so users on slow connections see it while JS loads. A dark shell
+    // flashing before the light marketing pages reads as a broken, unstyled
+    // page. Web keeps the marketing aesthetic; native keeps its theme.
+    const bootBg = Platform.OS === 'web' ? lightColors.bgPrimary : colors.bgPrimary;
+    const bootFg = Platform.OS === 'web' ? lightColors.primary : colors.primary;
     return (
-      <View style={[styles.loading, { backgroundColor: colors.bgPrimary }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.loading, { backgroundColor: bootBg }]}>
+        <ActivityIndicator size="large" color={bootFg} />
       </View>
     );
   }
