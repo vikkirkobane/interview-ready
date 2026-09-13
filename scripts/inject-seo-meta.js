@@ -165,6 +165,36 @@ const ATS = {
   ],
 };
 
+const CHECKLIST = {
+  h1: 'ATS Resume Checklist: What Recruiters and Screening Software Actually Look For',
+  intro:
+    'A practical pre-application checklist: formatting that parses cleanly, the keywords screening software scans for, and the mistakes that get CVs filtered out before a human reads them.',
+  sections: [
+    {
+      h2: 'Formatting that parses cleanly',
+      body: 'Use a single-column layout, standard section headings such as Experience, Education and Skills, and a common font at 10 to 12pt. Avoid tables, text boxes, headers and footers for critical content, and export to PDF unless the employer asks for DOCX. If the parser cannot read your layout, your experience never reaches the recruiter.',
+    },
+    {
+      h2: 'Keywords that match the job description',
+      body: 'Mirror the exact wording of the posting for skills, tools and job titles. If the description says stakeholder management, write stakeholder management, not relationship building. Screeners score literal matches, so cover each requirement that genuinely applies to you.',
+    },
+    {
+      h2: 'Mistakes that get CVs filtered out',
+      body: 'The most common rejects are missing dates, unexplained gaps, graphics instead of text, spelling of job-critical terms, and applying with one generic resume everywhere. Fix these five and your application is already ahead of most.',
+    },
+  ],
+  faq: [
+    {
+      q: 'Is this checklist free to use?',
+      a: 'Yes. The checklist and the free ATS resume score cost nothing and require no credit card.',
+    },
+    {
+      q: 'How is the checklist different from the resume score?',
+      a: 'The checklist is a manual review of format and content best practice. The score compares your actual resume against a specific job description and tells you which keywords are missing. Use both: run the score, then work through the checklist before you apply.',
+    },
+  ],
+};
+
 /* ------------------------------------------------------------------ */
 /* JSON-LD                                                            */
 /* ------------------------------------------------------------------ */
@@ -627,6 +657,11 @@ function main() {
     } else if (slug === 'ats-score') {
       headParts.push(ldScript(faqSchema(ATS.faq)));
       bodyExtra = noscriptBlock(ATS);
+    } else if (slug === 'ats-checklist') {
+      // This screen already statically renders its full checklist content in
+      // the export (unlike the other SPA screens, which need a noscript
+      // fallback), so only add structured data here.
+      headParts.push(ldScript(faqSchema(CHECKLIST.faq)));
     } else if (slug === 'pricing') {
       headParts.push(ldScript(faqSchema(PRICING.faq)));
       bodyExtra = noscriptBlock(PRICING);
