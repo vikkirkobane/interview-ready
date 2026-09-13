@@ -74,6 +74,14 @@
 - **[planning.md](planning.md)** — Original planning notes
 - **[claude.md](claude.md)** — Development context
 
+#### SEO & Web Presence
+- **[SEO_INTEGRATION_GUIDE.md](SEO_INTEGRATION_GUIDE.md)** ⭐ READ BEFORE ADDING ANY PAGE
+  - The 2-minute mental model of how SEO works on this site
+  - Step-by-step checklists: new blog post, new marketing page, new location page
+  - Design tokens for static pages (must match the app)
+  - Troubleshooting table and PR review checklist
+  - Enforced by `scripts/verify-seo.js`, which fails the build on regressions
+
 #### Task Management
 - **[tasks.md](tasks.md)** — Updated task checklist with progress
 
