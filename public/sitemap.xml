@@ -17,7 +17,7 @@
   </url>
   <url>
     <loc>https://appinterviewready.top/blog</loc>
-    <lastmod>2026-09-11</lastmod>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,6 +70,16 @@
     <loc>https://appinterviewready.top/careers/south-africa</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://appinterviewready.top/blog/too-good-at-wrong-job</loc>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/too-good-at-wrong-job.jpg</image:loc>
+      <image:title>The Hidden Career Risk: When Being Too Good at the Wrong Job Holds You Back</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/why-did-you-leave</loc>

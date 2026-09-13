@@ -125,6 +125,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/why-did-you-leave.jpg',
     tags: ['interview questions', 'why did you leave', 'interview preparation', 'career advice'],
   },
+  {
+    slug: 'too-good-at-wrong-job',
+    title: 'The Hidden Career Risk: When Being Too Good at the Wrong Job Holds You Back',
+    date: '2026-09-13',
+    description:
+      'When excellence becomes a trap, being highly competent in the wrong role slowly atrophies your marketable skills while the world moves on. A guide to recognizing and escaping the career stagnation trap.',
+    coverImage: '/blog/images/too-good-at-wrong-job.jpg',
+    tags: ['career risk', 'career stagnation', 'professional growth', 'job fit', 'career advice', 'Interview Ready'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {
