@@ -66,7 +66,8 @@ Rules:
 - **Title:** ≤ 60 chars ideally (Google truncates ~60). No em dashes.
 - **Date:** the **actual publish date**, never copy another post's date. Feeds the sitemap `lastmod`, feed `pubDate`, and OG image cache-buster.
 - **Cover image:** 1200×630 JPG at `public/blog/images/<slug>.jpg`. Nothing else in the pipeline works without it.
-- **No em dashes in the body.** No "Image Generation Prompt" sections (user-facing pages strip them, but don't rely on that).
+- **Image Generation Prompt sections are REQUIRED, one per post.** They are author tooling: kept in the markdown so covers can be regenerated, and stripped from published HTML at render time by `prerender-blog.js` (`cleanCitations`) and mirrored in `app/blog/[slug].tsx`. So they never reach readers and cannot hurt SEO, but they must stay in the markdown. Use the `## Image Generation Prompt` heading followed by `## Takeaway`, because the stripper's regex ends the section at the next `## Takeaway`.
+- **No em dashes in the body.**
 
 ### Step 2: Register it in `src/data/blog-posts.ts`
 
@@ -110,6 +111,7 @@ Then confirm:
 - Copying another post's date → wrong `lastmod`, feed order, and cache-buster.
 - Forgetting the cover image → no image-sitemap entry, blank social card.
 - Em dashes in title/description → guaranteed owner rejection.
+- Omitting the Image Generation Prompt section → the owner requires one per post (it stays in the markdown, stripped from published HTML).
 
 ---
 

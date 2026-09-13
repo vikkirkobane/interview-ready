@@ -450,6 +450,7 @@ ${(tags || []).length ? `<div class="tags">${tags.map((t) => `<span>${esc(t)}</s
 <h3>Try Interview Ready free</h3>
 <p>Interview Ready writes, formats and exports ATS-optimised resumes and cover letters in seconds, tailored to the exact job description you are targeting. Create your account and try it free.</p>
 <a class="cta" href="/welcome">Get Started Free</a>
+<p>Not sure which part of your CV is costing you interviews? <a href="/ats-score">Get your free resume score</a> to see the keywords, formatting and section gaps to fix before you apply again.</p>
 </div>
 ${
   (moreLinks || []).length
@@ -466,6 +467,7 @@ ${
 <a href="/pricing">Pricing</a>
 <a href="/blog">Blog</a>
 <a href="/blog/feed.xml">RSS</a>
+<a href="/ats-score">Resume Score</a>
 ${careersFooterLinks()}
 <a href="/privacy">Privacy</a>
 <a href="/terms">Terms</a>
