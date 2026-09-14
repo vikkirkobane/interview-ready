@@ -6,6 +6,8 @@ tags: [career risk, career stagnation, professional growth, job fit, career advi
 
 # The Hidden Career Risk: When Being Too Good at the Wrong Job Holds You Back
 
+![Career risk illustration showing someone excelling at tasks that no longer serve their growth](/blog/images/too-good-at-wrong-job.jpg)
+
 Sometimes the biggest career risk isn't leaving too soon. It's becoming too good at making the wrong role work.
 
 Adaptation can look like resilience, until all your energy is spent compensating for a fit you've already outgrown.
