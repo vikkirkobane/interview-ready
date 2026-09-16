@@ -133,6 +133,15 @@ const POSTS = [
     date: '2026-09-11',
     tags: ['interview questions', 'why did you leave', 'interview preparation', 'career advice'],
   },
+  {
+    slug: 'career-clarity-from-experience',
+    title: 'Career Clarity Comes from Experience, Not from Thinking Harder',
+    description:
+      'Clarity about your career rarely arrives through more thinking. It comes from small, real experiments: conversations, shadowing, side projects, and the genuine reactions they produce.',
+    image: '/blog/images/career-clarity-from-experience.jpg',
+    date: '2026-09-16',
+    tags: ['career clarity', 'career change', 'exploration', 'early career', 'freshers', 'Interview Ready'],
+  },
 ];
 
 for (const post of POSTS) {

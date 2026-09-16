@@ -134,6 +134,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/too-good-at-wrong-job.jpg',
     tags: ['career risk', 'career stagnation', 'professional growth', 'job fit', 'career advice', 'Interview Ready'],
   },
+  {
+    slug: 'career-clarity-from-experience',
+    title: 'Career Clarity Comes from Experience, Not from Thinking Harder',
+    date: '2026-09-16',
+    description:
+      'Clarity about your career rarely arrives through more thinking. It comes from small, real experiments: conversations, shadowing, side projects, and the genuine reactions they produce.',
+    coverImage: '/blog/images/career-clarity-from-experience.jpg',
+    tags: ['career clarity', 'career change', 'exploration', 'early career', 'freshers', 'Interview Ready'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {

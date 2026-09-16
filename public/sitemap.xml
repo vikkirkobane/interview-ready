@@ -17,7 +17,7 @@
   </url>
   <url>
     <loc>https://appinterviewready.top/blog</loc>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,6 +70,16 @@
     <loc>https://appinterviewready.top/careers/south-africa</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://appinterviewready.top/blog/career-clarity-from-experience</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/career-clarity-from-experience.jpg</image:loc>
+      <image:title>Career Clarity Comes from Experience, Not from Thinking Harder</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/too-good-at-wrong-job</loc>
