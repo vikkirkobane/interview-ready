@@ -143,6 +143,15 @@ export const blogPosts: BlogPost[] = [
     coverImage: '/blog/images/career-clarity-from-experience.jpg',
     tags: ['career clarity', 'career change', 'exploration', 'early career', 'freshers', 'Interview Ready'],
   },
+  {
+    slug: 'whose-definition-of-success',
+    title: 'Whose Definition of Success Are You Actually Working Toward?',
+    date: '2026-09-18',
+    description:
+      'Most definitions of success are inherited, not chosen. Learn how to spot the borrowed standards shaping your career and decide what success means for you.',
+    coverImage: '/blog/images/whose-definition-of-success.jpg',
+    tags: ['career clarity', 'definition of success', 'career values', 'career advice', 'freshers', 'Interview Ready'],
+  },
 ];
 
 export function getBlogPostBySlug(slug: string): BlogPost | undefined {

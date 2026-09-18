@@ -217,7 +217,7 @@ function parsePostsTs(ts) {
 function cleanCitations(src) {
   // Strip the internal Image Generation Prompt section: it is author tooling,
   // not reader content. Mirrors the filter in app/blog/[slug].tsx.
-  src = src.replace(/## Image Generation Prompt[\s\S]*?(?=## Takeaway|$)/i, '');
+  src = src.replace(/## Image Generation Prompt[\s\S]*?(?=## |\*\*Sources\*\*|$)/i, '');
   return src.replace(/【\s*(https?:\/\/[^\s】]+)\s*】/g, (_, url) => {
     let host = url;
     try {

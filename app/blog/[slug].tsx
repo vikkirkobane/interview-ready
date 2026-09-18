@@ -43,7 +43,7 @@ export default function BlogPostScreen() {
         const text = await res.text();
         let cleaned = text.replace(/^---[\s\S]*?---\s*/, '');
         // Remove the Image Generation Prompt section (internal-only, not for readers)
-        cleaned = cleaned.replace(/## Image Generation Prompt[\s\S]*?(?=## Takeaway|$)/i, '');
+        cleaned = cleaned.replace(/## Image Generation Prompt[\s\S]*?(?=## |\*\*Sources\*\*|$)/i, '');
         // Replace long dashes with natural alternatives to reduce AI-slop feel
         cleaned = cleaned
           .replace(/ — /g, ', ')

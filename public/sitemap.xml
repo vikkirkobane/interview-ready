@@ -17,7 +17,7 @@
   </url>
   <url>
     <loc>https://appinterviewready.top/blog</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,6 +70,16 @@
     <loc>https://appinterviewready.top/careers/south-africa</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://appinterviewready.top/blog/whose-definition-of-success</loc>
+    <lastmod>2026-09-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/whose-definition-of-success.jpg</image:loc>
+      <image:title>Whose Definition of Success Are You Actually Working Toward?</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/career-clarity-from-experience</loc>

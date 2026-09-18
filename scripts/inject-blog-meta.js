@@ -142,6 +142,15 @@ const POSTS = [
     date: '2026-09-16',
     tags: ['career clarity', 'career change', 'exploration', 'early career', 'freshers', 'Interview Ready'],
   },
+  {
+    slug: 'whose-definition-of-success',
+    title: 'Whose Definition of Success Are You Actually Working Toward?',
+    description:
+      'Most definitions of success are inherited, not chosen. Learn how to spot the borrowed standards shaping your career and decide what success means for you.',
+    image: '/blog/images/whose-definition-of-success.jpg',
+    date: '2026-09-18',
+    tags: ['career clarity', 'definition of success', 'career values', 'career advice', 'freshers', 'Interview Ready'],
+  },
 ];
 
 for (const post of POSTS) {
