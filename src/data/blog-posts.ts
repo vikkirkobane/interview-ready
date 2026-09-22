@@ -9,6 +9,15 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'professional-identity-negotiation',
+    title: 'Professional Identity Is a Negotiation, Not a Personal Brand',
+    date: '2026-09-22',
+    description:
+      'Professional identity is not a personal brand you decide in an afternoon. It is an ongoing negotiation between who you are and the roles and expectations shaping what is possible for you at work.',
+    coverImage: '/blog/images/professional-identity-negotiation.jpg',
+    tags: ['professional identity', 'identity work', 'career clarity', 'career advice', 'freshers', 'Interview Ready'],
+  },
+  {
     slug: 'questions-job-seekers-ask-before-interview',
     title: 'The Questions Job Seekers Ask Most Before an Interview and How to Answer Them',
     date: '2026-09-04',

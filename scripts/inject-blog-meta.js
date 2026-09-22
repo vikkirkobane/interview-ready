@@ -98,6 +98,15 @@ const POSTS = [
     tags: ['public speaking', 'communication skills', 'interview preparation', 'recording yourself'],
   },
   {
+    slug: 'professional-identity-negotiation',
+    title: 'Professional Identity Is a Negotiation, Not a Personal Brand',
+    description:
+      'Professional identity is not a personal brand you decide in an afternoon. It is an ongoing negotiation between who you are and the roles and expectations shaping what is possible for you at work.',
+    image: '/blog/images/professional-identity-negotiation.jpg',
+    date: '2026-09-22',
+    tags: ['professional identity', 'identity work', 'career clarity', 'career advice', 'freshers', 'Interview Ready'],
+  },
+  {
     slug: 'ai-resume-judgment',
     title: 'AI Can Write Your Resume, But Only You Can Decide What Matters Most',
     description:
