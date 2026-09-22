@@ -6,6 +6,8 @@ tags: [professional identity, identity work, career clarity, career advice, fres
 
 # Professional Identity Is a Negotiation, Not a Personal Brand
 
+![An early career African professional in a navy suit holding an open notebook, negotiating across a meeting table with two colleagues reviewing a chart](/blog/images/professional-identity-negotiation.jpg)
+
 We talk a lot about professional identity, but usually in a pretty surface-level way.
 
 What's your personal brand? What are your signature strengths? How do you want to be known?
