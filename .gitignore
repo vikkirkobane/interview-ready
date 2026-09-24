@@ -54,3 +54,6 @@ interview-ready-landing/
 # Documentation
 docs/
 
+
+__pycache__/
+*.pyc

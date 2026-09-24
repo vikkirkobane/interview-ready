@@ -77,4 +77,5 @@ if __name__ == "__main__":
     make_image("ai-resume-judgment", "Your story, your call.", (253, 230, 138))
     make_image("interview-silence-guide", "Silence is not a verdict.", (147, 197, 253))
     make_image("perseverance-change-direction", "Quit the goal, not yourself.", (253, 230, 138))
+    make_image("naming-the-structure-career-advice", "Name it. Navigate it.", (147, 197, 253))
     print("done")

@@ -98,6 +98,15 @@ const POSTS = [
     tags: ['public speaking', 'communication skills', 'interview preparation', 'recording yourself'],
   },
   {
+    slug: 'naming-the-structure-career-advice',
+    title: 'Naming the Structure: Why Career Advice Alone Falls Short',
+    description:
+      'Systemic patterns in who gets hired, promoted and included are features of systems, not personal failures. Why career advice that only preaches self improvement falls short, and how to navigate structure honestly.',
+    image: '/blog/images/naming-the-structure-career-advice.jpg',
+    date: '2026-09-24',
+    tags: ['systemic barriers', 'career development', 'discrimination', 'meritocracy', 'career advice', 'Interview Ready'],
+  },
+  {
     slug: 'professional-identity-negotiation',
     title: 'Professional Identity Is a Negotiation, Not a Personal Brand',
     description:

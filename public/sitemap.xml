@@ -17,7 +17,7 @@
   </url>
   <url>
     <loc>https://appinterviewready.top/blog</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -70,6 +70,16 @@
     <loc>https://appinterviewready.top/careers/south-africa</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://appinterviewready.top/blog/naming-the-structure-career-advice</loc>
+    <lastmod>2026-09-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://appinterviewready.top/blog/images/naming-the-structure-career-advice.jpg</image:loc>
+      <image:title>Naming the Structure: Why Career Advice Alone Falls Short</image:title>
+    </image:image>
   </url>
   <url>
     <loc>https://appinterviewready.top/blog/professional-identity-negotiation</loc>
